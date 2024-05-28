@@ -1,0 +1,18 @@
+{
+    "name": "@haxtheweb/cli",
+    "private": false,
+    "version": "0.0.1",
+    "type": "module",
+    "dependencies": {
+      "@clack/core": "0.3.4",
+      "@clack/prompts": "0.7.0",
+      "picocolors": "1.0.1",
+      "sync-exec": "0.6.2",
+      "@open-wc/create": "0.38.95"
+    },
+    "scripts": {
+      "start": "node ./index.js"
+    },
+    "devDependencies": {
+    }
+  }
