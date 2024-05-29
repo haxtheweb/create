@@ -5,7 +5,6 @@
       "access": "public"
     },
     "description": "Rapidly build web components for the Web that work with HAX",
-    "type": "module",
     "author": "HAXTheWeb core team",
     "license": "Apache-2.0",
     "engines": {
@@ -20,10 +19,11 @@
     },
     "homepage": "https://hax.psu.edu/",
     "scripts": {
-      "start": "node ./index.js"
+      "build": "rm -rf dist && babel src --out-dir dist --copy-files --include-dotfiles",
+      "start": "npm run build && node ./dist/index.js"
     },
     "bin": {
-      "create-haxtheweb": "./index.js"
+      "create-haxtheweb": "./dist/index.js"
     },
     "keywords": [
       "haxtheweb",
@@ -41,5 +41,17 @@
       "picocolors": "1.0.1",
       "sync-exec": "0.6.2",
       "ejs": "3.1.10"
+    },
+    "devDependencies": {
+      "@babel/cli": "^7.24.6",
+      "@babel/core": "^7.24.6",
+      "@babel/register": "^7.24.6",
+      "@custom-elements-manifest/analyzer": "^0.10.2",
+      "@rollup/plugin-babel": "^6.0.4",
+      "@rollup/plugin-node-resolve": "^15.2.3",
+      "@web/rollup-plugin-html": "^2.3.0",
+      "@web/rollup-plugin-import-meta-assets": "^2.2.1",
+      "babel-plugin-transform-dynamic-import": "^2.1.0",
+      "@babel/preset-env": "7.24.6"
     }
   }
