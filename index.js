@@ -59,7 +59,6 @@ async function main() {
 							maxItems: 2,
 							options: [
 								{ value: 'course', label: "Course" },
-								{ value: 'blank', label: "Blank"},
 							],
 						});
 					break;
@@ -70,7 +69,6 @@ async function main() {
 							maxItems: 2,
 							options: [
 								{ value: 'default', label: "Default" },
-								{ value: 'blank', label: "Blank"},
 							],
 						});
           break;
@@ -149,16 +147,6 @@ async function main() {
 }
 
 main().catch(console.error);
-
-/**
- * Helper to convert camel case to dash; important when setting attributes.
- */
-function camelToDash(str) {
-  return str
-    .replace(/\W+/g, "-")
-    .replace(/([a-z\d])([A-Z])/g, "$1-$2")
-    .toLowerCase();
-}
 
 /**
  * Helper to convert dash to camel; important when reading attributes.

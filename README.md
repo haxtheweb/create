@@ -1,11 +1,10 @@
 # HAX The CLI
-Rapidly install and build projects that are HAX ready using HAX the CLI.
-HAX The Web's CLI tools empower you to rapidly..
-- start making elements that are designed to work with HAX, yet work and can be published stand alone
+Rapidly build web components for the Web that work with HAX. HAX The Web's CLI tools empower you to rapidly..
+- start making Lit based web components using the HAX design system and tools
 
 ## Future state
-- start making new themes for HAXcms
-- making new HAX Sites the same way you could with a full instance yet from command line
+- Create new HAX sites and administer them from the CLI
+- Create new themes for HAXcms
 
 # Usage
 

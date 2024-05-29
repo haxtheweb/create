@@ -1,8 +1,10 @@
 {
-    "name": "@haxtheweb/cli",
+    "name": "@haxtheweb/create",
+    "description": "Rapidly build web components for the Web that work with HAX",
     "private": false,
     "version": "0.0.1",
     "type": "module",
+    "author": "HAXTheWeb core team",
     "license": "Apache-2.0",
     "dependencies": {
       "@clack/core": "0.3.4",
@@ -13,7 +15,5 @@
     },
     "scripts": {
       "start": "node ./index.js"
-    },
-    "devDependencies": {
     }
   }
