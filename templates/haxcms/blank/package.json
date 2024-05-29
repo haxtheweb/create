@@ -1,5 +1,5 @@
 {
-    "name": "stuff",
+    "name": "<%= name %>",
     "dependencies": {
         "@haxtheweb/d-d-d": "9.0.0-alpha.0"
     }

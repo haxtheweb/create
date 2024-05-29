@@ -1,0 +1,33 @@
+{
+    "name": "<%= name %>",
+    "description": "Webcomponent <%= name %> following hax / open-wc recommendations",
+    "license": "Apache-2.0",
+    "author": "<%= author %>",
+    "version": "0.0.0",
+    "scripts": {
+      "build": "rimraf public && rollup -c rollup.config.js && yarn run analyze --exclude public",
+      "analyze": "cem analyze --litelement",
+      "start": "web-dev-server"
+    },
+    "dependencies": {
+      "lit": "^3.1.3",
+      "@haxtheweb/d-d-d": "^9.0.0-alpha.0"
+    },
+    "devDependencies": {
+      "@babel/preset-env": "^7.16.4",
+      "@custom-elements-manifest/analyzer": "^0.4.17",
+      "@open-wc/building-rollup": "^2.0.1",
+      "@open-wc/testing": "next",
+      "@rollup/plugin-babel": "^5.3.0",
+      "@rollup/plugin-node-resolve": "^13.0.6",
+      "@web/dev-server": "^0.1.28",
+      "@web/rollup-plugin-html": "^1.10.1",
+      "@web/rollup-plugin-import-meta-assets": "^1.0.7",
+      "babel-plugin-template-html-minifier": "^4.1.0",
+      "deepmerge": "^4.2.2",
+      "rimraf": "^3.0.2",
+      "rollup": "^2.60.0",
+      "rollup-plugin-terser": "^7.0.2"
+    },
+    "customElements": "custom-elements.json"
+  }

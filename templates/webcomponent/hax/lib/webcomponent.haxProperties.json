@@ -1,0 +1,42 @@
+{
+    "canScale": true,
+    "canEditSource": true,
+    "gizmo": {
+      "title": "<%= name %>",
+      "description": "",
+      "icon": "book",
+      "color": "green",
+      "tags": [
+        "Other"
+      ],
+      "handles": [],
+      "meta": {
+        "author": "<%= author %>"
+      }
+    },
+    "settings": {
+      "configure": [
+        {
+          "property": "title",
+          "title": "Title",
+          "description": "Title of <%= name %>",
+          "inputMethod": "textfield",
+          "icon": "editor:title",
+          "required": true
+        }
+      ]
+    },
+    "saveOptions": {
+      "wipeSlot": false,
+      "unsetAttributes": []
+    },
+    "demoSchema": [
+      {
+        "tag": "<%= name %>",
+        "properties": {
+        },
+        "content": ""
+      }
+    ]
+  }
+  

@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <base href="/">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="Description" content="Demonstration for <%= name %>">
+
+  <style>
+    :root,
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #ededed;
+    }
+    <%= name %> {
+      margin: 16px;
+    }
+    #demo1 {
+      --<%= name %>-font-size: var(--ddd-font-size-xs);
+      background-color: var(--ddd-accent-5);
+    }
+    #demo2 {
+      --<%= name %>-font-size: var(--ddd-font-size-l);
+      background-color: var(--ddd-accent-8);
+      color: var(--ddd-primary-15);
+    }
+  </style>
+  <title><%= name %></title>
+</head>
+
+<body>
+  <h1><%= name %></h1>
+  <!-- this is going to do whatever the tag's defaults are -->
+  <<%= name %> id="demo1"><div>Sample Slot Content</div></<%= name %>>
+  <<%= name %> id="demo2" title="Sample Title Content"></<%= name %>>
+  <script type="module" src="./src/<%= name %>.js"></script>
+</body>
+
+</html>
