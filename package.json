@@ -22,6 +22,19 @@
     "scripts": {
       "start": "node ./index.js"
     },
+    "bin": {
+      "create-haxtheweb": "./index.js"
+    },
+    "keywords": [
+      "haxtheweb",
+      "haxcms",
+      "haxsite",
+      "htw",
+      "webcomponents",
+      "lit",
+      "generator",
+      "starter-app"
+    ],
     "dependencies": {
       "@clack/core": "0.3.4",
       "@clack/prompts": "0.7.0",
