@@ -25,6 +25,9 @@
     "bin": {
       "create-haxtheweb": "./dist/index.js"
     },
+    "files": [
+      "dist"
+    ],
     "keywords": [
       "haxtheweb",
       "haxcms",
