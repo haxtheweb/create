@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 import * as fs from 'node:fs';
 import * as path from "node:path";
 import { setTimeout } from 'node:timers/promises';
@@ -6,16 +8,6 @@ import * as p from '@clack/prompts';
 import * as sh from "sync-exec";
 const exec = sh.default;
 import color from 'picocolors';
-
-/**
- * https://github.com/open-wc/create/blob/master/src/create.js
- * look at how openwc does templating
- * ideally we'd be templating the files from a prebuilt repo and it would be minimal
- * need CLIs for becoming a developer:
- * of a new DDD based element
- * of a new HAXcms stand alone site
- * of a new HAX theme
- */
 
 async function main() {
 	console.clear();
