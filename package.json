@@ -20,10 +20,10 @@
     "homepage": "https://hax.psu.edu/",
     "scripts": {
       "build": "rm -rf dist && babel src --out-dir dist --copy-files --include-dotfiles",
-      "start": "npm run build && node ./dist/index.js"
+      "start": "npm run build && node ./dist/create.js"
     },
     "bin": {
-      "create-haxtheweb": "./dist/index.js"
+      "create-haxtheweb": "./dist/create.js"
     },
     "files": [
       "dist"

@@ -106,7 +106,7 @@ async function main() {
 	  let s = p.spinner();
       s.start('Copying files');
       await setTimeout(250);
-      await exec(`cp -R ${path.resolve(path.dirname(''))}/src/templates/${project.type}/${project.typeOption}/ ${project.path}`);
+      await exec(`cp -R ${process.mainModule.path}/templates/${project.type}/${project.typeOption}/ ${project.path}`);
       // rename paths that are of the element name in question
       await exec(`mv ${project.path}/src/webcomponent.js ${project.path}/src/${project.name}.js`);
       await exec(`mv ${project.path}/lib/webcomponent.haxProperties.json ${project.path}/lib/${project.name}.haxProperties.json`);
