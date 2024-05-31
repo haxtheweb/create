@@ -21,7 +21,7 @@
   "scripts": {
     "build": "rm -rf dist && babel src --out-dir dist --copy-files --include-dotfiles",
     "start": "npm run build && node ./dist/create.js",
-    "release": "commit-and-tag-version && git push --follow-tags origin master && npm publish"
+    "release": "commit-and-tag-version && git push --follow-tags origin main && npm publish"
   },
   "bin": {
     "create-haxtheweb": "./dist/create.js"
