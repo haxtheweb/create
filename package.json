@@ -1,62 +1,62 @@
 {
-    "name": "@haxtheweb/create",
-    "version": "0.1.0",
-    "publishConfig": {
-      "access": "public"
-    },
-    "description": "Rapidly build web components for the Web that work with HAX",
-    "author": "HAXTheWeb core team",
-    "license": "Apache-2.0",
-    "engines": {
-      "node": ">=18.20.3"
-    },
-    "repository": {
-      "type": "git",
-      "url": "https://github.com/haxtheweb/create.git"
-    },
-    "bugs": {
-      "url": "https://github.com/haxtheweb/issues/issues"
-    },
-    "homepage": "https://hax.psu.edu/",
-    "scripts": {
-      "build": "rm -rf dist && babel src --out-dir dist --copy-files --include-dotfiles",
-      "start": "npm run build && node ./dist/create.js",
-      "release": "commit-and-tag-version && git push --follow-tags origin master && npm publish"
-    },
-    "bin": {
-      "create-haxtheweb": "./dist/create.js"
-    },
-    "files": [
-      "dist"
-    ],
-    "keywords": [
-      "haxtheweb",
-      "haxcms",
-      "haxsite",
-      "htw",
-      "webcomponents",
-      "lit",
-      "generator",
-      "starter-app"
-    ],
-    "dependencies": {
-      "@clack/core": "0.3.4",
-      "@clack/prompts": "0.7.0",
-      "picocolors": "1.0.1",
-      "sync-exec": "0.6.2",
-      "ejs": "3.1.10"
-    },
-    "devDependencies": {
-      "@babel/cli": "^7.24.6",
-      "@babel/core": "^7.24.6",
-      "@babel/register": "^7.24.6",
-      "@custom-elements-manifest/analyzer": "^0.10.2",
-      "@rollup/plugin-babel": "^6.0.4",
-      "@rollup/plugin-node-resolve": "^15.2.3",
-      "@web/rollup-plugin-html": "^2.3.0",
-      "@web/rollup-plugin-import-meta-assets": "^2.2.1",
-      "babel-plugin-transform-dynamic-import": "^2.1.0",
-      "@babel/preset-env": "7.24.6",
-      "commit-and-tag-version": "12.4.1"
-    }
+  "name": "@haxtheweb/create",
+  "version": "0.1.1",
+  "publishConfig": {
+    "access": "public"
+  },
+  "description": "Rapidly build web components for the Web that work with HAX",
+  "author": "HAXTheWeb core team",
+  "license": "Apache-2.0",
+  "engines": {
+    "node": ">=18.20.3"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/haxtheweb/create.git"
+  },
+  "bugs": {
+    "url": "https://github.com/haxtheweb/issues/issues"
+  },
+  "homepage": "https://hax.psu.edu/",
+  "scripts": {
+    "build": "rm -rf dist && babel src --out-dir dist --copy-files --include-dotfiles",
+    "start": "npm run build && node ./dist/create.js",
+    "release": "commit-and-tag-version && git push --follow-tags origin master && npm publish"
+  },
+  "bin": {
+    "create-haxtheweb": "./dist/create.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "keywords": [
+    "haxtheweb",
+    "haxcms",
+    "haxsite",
+    "htw",
+    "webcomponents",
+    "lit",
+    "generator",
+    "starter-app"
+  ],
+  "dependencies": {
+    "@clack/core": "0.3.4",
+    "@clack/prompts": "0.7.0",
+    "picocolors": "1.0.1",
+    "sync-exec": "0.6.2",
+    "ejs": "3.1.10"
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.24.6",
+    "@babel/core": "^7.24.6",
+    "@babel/register": "^7.24.6",
+    "@custom-elements-manifest/analyzer": "^0.10.2",
+    "@rollup/plugin-babel": "^6.0.4",
+    "@rollup/plugin-node-resolve": "^15.2.3",
+    "@web/rollup-plugin-html": "^2.3.0",
+    "@web/rollup-plugin-import-meta-assets": "^2.2.1",
+    "babel-plugin-transform-dynamic-import": "^2.1.0",
+    "@babel/preset-env": "7.24.6",
+    "commit-and-tag-version": "12.4.1"
   }
+}
