@@ -59,7 +59,7 @@ async function main() {
 			name: ({ results }) => {
 				return p.text({
 					message: 'Project name:',
-          placeholder: project.type === "webcomponent" ? "my-element" : "mysite",
+          placeholder: results.type === "webcomponent" ? "my-element" : "mysite",
           validate: (value) => {
             if (!value) {
               return "Name is required";
@@ -110,6 +110,10 @@ async function main() {
     project.version = "9.0.0-alpha.0";
     project.id = generateUUID();
     project.timestamp = Date.now();
+    project.hexCode = "#540054";
+    // icons
+    ["48x48","72x72","96x96","144x144","192x192","256x256","512x512"].map(size => project[`logo${size}`] = `assets/icon-${size}`);
+    console.log(project);
     let s = p.spinner();
     s.start('Copying files');
     await setTimeout(250);
@@ -120,16 +124,20 @@ async function main() {
     s.stop('Files copied');
     await setTimeout(250);
     s.start('Making files awesome');
-    try {
       for (const filePath of readAllFiles(project.path)) {
-        const ejsString = ejs.fileLoader(filePath, 'utf8');
-        let content = ejs.render(ejsString, project);
-        fs.writeFileSync(filePath, content);
+        try {
+          // ensure we don't try to pattern rewrite image files
+          if (!filePath.endsWith('.jpg') && !filePath.endsWith('.png')) {
+            const ejsString = ejs.fileLoader(filePath, 'utf8');
+            let content = ejs.render(ejsString, project);
+            // file written successfully  
+            fs.writeFileSync(filePath, content);
+          }
+        } catch (err) {
+          console.error(filePath);
+          console.error(err);
+        }
       }
-      // file written successfully
-    } catch (err) {
-      console.error(err);
-    }
     s.stop('Files are now awesome!');
     if (project.install) {
       await setTimeout(250);
@@ -167,7 +175,6 @@ function dashToCamel(str) {
 // read in all files recursively for rewriting
 function* readAllFiles(dir)  {
   const files = fs.readdirSync(dir, { withFileTypes: true });
-
   for (const file of files) {
     if (file.isDirectory()) {
       yield* readAllFiles(path.join(dir, file.name));
@@ -176,7 +183,7 @@ function* readAllFiles(dir)  {
     }
   }
 }
-
+// generate unique-enough id
 function generateUUID() {
   return "ss-s-s-s-sss".replace(/s/g, _uuidPart);
 }

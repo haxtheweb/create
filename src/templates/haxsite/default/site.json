@@ -12,20 +12,21 @@
       "name": "btopro",
       "created": <%= timestamp %>,
       "updated": <%= timestamp %>,
-      "version": "<%= version %>"
+      "version": "<%= version %>",
+      "settings": {}
     },
     "theme": {
       "element": "clean-one",
-      "path": "@lrnwebcomponents/clean-one/clean-one.js",
-      "name": "Haxor Blog theme",
-      "thumbnail": "build/es6/node_modules/@lrnwebcomponents/app-hax/lib/assets/images/PartyStyle.svg",
+      "path": "@haxtheweb/clean-one/clean-one.js",
+      "name": "Clean theme",
+      "thumbnail": "build/es6/node_modules/@haxtheweb/app-hax/lib/assets/images/PartyStyle.svg",
       "variables": {
-      "image": "files/1500x5001.jpeg",
-      "imageAlt": "",
-      "imageLink": "",
-      "hexCode": "#aeff00",
-      "cssVariable": "--simple-colors-default-theme-deep-purple-7",
-      "icon": "av:add-to-queue"
+        "image": "assets/banner.jpg",
+        "imageAlt": "",
+        "imageLink": "",
+        "hexCode": "<%= hexCode %>",
+        "cssVariable": "--simple-colors-default-theme-deep-purple-7",
+        "icon": "lightbulb-outline"
       },
       "regions": {}
     },
