@@ -2,7 +2,7 @@
 
 import * as fs from 'node:fs';
 import { loadHaxSite } from "./haxsite/v1/loader.js";
-import { readAllFiles } from './utils.js';
+import { readAllFiles, dashToCamel, generateUUID } from './utils.js';
 import { setTimeout } from 'node:timers/promises';
 import * as ejs from "ejs";
 import * as p from '@clack/prompts';
@@ -17,12 +17,11 @@ async function main() {
   let author = value.stdout.trim();
   // delay so that we clear and then let them visually react to change
 	await setTimeout(500);
-  const siteData = await loadHaxSite(`/media/bto108a/AtticStorage/git/haxtheweb/HAXcms/sites/btopro`);
-  p.intro(`${color.bgGreen(color.black(` HAXTheWeb : Site detected `))}`);
+  const siteData = await loadHaxSite();
   // CLI works within context of the site if one is detected, otherwise we can do other thingss
   if (siteData) {
+    p.intro(`${color.bgGreen(color.black(` HAXTheWeb : Site detected `))}`);
     p.intro(`${color.bgBlue(color.white(` Title: ${siteData.site.title} `))}`);
-    p.intro(`${color.bgBlue(color.white(` Operations: `))}`);
     let operation = { action: null };
     // infinite loop until quitting the cli
     while (operation.action !== 'quit') {
@@ -39,6 +38,12 @@ async function main() {
                 { value: 'quit', label: "Close CLI"},
               ],
             }),
+        },
+        {
+          onCancel: () => {
+            p.cancel('Operation cancelled.');
+            process.exit(0);
+          },
         });
       switch (operation.action) {
         case "stats":
@@ -60,6 +65,7 @@ async function main() {
   }
   else {
     // intro text
+    p.intro(`${color.bgGreen(color.black(` HAXTheWeb : CLI `))}`);
     p.intro(`${color.bgMagenta(color.white(` Let's create a bright future `))}`);
 
     const project = await p.group(
@@ -159,6 +165,24 @@ async function main() {
       s.start('Copying files');
       await setTimeout(250);
       await exec(`cp -R ${process.mainModule.path}/templates/${project.type}/${project.typeOption}/ ${project.path}`);
+      // symlinks for standard way of shipping in haxcms multisite mode
+      if (project.type === "haxsite") {
+        try {
+          // hack to hide these error messages as we symlink something that doesn't presently exist in all situations
+          let err = console.error;
+          console.error = () => {};
+          await fs.symlinkSync('../../build', `${project.path}/build`);
+          await fs.symlinkSync('../../dist', `${project.path}/dist`);
+          await fs.symlinkSync('../../node_modules', `${project.path}/node_modules`);
+          await fs.symlinkSync('../../wc-registry.json', `${project.path}/wc-registry.json`);
+          setTimeout(() => {
+            console.error = err;            
+          }, 0);
+        }
+        catch(e) {
+          // this will error, ignore it
+        }
+      }
       // rename paths that are of the element name in question
       await exec(`mv ${project.path}/src/webcomponent.js ${project.path}/src/${project.name}.js`);
       await exec(`mv ${project.path}/lib/webcomponent.haxProperties.json ${project.path}/lib/${project.name}.haxProperties.json`);

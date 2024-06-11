@@ -9,7 +9,7 @@
       "name": "<%= author %>"
     },
     "site": {
-      "name": "btopro",
+      "name": "<%= name %>",
       "created": <%= timestamp %>,
       "updated": <%= timestamp %>,
       "version": "<%= version %>",
