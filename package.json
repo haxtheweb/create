@@ -4,7 +4,7 @@
   "publishConfig": {
     "access": "public"
   },
-  "description": "Rapidly build web components for the Web that work with HAX",
+  "description": "CLI for all things HAX the web",
   "author": "HAXTheWeb core team",
   "license": "Apache-2.0",
   "engines": {
