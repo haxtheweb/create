@@ -3,6 +3,7 @@
 process.env.haxcms_middleware = "node-cli";
 
 import * as fs from 'node:fs';
+import * as path from 'node:path';
 import * as hax from "@haxtheweb/haxcms-nodejs";
 const HAXCMS = hax.HAXCMS;
 import { characters } from './art.js';
@@ -10,10 +11,10 @@ import { readAllFiles, dashToCamel } from './utils.js';
 import { setTimeout } from 'node:timers/promises';
 import * as ejs from "ejs";
 import * as p from '@clack/prompts';
-import * as sh from "sync-exec";
-const exec = sh.default;
 import color from 'picocolors';
-
+import * as child_process from "child_process";
+import * as util from "node:util";
+const exec = util.promisify(child_process.exec);
 const fakeSend = {
   send: (json) => console.log(json),
   sendStatus: (data) => console.log(data) 
@@ -24,13 +25,13 @@ function merlinSays(text) {
 }
 async function main() {
   console.clear();
-  p.intro(`${color.bgBlack(color.gray(`Never`))}`);
+  p.intro(`${color.bgBlack(color.underline(color.gray(`Never`)))}`);
   await setTimeout(300);
   p.intro(`${color.bgBlack(color.red(`     stop `))}`);
   await setTimeout(300);
   p.intro(`${color.bgBlack(color.white(`         never`))}`);
   await setTimeout(300);
-  p.intro(`${color.bgBlack(color.green(`              stopping `))}`);
+  p.intro(`${color.bgBlack(color.cyan(`              stopping `))}`);
   await setTimeout(500);
   let colors = ['blue','yellow','red','magenta']
   for (let i in characters) {
@@ -51,14 +52,20 @@ async function main() {
   p.intro(`${color.bgGreen(color.black(`     The Web : CLI    `))}
 
 
-${merlinSays('Welcome wary web wanderer')}`);
+  ${merlinSays('Welcome wary web wanderer')}`);
   // should be able to grab
-  let value = await exec(`git config user.name`);
-  let author = value.stdout.trim();
+  let author = '';
+  try {
+    let value = await exec(`git config user.name`);
+    author = value.stdout.trim();
+  }
+  catch(e) {
+    console.log(e);
+  }
   // delay so that we clear and then let them visually react to change
   const siteData = await hax.systemStructureContext();
   // delay so that we clear and then let them visually react to change
-// CLI works within context of the site if one is detected, otherwise we can do other thingss
+  // CLI works within context of the site if one is detected, otherwise we can do other thingss
   if (siteData) {
     p.intro(`${color.bgBlack(color.white(` HAXTheWeb : Site detected `))}`);
     p.intro(`${color.bgBlue(color.white(` Title: ${siteData.site.title} `))}`);
@@ -93,18 +100,33 @@ ${merlinSays('Welcome wary web wanderer')}`);
           p.intro(`${color.bgBlue(color.white(` Pages: ${siteData.site.items.length} `))}`);  
         break;
         case "localhost":
-          await exec(`cd ${siteData.path} && npx @haxtheweb/haxcms-nodejs`);
+          try {
+            await exec(`cd ${siteData.path} && npx @haxtheweb/haxcms-nodejs`);
+          }
+          catch(e) {
+
+          }
         break;
         case "node-add":
           // @todo add new page option
         break;
         case "sync-git":
           // @todo git sync might need other arguments / be combined with publishing
-          await exec(`cd ${siteData.path} && git pull && git push`);
+          try {
+            await exec(`cd ${siteData.path} && git pull && git push`);
+          }
+          catch(e) {
+            console.log(e);
+          }
         break;
         case "publish":
           // @todo support other forms of publishing
-          await exec(`cd ${siteData.path} && npm install --global surge && surge .`);
+          try {
+            await exec(`cd ${siteData.path} && npm install --global surge && surge .`);
+          }
+          catch(e) {
+            console.log(e);
+          }
         break;
         case "quit":
           p.outro(`Have a great day! Ideas to HAX faster? ${color.underline(color.cyan('https://github.com/haxtheweb/issues'))}`);
@@ -123,13 +145,13 @@ ${merlinSays('Welcome wary web wanderer')}`);
         {
           type: ({ results }) =>
           p.select({
-            message: activeProject ? `What should we build?` : `Thirsty for more? What should we create now?`,
-            initialValue: 'haxsite',
+            message: !activeProject ? `What should we build?` : `Thirsty for more? What should we create now?`,
+            initialValue: 'haxcms',
             required: true,
             options: [
-              { value: 'haxsite', label: '🏡 Create a new HAXcms site (single)'},
-              { value: 'haxsite-multisite', label: '🏘️  Create a new HAXcms multi-site'},
-              { value: 'webcomponent', label: '🏗️  Create a new Web component' },
+              { value: 'haxcms', label: '🏡 Create a HAXcms site (single)'},
+              { value: 'haxcms-multisite', label: '🏘️  Create a HAXcms multi-site'},
+              { value: 'webcomponent', label: '🏗️  Create a Web Component' },
               { value: 'quit', label: '🚪 Quit'},
             ],
           }),
@@ -151,10 +173,35 @@ ${merlinSays('Welcome wary web wanderer')}`);
                 resolve( activeProject);
               });
             },
-            name: ({ results }) => {
+            path: ({ results }) => {
+              let initialPath = `${process.cwd()}`;
               return p.text({
-                message: results.type === "webcomponent" ? "Element Name:" : "Site name:",
-                placeholder: results.type === "webcomponent" ? "my-element" : "mysite",
+                message: `What folder will your ${results.type === "webcomponent" ? "project" : "site"} live in?`,
+                placeholder: initialPath,
+                validate: (value) => {
+                  if (!value) {
+                    return "Path is required (tab writes default)";
+                  }
+                  if (!fs.existsSync(value)) {
+                    return `${value} does not exist. Select a valid folder`;
+                  }
+                }
+              });
+            },
+            name: ({ results }) => {
+              let placeholder = "mysite";
+              let message = "Site name:";
+              if (results.type === "webcomponent") {
+                placeholder = "my-element";
+                message = "Element name:";
+              }
+              else if (results.type === "haxcms-multisite") {
+                placeholder = "mysitefactory";
+                message = "Site factory name:";
+              }
+              return p.text({
+                message: message,
+                placeholder: placeholder,
                 validate: (value) => {
                   if (!value) {
                     return "Name is required (tab writes default)";
@@ -165,17 +212,8 @@ ${merlinSays('Welcome wary web wanderer')}`);
                   if (results.type === "webcomponent" && value.indexOf('-') === -1 && value.indexOf('-') !== 0 && value.indexOf('-') !== value.length-1) {
                     return "Name must include at least one `-` and must not start or end name.";
                   }
-                }
-              });
-            },
-            path: ({ results }) => {
-              let initialPath = `${process.cwd()}`;
-              return p.text({
-                message: `Where should I create the ${results.type === "webcomponent" ? "project" : "site"}?`,
-                placeholder: initialPath,
-                validate: (value) => {
-                  if (!value) {
-                    return "Path is required (tab writes default)";
+                  if (fs.existsSync(path.join(results.path, value))) {
+                    return `${path.join(results.path, value)} exists, rename this project`;
                   }
                 }
               });
@@ -193,7 +231,7 @@ ${merlinSays('Welcome wary web wanderer')}`);
                 options = [
                   { value: 'install', label: 'Install dependencies (via npm)', hint: 'recommended' },
                   { value: 'git', label: 'Put in version control (git)', hint: 'recommended' },
-                  { value: 'launch', label: 'Launch project on creation', hint: 'recommended' },
+                  { value: 'launch', label: 'Launch project on creation', hint: 'recommended (requires install)' },
                 ];
                 initialValues = ['install', 'git', 'launch']
               }
@@ -221,14 +259,12 @@ ${merlinSays('Welcome wary web wanderer')}`);
         // values not set but important for templating
         project.className = dashToCamel(project.name);
         project.version = await HAXCMS.getHAXCMSVersion();
-        console.log(project);
         let s = p.spinner();
-        await setTimeout(250);
         // we can do this if it's a multisite
         var site;
         // resolve site vs multi-site
         switch (project.type) {
-          case 'haxsite':
+          case 'haxcms':
             s.start(merlinSays(`Creating new site: ${project.name}`));
             //site = new hax.HAXCMSSite();
             //await site.newSite(project.path, '/', project.name);
@@ -250,15 +286,15 @@ ${merlinSays('Welcome wary web wanderer')}`);
               },
             };
             HAXCMS.cliWritePath = `${project.path}`;
-            hax.RoutesMap.post.createSite({body: siteRequest}, fakeSend);        
-            s.stop(merlinSays(`Site created. I must say I still got it!`));
-            await setTimeout(300);
+            await hax.RoutesMap.post.createSite({body: siteRequest}, fakeSend);        
+            s.stop(merlinSays(`${project.name} created!`));
+            await setTimeout(500);
           break;
-          case 'haxsite-multisite':
-            s.start(merlinSays(`Adding new site: ${project.name} to multi-site`));
-            site = await HAXCMS.createSite(project.name);
-            s.stop(merlinSays(`Site added to multi-site. Wow, That was fast..`));
-            await setTimeout(300);
+          case 'haxcms-multisite':
+            s.start(merlinSays(`Creating multisite: ${project.name}`));
+            await fs.mkdirSync(`${project.path}/${project.name}`);
+            s.stop(merlinSays(`${project.name} is setup to be a multi-site!`));
+            await setTimeout(500);
           break;
           case 'webcomponent':
             s.start(merlinSays('Copying project files'));
@@ -271,7 +307,7 @@ ${merlinSays('Welcome wary web wanderer')}`);
             await fs.renameSync(`${project.path}/${project.name}/src/webcomponent.js`, `${project.path}/${project.name}/src/${project.name}.js`);
             await fs.renameSync(`${project.path}/${project.name}/lib/webcomponent.haxProperties.json`, `${project.path}/${project.name}/lib/${project.name}.haxProperties.json`);
             s.stop(merlinSays('Files copied'));
-            await setTimeout(300);
+            await setTimeout(500);
             s.start(merlinSays('Making files awesome'));
             for (const filePath of readAllFiles(`${project.path}/${project.name}`)) {
               try {
@@ -290,46 +326,60 @@ ${merlinSays('Welcome wary web wanderer')}`);
             s.stop('Files are now awesome!');
           break;
         }
-      // options for install, git and other extras
-        if (project.extras.includes('install')) {
-          await setTimeout(250);
-          s.start(merlinSays(`Let's install everything using magic (npm)`));
-          await setTimeout(250);
-          await exec(`cd ${project.path}/${project.name} && npm install`);
-          await setTimeout(250);
-          s.stop(merlinSays(`Everything is installed. It's go time`));
-        }
         if (project.extras.includes('git')) {
           project.gitRepo = await p.text({
             message: 'Git Repo location:',
             placeholder: `git@github.com:${project.author}/${project.name}.git`
           });
-          await exec(`cd ${project.path}/${project.name} && git init && git add -A && git commit -m "first commit" && git branch -M main${project.gitRepo != '' ? ` && git remote add origin ${project.gitRepo}` : ''}`);
+          try {
+            await exec(`cd ${project.path}/${project.name} && git init && git add -A && git commit -m "first commit" && git branch -M main${project.gitRepo != '' ? ` && git remote add origin ${project.gitRepo}` : ''}`);    
+          }
+          catch(e) {        
+          }
+        }
+        // options for install, git and other extras
+        if (project.extras.includes('install')) {
+          s.start(merlinSays(`Let's install everything using magic (npm)`));
+          try {
+            await exec(`cd ${project.path}/${project.name} && npm install`);
+          }
+          catch(e) {
+            console.log(e);
+          }
+          s.stop(merlinSays(`Everything is installed. It's go time`));
         }
         // autolaunch if default was selected
         if (project.extras.includes('launch')) {
-          p.note(`${merlinSays(`${project.name} is launching to work on.`)}
-Merlin is in a sub-process running your ${project.type}
-To get back to Merlin press: ${color.black(color.bgRed(`CTRL + C`))}`);
-          let optionPath = project.path;
+          p.note(`${merlinSays(`I have summoned a sub-process daemon 👹`)}
+Running ${project.type}
+Launched from: ${project.path}/${project.name}
+
+To resume 🧙 Merlin press ⌨️: ${color.black(color.bgRed(`CTRL + C`))}
+`);
+          await setTimeout(2000);
+          let optionPath = `${project.path}/${project.name}`;
           if (project.type === "webcomponent") {
-            await exec(`cd ${optionPath} && npm start`);
+            try {
+              await exec(`cd ${optionPath} && npm start`);              
+            }
+            catch(e) {
+            }
           }
           else {
-            // resolve multi-site from single site pathing
-            if (project.type === "haxsite") {
-              optionPath += `/${project.name}`;
+            try {
+             await exec(`cd ${optionPath} && npx @haxtheweb/haxcms-nodejs`);
             }
-            await exec(`cd ${optionPath} && npx @haxtheweb/haxcms-nodejs`);
+              catch(e) {
+            }
           }
         }
         else {
           let nextSteps = `cd ${project.path}/${project.name} && `;
           switch (project.type) {
-            case 'haxsite':
+            case 'haxcms':
               nextSteps += `npx @haxtheweb/haxcms-nodejs`;
             break;
-            case 'haxsite-multisite':
+            case 'haxcms-multisite':
               nextSteps = `cd ${project.path} && npx @haxtheweb/haxcms-nodejs\n`;
             break;
             case 'webcomponent':
@@ -341,10 +391,16 @@ To get back to Merlin press: ${color.black(color.bgRed(`CTRL + C`))}`);
         }
       }
     }
-    p.outro(`🔮 Ideas to HAX better, faster, stronger: ${color.underline(color.cyan('https://github.com/haxtheweb/issues'))}`);
-    p.outro(`👔 Share on LinkedIn: ${color.underline(color.cyan('https://bit.ly/hax-linkedin'))}`);
-    p.outro(`🧵 Share on X: ${color.underline(color.cyan('https://bit.ly/hax-x'))}`);
-    p.outro(`💬 Join our Community: ${color.underline(color.cyan('https://bit.ly/hax-discord'))}`);
+    p.outro(`
+🔮  Ideas to HAX better, faster, stronger: ${color.underline(color.cyan('https://github.com/haxtheweb/issues'))}
+
+👔  Share on LinkedIn: ${color.underline(color.cyan('https://bit.ly/hax-linkedin'))}
+
+🧵  Share on X: ${color.underline(color.cyan('https://bit.ly/hax-x'))}
+
+💬  Join our Community: ${color.underline(color.cyan('https://bit.ly/hax-discord'))}
+
+`);
   }
 }
 
