@@ -21,7 +21,7 @@
   "scripts": {
     "build": "rm -rf dist && babel src --out-dir dist --copy-files --include-dotfiles && chmod 774 dist/create.js",
     "start": "npm run build && node ./dist/create.js && chmod 774 dist/create.js",
-    "release": "commit-and-tag-version && git push --follow-tags origin main && npm publish"
+    "release": "npm run build && commit-and-tag-version && git push --follow-tags origin main && npm publish"
   },
   "bin": {
     "create-haxtheweb": "./dist/create.js"
@@ -44,7 +44,7 @@
     "@clack/prompts": "0.7.0",
     "picocolors": "1.0.1",
     "ejs": "3.1.10",
-    "@haxtheweb/haxcms-nodejs": "^0.0.12"
+    "@haxtheweb/haxcms-nodejs": "0.0.13"
   },
   "devDependencies": {
     "@babel/cli": "^7.24.6",
