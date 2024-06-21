@@ -48,4 +48,4 @@ export class <%= className %> extends DDDSuper(LitElement) {
   }
 }
 
-globalThis.customElements.define(<%= className %>.tag,  className %>);
+globalThis.customElements.define(<%= className %>.tag,  <%= className %>);
