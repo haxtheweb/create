@@ -46,7 +46,7 @@
     "@clack/prompts": "0.7.0",
     "picocolors": "1.0.1",
     "ejs": "3.1.10",
-    "@haxtheweb/haxcms-nodejs": "^0.0.14"
+    "@haxtheweb/haxcms-nodejs": "^0.0.15"
   },
   "devDependencies": {
     "@babel/cli": "^7.24.6",
