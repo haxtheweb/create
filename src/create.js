@@ -394,9 +394,9 @@ To resume 🧙 Merlin press ⌨️: ${color.black(color.bgRed(`CTRL + C`))}
     p.outro(`
 🔮  Ideas to HAX better, faster, stronger: ${color.underline(color.cyan('https://github.com/haxtheweb/issues'))}
 
-👔  Share on LinkedIn: ${color.underline(color.cyan('https://bit.ly/hax-linkedin'))}
+👔  Share on LinkedIn: ${color.underline(color.cyan('https://bit.ly/hax-the-linkedin'))}
 
-🧵  Share on X: ${color.underline(color.cyan('https://bit.ly/hax-x'))}
+🧵  Share on X: ${color.underline(color.cyan('https://bit.ly/hax-the-x'))}
 
 💬  Join our Community: ${color.underline(color.cyan('https://bit.ly/hax-discord'))}
 
@@ -405,3 +405,4 @@ To resume 🧙 Merlin press ⌨️: ${color.black(color.bgRed(`CTRL + C`))}
 }
 
 main().catch(console.error);
+
