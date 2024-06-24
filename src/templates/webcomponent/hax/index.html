@@ -49,7 +49,7 @@
   <!-- Take HAX, the Web and you further down the rabbit hole -->
   <style>
     #follow-the-white-rabbit {
-      margin: var(--ddd-spacing-4) auto;
+      margin: var(--ddd-spacing-4) auto 64px  16px;
       background-color: var(--ddd-accent-4);
     }
     #follow-the-white-rabbit[open] summary {
@@ -83,6 +83,11 @@
   <details id="follow-the-white-rabbit" open>
     <summary>How to Develop</summary>
     <div class="content">
+      <p>
+      <%if (githubLink) { %>
+        <strong>Checkout project on github:</strong> <a href="<%= githubLink %>" target="_blank" rel="nofollow"><%= author %>/<%= name %></a>
+        <% } %>
+      </p>
       <p>
         You can edit the current page by modifying <code>index.html</code><br />
         To edit your <strong><%= name %></strong> tag, modify <code>src/<%= name %>.js</code>.

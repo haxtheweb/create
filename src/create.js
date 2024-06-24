@@ -208,6 +208,9 @@ async function main() {
                   if (!value) {
                     return "Name is required (tab writes default)";
                   }
+                  if (/^\d/.test(value)) {
+                    return "Name cannot start with a number";
+                  }
                   if (value.indexOf(' ') !== -1) {
                     return "No spaces allowed in project name";
                   }
@@ -301,6 +304,24 @@ async function main() {
             await setTimeout(500);
           break;
           case 'webcomponent':
+            // option to build github repo link for the user
+            if (project.extras.includes('git')) {
+              project.gitRepo = await p.text({
+                message: 'Git Repo location:',
+                placeholder: `git@github.com:${project.author}/${project.name}.git`
+              });
+              // if they supplied one and it has github in it, build a link automatically for ejs index
+              if (project.gitRepo && project.gitRepo.includes('github.com')) {
+                project.githubLink = project.gitRepo.replace('git@github.com:', 'https://github.com/').replace('.git', '');
+              }
+              else {
+                project.githubLink = null;
+              }
+            }
+            else {
+              project.githubLink = null;
+            }
+            
             s.start(merlinSays('Copying project files'));
             // leverage this little helper from HAXcms
             await HAXCMS.recurseCopy(
@@ -330,11 +351,7 @@ async function main() {
             s.stop('Files are now awesome!');
           break;
         }
-        if (project.extras.includes('git')) {
-          project.gitRepo = await p.text({
-            message: 'Git Repo location:',
-            placeholder: `git@github.com:${project.author}/${project.name}.git`
-          });
+        if (project.gitRepo) {
           try {
             await exec(`cd ${project.path}/${project.name} && git init && git add -A && git commit -m "first commit" && git branch -M main${project.gitRepo ? ` && git remote add origin ${project.gitRepo}` : ''}`);    
           }
@@ -362,11 +379,12 @@ async function main() {
           }
           p.note(`${merlinSays(`I have summoned a sub-process daemon 👹`)}
 
-🚀  Running ${color.bold(project.type)}
+🚀  Running your ${color.bold(project.type)} ${color.bold(project.name)}:
+      ${color.underline(color.cyan('http://localhost:8000'))}
 
-🏠  Launched from: ${color.bold(color.yellow(color.bgBlack(`${optionPath}`)))}
+🏠  Launched from: ${color.underline(color.bold(color.yellow(color.bgBlack(`${optionPath}`))))}
 💻  Navigate to folder: ${color.bold(color.yellow(color.bgBlack(`cd ${optionPath}`)))}
-🚧  Launch later: ${color.bold(color.yellow(color.bgBlack(`${command}`)))}
+🚧  Launch later with command: ${color.bold(color.yellow(color.bgBlack(`${command}`)))}
 📂  Open folder: ${color.bold(color.yellow(color.bgBlack(`open ${optionPath}`)))}
 📘  VS Code Project: ${color.bold(color.yellow(color.bgBlack(`code ${optionPath}`)))}
 

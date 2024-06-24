@@ -2,7 +2,7 @@ import { LitElement, html, css } from "lit";
 import { DDDSuper } from "@haxtheweb/d-d-d/d-d-d.js";
 
 export class <%= className %> extends DDDSuper(LitElement) {
-  
+
   static get tag() {
     return "<%= name %>";
   }
@@ -38,7 +38,6 @@ export class <%= className %> extends DDDSuper(LitElement) {
       }
     `];
   }
-  
 
   render() {
     return html`
@@ -57,4 +56,4 @@ export class <%= className %> extends DDDSuper(LitElement) {
   }
 }
 
-globalThis.customElements.define(<%= className %>.tag,  <%= className %>);
+globalThis.customElements.define(<%= className %>.tag, <%= className %>);

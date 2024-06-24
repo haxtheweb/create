@@ -6,7 +6,7 @@ export const SITE_FILE_NAME = "site.json";
  * Helper to convert dash to camel; important when reading attributes.
  */
 export function dashToCamel(str) {
-  return str.replace(/-([a-z])/g, function (g) {
+  return str.replace(/-([a-z0-9])/g, function (g) {
     return g[1].toUpperCase();
   });
 }
