@@ -1,16 +1,26 @@
 # <%= name %>
-HAX The Web Boilerplate based on OpenWC intended to quick start contribution via Vercel and web components ecosystems.
+DDD + Lit web component based on OpenWC toolchain. This is intended to provide the following:
+- Look good via DDD, HAX design system
+- Simple, easy to read code via Lit
+- Great workflow via OpenWC tooling + Vercel for sharing demos
+- Simplify contribution to the HAX ecosystem
+- Publish and distribute via npmjs.com
 
-## Install
-- `yarn install` - installs dependencies to get workin
+## Install dependencies
+- `npm install` - installs dependencies so you can work
 
-## Scripts
-- `yarn start` runs your web component for development, reloading on file changes
-- `yarn run build` builds your web component and outputs it in your `dist` directory for placement on web servers in a compiled form
+## Commands
+- `npm start` - runs your web component for development, reloading on file changes
+- `npm run build` - builds your web component and outputs it in your `dist` directory for placement on web servers in a compiled form. Vercel automatically does this on commit to github.
+- `npm run release` - this will build your code, update the version, and publish it to npm for others to use
 
 ## Working with your web component
-- edit files in the `/src/` directory
+- edit `/src/<%= name %>.js`
+- edit your 'demo' by modifying `./index.html`
+- add dependencies using `npm install --save @whatever/repo` or editing `./package.json` directly
 - if you must reference additional non-JS files, ensure you use the `new URL('./my-file.jpg', import.meta.url).href` syntax so that it builds correctly
+- if you add additional `.js` files / web components then place them under `/src/`
+- to improve HAX wiring edit file in `/lib/<%= name %>.haxProperties.json`
 
 ## Recommended setup
 - Load VS code in 1 window to project root
@@ -18,20 +28,21 @@ HAX The Web Boilerplate based on OpenWC intended to quick start contribution via
 - Right click -> Inspect and open the Console to see error output
 
 ## Recommended Integrated Development Environment (IDE)
-- VSCode https://code.visualstudio.com/Download
+- [VSCode](https://code.visualstudio.com/Download)
 
 ### Plugins
 
 Name: lit-html
-Id: bierner.lit-html
 Description: Syntax highlighting and IntelliSense for html inside of JavaScript and TypeScript tagged template strings
-Version: 1.11.1
 Publisher: Matt Bierner
 VS Marketplace Link: https://marketplace.visualstudio.com/items?itemName=bierner.lit-html
 
 Name: lit-plugin
-Id: runem.lit-plugin
 Description: Syntax highlighting, type checking and code completion for lit-html
-Version: 1.4.3
 Publisher: Rune Mehlsen
 VS Marketplace Link: https://marketplace.visualstudio.com/items?itemName=runem.lit-plugin
+
+# Credits
+A brighter future dreamed and developed by the Penn State [HAXTheWeb](https://hax.psu.edu/) initative.
+
+Never. Stop. innovating.

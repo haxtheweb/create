@@ -2,7 +2,7 @@ import { LitElement, html, css } from "lit";
 import { DDDSuper } from "@haxtheweb/d-d-d/d-d-d.js";
 
 export class <%= className %> extends DDDSuper(LitElement) {
-
+  
   static get tag() {
     return "<%= name %>";
   }
@@ -23,9 +23,18 @@ export class <%= className %> extends DDDSuper(LitElement) {
     css`
       :host {
         display: block;
+        color: var(--ddd-theme-primary);
+        background-color: var(--ddd-theme-accent);
+        font-family: var(--ddd-font-navigation);
+        font-size: var(--<%= name %>-font-size, var(--ddd-font-size-s));
       }
-      p {
-        font-size: var(--<%= name %>-font-size);
+      .wrapper {
+        margin: var(--ddd-spacing-2);
+        padding: var(--ddd-spacing-4);
+      }
+      div {
+        padding: 0;
+        margin: 0;
       }
     `];
   }
@@ -33,10 +42,10 @@ export class <%= className %> extends DDDSuper(LitElement) {
 
   render() {
     return html`
-      <div class="wrapper">
-        <p>${this.title}</p>
-        <slot></slot>
-      </div>`;
+<div class="wrapper">
+  <div>${this.title}</div>
+  <slot></slot>
+</div>`;
   }
 
   /**

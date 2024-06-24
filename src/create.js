@@ -90,6 +90,7 @@ async function main() {
         {
           onCancel: () => {
             p.cancel('🧙 Merlin: Canceling CLI.. HAX ya later 🪄');
+            communityStatement();
             process.exit(0);
           },
         });
@@ -129,7 +130,7 @@ async function main() {
           }
         break;
         case "quit":
-          p.outro(`Have a great day! Ideas to HAX faster? ${color.underline(color.cyan('https://github.com/haxtheweb/issues'))}`);
+          // quit
         break;
       }
     }
@@ -139,7 +140,7 @@ async function main() {
     let project = { type: null };
     while (project.type !== 'quit') {
       if (activeProject) {
-        p.note(` 🧙🪄 BE GONE ${activeProject} sub-process daemon! 🪄 + ✨ 👹 = 💀 `);
+        p.note(` 🧙🪄 BE GONE ${color.bold(color.black(color.bgGreen(activeProject)))} sub-process daemon! 🪄 + ✨ 👹 = 💀 `);
       }
       project = await p.group(
         {
@@ -159,6 +160,7 @@ async function main() {
         {
           onCancel: () => {
             p.cancel('🧙🪄 Merlin: Leaving so soon? HAX ya later');
+            communityStatement();
             process.exit(0);
           },
         }
@@ -229,11 +231,11 @@ async function main() {
               let initialValues = [];
               if (results.type === "webcomponent") {
                 options = [
-                  { value: 'install', label: 'Install dependencies (via npm)', hint: 'recommended' },
-                  { value: 'git', label: 'Put in version control (git)', hint: 'recommended' },
-                  { value: 'launch', label: 'Launch project on creation', hint: 'recommended (requires install)' },
+                  { value: 'launch', label: 'Launch project', hint: 'recommended, requires install' },
+                  { value: 'install', label: 'Install dependencies via npm', hint: 'recommended' },
+                  { value: 'git', label: 'Apply version control via git', hint: 'recommended' },
                 ];
-                initialValues = ['install', 'git', 'launch']
+                initialValues = ['launch', 'install', 'git']
               }
               else {
                 options = [
@@ -242,7 +244,7 @@ async function main() {
                 initialValues = ['launch']
               }
               return p.multiselect({
-                message: 'Additional setup options',
+                message: 'Additional setup',
                 initialValues: initialValues,
                 options: options,
                 required: false,
@@ -252,12 +254,14 @@ async function main() {
           {
             onCancel: () => {
               p.cancel('🧙🪄 Merlin: Canceling CLI.. HAX ya later');
+              communityStatement();
               process.exit(0);
             },
           }
         );
-        // values not set but important for templating
+        // values not set by user but used in templating
         project.className = dashToCamel(project.name);
+        project.year = new Date().getFullYear();
         project.version = await HAXCMS.getHAXCMSVersion();
         let s = p.spinner();
         // we can do this if it's a multisite
@@ -332,14 +336,15 @@ async function main() {
             placeholder: `git@github.com:${project.author}/${project.name}.git`
           });
           try {
-            await exec(`cd ${project.path}/${project.name} && git init && git add -A && git commit -m "first commit" && git branch -M main${project.gitRepo != '' ? ` && git remote add origin ${project.gitRepo}` : ''}`);    
+            await exec(`cd ${project.path}/${project.name} && git init && git add -A && git commit -m "first commit" && git branch -M main${project.gitRepo ? ` && git remote add origin ${project.gitRepo}` : ''}`);    
           }
           catch(e) {        
           }
         }
         // options for install, git and other extras
-        if (project.extras.includes('install')) {
-          s.start(merlinSays(`Let's install everything using magic (npm)`));
+        // can't launch if we didn't install first so launch implies installation
+        if (project.extras.includes('launch') || project.extras.includes('install')) {
+          s.start(merlinSays(`Installation magic (npm install)`));
           try {
             await exec(`cd ${project.path}/${project.name} && npm install`);
           }
@@ -350,27 +355,30 @@ async function main() {
         }
         // autolaunch if default was selected
         if (project.extras.includes('launch')) {
-          p.note(`${merlinSays(`I have summoned a sub-process daemon 👹`)}
-Running ${project.type}
-Launched from: ${project.path}/${project.name}
-
-To resume 🧙 Merlin press ⌨️: ${color.black(color.bgRed(`CTRL + C`))}
-`);
-          await setTimeout(2000);
           let optionPath = `${project.path}/${project.name}`;
+          let command = `npx @haxtheweb/haxcms-nodejs`;
           if (project.type === "webcomponent") {
-            try {
-              await exec(`cd ${optionPath} && npm start`);              
-            }
-            catch(e) {
-            }
+            command = `npm start`;
           }
-          else {
-            try {
-             await exec(`cd ${optionPath} && npx @haxtheweb/haxcms-nodejs`);
-            }
-              catch(e) {
-            }
+          p.note(`${merlinSays(`I have summoned a sub-process daemon 👹`)}
+
+🚀  Running ${color.bold(project.type)}
+
+🏠  Launched from: ${color.bold(color.yellow(color.bgBlack(`${optionPath}`)))}
+💻  Navigate to folder: ${color.bold(color.yellow(color.bgBlack(`cd ${optionPath}`)))}
+🚧  Launch later: ${color.bold(color.yellow(color.bgBlack(`${command}`)))}
+📂  Open folder: ${color.bold(color.yellow(color.bgBlack(`open ${optionPath}`)))}
+📘  VS Code Project: ${color.bold(color.yellow(color.bgBlack(`code ${optionPath}`)))}
+
+⌨️  To resume 🧙 Merlin press: ${color.bold(color.black(color.bgRed(` CTRL + C `)))}
+`);
+          // at least a second to see the message print at all
+          await setTimeout(1000);
+          try {
+            await exec(`cd ${optionPath} && ${command}`);
+          }
+          catch(e) {
+            // don't log bc output is weird
           }
         }
         else {
@@ -391,18 +399,25 @@ To resume 🧙 Merlin press ⌨️: ${color.black(color.bgRed(`CTRL + C`))}
         }
       }
     }
-    p.outro(`
-🔮  Ideas to HAX better, faster, stronger: ${color.underline(color.cyan('https://github.com/haxtheweb/issues'))}
-
-👔  Share on LinkedIn: ${color.underline(color.cyan('https://bit.ly/hax-the-linkedin'))}
-
-🧵  Share on X: ${color.underline(color.cyan('https://bit.ly/hax-the-x'))}
-
-💬  Join our Community: ${color.underline(color.cyan('https://bit.ly/hax-discord'))}
-
-`);
   }
+  communityStatement();
 }
 
 main().catch(console.error);
 
+// standard community statement so we can leverage on cancel executions
+function communityStatement() {
+  p.outro(`
+    🧙  HAX @ Penn State: ${color.underline(color.cyan('https://hax.psu.edu'))}
+    
+    🔮  Ideas to HAX Harder, Better, Faster, Stronger: ${color.underline(color.white('https://github.com/haxtheweb/issues/issues'))}
+    
+    👔  Share on LinkedIn: ${color.underline(color.cyan('https://bit.ly/hax-the-linkedin'))}
+    
+    🧵  Tweet on X: ${color.underline(color.white('https://bit.ly/hax-the-x'))}
+    
+    💬  Join Community: ${color.underline(color.cyan('https://bit.ly/hax-discord'))}
+    
+    💡  ${color.bold(color.white(`Never. Stop. Innovating.`))}
+  `);
+}

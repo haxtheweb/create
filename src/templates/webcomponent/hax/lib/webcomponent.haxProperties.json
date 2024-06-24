@@ -1,42 +1,51 @@
 {
+    "api": "1",
     "canScale": true,
     "canEditSource": true,
+    "type": "element",
+    "designSystem": {
+        "accent": true,
+        "primary": true,
+        "card": true,
+        "text": true,
+        "designTreatment": false
+    },
     "gizmo": {
-      "title": "<%= name %>",
-      "description": "",
-      "icon": "book",
-      "color": "green",
-      "tags": [
-        "Other"
-      ],
-      "handles": [],
-      "meta": {
-        "author": "<%= author %>"
-      }
+        "title": "<%= name %>",
+        "description": "",
+        "icon": "icons:android",
+        "color": "purple",
+        "tags": [
+            "Other"
+        ],
+        "handles": [],
+        "meta": {
+            "author": "<%= author %>"
+        }
     },
     "settings": {
-      "configure": [
-        {
-          "property": "title",
-          "title": "Title",
-          "description": "Title of <%= name %>",
-          "inputMethod": "textfield",
-          "icon": "editor:title",
-          "required": true
-        }
-      ]
+        "configure": [
+            {
+                "property": "title",
+                "title": "Title",
+                "description": "",
+                "inputMethod": "textfield",
+                "icon": "editor:title",
+                "required": true
+            }
+        ]
     },
     "saveOptions": {
-      "wipeSlot": false,
-      "unsetAttributes": []
+        "wipeSlot": false,
+        "unsetAttributes": []
     },
     "demoSchema": [
-      {
-        "tag": "<%= name %>",
-        "properties": {
-        },
-        "content": ""
-      }
+        {
+            "tag": "<%= name %>",
+            "properties": {
+              "title": "Sample property title"
+            },
+            "content": ""
+        }
     ]
-  }
-  
+}
