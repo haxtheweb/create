@@ -14,10 +14,10 @@
       background-color: var(--ddd-accent-1);
     }
     #demo {
-      margin: var(--ddd-spacing-4);
+      margin: var(--ddd-spacing-2);
     }
     <%= name %> {
-      margin: var(--ddd-spacing-4);
+      margin: var(--ddd-spacing-2);
       border: var(--ddd-border-md);
       border-radius: var(--ddd-radius-lg);
     }
@@ -26,8 +26,8 @@
     }
     #example {
       --<%= name %>-font-size: var(--ddd-font-size-l);
-      background-color: var(--ddd-accent-5);
-      color: var(--ddd-primary-15);
+      background-color: var(--ddd-accent-2);
+      color: var(--ddd-primary-17);
     }
   </style>
   <title><%= name %></title>
@@ -40,7 +40,7 @@
     <h2>Default</h2>
     <<%= name %>></<%= name %>>
     <h2>Slot usage</h2>
-    <<%= name %>><div>Sample slot content</div></<%= name %>>
+    <<%= name %> data-accent="2" data-primary="17"><div>Sample slot content</div></<%= name %>>
     <h2>Property usage</h2>
     <<%= name %> id="example" title="Sample property title"></<%= name %>>
   </div>
