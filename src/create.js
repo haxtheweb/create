@@ -62,6 +62,7 @@ async function main() {
   catch(e) {
     console.log(e);
   }
+  var port = "3000";
   // delay so that we clear and then let them visually react to change
   const siteData = await hax.systemStructureContext();
   // delay so that we clear and then let them visually react to change
@@ -304,6 +305,7 @@ async function main() {
             await setTimeout(500);
           break;
           case 'webcomponent':
+            port = "8000";
             // option to build github repo link for the user
             if (project.extras.includes('git')) {
               project.gitRepo = await p.text({
@@ -380,13 +382,13 @@ async function main() {
           p.note(`${merlinSays(`I have summoned a sub-process daemon 👹`)}
 
 🚀  Running your ${color.bold(project.type)} ${color.bold(project.name)}:
-      ${color.underline(color.cyan('http://localhost:8000'))}
+      ${color.underline(color.cyan(`http://localhost:${port}`))}
 
-🏠  Launched from: ${color.underline(color.bold(color.yellow(color.bgBlack(`${optionPath}`))))}
-💻  Navigate to folder: ${color.bold(color.yellow(color.bgBlack(`cd ${optionPath}`)))}
-🚧  Launch later with command: ${color.bold(color.yellow(color.bgBlack(`${command}`)))}
+🏠  Launched: ${color.underline(color.bold(color.yellow(color.bgBlack(`${optionPath}`))))}
+💻  Folder: ${color.bold(color.yellow(color.bgBlack(`cd ${optionPath}`)))}
 📂  Open folder: ${color.bold(color.yellow(color.bgBlack(`open ${optionPath}`)))}
 📘  VS Code Project: ${color.bold(color.yellow(color.bgBlack(`code ${optionPath}`)))}
+🚧  Launch later: ${color.bold(color.yellow(color.bgBlack(`${command}`)))}
 
 ⌨️  To resume 🧙 Merlin press: ${color.bold(color.black(color.bgRed(` CTRL + C `)))}
 `);
