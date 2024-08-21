@@ -31,15 +31,10 @@
     "dist"
   ],
   "keywords": [
-    "haxtheweb",
-    "haxcms",
-    "haxsite",
-    "htw",
     "webcomponents",
+    "html",
     "lit",
-    "cms",
-    "generator",
-    "starter-app"
+    "haxtheweb"
   ],
   "dependencies": {
     "@clack/core": "0.3.4",
