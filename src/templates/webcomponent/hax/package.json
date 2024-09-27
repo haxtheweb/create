@@ -1,24 +1,33 @@
 {
-    "name": "<%= name %>",
+    "name": "<%= org %><%= name %>",
+    "version": "0.0.0",
     "description": "Webcomponent <%= name %> following hax / open-wc recommendations",
     "license": "Apache-2.0",
-    "author": "<%= author %>",
-    "version": "0.0.0",
-    "type": "module",
-    "scripts": {
-      "start": "web-dev-server",
-      "build": "rimraf public && rollup -c rollup.config.js && npm run analyze",
-      "analyze": "cem analyze --litelement --exclude public",
-      "release": "npm run build && commit-and-tag-version && git push --follow-tags origin main && npm publish"
+    "author": {
+      "name": "<%= author %>"
     },
     "keywords": [
       "webcomponents",
       "lit",
       "haxtheweb"
     ],
+    "repository": {
+      "type": "git",
+      "url": "<%= githubLink =>"
+    },
+    "type": "module",
+    "main": "<%= name %>.js",
+    "module": "<%= name %>.js",
+    "scripts": {
+      "start": "web-dev-server",
+      "build": "rimraf public && rollup -c rollup.config.js && npm run analyze",
+      "analyze": "cem analyze --litelement --exclude public",
+      "release": "npm run build && commit-and-tag-version && git push --follow-tags origin main && npm publish"
+    },
     "dependencies": {
       "lit": "^3.2.0",
-      "@haxtheweb/d-d-d": "^<%= version %>"
+      "@haxtheweb/d-d-d": "^<%= version %>",
+      "@haxtheweb/i18n-manager": "^<%= version %>"
     },
     "devDependencies": {
       "@babel/preset-env": "^7.16.4",
@@ -35,6 +44,10 @@
       "rollup-plugin-esbuild": "^6.1.1",
       "rimraf": "^5.0.7",
       "commit-and-tag-version": "^12.4.1"
+    },
+    "private": false,
+    "publishConfig": {
+      "access": "public"
     },
     "customElements": "custom-elements.json"
   }

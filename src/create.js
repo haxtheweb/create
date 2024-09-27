@@ -60,7 +60,9 @@ async function main() {
     author = value.stdout.trim();
   }
   catch(e) {
-    console.log(e);
+    console.log('git user name not configured. Run the following to do this:');
+    console.log('git config --global user.name "namehere"');
+    console.log('git config --global user.email "email@here');
   }
   var port = "3000";
   // delay so that we clear and then let them visually react to change
@@ -224,6 +226,24 @@ async function main() {
                 }
               });
             },
+            org: ({ results }) => {
+              if (results.type === "webcomponent") {
+                // @todo detect mono repo and automatically add this
+                let initialOrg = '@haxtheweb';
+                return p.text({
+                  message: 'Organization:',
+                  placeholder: initialOrg,
+                  validate: (value) => {
+                    if (value && !value.startsWith('@')) {
+                      return "Organizations are not required, but organizations must start with @ if used";
+                    }
+                  }
+                });  
+              }
+              else {
+                return '';
+              }
+            },
             author: ({ results }) => {
               return p.text({
                 message: 'Author:',
@@ -322,6 +342,10 @@ async function main() {
             }
             else {
               project.githubLink = null;
+            }
+            // if we have an org, add a / at the end so file name is written correctly
+            if (project.org != '') {
+              project.org += '/';
             }
             
             s.start(merlinSays('Copying project files'));
