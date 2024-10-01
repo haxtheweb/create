@@ -355,8 +355,19 @@ async function main() {
               `${project.path}/${project.name}`
             );
             // rename paths that are of the element name in question
-            await fs.renameSync(`${project.path}/${project.name}/src/webcomponent.js`, `${project.path}/${project.name}/src/${project.name}.js`);
             await fs.renameSync(`${project.path}/${project.name}/lib/webcomponent.haxProperties.json`, `${project.path}/${project.name}/lib/${project.name}.haxProperties.json`);
+            // loop through and rename all the localization files
+            fs.readdir(`${project.path}/${project.name}/locales/`, function (err, files) {
+              if (err) {
+                console.error("Could not list the directory.", err);
+                process.exit(1);
+              }
+              files.forEach(async function (file, index) {
+                await fs.renameSync(`${project.path}/${project.name}/locales/${file}`, `${project.path}/${project.name}/locales/${file.replace('webcomponent', project.name)}`);
+              });
+            });
+            await fs.renameSync(`${project.path}/${project.name}/src/webcomponent.js`, `${project.path}/${project.name}/src/${project.name}.js`);
+            await fs.renameSync(`${project.path}/${project.name}/test/webcomponent.test.js`, `${project.path}/${project.name}/test/${project.name}.test.js`);
             s.stop(merlinSays('Files copied'));
             await setTimeout(500);
             s.start(merlinSays('Making files awesome'));

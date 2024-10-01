@@ -1,4 +1,4 @@
-import { fixture, expect, html } from "@open-wc/testing";
+import { html, fixture, expect } from '@open-wc/testing';
 import "../<%= name %>.js";
 
 describe("<%= className %> test", () => {
