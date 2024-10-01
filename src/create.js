@@ -366,7 +366,7 @@ async function main() {
                 await fs.renameSync(`${project.path}/${project.name}/locales/${file}`, `${project.path}/${project.name}/locales/${file.replace('webcomponent', project.name)}`);
               });
             });
-            await fs.renameSync(`${project.path}/${project.name}/src/webcomponent.js`, `${project.path}/${project.name}/src/${project.name}.js`);
+            await fs.renameSync(`${project.path}/${project.name}/webcomponent.js`, `${project.path}/${project.name}/${project.name}.js`);
             await fs.renameSync(`${project.path}/${project.name}/test/webcomponent.test.js`, `${project.path}/${project.name}/test/${project.name}.test.js`);
             s.stop(merlinSays('Files copied'));
             await setTimeout(500);
