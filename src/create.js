@@ -19,7 +19,7 @@ const fakeSend = {
   send: (json) => console.log(json),
   sendStatus: (data) => console.log(data) 
 }
-var hasGit = false;
+var hasGit = true;
 exec('git --version', error => {
   if (error) {
     hasGit = false;
