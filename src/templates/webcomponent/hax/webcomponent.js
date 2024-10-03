@@ -1,5 +1,5 @@
 /**
- * Copyright <%= year => <%= author =>
+ * Copyright <%= year %> <%= author %>
  * @license Apache-2.0, see LICENSE for full text.
  */
 import { LitElement, html, css } from "lit";
@@ -8,7 +8,6 @@ import { I18NMixin } from "@haxtheweb/i18n-manager/lib/I18NMixin.js";
 
 /**
  * `<%= name %>`
- * 
  * 
  * @demo index.html
  * @element <%= name %>

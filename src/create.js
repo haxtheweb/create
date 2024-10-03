@@ -19,6 +19,19 @@ const fakeSend = {
   send: (json) => console.log(json),
   sendStatus: (data) => console.log(data) 
 }
+var hasGit = false;
+exec('git --version', error => {
+  if (error) {
+    hasGit = false;
+  }
+});
+var hasSurge = true;
+exec('surge --version', error => {
+  if (error) {
+    hasSurge = false;
+  }
+});
+
 // standardize merlin statements visually
 function merlinSays(text) {
   return `${color.yellow(color.bgBlack(` 🧙 Merlin: `))} ${color.bgBlack(color.green(` ${text} `))}`;
@@ -260,6 +273,10 @@ async function main() {
                   { value: 'git', label: 'Apply version control via git', hint: 'recommended' },
                 ];
                 initialValues = ['launch', 'install', 'git']
+                if (!hasGit) {
+                  options.pop();
+                  initialValues.pop();
+                }
               }
               else {
                 options = [

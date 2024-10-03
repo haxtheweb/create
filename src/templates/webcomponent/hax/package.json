@@ -13,7 +13,7 @@
     ],
     "repository": {
       "type": "git",
-      "url": "<%= githubLink =>"
+      "url": "<%= githubLink %>"
     },
     "type": "module",
     "main": "<%= name %>.js",

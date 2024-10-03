@@ -15,6 +15,9 @@ npx @haxtheweb/create
 npm init @haxtheweb
 ```
 
+## Windows problems?
+Try setting a different cache path to load from `npm config set cache C:\tmp\nodejs\npm-cache --global`
+
 Follow the prompts and let's HAX the Web together!
 
 ## Web component
