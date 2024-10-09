@@ -80,27 +80,38 @@ async function main() {
   var port = "3000";
   // delay so that we clear and then let them visually react to change
   const siteData = await hax.systemStructureContext();
+  let packageData = {};
+  if (`${process.cwd()}/package.json`) {
+    try {
+      packageData = JSON.parse(fs.readFileSync(`${process.cwd()}/package.json`));
+    } catch (err) {
+      console.error(err)
+    }
+  }
   // delay so that we clear and then let them visually react to change
   // CLI works within context of the site if one is detected, otherwise we can do other thingss
   if (siteData) {
     p.intro(`${color.bgBlack(color.white(` HAXTheWeb : Site detected `))}`);
-    p.intro(`${color.bgBlue(color.white(` Title: ${siteData.site.title} `))}`);
+    p.intro(`${color.bgBlue(color.white(` Name: ${siteData.name} `))}`);
     let operation = { action: null };
     // infinite loop until quitting the cli
     while (operation.action !== 'quit') {
+      let actions = [
+        { value: 'stats', label: "Site stats" },
+        { value: 'localhost', label: "Open Site (localhost)"},
+        { value: 'sync-git', label: "Sync code in git"},
+        //{ value: 'node-add', label: "New Page"},
+      ];
+      if (hasSurge) {
+        actions.push({ value: 'publish-surge', label: "Publish site using Surge.sh"});              
+      }
+      actions.push({ value: 'quit', label: "🚪 Quit"});
       operation = await p.group(
         {
           action: ({ results }) =>
             p.select({
               message: `Actions you can take`,
-              options: [
-                { value: 'stats', label: "Site stats" },
-                { value: 'localhost', label: "Open Site (localhost)"},
-                { value: 'node-add', label: "New Page"},
-                { value: 'sync-git', label: "Sync code in git"},
-                { value: 'publish', label: "Publish site to the web"},
-                { value: 'quit', label: "🚪 Quit"},
-              ],
+              options: actions,
             }),
         },
         {
@@ -112,43 +123,77 @@ async function main() {
         });
       switch (operation.action) {
         case "stats":
-          p.intro(`${color.bgBlue(color.white(` Title: ${siteData.site.title} `))}`);
-          p.intro(`${color.bgBlue(color.white(` Description: ${siteData.site.description} `))}`);
-          p.intro(`${color.bgBlue(color.white(` Pages: ${siteData.site.items.length} `))}`);  
+          p.intro(`${color.bgBlue(color.white(` Title: ${siteData.manifest.title} `))}`);
+          p.intro(`${color.bgBlue(color.white(` Description: ${siteData.manifest.description} `))}`);
+          p.intro(`${color.bgBlue(color.white(` Pages: ${siteData.manifest.items.length} `))}`);  
         break;
         case "localhost":
           try {
-            await exec(`cd ${siteData.path} && npx @haxtheweb/haxcms-nodejs`);
+            await exec(`cd ${siteData.directory} && npx @haxtheweb/haxcms-nodejs`);
           }
           catch(e) {
-
+            console.log(e.stderr);
           }
         break;
         case "node-add":
           // @todo add new page option
+          try {
+            //await exec(`npm run haxcms-nodejs-cli --site=${siteData.name} --op=createNode --nodeTitle=New`);
+          }
+          catch(e) {
+            console.log(e.stderr);
+          }
         break;
         case "sync-git":
           // @todo git sync might need other arguments / be combined with publishing
           try {
-            await exec(`cd ${siteData.path} && git pull && git push`);
+            await exec(`cd ${siteData.directory} && git pull && git push`);
           }
           catch(e) {
-            console.log(e);
+            console.log(e.stderr);
           }
         break;
-        case "publish":
-          // @todo support other forms of publishing
+        case "publish-surge":
           try {
-            await exec(`cd ${siteData.path} && npm install --global surge && surge .`);
+            await exec(`cd ${siteData.directory} && npm install --global surge && surge .`);
           }
           catch(e) {
-            console.log(e);
+            console.log(e.stderr);
           }
         break;
         case "quit":
           // quit
         break;
       }
+    }
+  }
+  else if (packageData && packageData.haxcli && packageData.scripts.start) {
+    p.intro(`${color.bgBlack(color.white(` HAXTheWeb : Webcomponent detected `))}`);
+    p.intro(`${color.bgBlue(color.white(` Name: ${packageData.name} `))}`);
+    port = "8000";
+    p.note(`${merlinSays(`I have summoned a sub-process daemon 👹`)}
+    
+    🚀  Running your ${color.bold('webcomponent')} ${color.bold(packageData.name)}:
+          ${color.underline(color.cyan(`http://localhost:${port}`))}
+    
+    🏠  Launched: ${color.underline(color.bold(color.yellow(color.bgBlack(`${process.cwd()}`))))}
+    💻  Folder: ${color.bold(color.yellow(color.bgBlack(`cd ${process.cwd()}`)))}
+    📂  Open folder: ${color.bold(color.yellow(color.bgBlack(`open ${process.cwd()}`)))}
+    📘  VS Code Project: ${color.bold(color.yellow(color.bgBlack(`code ${process.cwd()}`)))}
+    🚧  Launch later: ${color.bold(color.yellow(color.bgBlack(`npm start`)))}
+    
+    ⌨️  To exit 🧙 Merlin press: ${color.bold(color.black(color.bgRed(` CTRL + C `)))}
+    `);
+    try {
+      let s = p.spinner();
+      s.start(merlinSays(`Installation magic (npm install)`));
+      await exec(`npm install`);
+      s.stop(merlinSays(`Everything is installed. It's go time`));
+      // ensure it's installed first
+      await exec(`npm start`);
+    }
+    catch(e) {
+      // don't log bc output is weird
     }
   }
   else {
@@ -167,7 +212,7 @@ async function main() {
             required: true,
             options: [
               { value: 'haxcms', label: '🏡 Create a HAXcms site (single)'},
-              { value: 'haxcms-multisite', label: '🏘️  Create a HAXcms multi-site'},
+              { value: 'haxcms-multiple', label: '🏘️  Create a HAXcms (multiple)'},
               { value: 'webcomponent', label: '🏗️  Create a Web Component' },
               { value: 'quit', label: '🚪 Quit'},
             ],
@@ -253,9 +298,6 @@ async function main() {
                   }
                 });  
               }
-              else {
-                return '';
-              }
             },
             author: ({ results }) => {
               return p.text({
@@ -268,7 +310,7 @@ async function main() {
               let initialValues = [];
               if (results.type === "webcomponent") {
                 options = [
-                  { value: 'launch', label: 'Launch project', hint: 'recommended, requires install' },
+                  { value: 'launch', label: 'Launch project', hint: 'recommended' },
                   { value: 'install', label: 'Install dependencies via npm', hint: 'recommended' },
                   { value: 'git', label: 'Apply version control via git', hint: 'recommended' },
                 ];
@@ -335,19 +377,20 @@ async function main() {
             s.stop(merlinSays(`${project.name} created!`));
             await setTimeout(500);
           break;
-          case 'haxcms-multisite':
+          case 'haxcms-multiple':
             s.start(merlinSays(`Creating multisite: ${project.name}`));
             await fs.mkdirSync(`${project.path}/${project.name}`);
-            s.stop(merlinSays(`${project.name} is setup to be a multi-site!`));
+            s.stop(merlinSays(`${project.name} is setup for multiple sites!`));
             await setTimeout(500);
           break;
           case 'webcomponent':
             port = "8000";
             // option to build github repo link for the user
             if (project.extras.includes('git')) {
+              // @todo need to support git@ and https methods
               project.gitRepo = await p.text({
                 message: 'Git Repo location:',
-                placeholder: `git@github.com:${project.author}/${project.name}.git`
+                placeholder: `https://github.com/${project.author}/${project.name}.git`
               });
               // if they supplied one and it has github in it, build a link automatically for ejs index
               if (project.gitRepo && project.gitRepo.includes('github.com')) {
@@ -361,8 +404,11 @@ async function main() {
               project.githubLink = null;
             }
             // if we have an org, add a / at the end so file name is written correctly
-            if (project.org != '') {
+            if (project.org) {
               project.org += '/';
+            }
+            else {
+              project.org = '';
             }
             
             s.start(merlinSays('Copying project files'));
@@ -467,7 +513,7 @@ async function main() {
             break;
           }
           p.note(`${project.name} is ready to go. Run the following to start development:`);
-          p.outro(nextSteps);    
+          p.outro(nextSteps);
         }
       }
     }
