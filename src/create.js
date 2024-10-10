@@ -4,16 +4,19 @@ process.env.haxcms_middleware = "node-cli";
 
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import * as hax from "@haxtheweb/haxcms-nodejs";
-const HAXCMS = hax.HAXCMS;
-import { characters } from './art.js';
-import { readAllFiles, dashToCamel } from './utils.js';
 import { setTimeout } from 'node:timers/promises';
 import * as ejs from "ejs";
 import * as p from '@clack/prompts';
 import color from 'picocolors';
+
+import { haxIntro, communityStatement, merlinSays } from "./lib/statements.js";
+import { readAllFiles, dashToCamel } from './lib/utils.js';
+import * as hax from "@haxtheweb/haxcms-nodejs";
+const HAXCMS = hax.HAXCMS;
+
 import * as child_process from "child_process";
 import * as util from "node:util";
+import { program} from "commander";
 const exec = util.promisify(child_process.exec);
 const fakeSend = {
   send: (json) => console.log(json),
@@ -32,42 +35,26 @@ exec('surge --version', error => {
   }
 });
 
-// standardize merlin statements visually
-function merlinSays(text) {
-  return `${color.yellow(color.bgBlack(` 🧙 Merlin: `))} ${color.bgBlack(color.green(` ${text} `))}`;
-}
+
 async function main() {
-  console.clear();
-  p.intro(`${color.bgBlack(color.underline(color.gray(`Never`)))}`);
-  await setTimeout(300);
-  p.intro(`${color.bgBlack(color.red(`     stop `))}`);
-  await setTimeout(300);
-  p.intro(`${color.bgBlack(color.white(`         never`))}`);
-  await setTimeout(300);
-  p.intro(`${color.bgBlack(color.cyan(`              stopping `))}`);
-  await setTimeout(500);
-  let colors = ['blue','yellow','red','magenta']
-  for (let i in characters) {
-    if (i < characters.length-1) {
-      console.clear();
-      p.intro(`${color.bgBlack(color[colors[i]](`Better future loading..`))}`);
-      p.intro(color.bgBlack(color[colors[i]](characters[i])));
-      let rockets = '';
-      for (let step = 0; step < i; step++) {
-        rockets += "🚀🚀🚀"
-      }
-      p.intro(rockets);
-      await setTimeout((Math.random() * 400) + 150);
-    }
+  program
+  .option('--y') // skip steps
+  .option('--skip') // skip steps
+  .option('--auto') // select defaults whenever possible
+  .option('--type <char>') // haxsite, haxcms, webcomponent
+  .option('--name <char>') // project name
+  .option('--org <char>') // organization name
+  .option('--author <char>') // organization name
+  .option('--path <char>') // path
+  .option('--');
+  program.parse();
+  var cliOptions = program.opts();
+  console.log(cliOptions);
+  if (!cliOptions.y && !cliOptions.auto && !cliOptions.skip) {
+    await haxIntro();
   }
-  console.clear();
-  p.intro(color.bgBlack(color.green(characters.pop())))
-  p.intro(`${color.bgGreen(color.black(`     The Web : CLI    `))}
-
-
-  ${merlinSays('Welcome wary web wanderer')}`);
-  // should be able to grab
   let author = '';
+  // should be able to grab if not predefined
   try {
     let value = await exec(`git config user.name`);
     author = value.stdout.trim();
@@ -76,6 +63,11 @@ async function main() {
     console.log('git user name not configured. Run the following to do this:');
     console.log('git config --global user.name "namehere"');
     console.log('git config --global user.email "email@here');
+  }
+  if (cliOptions.auto) {
+    cliOptions.path = process.cwd();
+    cliOptions.org = '@haxtheweb'; // @todo detect this correctly
+    cliOptions.author = author;
   }
   var port = "3000";
   // delay so that we clear and then let them visually react to change
@@ -97,7 +89,7 @@ async function main() {
     // infinite loop until quitting the cli
     while (operation.action !== 'quit') {
       let actions = [
-        { value: 'stats', label: "Site stats" },
+        { value: 'status', label: "Site Status" },
         { value: 'localhost', label: "Open Site (localhost)"},
         { value: 'sync-git', label: "Sync code in git"},
         //{ value: 'node-add', label: "New Page"},
@@ -122,7 +114,7 @@ async function main() {
           },
         });
       switch (operation.action) {
-        case "stats":
+        case "status":
           p.intro(`${color.bgBlue(color.white(` Title: ${siteData.manifest.title} `))}`);
           p.intro(`${color.bgBlue(color.white(` Description: ${siteData.manifest.description} `))}`);
           p.intro(`${color.bgBlue(color.white(` Pages: ${siteData.manifest.items.length} `))}`);  
@@ -202,30 +194,38 @@ async function main() {
     while (project.type !== 'quit') {
       if (activeProject) {
         p.note(` 🧙🪄 BE GONE ${color.bold(color.black(color.bgGreen(activeProject)))} sub-process daemon! 🪄 + ✨ 👹 = 💀 `);
+        cliOptions = {};
       }
-      project = await p.group(
-        {
-          type: ({ results }) =>
-          p.select({
-            message: !activeProject ? `What should we build?` : `Thirsty for more? What should we create now?`,
-            initialValue: 'haxcms',
-            required: true,
-            options: [
-              { value: 'haxcms', label: '🏡 Create a HAXcms site (single)'},
-              { value: 'haxcms-multiple', label: '🏘️  Create a HAXcms (multiple)'},
-              { value: 'webcomponent', label: '🏗️  Create a Web Component' },
-              { value: 'quit', label: '🚪 Quit'},
-            ],
-          }),
-        },
-        {
-          onCancel: () => {
-            p.cancel('🧙🪄 Merlin: Leaving so soon? HAX ya later');
-            communityStatement();
-            process.exit(0);
+      if (['haxsite', 'haxcms', 'webcomponent'].includes(cliOptions.type)) {
+        project = {
+          type: cliOptions.type
+        };
+      }
+      else {
+        project = await p.group(
+          {
+            type: ({ results }) =>
+            p.select({
+              message: !activeProject ? `What should we build?` : `Thirsty for more? What should we create now?`,
+              initialValue: 'haxsite',
+              required: true,
+              options: [
+                { value: 'haxsite', label: '🏡 Create a HAXcms site (single)'},
+                { value: 'haxcms', label: '🏘️  Create a HAXcms (multiple)'},
+                { value: 'webcomponent', label: '🏗️  Create a Web Component' },
+                { value: 'quit', label: '🚪 Quit'},
+              ],
+            }),
           },
-        }
-      );
+          {
+            onCancel: () => {
+              p.cancel('🧙🪄 Merlin: Leaving so soon? HAX ya later');
+              communityStatement();
+              process.exit(0);
+            },
+          }
+        );
+      }
       activeProject = project.type;
       // silly but this way we don't have to take options for quitting
       if (project.type !== 'quit') {
@@ -238,54 +238,66 @@ async function main() {
             },
             path: ({ results }) => {
               let initialPath = `${process.cwd()}`;
-              return p.text({
-                message: `What folder will your ${results.type === "webcomponent" ? "project" : "site"} live in?`,
-                placeholder: initialPath,
-                validate: (value) => {
-                  if (!value) {
-                    return "Path is required (tab writes default)";
+              if (!cliOptions.path && !cliOptions.auto) {
+                return p.text({
+                  message: `What folder will your ${(cliOptions.type === "webcomponent" || results.type === "webcomponent") ? "project" : "site"} live in?`,
+                  placeholder: initialPath,
+                  validate: (value) => {
+                    if (!value) {
+                      return "Path is required (tab writes default)";
+                    }
+                    if (!fs.existsSync(value)) {
+                      return `${value} does not exist. Select a valid folder`;
+                    }
                   }
-                  if (!fs.existsSync(value)) {
-                    return `${value} does not exist. Select a valid folder`;
-                  }
-                }
-              });
+                });
+              }
             },
             name: ({ results }) => {
-              let placeholder = "mysite";
-              let message = "Site name:";
-              if (results.type === "webcomponent") {
-                placeholder = "my-element";
-                message = "Element name:";
-              }
-              else if (results.type === "haxcms-multisite") {
-                placeholder = "mysitefactory";
-                message = "Site factory name:";
-              }
-              return p.text({
-                message: message,
-                placeholder: placeholder,
-                validate: (value) => {
-                  if (!value) {
-                    return "Name is required (tab writes default)";
-                  }
-                  if (/^\d/.test(value)) {
-                    return "Name cannot start with a number";
-                  }
-                  if (value.indexOf(' ') !== -1) {
-                    return "No spaces allowed in project name";
-                  }
-                  if (results.type === "webcomponent" && value.indexOf('-') === -1 && value.indexOf('-') !== 0 && value.indexOf('-') !== value.length-1) {
-                    return "Name must include at least one `-` and must not start or end name.";
-                  }
-                  if (fs.existsSync(path.join(results.path, value))) {
-                    return `${path.join(results.path, value)} exists, rename this project`;
-                  }
+              if (!cliOptions.name) {
+                let placeholder = "mysite";
+                let message = "Site name:";
+                if (cliOptions.type === "webcomponent" ||results.type === "webcomponent") {
+                  placeholder = "my-element";
+                  message = "Element name:";
                 }
-              });
+                else if (cliOptions.type === "haxcms" ||results.type === "haxcms") {
+                  placeholder = "mysitefactory";
+                  message = "Site factory name:";
+                }
+                return p.text({
+                  message: message,
+                  placeholder: placeholder,
+                  validate: (value) => {
+                    if (!value) {
+                      return "Name is required (tab writes default)";
+                    }
+                    if (/^\d/.test(value)) {
+                      return "Name cannot start with a number";
+                    }
+                    if (value.indexOf(' ') !== -1) {
+                      return "No spaces allowed in project name";
+                    }
+                    if (results.type === "webcomponent" && value.indexOf('-') === -1 && value.indexOf('-') !== 0 && value.indexOf('-') !== value.length-1) {
+                      return "Name must include at least one `-` and must not start or end name.";
+                    }
+                    // assumes auto was selected in CLI
+                    let joint = process.cwd();
+                    if (cliOptions.path) {
+                      joint = cliOptions.path;
+                    }
+                    else if (results.path) {
+                      joint = results.path;
+                    }
+                    if (fs.existsSync(path.join(joint, value))) {
+                      return `${path.join(joint, value)} exists, rename this project`;
+                    }
+                  }
+                });  
+              }
             },
             org: ({ results }) => {
-              if (results.type === "webcomponent") {
+              if (results.type === "webcomponent" && !cliOptions.org && !cliOptions.auto) {
                 // @todo detect mono repo and automatically add this
                 let initialOrg = '@haxtheweb';
                 return p.text({
@@ -300,38 +312,42 @@ async function main() {
               }
             },
             author: ({ results }) => {
-              return p.text({
-                message: 'Author:',
-                initialValue: author,
-              });
+              if (!cliOptions.author && !cliOptions.auto) {
+                return p.text({
+                  message: 'Author:',
+                  initialValue: author,
+                });
+              }
             },
             extras: ({ results }) => {
-              let options = [];
-              let initialValues = [];
-              if (results.type === "webcomponent") {
-                options = [
-                  { value: 'launch', label: 'Launch project', hint: 'recommended' },
-                  { value: 'install', label: 'Install dependencies via npm', hint: 'recommended' },
-                  { value: 'git', label: 'Apply version control via git', hint: 'recommended' },
-                ];
-                initialValues = ['launch', 'install', 'git']
-                if (!hasGit) {
-                  options.pop();
-                  initialValues.pop();
+              if (!cliOptions.auto  && !cliOptions.skip) {
+                let options = [];
+                let initialValues = [];
+                if (cliOptions.type === "webcomponent" || results.type === "webcomponent") {
+                  options = [
+                    { value: 'launch', label: 'Launch project', hint: 'recommended' },
+                    { value: 'install', label: 'Install dependencies via npm', hint: 'recommended' },
+                    { value: 'git', label: 'Apply version control via git', hint: 'recommended' },
+                  ];
+                  initialValues = ['launch', 'install', 'git']
+                  if (!hasGit) {
+                    options.pop();
+                    initialValues.pop();
+                  }
                 }
+                else {
+                  options = [
+                    { value: 'launch', label: 'Launch project on creation', hint: 'recommended' },
+                  ];
+                  initialValues = ['launch']
+                }
+                return p.multiselect({
+                  message: 'Additional setup',
+                  initialValues: initialValues,
+                  options: options,
+                  required: false,
+                })
               }
-              else {
-                options = [
-                  { value: 'launch', label: 'Launch project on creation', hint: 'recommended' },
-                ];
-                initialValues = ['launch']
-              }
-              return p.multiselect({
-                message: 'Additional setup',
-                initialValues: initialValues,
-                options: options,
-                required: false,
-              })
             },
           },
           {
@@ -342,19 +358,31 @@ async function main() {
             },
           }
         );
+        // merge cli options with project options
+        project = {
+          ...project,
+          ...cliOptions,
+        };
+        // auto select operations to perform if requested
+        if (cliOptions.auto) {
+          let extras = ['launch'];
+          if (project.type === "webcomponent") {
+            extras = ['launch', 'install', 'git']
+            if (!hasGit) {
+              extras.pop();
+            }
+          }
+          project.extras = extras;
+        }
         // values not set by user but used in templating
         project.className = dashToCamel(project.name);
         project.year = new Date().getFullYear();
         project.version = await HAXCMS.getHAXCMSVersion();
         let s = p.spinner();
-        // we can do this if it's a multisite
-        var site;
         // resolve site vs multi-site
         switch (project.type) {
-          case 'haxcms':
+          case 'haxsite':
             s.start(merlinSays(`Creating new site: ${project.name}`));
-            //site = new hax.HAXCMSSite();
-            //await site.newSite(project.path, '/', project.name);
             let siteRequest = {
               "site": {
                   "name": project.name,
@@ -380,6 +408,7 @@ async function main() {
           case 'haxcms-multiple':
             s.start(merlinSays(`Creating multisite: ${project.name}`));
             await fs.mkdirSync(`${project.path}/${project.name}`);
+            await fs.mkdirSync(`${project.path}/${project.name}/_sites`);
             s.stop(merlinSays(`${project.name} is setup for multiple sites!`));
             await setTimeout(500);
           break;
@@ -388,10 +417,15 @@ async function main() {
             // option to build github repo link for the user
             if (project.extras.includes('git')) {
               // @todo need to support git@ and https methods
-              project.gitRepo = await p.text({
-                message: 'Git Repo location:',
-                placeholder: `https://github.com/${project.author}/${project.name}.git`
-              });
+              if (cliOptions.auto) {
+                project.gitRepo = `https://github.com/${project.author}/${project.name}.git`;
+              }
+              else  {
+                project.gitRepo = await p.text({
+                  message: 'Git Repo location:',
+                  placeholder: `https://github.com/${project.author}/${project.name}.git`
+                });  
+              }
               // if they supplied one and it has github in it, build a link automatically for ejs index
               if (project.gitRepo && project.gitRepo.includes('github.com')) {
                 project.githubLink = project.gitRepo.replace('git@github.com:', 'https://github.com/').replace('.git', '');
@@ -502,10 +536,10 @@ async function main() {
         else {
           let nextSteps = `cd ${project.path}/${project.name} && `;
           switch (project.type) {
-            case 'haxcms':
+            case 'haxsite':
               nextSteps += `npx @haxtheweb/haxcms-nodejs`;
             break;
-            case 'haxcms-multisite':
+            case 'haxcms':
               nextSteps = `cd ${project.path} && npx @haxtheweb/haxcms-nodejs\n`;
             break;
             case 'webcomponent':
@@ -522,20 +556,3 @@ async function main() {
 }
 
 main().catch(console.error);
-
-// standard community statement so we can leverage on cancel executions
-function communityStatement() {
-  p.outro(`
-    🧙  HAX @ Penn State: ${color.underline(color.cyan('https://hax.psu.edu'))}
-    
-    🔮  Ideas to HAX Harder, Better, Faster, Stronger: ${color.underline(color.white('https://github.com/haxtheweb/issues/issues'))}
-    
-    👔  Share on LinkedIn: ${color.underline(color.cyan('https://bit.ly/hax-the-linkedin'))}
-    
-    🧵  Tweet on X: ${color.underline(color.white('https://bit.ly/hax-the-x'))}
-    
-    💬  Join Community: ${color.underline(color.cyan('https://bit.ly/hax-discord'))}
-    
-    💡  ${color.bold(color.white(`Never. Stop. Innovating.`))}
-  `);
-}
