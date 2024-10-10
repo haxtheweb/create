@@ -16,7 +16,7 @@ const HAXCMS = hax.HAXCMS;
 
 import * as child_process from "child_process";
 import * as util from "node:util";
-import { program} from "commander";
+import { program } from "commander";
 const exec = util.promisify(child_process.exec);
 const fakeSend = {
   send: (json) => console.log(json),
@@ -46,12 +46,15 @@ async function main() {
   .option('--org <char>') // organization name
   .option('--author <char>') // organization name
   .option('--path <char>') // path
+  .option('--npmClient <char>') // npm yarn pnpm etc
   .option('--');
   program.parse();
   var cliOptions = program.opts();
-  console.log(cliOptions);
   if (!cliOptions.y && !cliOptions.auto && !cliOptions.skip) {
     await haxIntro();
+  }
+  if (!cliOptions.npmClient) {
+    cliOptions.npmClient = 'npm';
   }
   let author = '';
   // should be able to grab if not predefined
@@ -66,7 +69,7 @@ async function main() {
   }
   if (cliOptions.auto) {
     cliOptions.path = process.cwd();
-    cliOptions.org = '@haxtheweb'; // @todo detect this correctly
+    cliOptions.org = '';
     cliOptions.author = author;
   }
   var port = "3000";
@@ -76,6 +79,24 @@ async function main() {
   if (`${process.cwd()}/package.json`) {
     try {
       packageData = JSON.parse(fs.readFileSync(`${process.cwd()}/package.json`));
+      // leverage these values if they exist downstream
+      if (packageData.npmClient) {
+        cliOptions.npmClient = packageData.npmClient;
+      }
+      // see if we're in a monorepo
+      if (packageData.useWorkspaces && packageData.workspaces && packageData.workspaces.packages && packageData.workspaces.packages[0]) {
+        p.intro(`${color.bgBlack(color.white(` Monorepo detected : Setting relative defaults `))}`);
+        cliOptions.isMonorepo = true;
+        cliOptions.auto = true;
+        // assumed if monorepo
+        cliOptions.type = 'webcomponent';
+        cliOptions.path = path.join(process.cwd(), packageData.workspaces.packages[0].replace('/*','/'));
+        if (packageData.orgNpm) {
+          cliOptions.org = packageData.orgNpm;
+        }
+        cliOptions.gitRepo = packageData.repository.url;
+        cliOptions.author = packageData.author.name ? packageData.author.name : author;
+      }
     } catch (err) {
       console.error(err)
     }
@@ -130,7 +151,7 @@ async function main() {
         case "node-add":
           // @todo add new page option
           try {
-            //await exec(`npm run haxcms-nodejs-cli --site=${siteData.name} --op=createNode --nodeTitle=New`);
+            //await exec(`${cliOptions.npmClient} run haxcms-nodejs-cli --site=${siteData.name} --op=createNode --nodeTitle=New`);
           }
           catch(e) {
             console.log(e.stderr);
@@ -147,7 +168,7 @@ async function main() {
         break;
         case "publish-surge":
           try {
-            await exec(`cd ${siteData.directory} && npm install --global surge && surge .`);
+            await exec(`cd ${siteData.directory} && ${cliOptions.npmClient} install --global surge && surge .`);
           }
           catch(e) {
             console.log(e.stderr);
@@ -172,17 +193,17 @@ async function main() {
     💻  Folder: ${color.bold(color.yellow(color.bgBlack(`cd ${process.cwd()}`)))}
     📂  Open folder: ${color.bold(color.yellow(color.bgBlack(`open ${process.cwd()}`)))}
     📘  VS Code Project: ${color.bold(color.yellow(color.bgBlack(`code ${process.cwd()}`)))}
-    🚧  Launch later: ${color.bold(color.yellow(color.bgBlack(`npm start`)))}
+    🚧  Launch later: ${color.bold(color.yellow(color.bgBlack(`${cliOptions.npmClient} start`)))}
     
     ⌨️  To exit 🧙 Merlin press: ${color.bold(color.black(color.bgRed(` CTRL + C `)))}
     `);
     try {
       let s = p.spinner();
-      s.start(merlinSays(`Installation magic (npm install)`));
-      await exec(`npm install`);
+      s.start(merlinSays(`Installation magic (${cliOptions.npmClient} install)`));
+      await exec(`${cliOptions.npmClient} install`);
       s.stop(merlinSays(`Everything is installed. It's go time`));
       // ensure it's installed first
-      await exec(`npm start`);
+      await exec(`${cliOptions.npmClient} start`);
     }
     catch(e) {
       // don't log bc output is weird
@@ -299,7 +320,7 @@ async function main() {
             org: ({ results }) => {
               if (results.type === "webcomponent" && !cliOptions.org && !cliOptions.auto) {
                 // @todo detect mono repo and automatically add this
-                let initialOrg = '@haxtheweb';
+                let initialOrg = '';
                 return p.text({
                   message: 'Organization:',
                   placeholder: initialOrg,
@@ -326,11 +347,11 @@ async function main() {
                 if (cliOptions.type === "webcomponent" || results.type === "webcomponent") {
                   options = [
                     { value: 'launch', label: 'Launch project', hint: 'recommended' },
-                    { value: 'install', label: 'Install dependencies via npm', hint: 'recommended' },
+                    { value: 'install', label: `Install dependencies via ${cliOptions.npmClient}`, hint: 'recommended' },
                     { value: 'git', label: 'Apply version control via git', hint: 'recommended' },
                   ];
                   initialValues = ['launch', 'install', 'git']
-                  if (!hasGit) {
+                  if (!hasGit || cliOptions.isMonorepo) {
                     options.pop();
                     initialValues.pop();
                   }
@@ -368,7 +389,7 @@ async function main() {
           let extras = ['launch'];
           if (project.type === "webcomponent") {
             extras = ['launch', 'install', 'git']
-            if (!hasGit) {
+            if (!hasGit || cliOptions.isMonorepo) {
               extras.pop();
             }
           }
@@ -495,9 +516,12 @@ async function main() {
         // options for install, git and other extras
         // can't launch if we didn't install first so launch implies installation
         if (project.extras.includes('launch') || project.extras.includes('install')) {
-          s.start(merlinSays(`Installation magic (npm install)`));
+          s.start(merlinSays(`Installation magic (${cliOptions.npmClient} install)`));
           try {
-            await exec(`cd ${project.path}/${project.name} && npm install`);
+            // monorepos install from top but then still need to launch from local location
+            if (!cliOptions.isMonorepo) {
+              await exec(`cd ${project.path}/${project.name} && ${cliOptions.npmClient} install`);
+            }
           }
           catch(e) {
             console.log(e);
@@ -509,7 +533,7 @@ async function main() {
           let optionPath = `${project.path}/${project.name}`;
           let command = `npx @haxtheweb/haxcms-nodejs`;
           if (project.type === "webcomponent") {
-            command = `npm start`;
+            command = `${cliOptions.npmClient} start`;
           }
           p.note(`${merlinSays(`I have summoned a sub-process daemon 👹`)}
 
@@ -543,7 +567,7 @@ async function main() {
               nextSteps = `cd ${project.path} && npx @haxtheweb/haxcms-nodejs\n`;
             break;
             case 'webcomponent':
-              nextSteps += `${project.extras.includes('install') ? '' : 'npm install &&'}npm start`;
+              nextSteps += `${project.extras.includes('install') ? '' : `${cliOptions.npmClient} install && `}${cliOptions.npmClient} start`;
             break;
           }
           p.note(`${project.name} is ready to go. Run the following to start development:`);
