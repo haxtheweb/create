@@ -90,7 +90,7 @@ async function main() {
         cliOptions.auto = true;
         // assumed if monorepo
         cliOptions.type = 'webcomponent';
-        cliOptions.path = path.join(process.cwd(), packageData.workspaces.packages[0].replace('/*','/'));
+        cliOptions.path = path.join(process.cwd(), packageData.workspaces.packages[0].replace('/*',''));
         if (packageData.orgNpm) {
           cliOptions.org = packageData.orgNpm;
         }
@@ -506,7 +506,7 @@ async function main() {
             s.stop('Files are now awesome!');
           break;
         }
-        if (project.gitRepo) {
+        if (project.gitRepo && !cliOptions.isMonorepo) {
           try {
             await exec(`cd ${project.path}/${project.name} && git init && git add -A && git commit -m "first commit" && git branch -M main${project.gitRepo ? ` && git remote add origin ${project.gitRepo}` : ''}`);    
           }
