@@ -41,7 +41,7 @@ async function main() {
   .option('--y') // skip steps
   .option('--skip') // skip steps
   .option('--auto') // select defaults whenever possible
-  .option('--type <char>') // haxsite, haxcms, webcomponent
+  .option('--type <char>') // haxsite, webcomponent
   .option('--name <char>') // project name
   .option('--org <char>') // organization name
   .option('--author <char>') // organization name
@@ -50,6 +50,15 @@ async function main() {
   .option('--');
   program.parse();
   var cliOptions = program.opts();
+  // auto and y assume same thing
+  if (cliOptions.y || cliOptions.auto) {
+    cliOptions.y = true;
+    cliOptions.auto = true;
+    // assume we are creating a webcomponent if name supplied but no type defined
+    if (!cliOptions.type) {
+      cliOptions.type = 'webcomponent'
+    }
+  }
   if (!cliOptions.y && !cliOptions.auto && !cliOptions.skip) {
     await haxIntro();
   }
@@ -76,29 +85,43 @@ async function main() {
   // delay so that we clear and then let them visually react to change
   const siteData = await hax.systemStructureContext();
   let packageData = {};
-  if (`${process.cwd()}/package.json`) {
-    try {
-      packageData = JSON.parse(fs.readFileSync(`${process.cwd()}/package.json`));
-      // leverage these values if they exist downstream
-      if (packageData.npmClient) {
-        cliOptions.npmClient = packageData.npmClient;
-      }
-      // see if we're in a monorepo
-      if (packageData.useWorkspaces && packageData.workspaces && packageData.workspaces.packages && packageData.workspaces.packages[0]) {
-        p.intro(`${color.bgBlack(color.white(` Monorepo detected : Setting relative defaults `))}`);
-        cliOptions.isMonorepo = true;
-        cliOptions.auto = true;
-        // assumed if monorepo
-        cliOptions.type = 'webcomponent';
-        cliOptions.path = path.join(process.cwd(), packageData.workspaces.packages[0].replace('/*',''));
-        if (packageData.orgNpm) {
-          cliOptions.org = packageData.orgNpm;
+  let testPackages = [
+    path.join(process.cwd(), 'package.json'),
+    path.join(process.cwd(), '../', 'package.json'),
+    path.join(process.cwd(), '../', '../', 'package.json'),
+  ]
+  // test within reason, for package.json files seeing if anything is available to suggest
+  // that we might be in a local package or a monorepo.
+  while (testPackages.length > 0) {
+    let packLoc = testPackages.shift();
+    if (fs.existsSync(packLoc)) {
+      try {
+        packageData = JSON.parse(fs.readFileSync(`${process.cwd()}/package.json`));
+        // assume we are working on a web component / existing if we find this key
+        if (packageData.hax && packageData.hax.cli) {
+          cliOptions.type = 'webcomponent';
         }
-        cliOptions.gitRepo = packageData.repository.url;
-        cliOptions.author = packageData.author.name ? packageData.author.name : author;
+        // leverage these values if they exist downstream
+        if (packageData.npmClient) {
+          cliOptions.npmClient = packageData.npmClient;
+        }
+        // see if we're in a monorepo
+        if (packageData.useWorkspaces && packageData.workspaces && packageData.workspaces.packages && packageData.workspaces.packages[0]) {
+          p.intro(`${color.bgBlack(color.white(` Monorepo detected : Setting relative defaults `))}`);
+          cliOptions.isMonorepo = true;
+          cliOptions.auto = true;
+          // assumed if monorepo
+          cliOptions.type = 'webcomponent';
+          cliOptions.path = path.join(process.cwd(), packageData.workspaces.packages[0].replace('/*',''));
+          if (packageData.orgNpm) {
+            cliOptions.org = packageData.orgNpm;
+          }
+          cliOptions.gitRepo = packageData.repository.url;
+          cliOptions.author = packageData.author.name ? packageData.author.name : author;
+        }
+      } catch (err) {
+        console.error(err)
       }
-    } catch (err) {
-      console.error(err)
     }
   }
   // delay so that we clear and then let them visually react to change
@@ -168,7 +191,7 @@ async function main() {
         break;
         case "publish-surge":
           try {
-            await exec(`cd ${siteData.directory} && ${cliOptions.npmClient} install --global surge && surge .`);
+            await exec(`cd ${siteData.directory} && surge .`);
           }
           catch(e) {
             console.log(e.stderr);
@@ -180,7 +203,7 @@ async function main() {
       }
     }
   }
-  else if (packageData && packageData.haxcli && packageData.scripts.start) {
+  else if (packageData && packageData.hax && packageData.hax.cli && packageData.scripts.start) {
     p.intro(`${color.bgBlack(color.white(` HAXTheWeb : Webcomponent detected `))}`);
     p.intro(`${color.bgBlue(color.white(` Name: ${packageData.name} `))}`);
     port = "8000";
@@ -198,15 +221,17 @@ async function main() {
     ⌨️  To exit 🧙 Merlin press: ${color.bold(color.black(color.bgRed(` CTRL + C `)))}
     `);
     try {
-      let s = p.spinner();
-      s.start(merlinSays(`Installation magic (${cliOptions.npmClient} install)`));
-      await exec(`${cliOptions.npmClient} install`);
-      s.stop(merlinSays(`Everything is installed. It's go time`));
-      // ensure it's installed first
+      // ensure it's installed first, unless it's a monorepo
+      if (!cliOptions.isMonorepo) {
+        let s = p.spinner();
+        s.start(merlinSays(`Installation magic (${cliOptions.npmClient} install)`));
+        await exec(`${cliOptions.npmClient} install`);
+        s.stop(merlinSays(`Everything is installed. It's go time`));
+      }
       await exec(`${cliOptions.npmClient} start`);
     }
     catch(e) {
-      // don't log bc output is weird
+      // don't log bc output is odd
     }
   }
   else {
@@ -217,7 +242,7 @@ async function main() {
         p.note(` 🧙🪄 BE GONE ${color.bold(color.black(color.bgGreen(activeProject)))} sub-process daemon! 🪄 + ✨ 👹 = 💀 `);
         cliOptions = {};
       }
-      if (['haxsite', 'haxcms', 'webcomponent'].includes(cliOptions.type)) {
+      if (['haxsite', 'webcomponent'].includes(cliOptions.type)) {
         project = {
           type: cliOptions.type
         };
@@ -228,12 +253,11 @@ async function main() {
             type: ({ results }) =>
             p.select({
               message: !activeProject ? `What should we build?` : `Thirsty for more? What should we create now?`,
-              initialValue: 'haxsite',
+              initialValue: 'webcomponent',
               required: true,
               options: [
-                { value: 'haxsite', label: '🏡 Create a HAXcms site (single)'},
-                { value: 'haxcms', label: '🏘️  Create a HAXcms (multiple)'},
                 { value: 'webcomponent', label: '🏗️  Create a Web Component' },
+                { value: 'haxsite', label: '🏡 Create a HAXcms site (single)'},
                 { value: 'quit', label: '🚪 Quit'},
               ],
             }),
@@ -263,6 +287,7 @@ async function main() {
                 return p.text({
                   message: `What folder will your ${(cliOptions.type === "webcomponent" || results.type === "webcomponent") ? "project" : "site"} live in?`,
                   placeholder: initialPath,
+                  required: true,
                   validate: (value) => {
                     if (!value) {
                       return "Path is required (tab writes default)";
@@ -282,13 +307,10 @@ async function main() {
                   placeholder = "my-element";
                   message = "Element name:";
                 }
-                else if (cliOptions.type === "haxcms" ||results.type === "haxcms") {
-                  placeholder = "mysitefactory";
-                  message = "Site factory name:";
-                }
                 return p.text({
                   message: message,
                   placeholder: placeholder,
+                  required: true,
                   validate: (value) => {
                     if (!value) {
                       return "Name is required (tab writes default)";
@@ -320,10 +342,11 @@ async function main() {
             org: ({ results }) => {
               if (results.type === "webcomponent" && !cliOptions.org && !cliOptions.auto) {
                 // @todo detect mono repo and automatically add this
-                let initialOrg = '';
+                let initialOrg = '@yourOrganization';
                 return p.text({
                   message: 'Organization:',
                   placeholder: initialOrg,
+                  required: false,
                   validate: (value) => {
                     if (value && !value.startsWith('@')) {
                       return "Organizations are not required, but organizations must start with @ if used";
@@ -336,6 +359,7 @@ async function main() {
               if (!cliOptions.author && !cliOptions.auto) {
                 return p.text({
                   message: 'Author:',
+                  required: false,
                   initialValue: author,
                 });
               }
@@ -379,17 +403,19 @@ async function main() {
             },
           }
         );
-        // merge cli options with project options
+        // merge cli options with project options assume this is NOT a monorepo
+        // but spread will overwrite if needed
         project = {
+          isMonorepo: false,
           ...project,
           ...cliOptions,
         };
         // auto select operations to perform if requested
-        if (cliOptions.auto) {
+        if (project.auto) {
           let extras = ['launch'];
           if (project.type === "webcomponent") {
             extras = ['launch', 'install', 'git']
-            if (!hasGit || cliOptions.isMonorepo) {
+            if (!hasGit || project.isMonorepo) {
               extras.pop();
             }
           }
@@ -424,13 +450,6 @@ async function main() {
             HAXCMS.cliWritePath = `${project.path}`;
             await hax.RoutesMap.post.createSite({body: siteRequest}, fakeSend);        
             s.stop(merlinSays(`${project.name} created!`));
-            await setTimeout(500);
-          break;
-          case 'haxcms-multiple':
-            s.start(merlinSays(`Creating multisite: ${project.name}`));
-            await fs.mkdirSync(`${project.path}/${project.name}`);
-            await fs.mkdirSync(`${project.path}/${project.name}/_sites`);
-            s.stop(merlinSays(`${project.name} is setup for multiple sites!`));
             await setTimeout(500);
           break;
           case 'webcomponent':
@@ -562,9 +581,6 @@ async function main() {
           switch (project.type) {
             case 'haxsite':
               nextSteps += `npx @haxtheweb/haxcms-nodejs`;
-            break;
-            case 'haxcms':
-              nextSteps = `cd ${project.path} && npx @haxtheweb/haxcms-nodejs\n`;
             break;
             case 'webcomponent':
               nextSteps += `${project.extras.includes('install') ? '' : `${cliOptions.npmClient} install && `}${cliOptions.npmClient} start`;

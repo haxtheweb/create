@@ -53,6 +53,8 @@
     "publishConfig": {
       "access": "public"
     },
-    "haxcli": true,
+    "hax": {
+      "cli": true
+    },
     "customElements": "custom-elements.json"
   }

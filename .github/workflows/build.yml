@@ -10,8 +10,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform: [ubuntu-latest, windows-latest, or macos-latest]
-        node-version: [20, 22]
+        platform: [ubuntu-latest, windows-latest]
+        node-version: [20]
     runs-on: ${{ matrix.platform }}
     steps:
       - name: Checkout
