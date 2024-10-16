@@ -1,20 +1,26 @@
 # HAX The CLI
 Rapidly build web components for the Web that work with HAX. HAX The Web's CLI tools empower you to rapidly..
-- start making Lit based web components using the HAX design system and tools
-
-## Future state
-- Create new HAX sites and administer them from the CLI
-- Create new themes for HAXcms
-- Interface w/ docs / AI agent on website
-
-# Usage
 
 ```bash
 # this allows you to then use hax command
 npm install @haxtheweb/create --global
 # then run
 hax
+```
 
+# Commands
+
+## Default / global / new context
+- `hax` - fun ascii art and interactive CLI (via [clack](https://www.clack.cc/) )
+- `hax --name my-element --y` - Make a new HAX capable, i18n wired, Design system (DDD) driven web component
+- `hax --type haxsite --name mysite --y` - create a new HAXsite (HAXcms, single site) `
+
+## Site  context
+- listing what a site can do
+
+# Alternative Usage
+
+```bash
 # also this will invoke 1x
 npx @haxtheweb/create
 # this is same as above, better windows CLI support
