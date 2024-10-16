@@ -13,10 +13,16 @@ hax
 ## Default / global / new context
 - `hax` - fun ascii art and interactive CLI (via [clack](https://www.clack.cc/) )
 - `hax --name my-element --y` - Make a new HAX capable, i18n wired, Design system (DDD) driven web component
-- `hax --type haxsite --name mysite --y` - create a new HAXsite (HAXcms, single site) `
+  -  if in a monorepo root, will place in correct location / inherit settings
+- `hax --type haxsite --name mysite --y` - create a new HAXsite (HAXcms, single site)
 
 ## Site  context
-- listing what a site can do
+- listing stats
+- launch site
+- publish to surge.sh (if installed)
+
+## web component context
+- launch element
 
 # Alternative Usage
 
