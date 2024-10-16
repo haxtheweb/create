@@ -21,6 +21,21 @@ npx @haxtheweb/create
 npm init @haxtheweb
 ```
 
+## Usage in other programs
+https://stackoverflow.com/questions/69208298/use-node-bins-without-installing-the-package-globally explains it but you should be able to use the CLI as part of another project as follows:
+```json
+{
+  "scripts": {
+    "hax": "hax"
+  }
+}
+```
+
+```bash
+# script creating a new element called my-element w/ all defaults
+npm run hax -- --name my-element --y
+```
+
 ## Windows problems?
 Try setting a different cache path to load from `npm config set cache C:\tmp\nodejs\npm-cache --global`
 
