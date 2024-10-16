@@ -10,8 +10,14 @@ Rapidly build web components for the Web that work with HAX. HAX The Web's CLI t
 # Usage
 
 ```bash
+# this allows you to then use hax command
+npm install @haxtheweb/create --global
+# then run
+hax
+
+# also this will invoke 1x
 npx @haxtheweb/create
-#or
+# this is same as above, better windows CLI support
 npm init @haxtheweb
 ```
 
