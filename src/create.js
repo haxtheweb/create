@@ -12,6 +12,7 @@ import color from 'picocolors';
 import { haxIntro, communityStatement, merlinSays } from "./lib/statements.js";
 import { readAllFiles, dashToCamel } from './lib/utils.js';
 import * as hax from "@haxtheweb/haxcms-nodejs";
+import * as haxcmsNodejsCli from "@haxtheweb/haxcms-nodejs/dist/cli.js";
 const HAXCMS = hax.HAXCMS;
 
 import * as child_process from "child_process";
@@ -42,11 +43,14 @@ async function main() {
   .option('--skip') // skip steps
   .option('--auto') // select defaults whenever possible
   .option('--type <char>') // haxsite, webcomponent
-  .option('--name <char>') // project name
+  .option('--name <char>') // haxsite / webcomponent name
+  .option('--title <char>') // page title
+  .option('--domain <char>') // haxsite / webcomponent name
+  .option('--action <char>') // action to take
   .option('--org <char>') // organization name
   .option('--author <char>') // organization name
   .option('--path <char>') // path
-  .option('--npmClient <char>') // npm yarn pnpm etc
+  .option('--npm-client <char>') // npm yarn pnpm etc
   .option('--');
   program.parse();
   var cliOptions = program.opts();
@@ -128,35 +132,49 @@ async function main() {
   // CLI works within context of the site if one is detected, otherwise we can do other thingss
   if (siteData) {
     p.intro(`${color.bgBlack(color.white(` HAXTheWeb : Site detected `))}`);
+    cliOptions.type = "haxsite";
     p.intro(`${color.bgBlue(color.white(` Name: ${siteData.name} `))}`);
-    let operation = { action: null };
+    // defaults if nothing set via CLI
+    let operation = { 
+      action: null, 
+      title: "New Page",
+      domain: `haxcli-${siteData.name}.surge.sh`
+    };
+    console.log(cliOptions);
+    operation = {
+      ...operation,
+      ...cliOptions
+    };
+    console.log(operation);
     // infinite loop until quitting the cli
     while (operation.action !== 'quit') {
       let actions = [
         { value: 'status', label: "Site Status" },
         { value: 'localhost', label: "Open Site (localhost)"},
         { value: 'sync-git', label: "Sync code in git"},
-        //{ value: 'node-add', label: "New Page"},
+        { value: 'node-add', label: "Add New Page"},
       ];
       if (hasSurge) {
         actions.push({ value: 'publish-surge', label: "Publish site using Surge.sh"});              
       }
       actions.push({ value: 'quit', label: "🚪 Quit"});
-      operation = await p.group(
-        {
-          action: ({ results }) =>
-            p.select({
-              message: `Actions you can take`,
-              options: actions,
-            }),
-        },
-        {
-          onCancel: () => {
-            p.cancel('🧙 Merlin: Canceling CLI.. HAX ya later 🪄');
-            communityStatement();
-            process.exit(0);
+      if (!operation.action) {
+        operation = await p.group(
+          {
+            action: ({ results }) =>
+              p.select({
+                message: `Actions you can take`,
+                options: actions,
+              }),
           },
-        });
+          {
+            onCancel: () => {
+              p.cancel('🧙 Merlin: Canceling CLI.. HAX ya later 🪄');
+              communityStatement();
+              process.exit(0);
+            },
+          });
+      }
       switch (operation.action) {
         case "status":
           p.intro(`${color.bgBlue(color.white(` Title: ${siteData.manifest.title} `))}`);
@@ -172,9 +190,9 @@ async function main() {
           }
         break;
         case "node-add":
-          // @todo add new page option
+          // @todo need to accept arguments
           try {
-            //await exec(`${cliOptions.npmClient} run haxcms-nodejs-cli --site=${siteData.name} --op=createNode --nodeTitle=New`);
+            haxcmsNodejsCli.cliBridge('createNode', { site: siteData, node: { title: operation.title }});
           }
           catch(e) {
             console.log(e.stderr);
@@ -191,7 +209,9 @@ async function main() {
         break;
         case "publish-surge":
           try {
-            await exec(`cd ${siteData.directory} && surge .`);
+            // @todo should provide an option for setting the domain
+            let execOutput = await exec(`cd ${siteData.directory} && surge . ${operation.domain}`);
+            console.log(execOutput.stdout.trim());
           }
           catch(e) {
             console.log(e.stderr);
@@ -201,6 +221,7 @@ async function main() {
           // quit
         break;
       }
+      operation.action = null;
     }
   }
   else if (packageData && packageData.hax && packageData.hax.cli && packageData.scripts.start) {
@@ -242,7 +263,7 @@ async function main() {
         p.note(` 🧙🪄 BE GONE ${color.bold(color.black(color.bgGreen(activeProject)))} sub-process daemon! 🪄 + ✨ 👹 = 💀 `);
         cliOptions = {};
       }
-      if (['haxsite', 'webcomponent'].includes(cliOptions.type)) {
+      if (['site', 'haxsite', 'webcomponent'].includes(cliOptions.type)) {
         project = {
           type: cliOptions.type
         };
@@ -414,7 +435,7 @@ async function main() {
         if (project.auto) {
           let extras = ['launch'];
           if (project.type === "webcomponent") {
-            extras = ['launch', 'install', 'git']
+            extras = ['launch', 'install', 'git'];
             if (!hasGit || project.isMonorepo) {
               extras.pop();
             }
@@ -428,8 +449,9 @@ async function main() {
         let s = p.spinner();
         // resolve site vs multi-site
         switch (project.type) {
+          case 'site':
           case 'haxsite':
-            s.start(merlinSays(`Creating new site: ${project.name}`));
+              s.start(merlinSays(`Creating new site: ${project.name}`));
             let siteRequest = {
               "site": {
                   "name": project.name,
@@ -579,8 +601,9 @@ async function main() {
         else {
           let nextSteps = `cd ${project.path}/${project.name} && `;
           switch (project.type) {
+            case 'site':
             case 'haxsite':
-              nextSteps += `npx @haxtheweb/haxcms-nodejs`;
+                nextSteps += `npx @haxtheweb/haxcms-nodejs`;
             break;
             case 'webcomponent':
               nextSteps += `${project.extras.includes('install') ? '' : `${cliOptions.npmClient} install && `}${cliOptions.npmClient} start`;

@@ -22,8 +22,7 @@
     "build": "rm -rf dist && babel src --out-dir dist --copy-files --include-dotfiles && chmod 774 dist/create.js",
     "start": "npm run build && node ./dist/create.js && chmod 774 dist/create.js",
     "release": "npm run build && commit-and-tag-version && git push --follow-tags origin main && npm publish",
-    "haxcms-nodejs-cli": "./node_modules/.bin/haxcms-nodejs-cli",
-    "hax": "hax"
+    "haxcms-nodejs-cli": "haxcms-nodejs-cli"
   },
   "bin": {
     "create-haxtheweb": "./dist/create.js",
