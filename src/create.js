@@ -39,19 +39,20 @@ exec('surge --version', error => {
 
 async function main() {
   program
-  .option('--y') // skip steps
-  .option('--skip') // skip steps
-  .option('--auto') // select defaults whenever possible
-  .option('--type <char>') // haxsite, webcomponent
-  .option('--name <char>') // haxsite / webcomponent name
-  .option('--title <char>') // page title
-  .option('--domain <char>') // haxsite / webcomponent name
-  .option('--action <char>') // action to take
-  .option('--org <char>') // organization name
-  .option('--author <char>') // organization name
-  .option('--path <char>') // path
-  .option('--npm-client <char>') // npm yarn pnpm etc
-  .option('--');
+  .option('--y', 'yes to all questions') // skip steps
+  .option('--skip', 'skip frills like animations') // skip steps
+  .option('--auto', 'yes to all questions, alias of y') // select defaults whenever possible
+  .option('--type <char>', 'type of project, haxsite or webcomponent') // haxsite, webcomponent
+  .option('--name <char>', 'name of the project') // haxsite / webcomponent name
+  .option('--title <char>', 'site: node title') // page title
+  .option('--domain <char>', 'site: published domain name') // haxsite / webcomponent name
+  .option('--action <char>', 'site: action to take') // action to take
+  .option('--org <char>', 'organization for package.json') // organization name
+  .option('--author <char>', 'author for site / package.json') // organization name
+  .option('--path <char>', 'where to perform operation') // path
+  .option('--npm-client <char>', 'npm client to use (must be installed) npm, yarn, pnpm') // npm yarn pnpm etc
+  .option('--')
+  .helpCommand(true);
   program.parse();
   var cliOptions = program.opts();
   // auto and y assume same thing
