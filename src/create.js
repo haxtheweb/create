@@ -141,12 +141,10 @@ async function main() {
       title: "New Page",
       domain: `haxcli-${siteData.name}.surge.sh`
     };
-    console.log(cliOptions);
     operation = {
       ...operation,
       ...cliOptions
     };
-    console.log(operation);
     // infinite loop until quitting the cli
     while (operation.action !== 'quit') {
       let actions = [
@@ -194,6 +192,7 @@ async function main() {
           // @todo need to accept arguments
           try {
             haxcmsNodejsCli.cliBridge('createNode', { site: siteData, node: { title: operation.title }});
+            console.log(`"${operation.title}" added to site`);
           }
           catch(e) {
             console.log(e.stderr);
@@ -221,6 +220,9 @@ async function main() {
         case "quit":
           // quit
         break;
+      }
+      if (cliOptions.y) {
+        process.exit(0);
       }
       operation.action = null;
     }
