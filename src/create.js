@@ -7,26 +7,17 @@ import * as path from 'node:path';
 import * as p from '@clack/prompts';
 import color from 'picocolors';
 
-import { haxIntro, communityStatement, merlinSays } from "./lib/statements.js";
-import { dashToCamel } from './lib/utils.js';
-import { webcomponentProcess } from "./lib/programs/webcomponent.js";
-import { siteProcess } from "./lib/programs/site.js";
+import { haxIntro, communityStatement } from "./lib/statements.js";
+import { webcomponentProcess, webcomponentCommandDetected } from "./lib/programs/webcomponent.js";
+import { siteProcess, siteCommandDetected } from "./lib/programs/site.js";
 
 import * as hax from "@haxtheweb/haxcms-nodejs";
-import * as haxcmsNodejsCli from "@haxtheweb/haxcms-nodejs/dist/cli.js";
 const HAXCMS = hax.HAXCMS;
 
 import * as child_process from "child_process";
 import * as util from "node:util";
 import { program } from "commander";
 const exec = util.promisify(child_process.exec);
-
-var sysSurge = true;
-exec('surge --version', error => {
-  if (error) {
-    sysSurge = false;
-  }
-});
 
 let sysGit = true;
 exec('git --version', error => {
@@ -39,15 +30,23 @@ async function main() {
   var commandRun = {};
   program
   .option('--')
-  .option('--path <char>', 'where to perform operation') // path
-  .option('--npm-client <char>', 'npm client to use (must be installed) npm, yarn, pnpm', 'npm') // npm yarn pnpm etc
-  .option('--y', 'yes to all questions') // skip steps
-  .option('--skip', 'skip frills like animations') // skip steps
-  .option('--auto', 'yes to all questions, alias of y') // select defaults whenever possible
+  .option('--v', 'Verbose output for developers')
+  .option('--path <char>', 'where to perform operation')
+  .option('--npm-client <char>', 'npm client to use (must be installed) npm, yarn, pnpm', 'npm')
+  .option('--y', 'yes to all questions')
+  .option('--skip', 'skip frills like animations')
+  .option('--auto', 'yes to all questions, alias of y')
 
-  .option('--name <char>', 'name of the project') // site / webcomponent name
-  .option('--title <char>', 'node title', 'new page') // page title
-  .option('--domain <char>', 'published domain name') // site / webcomponent name
+  // options for webcomponent
+  .option('--org <char>', 'organization for package.json')
+  .option('--author <char>', 'author for site / package.json')
+
+
+// options for site
+  .option('--item-id <char>', 'node ID to operate on')
+  .option('--name <char>', 'name of the project')
+  .option('--title <char>', 'node title')
+  .option('--domain <char>', 'published domain name')
   .helpCommand(true);
 
   // default command which runs interactively
@@ -78,16 +77,16 @@ async function main() {
       }
     };
   })
-  .option('--name <char>', 'name of the project') // site / webcomponent name
-  .option('--title <char>', 'node title', 'new page') // page title
-  .option('--domain <char>', 'published domain name') // site / webcomponent name
+  .option('--name <char>', 'name of the site (when creating a new one)')
+  .option('--title <char>', 'node title')
+  .option('--domain <char>', 'published domain name')
   .version(await HAXCMS.getHAXCMSVersion());
 
   // webcomponent program
   program
   .command('webcomponent')
   .description('Create Lit based web components, with HAX recommendations')
-  .argument('[name]', 'name of the project') // site / webcomponent name
+  .argument('[name]', 'name of the project')
   .action((name) => {
     commandRun = {
       command: 'webcomponent',
@@ -100,13 +99,16 @@ async function main() {
       }
     };
   })
-  .option('--org <char>', 'organization for package.json') // organization name
-  .option('--author <char>', 'author for site / package.json'); // organization name
+  .option('--org <char>', 'organization for package.json')
+  .option('--author <char>', 'author for site / package.json');
+
 
   // process program arguments
   program.parse();
   commandRun.options = {...commandRun.options, ...program.opts()};
-  console.log(commandRun);
+  if (commandRun.options.v) {
+    console.log(commandRun);
+  }
   // auto and y assume same thing
   if (commandRun.options.y || commandRun.options.auto) {
     commandRun.options.y = true;
@@ -131,7 +133,6 @@ async function main() {
     commandRun.options.org = '';
     commandRun.options.author = author;
   }
-  var port = "3000";
   let packageData = {};
   let testPackages = [
     path.join(process.cwd(), 'package.json'),
@@ -172,155 +173,12 @@ async function main() {
       }
     }
   }
-  var siteData = await hax.systemStructureContext();
-  // delay so that we clear and then let them visually react to change
   // CLI works within context of the site if one is detected, otherwise we can do other thingss
-  if (siteData) {
-    // default to status unless already set so we don't issue a create in a create
-    if (!commandRun.arguments.action) {
-      commandRun.arguments.action = 'status';
-    }
-    p.intro(`${color.bgBlack(color.white(` HAXTheWeb : Site detected `))}`);
-    commandRun.command = "site";
-    p.intro(`${color.bgBlue(color.white(` Name: ${siteData.name} `))}`);
-    // defaults if nothing set via CLI
-    let operation = {
-      ...commandRun.arguments,
-      ...commandRun.options
-    };
-    console.log(commandRun.options.title);
-    if (!commandRun.options.title) {
-      commandRun.options.title = "New Page";
-    }
-    if (!commandRun.options.domain) {
-      commandRun.options.domain = `haxcli-${siteData.name}.surge.sh`;
-    }
-    // infinite loop until quitting the cli
-    while (operation.action !== 'quit') {
-      let actions = [
-        { value: 'status', label: "Site Status" },
-        { value: 'localhost', label: "Open Site (localhost)"},
-        { value: 'git:sync', label: "Sync code in git"},
-        { value: 'node:add', label: "Add New Page"},
-        { value: 'node:delete', label: "Delete Page"},
-      ];
-      if (sysSurge) {
-        actions.push({ value: 'publish-surge', label: "Publish site using Surge.sh"});              
-      }
-      actions.push({ value: 'quit', label: "🚪 Quit"});
-      if (!operation.action) {
-        operation = await p.group(
-          {
-            action: ({ results }) =>
-              p.select({
-                message: `Actions you can take`,
-                options: actions,
-              }),
-          },
-          {
-            onCancel: () => {
-              p.cancel('🧙 Merlin: Canceling CLI.. HAX ya later 🪄');
-              communityStatement();
-              process.exit(0);
-            },
-          });
-      }
-      switch (operation.action) {
-        case "status":
-          siteData = await hax.systemStructureContext();
-          p.intro(`${color.bgBlue(color.white(` Title: ${siteData.manifest.title} `))}`);
-          p.intro(`${color.bgBlue(color.white(` Description: ${siteData.manifest.description} `))}`);
-          p.intro(`${color.bgBlue(color.white(` Pages: ${siteData.manifest.items.length} `))}`);  
-        break;
-        case "localhost":
-          try {
-            await exec(`cd ${siteData.directory} && npx @haxtheweb/haxcms-nodejs`);
-          }
-          catch(e) {
-            console.log(e.stderr);
-          }
-        break;
-        case "node:add":
-          try {
-            // @todo accept title if not supplied
-            haxcmsNodejsCli.cliBridge('createNode', { site: siteData, node: { title: commandRun.options.title }});
-            console.log(`"${commandRun.options.title}" added to site`);
-          }
-          catch(e) {
-            console.log(e.stderr);
-          }
-        break;
-        case "node:delete":
-          try {
-            // @todo need to supply a command here
-            //haxcmsNodejsCli.cliBridge('deleteNode', { site: siteData, node: { id: id }});
-            console.log(`"${commandRun.options.title}" added to site`);
-          }
-          catch(e) {
-            console.log(e.stderr);
-          }
-        break;
-        case "git:sync":
-          // @todo git sync might need other arguments / be combined with publishing
-          try {
-            await exec(`cd ${siteData.directory} && git pull && git push`);
-          }
-          catch(e) {
-            console.log(e.stderr);
-          }
-        break;
-        case "publish-surge":
-          try {
-            // @todo should provide an option for setting the domain
-            let execOutput = await exec(`cd ${siteData.directory} && surge . ${operation.domain}`);
-            console.log(execOutput.stdout.trim());
-          }
-          catch(e) {
-            console.log(e.stderr);
-          }
-        break;
-        case "quit":
-          // quit
-        process.exit(0);
-        break;
-      }
-      if (commandRun.options.y) {
-        process.exit(0);
-      }
-      operation.action = null;
-    }
-    communityStatement();
+  if (await hax.systemStructureContext()) {
+    await siteCommandDetected(commandRun);
   }
   else if (packageData && packageData.hax && packageData.hax.cli && packageData.scripts.start) {
-    port = "8000";
-    p.intro(`${color.bgBlack(color.white(` HAXTheWeb : Webcomponent detected `))}`);
-    p.intro(`${color.bgBlue(color.white(` Name: ${packageData.name} `))}`);
-    p.note(`${merlinSays(`I have summoned a sub-process daemon 👹`)}
-    
-    🚀  Running your ${color.bold('webcomponent')} ${color.bold(packageData.name)}:
-          ${color.underline(color.cyan(`http://localhost:${port}`))}
-    
-    🏠  Launched: ${color.underline(color.bold(color.yellow(color.bgBlack(`${process.cwd()}`))))}
-    💻  Folder: ${color.bold(color.yellow(color.bgBlack(`cd ${process.cwd()}`)))}
-    📂  Open folder: ${color.bold(color.yellow(color.bgBlack(`open ${process.cwd()}`)))}
-    📘  VS Code Project: ${color.bold(color.yellow(color.bgBlack(`code ${process.cwd()}`)))}
-    🚧  Launch later: ${color.bold(color.yellow(color.bgBlack(`${commandRun.options.npmClient} start`)))}
-    
-    ⌨️  To exit 🧙 Merlin press: ${color.bold(color.black(color.bgRed(` CTRL + C `)))}
-    `);
-    try {
-      // ensure it's installed first, unless it's a monorepo
-      if (!commandRun.options.isMonorepo) {
-        let s = p.spinner();
-        s.start(merlinSays(`Installation magic (${commandRun.options.npmClient} install)`));
-        await exec(`${commandRun.options.npmClient} install`);
-        s.stop(merlinSays(`Everything is installed. It's go time`));
-      }
-      await exec(`${commandRun.options.npmClient} start`);
-    }
-    catch(e) {
-      // don't log bc output is odd
-    }
+    await webcomponentCommandDetected(commandRun, packageData);
   }
   else {
     let activeProject = null;
@@ -328,7 +186,12 @@ async function main() {
     while (project.type !== 'quit') {
       if (activeProject) {
         p.note(` 🧙🪄 BE GONE ${color.bold(color.black(color.bgGreen(activeProject)))} sub-process daemon! 🪄 + ✨ 👹 = 💀 `);
-        commandRun.options = {};
+        console.log(project);
+        commandRun = {
+          command: null,
+          arguments: {},
+          options: {}
+        }
       }
       if (['site', 'webcomponent'].includes(commandRun.command)) {
         project = {
@@ -388,7 +251,7 @@ async function main() {
               }
             },
             name: ({ results }) => {
-              if (!commandRun.arguments.name) {
+              if (!commandRun.options.name) {
                 let placeholder = "mysite";
                 let message = "Site name:";
                 if (commandRun.command === "webcomponent" || results.type === "webcomponent") {
@@ -429,7 +292,6 @@ async function main() {
             },
             org: ({ results }) => {
               if (results.type === "webcomponent" && !commandRun.options.org && !commandRun.options.auto) {
-                // @todo detect mono repo and automatically add this
                 let initialOrg = '@yourOrganization';
                 return p.text({
                   message: 'Organization:',
@@ -453,7 +315,7 @@ async function main() {
               }
             },
             extras: ({ results }) => {
-              if (!commandRun.options.auto  && !commandRun.options.skip) {
+              if (!commandRun.options.auto) {
                 let options = [];
                 let initialValues = [];
                 if (commandRun.command === "webcomponent" || results.type === "webcomponent") {
@@ -496,31 +358,18 @@ async function main() {
         project = {
           isMonorepo: false,
           ...project,
+          ...commandRun.arguments,
           ...commandRun.options,
         };
-        // auto select operations to perform if requested
-        if (project.auto) {
-          let extras = ['launch'];
-          if (project.type === "webcomponent") {
-            extras = ['launch', 'install', 'git'];
-            if (!sysGit || project.isMonorepo) {
-              extras.pop();
-            }
-          }
-          project.extras = extras;
-        }
-        // values not set by user but used in templating
-        project.className = dashToCamel(project.name);
         project.year = new Date().getFullYear();
         project.version = await HAXCMS.getHAXCMSVersion();
         // resolve site vs multi-site
         switch (project.type) {
           case 'site':
-            siteProcess(commandRun, project, port);
+            await siteProcess(commandRun, project);
           break;
           case 'webcomponent':
-            port = "8000";
-            webcomponentProcess(commandRun, project, port);
+            await webcomponentProcess(commandRun, project);
           break;
         }
       }
