@@ -23,7 +23,7 @@
     "start": "npm run build && node ./dist/create.js && chmod 774 dist/create.js",
     "release": "npm run build && commit-and-tag-version && git push --follow-tags origin main && npm publish",
     "hax": "hax",
-    "debug": "nodemon --watch src",
+    "dev": "nodemon --watch src",
     "haxcms-nodejs-cli": "haxcms-nodejs-cli"
   },
   "bin": {
@@ -42,7 +42,7 @@
   "dependencies": {
     "@clack/core": "0.3.4",
     "@clack/prompts": "0.7.0",
-    "@haxtheweb/haxcms-nodejs": "^9.0.13",
+    "@haxtheweb/haxcms-nodejs": "^9.0.14",
     "ejs": "3.1.10",
     "picocolors": "1.0.1",
     "commander": "12.1.0"

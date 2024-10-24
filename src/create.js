@@ -9,8 +9,8 @@ import color from 'picocolors';
 
 import { haxIntro, communityStatement } from "./lib/statements.js";
 import { webcomponentProcess, webcomponentCommandDetected } from "./lib/programs/webcomponent.js";
-import { siteProcess, siteCommandDetected } from "./lib/programs/site.js";
-
+import { siteActions, siteNodeOperations, siteProcess, siteCommandDetected } from "./lib/programs/site.js";
+import { camelToDash } from "./lib/utils.js";
 import * as hax from "@haxtheweb/haxcms-nodejs";
 const HAXCMS = hax.HAXCMS;
 
@@ -41,11 +41,10 @@ async function main() {
   .option('--org <char>', 'organization for package.json')
   .option('--author <char>', 'author for site / package.json')
 
-
-// options for site
+  // options for site
+  .option('--node-op <char>', 'node operation to perform')
   .option('--item-id <char>', 'node ID to operate on')
   .option('--name <char>', 'name of the project')
-  .option('--title <char>', 'node title')
   .option('--domain <char>', 'published domain name')
   .helpCommand(true);
 
@@ -62,9 +61,14 @@ async function main() {
   });
 
   // site operations and actions
-  program
-  .command('site')
-  .argument('[action]', 'action to take')
+  let strActions = '';
+  siteActions().forEach(action => {
+    strActions+= `${action.value} - ${action.label}` + "\n\r";
+  });
+  let siteProg = program
+  .command('site');
+  siteProg
+  .argument('[action]', 'Actions to perform on site include:' + "\n\r" + strActions)
   .action((action) => {
     commandRun = {
       command: 'site',
@@ -73,15 +77,18 @@ async function main() {
       },
       options: {
         skip: true,
-        y: (action) ? true : false
       }
     };
   })
   .option('--name <char>', 'name of the site (when creating a new one)')
-  .option('--title <char>', 'node title')
   .option('--domain <char>', 'published domain name')
+  .option('--node-op <char>', 'node operation to perform')
   .version(await HAXCMS.getHAXCMSVersion());
-
+  let siteNodeOps = siteNodeOperations();
+  for (var i in siteNodeOps) {
+    program.option(`--${camelToDash(siteNodeOps[i].value)} <char>`, `${siteNodeOps[i].label}`)
+    siteProg.option(`--${camelToDash(siteNodeOps[i].value)} <char>`, `${siteNodeOps[i].label}`)
+  }
   // webcomponent program
   program
   .command('webcomponent')
@@ -91,13 +98,15 @@ async function main() {
     commandRun = {
       command: 'webcomponent',
       arguments: {
-        name: name
       },
       options: {
         skip: true,
         y: (name) ? true : false
       }
     };
+    if (name) {
+      commandRun.arguments.name = name;
+    }
   })
   .option('--org <char>', 'organization for package.json')
   .option('--author <char>', 'author for site / package.json');
@@ -251,7 +260,7 @@ async function main() {
               }
             },
             name: ({ results }) => {
-              if (!commandRun.options.name) {
+              if (!commandRun.arguments.name) {
                 let placeholder = "mysite";
                 let message = "Site name:";
                 if (commandRun.command === "webcomponent" || results.type === "webcomponent") {
@@ -355,12 +364,21 @@ async function main() {
         );
         // merge cli options with project options assume this is NOT a monorepo
         // but spread will overwrite if needed
-        project = {
-          isMonorepo: false,
-          ...project,
-          ...commandRun.arguments,
-          ...commandRun.options,
-        };
+        if (commandRun.command === 'webcomponent' && !commandRun.arguments.name) {
+          project = {
+            isMonorepo: false,
+            ...project,
+            ...commandRun.options,
+          };
+        }
+        else {
+          project = {
+            isMonorepo: false,
+            ...project,
+            ...commandRun.arguments,
+            ...commandRun.options,
+          };
+        }
         project.year = new Date().getFullYear();
         project.version = await HAXCMS.getHAXCMSVersion();
         // resolve site vs multi-site

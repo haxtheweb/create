@@ -17,6 +17,16 @@ export function generateUUID() {
   return "ss-s-s-s-sss".replace(/s/g, _uuidPart);
 }
 
+/**
+ * Helper to convert camel case to dash; important when setting attributes.
+ */
+export function camelToDash(str) {
+  return str
+    .replace(/\W+/g, "-")
+    .replace(/([a-z\d])([A-Z])/g, "$1-$2")
+    .toLowerCase();
+}
+
 function _uuidPart() {
   return Math.floor((1 + Math.random()) * 0x10000)
   .toString(16)

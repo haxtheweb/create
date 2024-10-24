@@ -25,15 +25,27 @@ const fakeSend = {
     sendStatus: (data) => console.log(data) 
   }
 
+export function siteActions() {
+  return [
+    { value: 'start', label: "Start site (http://localhost)"},
+    { value: 'status', label: "Status" },
+    { value: 'sync', label: "Sync git"},
+    { value: 'theme', label: "Change theme"},
+    { value: 'node:add', label: "Add page"},
+    { value: 'node:edit', label: "Edit page"},
+    { value: 'node:delete', label: "Delete page"},
+  ];
+}
+
 export async function siteCommandDetected(commandRun) {
-    var siteData = await hax.systemStructureContext();
+    var activeHaxsite = await hax.systemStructureContext();
     // default to status unless already set so we don't issue a create in a create
     if (!commandRun.arguments.action) {
         commandRun.arguments.action = 'status';
       }
       p.intro(`${color.bgBlack(color.white(` HAXTheWeb : Site detected `))}`);
       commandRun.command = "site";
-      p.intro(`${color.bgBlue(color.white(` Name: ${siteData.name} `))}`);
+      p.intro(`${color.bgBlue(color.white(` Name: ${activeHaxsite.name} `))}`);
       // defaults if nothing set via CLI
       let operation = {
         ...commandRun.arguments,
@@ -43,19 +55,13 @@ export async function siteCommandDetected(commandRun) {
         commandRun.options.title = "New Page";
       }
       if (!commandRun.options.domain &&  commandRun.options.y) {
-        commandRun.options.domain = `haxcli-${siteData.name}.surge.sh`;
+        commandRun.options.domain = `haxcli-${activeHaxsite.name}.surge.sh`;
       }
       // infinite loop until quitting the cli
       while (operation.action !== 'quit') {
-        let actions = [
-          { value: 'status', label: "Site Status" },
-          { value: 'localhost', label: "Open Site (localhost)"},
-          { value: 'git:sync', label: "Sync code in git"},
-          { value: 'node:add', label: "Add New Page"},
-          { value: 'node:delete', label: "Delete Page"},
-        ];
+        let actions = siteActions();
         if (sysSurge) {
-          actions.push({ value: 'publish-surge', label: "Publish site using Surge.sh"});              
+          actions.push({ value: 'surge', label: "Publish site using Surge.sh"});              
         }
         actions.push({ value: 'quit', label: "🚪 Quit"});
         if (!operation.action) {
@@ -65,7 +71,7 @@ export async function siteCommandDetected(commandRun) {
             options: {}
           }
           // ensures data is updated and stateful per action
-          siteData = await hax.systemStructureContext();
+          activeHaxsite = await hax.systemStructureContext();
           operation = await p.group(
             {
               action: ({ results }) =>
@@ -84,13 +90,17 @@ export async function siteCommandDetected(commandRun) {
         }
         switch (operation.action) {
           case "status":
-            p.intro(`${color.bgBlue(color.white(` Title: ${siteData.manifest.title} `))}`);
-            p.intro(`${color.bgBlue(color.white(` Description: ${siteData.manifest.description} `))}`);
-            p.intro(`${color.bgBlue(color.white(` Pages: ${siteData.manifest.items.length} `))}`);  
+            p.intro(`${color.bgBlue(color.white(` Title: ${activeHaxsite.manifest.title} `))}`);
+            p.intro(`${color.bgBlue(color.white(` Description: ${activeHaxsite.manifest.description} `))}`);
+            p.intro(`${color.bgBlue(color.white(` Pages: ${activeHaxsite.manifest.items.length} `))}`);  
+            const date = new Date(activeHaxsite.manifest.metadata.site.updated*1000);
+            p.intro(`${color.bgBlue(color.white(` Last updated: ${date.toLocaleDateString("en-US")} `))}`);
           break;
-          case "localhost":
+          case "start":
             try {
-              await exec(`cd ${siteData.directory} && npx @haxtheweb/haxcms-nodejs`);
+              p.intro(`Starting server.. `);
+              p.intro(`⌨️  To stop server, press: ${color.bold(color.black(color.bgRed(` CTRL + C `)))}`);
+              await exec(`cd ${activeHaxsite.directory} && npx @haxtheweb/haxcms-nodejs`);
             }
             catch(e) {
               console.log(e.stderr);
@@ -111,11 +121,113 @@ export async function siteCommandDetected(commandRun) {
                   }
                 });
               }
-              let resp = await haxcmsNodejsCli.cliBridge('createNode', { site: siteData, node: { title: commandRun.options.title }});
+              let resp = await haxcmsNodejsCli.cliBridge('createNode', { site: activeHaxsite, node: { title: commandRun.options.title }});
               if (commandRun.options.v) {
                 console.log(resp.res.data);
               }
               console.log(`"${commandRun.options.title}" added to site`);
+            }
+            catch(e) {
+              console.log(e.stderr);
+            }
+          break;
+          case "node:edit":
+            try {
+              if (!commandRun.options.itemId) {
+                commandRun.options.itemId = await p.select({
+                  message: `Select an item to edit`,
+                  required: true,
+                  options: [ {value: null, label: "-- edit nothing, exit --" }, ...await siteItemsOptionsList(activeHaxsite)],
+                });
+              }
+              if (commandRun.options.itemId) {
+                let nodeOps = siteNodeOperations();
+                let page = activeHaxsite.loadNode(commandRun.options.itemId);
+                // select which aspect of this we are editing
+                if (!commandRun.options.nodeOp) {
+                  commandRun.options.nodeOp = await p.select({
+                    message: `${page.title} (${page.id}) - Node operations`,
+                    required: true,
+                    options: [ {value: null, label: "-- Exit --"}, ...nodeOps],
+                  });
+                }
+                if (commandRun.options.nodeOp && siteNodeOperations(commandRun.options.nodeOp)) {
+                  let nodeProp = commandRun.options.nodeOp;
+                  var propValue = commandRun.options[nodeProp];
+                  // verify we have a setting for the operation requested
+                  // otherwise we get interactive again
+                  if (!commandRun.options[nodeProp]) {
+                    let val = page[nodeProp];
+                    if (['tags', 'published', 'hideInMenu', 'theme'].includes(nodeProp)) {
+                      val = page.metadata[nodeProp];
+                    }
+                    else if (nodeProp === 'content') {
+                      val = await activeHaxsite.getPageContent(page);
+                    }
+                    //  boolean is confirm
+                    if (['published', 'hideInMenu'].includes(nodeProp)) {
+                      propValue = await p.confirm({
+                        message: `${nodeProp}:`,
+                        initialValue: Boolean(val),
+                        defaultValue: Boolean(val),
+                      });
+                    }
+                    // these have fixed possible values
+                    else if (['parent', 'theme'].includes(nodeProp)) {
+                      let l = nodeProp === 'parent' ? "-- no parent --" : "-- no theme --";
+                      let list = nodeProp === 'parent' ? await siteItemsOptionsList(activeHaxsite,  page.id) : await siteThemeList();
+                      propValue = await p.select({
+                        message: `${nodeProp}:`,
+                        defaultValue: val,
+                        initialValue: val,
+                        options: [ {value: null, label: l }, ...list],
+                      });
+                    }
+                    else {
+                      propValue = await p.text({
+                        message: `${nodeProp}:`,
+                        initialValue: val,
+                        defaultValue: val,
+                      });
+                    }
+                  }
+                  if (nodeProp === 'order') {
+                    propValue = parseInt(propValue);
+                  }
+                  // account for CLI
+                  if (propValue === "null") {
+                    propValue = null;
+                  }
+                  commandRun.options[nodeProp] = propValue;
+                }
+                // ensure we set empty values, just not completely undefined values
+                if (typeof commandRun.options[commandRun.options.nodeOp] !== "undefined") {
+                  if (commandRun.options.nodeOp === 'content') {
+                    if (commandRun.options.content && await page.writeLocation(commandRun.options.content)) {
+                      console.log(`node:edit success updated page content: "${page.id}`);
+                    }
+                    else {
+                      console.warn(`node:edit failure to write page content : ${page.id}`);
+                    }
+                  }
+                  else {
+                    if (['tags', 'published', 'hideInMenu'].includes(commandRun.options.nodeOp)) {
+                      page.metadata[commandRun.options.nodeOp] = commandRun.options[commandRun.options.nodeOp];
+                    }
+                    else if (commandRun.options.nodeOp === 'theme') {
+                      let themes = await HAXCMS.getThemes();
+                      page.metadata.theme = themes[commandRun.options[commandRun.options.nodeOp]];
+                    }
+                    else {
+                      page[commandRun.options.nodeOp] = commandRun.options[commandRun.options.nodeOp];
+                    }
+                    let resp = await activeHaxsite.updateNode(page);
+                    if (commandRun.options.v) {
+                      console.log(resp);
+                    }
+                  }
+                }
+              }
             }
             catch(e) {
               console.log(e.stderr);
@@ -127,36 +239,75 @@ export async function siteCommandDetected(commandRun) {
                 commandRun.options.itemId = await p.select({
                   message: `Select an item to delete`,
                   required: true,
-                  options: await siteItemsOptionsList(siteData),
+                  options: [ {value: null, label: "-- Delete nothing, exit --" }, ...await siteItemsOptionsList(activeHaxsite)],
                 });
               }
-              let resp = await haxcmsNodejsCli.cliBridge('deleteNode', { site: siteData, node: { id: commandRun.options.itemId }});
-              if (resp.res.data === 500) {
-                console.warn(`node:delete failed "${commandRun.options.itemId} not found`);
-              }
-              else {
-                console.log(`"${commandRun.options.itemId}" deleted`);
+              if (commandRun.options.itemId) {
+                let del = false;
+                if (!commandRun.options.y) {
+                  del = await p.confirm({
+                    message: `Are you sure you want to delete ${commandRun.options.itemId}? (This cannot be undone)`,
+                    initialValue: true,
+                  });
+                }
+                else {
+                  del = true;
+                }
+                // extra confirmation given destructive operation
+                if (del) {
+                  let resp = await haxcmsNodejsCli.cliBridge('deleteNode', { site: activeHaxsite, node: { id: commandRun.options.itemId }});
+                  if (resp.res.data === 500) {
+                    console.warn(`node:delete failed "${commandRun.options.itemId} not found`);
+                  }
+                  else {
+                    console.log(`"${commandRun.options.itemId}" deleted`);
+                  }    
+                }
               }
             }
             catch(e) {
               console.log(e.stderr);
             }
           break;
-          case "git:sync":
+          case "sync":
             // @todo git sync might need other arguments / be combined with publishing
             try {
-              await exec(`cd ${siteData.directory} && git pull && git push`);
+              await exec(`cd ${activeHaxsite.directory} && git pull && git push`);
             }
             catch(e) {
               console.log(e.stderr);
             }
           break;
-          case "publish-surge":
+          case "theme":
+            try {
+              //theme
+              let list = await siteThemeList();
+              activeHaxsite = await hax.systemStructureContext();
+              let val = activeHaxsite.manifest.metadata.theme.element;
+              if (!commandRun.options.theme) {
+                commandRun.options.theme = await p.select({
+                  message: `Select theme:`,
+                  defaultValue: val,
+                  initialValue: val,
+                  options: list,
+                });
+                let themes = await HAXCMS.getThemes();
+                if (themes && commandRun.options.theme && themes[commandRun.options.theme]) {
+                  activeHaxsite.manifest.metadata.theme = themes[commandRun.options.theme];
+                  activeHaxsite.manifest.save(false);
+                }
+              }
+            }
+            catch(e) {
+              console.log(e.stderr);
+            }
+          break;
+          case "surge":
             try {
               if (!commandRun.options.domain) {
                 commandRun.options.domain = await p.text({
                   message: `Domain for surge`,
-                  defaultValue: `haxcli-${siteData.name}.surge.sh`,
+                  defaultValue: `haxcli-${activeHaxsite.name}.surge.sh`,
                   required: true,
                   validate: (value) => {
                     if (!value) {
@@ -165,7 +316,7 @@ export async function siteCommandDetected(commandRun) {
                   }
                 });
               }
-              let execOutput = await exec(`cd ${siteData.directory} && surge . ${commandRun.options.domain}`);
+              let execOutput = await exec(`cd ${activeHaxsite.directory} && surge . ${commandRun.options.domain}`);
               console.log(execOutput.stdout.trim());
             }
             catch(e) {
@@ -183,6 +334,29 @@ export async function siteCommandDetected(commandRun) {
         operation.action = null;
       }
       communityStatement();
+}
+
+export function siteNodeOperations(search = null){
+  let obj = [
+    {value: 'title', label: "Title"},
+    {value: 'content', label: "Page content"},
+    {value: 'slug', label: "Path (slug)"},
+    {value: 'published', label: "Publishing status"},
+    {value: 'tags', label: "Tags"},
+    {value: 'parent', label: "Parent"},
+    {value: 'order', label: "Order"},
+    {value: 'theme', label: "Theme"},
+    {value: 'hideInMenu', label: "Hide in menu"},
+  ];
+  if (search) {
+    for (const op of obj) {
+      if (op.value === search) {
+        return true;
+      }
+    }
+    return false;
+  }
+  return obj;
 }
 
 // process site creation
@@ -271,13 +445,29 @@ export async function siteProcess(commandRun, project, port = '3000') {
     }
 }
 
-export async function siteItemsOptionsList(siteData) {
-    let items = [];
-    for (var i in siteData.manifest.items) {
-        items.push({
-            value: siteData.manifest.items[i].id,
-            label: siteData.manifest.items[i].title
-        })
+
+export async function siteItemsOptionsList(activeHaxsite, skipId = null) {
+  let items = [];
+  for (var i in activeHaxsite.manifest.items) {
+    // ensure we remove self if operation is about page in question like parent selector
+    if (activeHaxsite.manifest.items[i].id !== skipId) {
+      items.push({
+        value: activeHaxsite.manifest.items[i].id,
+        label: activeHaxsite.manifest.items[i].title
+      })  
     }
-    return items;
+  }
+  return items;
+}
+
+export async function siteThemeList() {
+  let themes = await HAXCMS.getThemes();
+  let items = [];
+  for (var i in themes) {
+    items.push({
+      value: i,
+      label: themes[i].name
+    })
+  }
+  return items;
 }
