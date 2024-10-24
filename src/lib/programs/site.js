@@ -111,7 +111,10 @@ export async function siteCommandDetected(commandRun) {
                   }
                 });
               }
-              await haxcmsNodejsCli.cliBridge('createNode', { site: siteData, node: { title: commandRun.options.title }});
+              let resp = await haxcmsNodejsCli.cliBridge('createNode', { site: siteData, node: { title: commandRun.options.title }});
+              if (commandRun.options.v) {
+                console.log(resp.res.data);
+              }
               console.log(`"${commandRun.options.title}" added to site`);
             }
             catch(e) {
@@ -127,9 +130,13 @@ export async function siteCommandDetected(commandRun) {
                   options: await siteItemsOptionsList(siteData),
                 });
               }
-              let response = await haxcmsNodejsCli.cliBridge('deleteNode', { site: siteData, node: { id: commandRun.options.itemId }});
-              console.log(response.res);
-              console.log(`"${commandRun.options.itemId}" deleted`);
+              let resp = await haxcmsNodejsCli.cliBridge('deleteNode', { site: siteData, node: { id: commandRun.options.itemId }});
+              if (resp.res.data === 500) {
+                console.warn(`node:delete failed "${commandRun.options.itemId} not found`);
+              }
+              else {
+                console.log(`"${commandRun.options.itemId}" deleted`);
+              }
             }
             catch(e) {
               console.log(e.stderr);
