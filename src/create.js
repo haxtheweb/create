@@ -134,7 +134,7 @@ async function main() {
     console.log('git config --global user.email "email@here');
   }
   // only set path if not already set
-  if (!commandRun.options.path) {
+  if (!commandRun.options.path && commandRun.options.skip) {
     commandRun.options.path = process.cwd();
   }
   if (commandRun.options.auto) { 
