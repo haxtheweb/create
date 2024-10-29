@@ -133,11 +133,11 @@ async function main() {
     console.log('git config --global user.name "namehere"');
     console.log('git config --global user.email "email@here');
   }
-  if (commandRun.options.auto) {
-    // only set path if not already set
-    if (!commandRun.options.path) {
-      commandRun.options.path = process.cwd();
-    }
+  // only set path if not already set
+  if (!commandRun.options.path) {
+    commandRun.options.path = process.cwd();
+  }
+  if (commandRun.options.auto) { 
     commandRun.options.org = '';
     commandRun.options.author = author;
   }
@@ -201,7 +201,6 @@ async function main() {
     while (project.type !== 'quit') {
       if (activeProject) {
         p.note(` 🧙🪄 BE GONE ${color.bold(color.black(color.bgGreen(activeProject)))} sub-process daemon! 🪄 + ✨ 👹 = 💀 `);
-        console.log(project);
         commandRun = {
           command: null,
           arguments: {},
@@ -266,7 +265,7 @@ async function main() {
               }
             },
             name: ({ results }) => {
-              if (!commandRun.arguments.name) {
+              if (!commandRun.arguments.action && !commandRun.arguments.name) {
                 let placeholder = "mysite";
                 let message = "Site name:";
                 if (commandRun.command === "webcomponent" || results.type === "webcomponent") {
@@ -390,6 +389,14 @@ async function main() {
         // resolve site vs multi-site
         switch (project.type) {
           case 'site':
+            if (!project.name && commandRun.arguments.action) {
+              project.name = commandRun.arguments.action;
+            }
+            // only set path if not already set
+            if (!commandRun.options.path) {
+              commandRun.options.path = process.cwd();
+              project.path = commandRun.options.path;
+            }
             await siteProcess(commandRun, project);
           break;
           case 'webcomponent':
