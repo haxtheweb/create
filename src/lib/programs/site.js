@@ -92,6 +92,7 @@ export async function siteCommandDetected(commandRun) {
           case "status":
             p.intro(`${color.bgBlue(color.white(` Title: ${activeHaxsite.manifest.title} `))}`);
             p.intro(`${color.bgBlue(color.white(` Description: ${activeHaxsite.manifest.description} `))}`);
+            p.intro(`${color.bgBlue(color.white(` Theme: ${activeHaxsite.manifest.metadata.theme.name} (${activeHaxsite.manifest.metadata.theme.element})`))}`);
             p.intro(`${color.bgBlue(color.white(` Pages: ${activeHaxsite.manifest.items.length} `))}`);  
             const date = new Date(activeHaxsite.manifest.metadata.site.updated*1000);
             p.intro(`${color.bgBlue(color.white(` Last updated: ${date.toLocaleDateString("en-US")} `))}`);
