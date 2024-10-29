@@ -263,6 +263,9 @@ export async function siteCommandDetected(commandRun) {
                     console.log(`"${commandRun.options.itemId}" deleted`);
                   }    
                 }
+                else {
+                  console.log(`Delete operation canceled`);
+                }
               }
             }
             catch(e) {

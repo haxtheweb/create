@@ -72,14 +72,15 @@ async function main() {
   .action((action) => {
     commandRun = {
       command: 'site',
-      arguments: {
-        action: action
-      },
-      options: {
-        skip: true,
-      }
+      arguments: {},
+      options: {}
     };
+    if (action) {
+      commandRun.arguments.action = action;
+      commandRun.options.skip = true;
+    }
   })
+  .option('--path <char>', 'path the project should be created in')
   .option('--name <char>', 'name of the site (when creating a new one)')
   .option('--domain <char>', 'published domain name')
   .option('--node-op <char>', 'node operation to perform')
@@ -89,6 +90,7 @@ async function main() {
     program.option(`--${camelToDash(siteNodeOps[i].value)} <char>`, `${siteNodeOps[i].label}`)
     siteProg.option(`--${camelToDash(siteNodeOps[i].value)} <char>`, `${siteNodeOps[i].label}`)
   }
+  
   // webcomponent program
   program
   .command('webcomponent')
@@ -97,21 +99,18 @@ async function main() {
   .action((name) => {
     commandRun = {
       command: 'webcomponent',
-      arguments: {
-      },
-      options: {
-        skip: true,
-        y: (name) ? true : false
-      }
+      arguments: {},
+      options: {}
     };
+    // if name set, populate
     if (name) {
       commandRun.arguments.name = name;
+      commandRun.options.skip = true;
     }
   })
+  .option('--path <char>', 'path the project should be created in')
   .option('--org <char>', 'organization for package.json')
   .option('--author <char>', 'author for site / package.json');
-
-
   // process program arguments
   program.parse();
   commandRun.options = {...commandRun.options, ...program.opts()};
@@ -122,9 +121,6 @@ async function main() {
   if (commandRun.options.y || commandRun.options.auto) {
     commandRun.options.y = true;
     commandRun.options.auto = true;
-  }
-  if (!commandRun.options.y && !commandRun.options.auto && !commandRun.options.skip) {
-    await haxIntro();
   }
   let author = '';
   // should be able to grab if not predefined
@@ -138,7 +134,10 @@ async function main() {
     console.log('git config --global user.email "email@here');
   }
   if (commandRun.options.auto) {
-    commandRun.options.path = process.cwd();
+    // only set path if not already set
+    if (!commandRun.options.path) {
+      commandRun.options.path = process.cwd();
+    }
     commandRun.options.org = '';
     commandRun.options.author = author;
   }
@@ -184,12 +183,19 @@ async function main() {
   }
   // CLI works within context of the site if one is detected, otherwise we can do other thingss
   if (await hax.systemStructureContext()) {
+    commandRun.program = 'site';
+    commandRun.options.skip = true;
     await siteCommandDetected(commandRun);
   }
   else if (packageData && packageData.hax && packageData.hax.cli && packageData.scripts.start) {
+    commandRun.program = 'webcomponent';
+    commandRun.options.skip = true;
     await webcomponentCommandDetected(commandRun, packageData);
   }
   else {
+    if (commandRun.command === 'start' && !commandRun.options.y && !commandRun.options.auto && !commandRun.options.skip) {
+      await haxIntro();
+    }
     let activeProject = null;
     let project = { type: null };
     while (project.type !== 'quit') {
@@ -243,7 +249,7 @@ async function main() {
             },
             path: ({ results }) => {
               let initialPath = `${process.cwd()}`;
-              if (!commandRun.options.path && !commandRun.options.auto) {
+              if (!commandRun.options.path && !commandRun.options.auto && !commandRun.options.skip) {
                 return p.text({
                   message: `What folder will your ${(commandRun.command === "webcomponent" || results.type === "webcomponent") ? "project" : "site"} live in?`,
                   placeholder: initialPath,
@@ -300,7 +306,7 @@ async function main() {
               }
             },
             org: ({ results }) => {
-              if (results.type === "webcomponent" && !commandRun.options.org && !commandRun.options.auto) {
+              if (results.type === "webcomponent" && !commandRun.options.org && !commandRun.options.auto && !commandRun.options.skip) {
                 let initialOrg = '@yourOrganization';
                 return p.text({
                   message: 'Organization:',
@@ -315,7 +321,7 @@ async function main() {
               }
             },
             author: ({ results }) => {
-              if (!commandRun.options.author && !commandRun.options.auto) {
+              if (!commandRun.options.author && !commandRun.options.auto && !commandRun.options.skip) {
                 return p.text({
                   message: 'Author:',
                   required: false,

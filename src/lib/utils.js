@@ -8,9 +8,14 @@ export const SITE_FILE_NAME = "site.json";
  * Helper to convert dash to camel; important when reading attributes.
  */
 export function dashToCamel(str) {
-  return str.replace(/-([a-z0-9])/g, function (g) {
+  return capitalizeFirstLetter(str.replace(/-([a-z0-9])/g, function (g) {
     return g[1].toUpperCase();
-  });
+  }));
+}
+
+//capitalize only the first letter of the string.
+export function capitalizeFirstLetter(string) {
+  return string.charAt(0).toUpperCase() + string.slice(1);
 }
 // generate unique-enough id
 export function generateUUID() {

@@ -32,8 +32,6 @@ export async function webcomponentProcess(commandRun, project, port = "8000") {
     }
     project.extras = extras;
   }
-  console.log(project);
-  console.log(commandRun);
   // values not set by user but used in templating
   project.className = dashToCamel(project.name);
   // option to build github repo link for the user
