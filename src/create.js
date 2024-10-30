@@ -42,6 +42,7 @@ async function main() {
   .option('--author <char>', 'author for site / package.json')
 
   // options for site
+  .option('--import-site <char>', 'URL of site to import')
   .option('--node-op <char>', 'node operation to perform')
   .option('--item-id <char>', 'node ID to operate on')
   .option('--name <char>', 'name of the project')
@@ -81,6 +82,7 @@ async function main() {
     }
   })
   .option('--path <char>', 'path the project should be created in')
+  .option('--import-site <char>', 'URL of site to import')
   .option('--name <char>', 'name of the site (when creating a new one)')
   .option('--domain <char>', 'published domain name')
   .option('--node-op <char>', 'node operation to perform')

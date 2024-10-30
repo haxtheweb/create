@@ -1,14 +1,11 @@
 #!/usr/bin/env node
-
 import { setTimeout } from 'node:timers/promises';
 import * as p from '@clack/prompts';
 import color from 'picocolors';
-
 import { merlinSays, communityStatement } from "../statements.js";
 import * as haxcmsNodejsCli from "@haxtheweb/haxcms-nodejs/dist/cli.js";
 import * as hax from "@haxtheweb/haxcms-nodejs";
 const HAXCMS = hax.HAXCMS;
-
 import * as child_process from "child_process";
 import * as util from "node:util";
 const exec = util.promisify(child_process.exec);
@@ -363,9 +360,42 @@ export function siteNodeOperations(search = null){
   return obj;
 }
 
+// fake response clas so we can capture the response from the headless route as opposed to print to console
+class Res {
+  constructor() {
+    this.query = {};
+    this.data = null;
+    this.statusCode = null;
+  }
+  send(data) {
+    this.data = data;
+    return this;
+  }
+  status(status) {
+    this.statusCode = status;
+    return this;
+  }
+  setHeader() {
+    return this;
+  }
+}
+
+async function openApiBroker(call, body) {
+  const handler = await import(`@haxtheweb/open-apis/dist/${call}.js`);
+  let res = new Res();
+  let req = {
+    body: JSON.stringify(body),
+    method: "post"
+  };
+  await handler.default(req, res);
+  return {
+    req: req,
+    res: res
+  };
+}
 // process site creation
-export async function siteProcess(commandRun, project, port = '3000') {
-    // auto select operations to perform if requested
+export async function siteProcess(commandRun, project, port = '3000') {  
+  // auto select operations to perform if requested
     if (!project.extras) {
         let extras = ['launch'];
         project.extras = extras;
@@ -382,13 +412,24 @@ export async function siteProcess(commandRun, project, port = '3000') {
             "type": "own",
             "structure": "course",
             "items": null,
-            "files": null
+            "files": null,
         },
         "theme": {
             "color": "green",
             "icon": "av:library-add"
         },
     };
+    // allow for importSite option
+    if (commandRun.options.importSite) {
+      const resp = await openApiBroker('apps/haxcms/convert/haxcmsToSite', { repoUrl: commandRun.options.importSite})
+      if (resp.res.data && resp.res.data.data && resp.res.data.data.items) {
+        siteRequest.build.structure = 'import';
+        siteRequest.build.items = resp.res.data.data.items;
+      }
+      if (resp.res.data && resp.res.data.data && resp.res.data.data.files) {
+        siteRequest.build.files = resp.res.data.data.files;
+      }
+    }
     HAXCMS.cliWritePath = `${project.path}`;
     await hax.RoutesMap.post.createSite({body: siteRequest}, fakeSend);
     s.stop(merlinSays(`${project.name} created!`));
