@@ -3,13 +3,20 @@ import { setTimeout } from 'node:timers/promises';
 import * as p from '@clack/prompts';
 import color from 'picocolors';
 import { merlinSays, communityStatement } from "../statements.js";
+// trick MFR into giving local paths
+globalThis.MicroFrontendRegistryConfig = {
+  base: `@haxtheweb/open-apis/`
+};
+import { MicroFrontendRegistry } from "../micro-frontend-registry.js";
+// emable HAXcms routes so we have name => path just like on frontend!
+MicroFrontendRegistry.enableServices(['haxcms']);
+
 import * as haxcmsNodejsCli from "@haxtheweb/haxcms-nodejs/dist/cli.js";
 import * as hax from "@haxtheweb/haxcms-nodejs";
 const HAXCMS = hax.HAXCMS;
 import * as child_process from "child_process";
 import * as util from "node:util";
 const exec = util.promisify(child_process.exec);
-
 var sysSurge = true;
 exec('surge --version', error => {
   if (error) {
@@ -380,18 +387,30 @@ class Res {
   }
 }
 
+// broker a call to the open-api repo which is an express based wrapper for vercel (originally)
+// this ensures the calls are identical and yet are converted to something the CLI can leverage
 async function openApiBroker(call, body) {
-  const handler = await import(`@haxtheweb/open-apis/dist/${call}.js`);
-  let res = new Res();
-  let req = {
-    body: JSON.stringify(body),
-    method: "post"
-  };
-  await handler.default(req, res);
-  return {
-    req: req,
-    res: res
-  };
+  let mfItem = MicroFrontendRegistry.get(`@haxcms/${call}`);
+  // ensure we have a MFR record to do the connection
+  // fun thing is this is local file access directly via import()
+  if (mfItem) {
+    // dynamic import... this might upset some stuff later bc it's not a direct reference
+    // but it's working locally at least.
+    const handler = await import(`${mfItem.endpoint.replace('/api/', '/dist/')}.js`);
+    // start the fake response
+    let res = new Res();
+    let req = {
+      body: JSON.stringify(body),
+      method: "post"
+    };
+    // js pass by ref for the win; these will both update bc of how we structured the calls
+    await handler.default(req, res);
+    // they'll need unpacked but that's a small price!
+    return {
+      req: req,
+      res: res
+    };
+  }
 }
 // process site creation
 export async function siteProcess(commandRun, project, port = '3000') {  
@@ -421,13 +440,20 @@ export async function siteProcess(commandRun, project, port = '3000') {
     };
     // allow for importSite option
     if (commandRun.options.importSite) {
-      const resp = await openApiBroker('apps/haxcms/convert/haxcmsToSite', { repoUrl: commandRun.options.importSite})
-      if (resp.res.data && resp.res.data.data && resp.res.data.data.items) {
-        siteRequest.build.structure = 'import';
-        siteRequest.build.items = resp.res.data.data.items;
+      if (!commandRun.options.importStructure) {
+        // assume hax to hax if it's not defined
+        commandRun.options.importStructure = 'haxcmsToSite';
       }
-      if (resp.res.data && resp.res.data.data && resp.res.data.data.files) {
-        siteRequest.build.files = resp.res.data.data.files;
+      // verify this is a valid way to do an import
+      if (commandRun.options.importStructure && MicroFrontendRegistry.get(`@haxcms/${commandRun.options.importStructure}`)) {
+        let resp = await openApiBroker(commandRun.options.importStructure, { repoUrl: commandRun.options.importSite});
+        if (resp.res.data && resp.res.data.data && resp.res.data.data.items) {
+          siteRequest.build.structure = 'import';
+          siteRequest.build.items = resp.res.data.data.items;
+        }
+        if (resp.res.data && resp.res.data.data && resp.res.data.data.files) {
+          siteRequest.build.files = resp.res.data.data.files;
+        }
       }
     }
     HAXCMS.cliWritePath = `${project.path}`;
@@ -437,7 +463,7 @@ export async function siteProcess(commandRun, project, port = '3000') {
 
     if (project.gitRepo && !commandRun.options.isMonorepo) {
       try {
-      await exec(`cd ${project.path}/${project.name} && git init && git add -A && git commit -m "first commit" && git branch -M main${project.gitRepo ? ` && git remote add origin ${project.gitRepo}` : ''}`);    
+        await exec(`cd ${project.path}/${project.name} && git init && git add -A && git commit -m "first commit" && git branch -M main${project.gitRepo ? ` && git remote add origin ${project.gitRepo}` : ''}`);    
       }
       catch(e) {        
       }

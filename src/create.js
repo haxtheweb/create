@@ -43,6 +43,7 @@ async function main() {
 
   // options for site
   .option('--import-site <char>', 'URL of site to import')
+  .option('--import-structure <char>', `import method to use:\n\rpressbooksToSite\n\relmslnToSite\n\rhaxcmsToSite\n\rnotionToSite\n\rgitbookToSite\n\revolutionToSite\n\rhtmlToSite\n\rdocxToSite`)
   .option('--node-op <char>', 'node operation to perform')
   .option('--item-id <char>', 'node ID to operate on')
   .option('--name <char>', 'name of the project')
@@ -83,6 +84,7 @@ async function main() {
   })
   .option('--path <char>', 'path the project should be created in')
   .option('--import-site <char>', 'URL of site to import')
+  .option('--import-structure <char>', `import method to use:\n\rpressbooksToSite\n\relmslnToSite\n\rhaxcmsToSite\n\rnotionToSite\n\rgitbookToSite\n\revolutionToSite\n\rhtmlToSite\n\rdocxToSite`)
   .option('--name <char>', 'name of the site (when creating a new one)')
   .option('--domain <char>', 'published domain name')
   .option('--node-op <char>', 'node operation to perform')
@@ -203,11 +205,17 @@ async function main() {
     while (project.type !== 'quit') {
       if (activeProject) {
         p.note(` 🧙🪄 BE GONE ${color.bold(color.black(color.bgGreen(activeProject)))} sub-process daemon! 🪄 + ✨ 👹 = 💀 `);
+        // ensure if we were automatically running the command we end
+        if (commandRun.options.y) {
+          communityStatement();
+          process.exit(0);
+        }
+        // otherwise null to reset the program to run again
         commandRun = {
           command: null,
           arguments: {},
           options: {}
-        }
+        };
       }
       if (['site', 'webcomponent'].includes(commandRun.command)) {
         project = {
