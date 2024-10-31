@@ -5,16 +5,55 @@ Rapidly build web components for the Web that work with HAX. HAX The Web's CLI t
 # this allows you to then use hax command
 npm install @haxtheweb/create --global
 # then run
-hax
+hax start
 ```
 
 # Commands
 
 ## Default / global / new context
-- `hax` - fun ascii art and interactive CLI (via [clack](https://www.clack.cc/) )
+- `hax start` - fun ascii art and interactive CLI (via [clack](https://www.clack.cc/) )
 - `hax --name my-element --y` - Make a new HAX capable, i18n wired, Design system (DDD) driven web component
   -  if in a monorepo root, will place in correct location / inherit settings
-- `hax --type haxsite --name mysite --y` - create a new HAXsite (HAXcms, single site)
+- `hax site mysite --y` - create a new HAXsite (HAXcms, single site)
+
+## --help
+```
+Usage: hax [options] [command]
+
+Options:
+  --
+  --v                            Verbose output for developers
+  --path <char>                  where to perform operation
+  --npm-client <char>            npm client to use (must be installed) npm,
+                                 yarn, pnpm (default: "npm")
+  --y                            yes to all questions
+  --skip                         skip frills like animations
+  --auto                         yes to all questions, alias of y
+  --org <char>                   organization for package.json
+  --author <char>                author for site / package.json
+  --import-site <char>           URL of site to import
+  --node-op <char>               node operation to perform
+  --item-id <char>               node ID to operate on
+  --name <char>                  name of the project
+  --domain <char>                published domain name
+  --title <char>                 Title
+  --content <char>               Page content
+  --slug <char>                  Path (slug)
+  --published <char>             Publishing status
+  --tags <char>                  Tags
+  --parent <char>                Parent
+  --order <char>                 Order
+  --theme <char>                 Theme
+  --hide-in-menu <char>          Hide in menu
+  -h, --help                     display help for command
+
+Commands:
+  start                          Interactive program to pick options
+  site [options] [action]
+  webcomponent [options] [name]  Create Lit based web components, with HAX
+                                 recommendations
+  help [command]                 display help for command
+```
 
 ## Site  context
 - listing stats
