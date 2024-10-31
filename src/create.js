@@ -238,6 +238,12 @@ async function main() {
           }
         );
       }
+      // detect being in a haxcms scaffold. easiest way is _sites being in this directory
+      // set the path automatically so we skip the question
+      if ((commandRun.command === "site") && fs.existsSync(`${process.cwd()}/_sites`)) {
+        p.intro(`${color.bgBlack(color.white(` HAXcms detected : Path set automatically `))}`);
+        commandRun.options.path = `${process.cwd()}/_sites`;
+      }
       activeProject = project.type;
       // silly but this way we don't have to take options for quitting
       if (project.type !== 'quit') {
