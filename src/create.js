@@ -171,6 +171,9 @@ async function main() {
         if (packageData.npmClient) {
           commandRun.options.npmClient = packageData.npmClient;
         }
+        else {
+          commandRun.options.npmClient = 'npm';
+        }
         // see if we're in a monorepo
         if (packageData.useWorkspaces && packageData.workspaces && packageData.workspaces.packages && packageData.workspaces.packages[0]) {
           p.intro(`${color.bgBlack(color.white(` Monorepo detected : Setting relative defaults `))}`);
