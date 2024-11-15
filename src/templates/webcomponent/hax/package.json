@@ -33,7 +33,7 @@
     },
     "devDependencies": {
       "@babel/preset-env": "^7.16.4",
-      "@custom-elements-manifest/analyzer": "^0.4.17",
+      "@custom-elements-manifest/analyzer": "^0.10.3",
       "@open-wc/building-rollup": "^3.0.2",
       "@rollup/plugin-babel": "^6.0.4",
       "@rollup/plugin-node-resolve": "^15.2.3",

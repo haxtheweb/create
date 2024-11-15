@@ -30,7 +30,9 @@ async function main() {
   var commandRun = {};
   program
   .option('--')
-  .option('--v', 'Verbose output for developers')
+  .option('--v', 'Verbose output')
+  .option('--debug', 'Output for developers')
+  .option('--format <char>', 'Output format; json (default), yaml')
   .option('--path <char>', 'where to perform operation')
   .option('--npm-client <char>', 'npm client to use (must be installed) npm, yarn, pnpm', 'npm')
   .option('--y', 'yes to all questions')
@@ -40,6 +42,7 @@ async function main() {
   // options for webcomponent
   .option('--org <char>', 'organization for package.json')
   .option('--author <char>', 'author for site / package.json')
+  .option('--writeHaxProperties', 'Write haxProperties for the element')
 
   // options for site
   .option('--import-site <char>', 'URL of site to import')
@@ -114,11 +117,12 @@ async function main() {
   })
   .option('--path <char>', 'path the project should be created in')
   .option('--org <char>', 'organization for package.json')
-  .option('--author <char>', 'author for site / package.json');
+  .option('--author <char>', 'author for site / package.json')
+  .option('--writeHaxProperties', 'Write haxProperties for the element');
   // process program arguments
   program.parse();
   commandRun.options = {...commandRun.options, ...program.opts()};
-  if (commandRun.options.v) {
+  if (commandRun.options.debug) {
     console.log(commandRun);
   }
   // auto and y assume same thing
@@ -162,7 +166,7 @@ async function main() {
     let packLoc = testPackages.shift();
     if (fs.existsSync(packLoc)) {
       try {
-        packageData = JSON.parse(fs.readFileSync(`${process.cwd()}/package.json`));
+        packageData = {...JSON.parse(fs.readFileSync(packLoc)), ...packageData};
         // assume we are working on a web component / existing if we find this key
         if (packageData.hax && packageData.hax.cli) {
           commandRun.program = 'webcomponent';
@@ -193,13 +197,16 @@ async function main() {
       }
     }
   }
+  if (commandRun.options.debug) {
+    console.log(packageData);
+  }
   // CLI works within context of the site if one is detected, otherwise we can do other thingss
   if (await hax.systemStructureContext()) {
     commandRun.program = 'site';
     commandRun.options.skip = true;
     await siteCommandDetected(commandRun);
   }
-  else if (packageData && packageData.hax && packageData.hax.cli && packageData.scripts.start) {
+  else if (packageData && (packageData.customElements || packageData.hax && packageData.hax.cli) && packageData.scripts.start) {
     commandRun.program = 'webcomponent';
     commandRun.options.skip = true;
     await webcomponentCommandDetected(commandRun, packageData);
@@ -240,7 +247,7 @@ async function main() {
               required: true,
               options: [
                 { value: 'webcomponent', label: '🏗️ Create a Web Component' },
-                { value: 'site', label: '🏡 Create a HAXcms site (single)'},
+                { value: 'site', label: '🏡 Create a HAXsite'},
                 { value: 'quit', label: '🚪 Quit'},
               ],
             }),

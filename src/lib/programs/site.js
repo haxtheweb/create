@@ -2,6 +2,8 @@
 import { setTimeout } from 'node:timers/promises';
 import * as p from '@clack/prompts';
 import color from 'picocolors';
+import { dump } from 'js-yaml';
+import { parse } from 'node-html-parser';
 import { merlinSays, communityStatement } from "../statements.js";
 // trick MFR into giving local paths
 globalThis.MicroFrontendRegistryConfig = {
@@ -24,10 +26,27 @@ exec('surge --version', error => {
   }
 });
 
-const fakeSend = {
-    send: (json) => console.log(json),
-    sendStatus: (data) => console.log(data) 
+// fake response class so we can capture the response from the headless route as opposed to print to console
+// this way we can handle as data or if use is requesting output format to change we can respond
+class Res {
+  constructor() {
+    this.query = {};
+    this.data = null;
+    this.statusCode = null;
   }
+  send(data) {
+    this.data = data;
+    return this;
+  }
+  status(status) {
+    this.statusCode = status;
+    return this;
+  }
+  setHeader() {
+    return this;
+  }
+}
+
 
 export function siteActions() {
   return [
@@ -35,9 +54,11 @@ export function siteActions() {
     { value: 'status', label: "Status" },
     { value: 'sync', label: "Sync git"},
     { value: 'theme', label: "Change theme"},
+    { value: 'node:stats', label: "Page stats"},
     { value: 'node:add', label: "Add page"},
     { value: 'node:edit', label: "Edit page"},
     { value: 'node:delete', label: "Delete page"},
+    { value: 'file:list', label: "List files" },
   ];
 }
 
@@ -106,6 +127,43 @@ export async function siteCommandDetected(commandRun) {
               p.intro(`Starting server.. `);
               p.intro(`⌨️  To stop server, press: ${color.bold(color.black(color.bgRed(` CTRL + C `)))}`);
               await exec(`cd ${activeHaxsite.directory} && npx @haxtheweb/haxcms-nodejs`);
+            }
+            catch(e) {
+              console.log(e.stderr);
+            }
+          break;
+          case "node:stats":
+            try {
+              if (!commandRun.options.itemId) {
+                commandRun.options.itemId = await p.select({
+                  message: `Select an item to edit`,
+                  required: true,
+                  options: [ {value: null, label: "-- edit nothing, exit --" }, ...await siteItemsOptionsList(activeHaxsite)],
+                });
+              }
+              if (commandRun.options.itemId) {
+                let nodeOps = siteNodeStatsOperations();
+                let page = activeHaxsite.loadNode(commandRun.options.itemId);
+                // select which aspect of this we are editing
+                if (!commandRun.options.nodeOp) {
+                  commandRun.options.nodeOp = await p.select({
+                    message: `${page.title} (${page.id}) - Node operations`,
+                    required: true,
+                    options: [ {value: null, label: "-- Exit --"}, ...nodeOps],
+                  });
+                }
+                if (commandRun.options.nodeOp && siteNodeStatsOperations(commandRun.options.nodeOp)) {
+                  switch(commandRun.options.nodeOp) {
+                    case 'details':
+                      console.log(page);
+                    break;
+                    case 'html':
+                      let html = await activeHaxsite.getPageContent(page);
+                      console.log(html);
+                    break;
+                  }
+                }
+              }
             }
             catch(e) {
               console.log(e.stderr);
@@ -331,6 +389,16 @@ export async function siteCommandDetected(commandRun) {
               console.log(e.stderr);
             }
           break;
+          case "file:list":
+            let res = new Res();
+            await hax.RoutesMap.get.listFiles({query: activeHaxsite.name, filename: commandRun.options.filename}, res);
+            if (commandRun.options.format === 'yaml') {
+              console.log(dump(res.data));
+            }
+            else {
+              console.log(res.data);
+            }
+            break;
           case "quit":
             // quit
           process.exit(0);
@@ -342,6 +410,24 @@ export async function siteCommandDetected(commandRun) {
         operation.action = null;
       }
       communityStatement();
+}
+
+export function siteNodeStatsOperations(search = null){
+  let obj = [
+    {value: 'details', label: "Details"},
+    {value: 'html', label: "Page as HTML source"},
+    {value: 'schema', label: "Page as HAXElementSchema"},
+    {value: 'md', label: "Page as Markdown"},    
+  ];
+  if (search) {
+    for (const op of obj) {
+      if (op.value === search) {
+        return true;
+      }
+    }
+    return false;
+  }
+  return obj;
 }
 
 export function siteNodeOperations(search = null){
@@ -367,26 +453,6 @@ export function siteNodeOperations(search = null){
   return obj;
 }
 
-// fake response clas so we can capture the response from the headless route as opposed to print to console
-class Res {
-  constructor() {
-    this.query = {};
-    this.data = null;
-    this.statusCode = null;
-  }
-  send(data) {
-    this.data = data;
-    return this;
-  }
-  status(status) {
-    this.statusCode = status;
-    return this;
-  }
-  setHeader() {
-    return this;
-  }
-}
-
 // broker a call to the open-api repo which is an express based wrapper for vercel (originally)
 // this ensures the calls are identical and yet are converted to something the CLI can leverage
 async function openApiBroker(call, body) {
@@ -397,7 +463,6 @@ async function openApiBroker(call, body) {
     // dynamic import... this might upset some stuff later bc it's not a direct reference
     // but it's working locally at least.
     const handler = await import(`${mfItem.endpoint.replace('/api/', '/dist/')}.js`);
-    // start the fake response
     let res = new Res();
     let req = {
       body: JSON.stringify(body),
@@ -457,7 +522,16 @@ export async function siteProcess(commandRun, project, port = '3000') {
       }
     }
     HAXCMS.cliWritePath = `${project.path}`;
-    await hax.RoutesMap.post.createSite({body: siteRequest}, fakeSend);
+    let res = new Res();
+    await hax.RoutesMap.post.createSite({body: siteRequest}, res);
+    if (commandRun.options.v) {
+      if (commandRun.options.format === 'yaml') {
+        console.log(dump(res.data));
+      }
+      else {
+        console.log(res.data);
+      }
+    }
     s.stop(merlinSays(`${project.name} created!`));
     await setTimeout(500);
 
