@@ -158,8 +158,16 @@ export async function siteCommandDetected(commandRun) {
                       console.log(page);
                     break;
                     case 'html':
+                      console.log(await activeHaxsite.getPageContent(page));
+                    break;
+                    case 'schema':
+                      // next up
                       let html = await activeHaxsite.getPageContent(page);
-                      console.log(html);
+                      let dom = parse(html);
+                      console.log(dom);
+                    break;
+                    case 'md':
+                      // @todo use the built in endpoints broker
                     break;
                   }
                 }
