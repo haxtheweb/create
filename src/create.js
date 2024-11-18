@@ -38,6 +38,7 @@ async function main() {
   .option('--y', 'yes to all questions')
   .option('--skip', 'skip frills like animations')
   .option('--auto', 'yes to all questions, alias of y')
+  .option('--no-i', 'prevent interactions / sub-process, good for scripting')
 
   // options for webcomponent
   .option('--org <char>', 'organization for package.json')
@@ -91,6 +92,7 @@ async function main() {
   .option('--name <char>', 'name of the site (when creating a new one)')
   .option('--domain <char>', 'published domain name')
   .option('--node-op <char>', 'node operation to perform')
+  .option('--no-i', 'prevent interactions / sub-process, good for scripting')
   .version(await HAXCMS.getHAXCMSVersion());
   let siteNodeOps = siteNodeOperations();
   for (var i in siteNodeOps) {
@@ -118,7 +120,8 @@ async function main() {
   .option('--path <char>', 'path the project should be created in')
   .option('--org <char>', 'organization for package.json')
   .option('--author <char>', 'author for site / package.json')
-  .option('--writeHaxProperties', 'Write haxProperties for the element');
+  .option('--writeHaxProperties', 'Write haxProperties for the element')
+  .option('--no-i', 'prevent interactions / sub-process, good for scripting');
   // process program arguments
   program.parse();
   commandRun.options = {...commandRun.options, ...program.opts()};
@@ -237,7 +240,7 @@ async function main() {
           type: commandRun.command
         };
       }
-      else {
+      else if (commandRun.options.i) {
         project = await p.group(
           {
             type: ({ results }) =>
@@ -260,6 +263,9 @@ async function main() {
             },
           }
         );
+      }
+      else if (!commandRun.options.i) {
+        process.exit(0);
       }
       // detect being in a haxcms scaffold. easiest way is _sites being in this directory
       // set the path automatically so we skip the question
@@ -360,7 +366,7 @@ async function main() {
               }
             },
             extras: ({ results }) => {
-              if (!commandRun.options.auto) {
+              if (!commandRun.options.auto && commandRun.options.i) {
                 let options = [];
                 let initialValues = [];
                 if (commandRun.command === "webcomponent" || results.type === "webcomponent") {

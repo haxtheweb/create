@@ -56,15 +56,17 @@ class Res {
 
 export function siteActions() {
   return [
-    { value: 'start', label: "Start site (http://localhost)"},
-    { value: 'status', label: "Status" },
-    { value: 'sync', label: "Sync git"},
-    { value: 'theme', label: "Change theme"},
-    { value: 'node:stats', label: "Page stats"},
-    { value: 'node:add', label: "Add page"},
-    { value: 'node:edit', label: "Edit page"},
-    { value: 'node:delete', label: "Delete page"},
-    { value: 'file:list', label: "List files" },
+    { value: 'start', label: "Launch site (http://localhost)"},
+    { value: 'node:stats', label: "Node: Stats"},
+    { value: 'node:add', label: "Node: Add page"},
+    { value: 'node:edit', label: "Node: Edit page"},
+    { value: 'node:delete', label: "Node: Delete page"},
+    { value: 'status', label: "Site: Status" },
+    { value: 'theme', label: "Site: Change theme"},
+    { value: 'file:list', label: "Site: List files" },
+    { value: 'site:html', label: "Site: Full site as HTML"},
+    { value: 'site:md', label: "Site: Full site as Markdown"},
+    { value: 'sync', label: "Site: Sync git"},
   ];
 }
 
@@ -422,6 +424,30 @@ export async function siteCommandDetected(commandRun) {
               console.log(res.data);
             }
             break;
+          case "site:html":
+          case "site:md":
+            let siteContent = '';
+            activeHaxsite = await hax.systemStructureContext();
+            let items = [];
+            if (commandRun.options.itemId != null) {
+              items = activeHaxsite.manifest.findBranch(commandRun.options.itemId);
+            }
+            else {
+              items = activeHaxsite.manifest.orderTree(activeHaxsite.manifest.items);
+            }
+            for (var i in items) {
+              let page = activeHaxsite.loadNode(items[i].id); 
+              siteContent += `<h1>${items[i].title}</h1>\n\r`;
+              siteContent += `<div data-jos-item-id="${items[i].id}">\n\r${await activeHaxsite.getPageContent(page)}\n\r</div>\n\r`;
+            }
+            if (operation.action === 'site:md') {
+              let resp = await openApiBroker('@core', 'htmlToMd', { html: siteContent})
+              console.log(resp.res.data.data);
+            }
+            else {
+              console.log(siteContent);
+            }
+          break;
           case "quit":
             // quit
           process.exit(0);
@@ -504,8 +530,10 @@ async function openApiBroker(scope, call, body) {
 export async function siteProcess(commandRun, project, port = '3000') {  
   // auto select operations to perform if requested
     if (!project.extras) {
-        let extras = ['launch'];
-        project.extras = extras;
+      project.extras = [];
+      if (commandRun.options.i) {
+        project.extras = ['launch'];
+      }
     }
     let s = p.spinner();
     s.start(merlinSays(`Creating new site: ${project.name}`));
