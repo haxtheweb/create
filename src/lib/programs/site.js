@@ -5,13 +5,15 @@ import color from 'picocolors';
 import { dump } from 'js-yaml';
 import { parse } from 'node-html-parser';
 import { merlinSays, communityStatement } from "../statements.js";
+import { dashToCamel } from "../utils.js";
+
 // trick MFR into giving local paths
 globalThis.MicroFrontendRegistryConfig = {
   base: `@haxtheweb/open-apis/`
 };
 import { MicroFrontendRegistry } from "../micro-frontend-registry.js";
 // emable HAXcms routes so we have name => path just like on frontend!
-MicroFrontendRegistry.enableServices(['haxcms']);
+MicroFrontendRegistry.enableServices(['core', 'haxcms', 'experimental']);
 
 import * as haxcmsNodejsCli from "@haxtheweb/haxcms-nodejs/dist/cli.js";
 import * as hax from "@haxtheweb/haxcms-nodejs";
@@ -40,6 +42,10 @@ class Res {
   }
   status(status) {
     this.statusCode = status;
+    return this;
+  }
+  json(data) {
+    this.data = JSON.parse(JSON.stringify(data));
     return this;
   }
   setHeader() {
@@ -163,11 +169,19 @@ export async function siteCommandDetected(commandRun) {
                     case 'schema':
                       // next up
                       let html = await activeHaxsite.getPageContent(page);
-                      let dom = parse(html);
-                      console.log(dom);
+                      let dom = parse(`<div id="fullpage">${html}</div>`);
+                      let els = [];
+                      for (var i in dom.querySelector('#fullpage').childNodes) {
+                        let node = dom.querySelector('#fullpage').childNodes[i];
+                        if (node && node.getAttribute) {
+                          els.push(await nodeToHaxElement(node, null));
+                        }
+                      }
+                      console.log(els);
                     break;
                     case 'md':
-                      // @todo use the built in endpoints broker
+                    let resp = await openApiBroker('@core', 'htmlToMd', { html: await activeHaxsite.getPageContent(page)})
+                    console.log(resp.res.data.data);
                     break;
                   }
                 }
@@ -175,6 +189,7 @@ export async function siteCommandDetected(commandRun) {
             }
             catch(e) {
               console.log(e.stderr);
+              console.log(e);
             }
           break;
           case "node:add":
@@ -463,8 +478,8 @@ export function siteNodeOperations(search = null){
 
 // broker a call to the open-api repo which is an express based wrapper for vercel (originally)
 // this ensures the calls are identical and yet are converted to something the CLI can leverage
-async function openApiBroker(call, body) {
-  let mfItem = MicroFrontendRegistry.get(`@haxcms/${call}`);
+async function openApiBroker(scope, call, body) {
+  let mfItem = MicroFrontendRegistry.get(`${scope}/${call}`);
   // ensure we have a MFR record to do the connection
   // fun thing is this is local file access directly via import()
   if (mfItem) {
@@ -519,7 +534,7 @@ export async function siteProcess(commandRun, project, port = '3000') {
       }
       // verify this is a valid way to do an import
       if (commandRun.options.importStructure && MicroFrontendRegistry.get(`@haxcms/${commandRun.options.importStructure}`)) {
-        let resp = await openApiBroker(commandRun.options.importStructure, { repoUrl: commandRun.options.importSite});
+        let resp = await openApiBroker('@haxcms', commandRun.options.importStructure, { repoUrl: commandRun.options.importSite});
         if (resp.res.data && resp.res.data.data && resp.res.data.data.items) {
           siteRequest.build.structure = 'import';
           siteRequest.build.items = resp.res.data.data.items;
@@ -623,4 +638,131 @@ export async function siteThemeList() {
     })
   }
   return items;
+}
+
+// @fork of the hax core util for this so that we avoid api difference between real dom and parse nodejs dom
+async function nodeToHaxElement(node, eventName = "insert-element") {
+  if (!node) {
+    return null;
+  }
+  // build out the properties to send along
+  var props = {};
+  // support basic styles
+  if (typeof node.getAttribute("style") !== typeof undefined) {
+    props.style = node.getAttribute("style");
+  }
+  // don't set a null style
+  if (props.style === null || props.style === "null") {
+    delete props.style;
+  }
+  // test if a class exists, not everything scopes
+  if (typeof node.getAttribute('class') !== typeof undefined) {
+    props.class = node.getAttribute('class').replace("hax-active", "");
+  }
+  // test if a id exists as its a special case in attributes... of course
+  if (typeof node.getAttribute('id') !== typeof undefined) {
+    props.id = node.getAttribute("id");
+  }
+  let tmpProps;
+  // weak fallback
+  if (typeof tmpProps === typeof undefined) {
+    tmpProps = node.__data;
+  }
+  // complex elements need complex support
+  if (typeof tmpProps !== typeof undefined) {
+    // run through attributes, though non-reflected props won't be here
+    // run through props, we always defer to property values
+    for (var property in tmpProps) {
+      // make sure we only set things that have a value
+      if (
+        property != "class" &&
+        property != "style" &&
+        tmpProps.hasOwnProperty(property) &&
+        typeof node[property] !== undefined &&
+        node[property] != null &&
+        node[property] != ""
+      ) {
+        props[property] = node[property];
+      }
+      // special support for false boolean
+      else if (node[property] === false) {
+        props[property] = false;
+      } 
+      else if (node[property] === true) {
+        props[property] = true;
+      }
+      else if (node[property] === 0) {
+        props[property] = 0;
+      }
+      else {
+        // unknown prop setting / ignored
+        //console.warn(node[property], property);
+      }
+    }
+    for (var attribute in node._attrs) {
+      // make sure we only set things that have a value
+      if (
+        typeof node._attrs[attribute] !== typeof undefined &&
+        attribute != "class" &&
+        attribute != "style" &&
+        attribute != "id" &&
+        typeof node._attrs[attribute] !== undefined &&
+        node._attrs[attribute] != null &&
+        node._attrs[attribute] != ""
+      ) {
+        props[attribute] = node._attrs[attribute];
+      }
+      else if (node._attrs[attribute] == "0") {
+        props[attribute] = node._attrs[attribute];
+      }
+      else {
+        // note: debug here if experiencing attributes that won't bind
+      }
+    }
+  } else {
+    // much easier case, usually just in primatives
+    for (var attribute in node._attrs) {
+      // make sure we only set things that have a value
+      if (
+        typeof node._attrs[attribute] !== typeof undefined &&
+        attribute != "class" &&
+        attribute != "style" &&
+        attribute != "id" &&
+        typeof node._attrs[attribute] !== undefined &&
+        node._attrs[attribute] != null &&
+        node._attrs[attribute] != ""
+      ) {
+        props[attribute] = node._attrs[attribute];
+      }
+    }
+  }
+  // support sandboxed environments which
+  // will hate iframe tags but love webview
+  let tag = node.tagName.toLowerCase();
+  if (globalThis.HaxStore && globalThis.HaxStore.instance && globalThis.HaxStore.instance._isSandboxed && tag === "iframe") {
+    tag = "webview";
+  }
+  let slotContent = '';
+  // if hax store around, allow it to get slot content of the node
+  if (globalThis.HaxStore && globalThis.HaxStore.instance) {
+    slotContent = await globalThis.HaxStore.instance.getHAXSlot(node);
+  }
+  else {
+    // if HAX isn't around, just return the innerHTML as a string for asignment to content
+    slotContent = node.innerHTML;
+  }
+  // support fallback on inner text if there were no nodes
+  if (slotContent == "") {
+    slotContent = node.innerText;
+  }
+  let element = {
+    tag: tag,
+    properties: props,
+    content: slotContent,
+  };
+
+  if (eventName !== null) {
+    element.eventName = eventName;
+  }
+  return element;
 }
