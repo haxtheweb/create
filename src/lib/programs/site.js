@@ -4,7 +4,7 @@ import * as p from '@clack/prompts';
 import color from 'picocolors';
 import { dump } from 'js-yaml';
 import { parse } from 'node-html-parser';
-import { merlinSays, communityStatement } from "../statements.js";
+import { merlinSays, communityStatement, playSound } from "../statements.js";
 import { dashToCamel } from "../utils.js";
 
 // trick MFR into giving local paths
@@ -605,8 +605,7 @@ async function openApiBroker(scope, call, body) {
   }
 }
 // process site creation
-export async function siteProcess(commandRun, project, port = '3000') {  
-  // auto select operations to perform if requested
+export async function siteProcess(commandRun, project, port = '3000') {    // auto select operations to perform if requested
     if (!project.extras) {
       project.extras = [];
       if (commandRun.options.i) {
@@ -662,8 +661,9 @@ export async function siteProcess(commandRun, project, port = '3000') {
       }
     }
     s.stop(merlinSays(`${project.name} created!`));
+    playSound("success");
     await setTimeout(500);
-
+    
     if (project.gitRepo && !commandRun.options.isMonorepo) {
       try {
         await exec(`cd ${project.path}/${project.name} && git init && git add -A && git commit -m "first commit" && git branch -M main${project.gitRepo ? ` && git remote add origin ${project.gitRepo}` : ''}`);    
@@ -703,7 +703,7 @@ export async function siteProcess(commandRun, project, port = '3000') {
       p.note(`${project.name} is ready to go. Run the following to start working with it:`);
       p.outro(nextSteps);
     }
-}
+  }
 
 
 export async function siteItemsOptionsList(activeHaxsite, skipId = null) {

@@ -7,7 +7,7 @@ import * as path from 'node:path';
 import * as p from '@clack/prompts';
 import color from 'picocolors';
 
-import { haxIntro, communityStatement } from "./lib/statements.js";
+import { haxIntro, communityStatement, playSound } from "./lib/statements.js";
 import { webcomponentProcess, webcomponentCommandDetected } from "./lib/programs/webcomponent.js";
 import { siteActions, siteNodeOperations, siteProcess, siteCommandDetected } from "./lib/programs/site.js";
 import { camelToDash } from "./lib/utils.js";
@@ -217,6 +217,7 @@ async function main() {
   else {
     if (commandRun.command === 'start' && !commandRun.options.y && !commandRun.options.auto && !commandRun.options.skip) {
       await haxIntro();
+      await playSound("coin");
     }
     let activeProject = null;
     let project = { type: null };

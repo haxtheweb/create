@@ -2,6 +2,7 @@ import { characters } from './art.js';
 import * as p from '@clack/prompts';
 import color from 'picocolors';
 import { setTimeout } from 'node:timers/promises';
+import * as path from 'node:path';
 
 
 export async function haxIntro() {
@@ -36,6 +37,24 @@ export async function haxIntro() {
   
   
     ${merlinSays('Welcome wary web wanderer')}`);
+}
+
+// everything is awesome
+import * as play from 'play-sound';
+
+export async function playSound(sound) {
+  if (['click','coin2','coin','hit','success'].includes(sound)) {
+    try {
+      const soundsDir = path.join(__dirname, '../../node_modules', '@haxtheweb/haxcms-nodejs/dist/public/build/es6/node_modules/@haxtheweb/app-hax/lib/assets/sounds');
+      const player = play.default({ player: 'mplayer'});
+      await player.play(`${soundsDir}/${sound}.mp3`, {mplayer: ['-af', `volume=-10`]}, function(err){
+        if (err) throw err
+      });
+    }
+    catch(e){}
+    return true;
+  }
+  return false;
 }
 
 // standard community statement so we can leverage on cancel executions
