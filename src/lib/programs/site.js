@@ -56,17 +56,19 @@ class Res {
 
 export function siteActions() {
   return [
-    { value: 'start', label: "Launch site (http://localhost)"},
-    { value: 'node:stats', label: "Node: Stats"},
-    { value: 'node:add', label: "Node: Add page"},
-    { value: 'node:edit', label: "Node: Edit page"},
-    { value: 'node:delete', label: "Node: Delete page"},
-    { value: 'status', label: "Site: Status" },
-    { value: 'theme', label: "Site: Change theme"},
-    { value: 'file:list', label: "Site: List files" },
-    { value: 'site:html', label: "Site: Full site as HTML"},
-    { value: 'site:md', label: "Site: Full site as Markdown"},
-    { value: 'sync', label: "Site: Sync git"},
+    { value: 'start', label: "Launch site in browser (http://localhost)"},
+    { value: 'node:stats', label: "Node Stats / data"},
+    { value: 'node:add', label: "Add a new page"},
+    { value: 'node:edit', label: "Edit a page"},
+    { value: 'node:delete', label: "Delete a page"},
+    { value: 'site:stats', label: "Site Status / stats" },
+    { value: 'site:items', label: "Site items" },
+    { value: 'site:list-files', label: "List site files" },
+    { value: 'site:theme', label: "Change theme"},
+    { value: 'site:html', label: "Full site as HTML"},
+    { value: 'site:md', label: "Full site as Markdown"},
+    { value: 'site:schema', label: "Full site as HAXElementSchema"},
+    { value: 'site:sync', label: "Sync git repo"},
   ];
 }
 
@@ -76,9 +78,11 @@ export async function siteCommandDetected(commandRun) {
     if (!commandRun.arguments.action) {
         commandRun.arguments.action = 'status';
       }
-      p.intro(`${color.bgBlack(color.white(` HAXTheWeb : Site detected `))}`);
       commandRun.command = "site";
-      p.intro(`${color.bgBlue(color.white(` Name: ${activeHaxsite.name} `))}`);
+      if (!commandRun.options.y && commandRun.options.i) {
+        p.intro(`${color.bgBlack(color.white(` HAXTheWeb : Site detected `))}`);
+        p.intro(`${color.bgBlue(color.white(` Name: ${activeHaxsite.name} `))}`);  
+      }
       // defaults if nothing set via CLI
       let operation = {
         ...commandRun.arguments,
@@ -94,7 +98,7 @@ export async function siteCommandDetected(commandRun) {
       while (operation.action !== 'quit') {
         let actions = siteActions();
         if (sysSurge) {
-          actions.push({ value: 'surge', label: "Publish site using Surge.sh"});              
+          actions.push({ value: 'site:surge', label: "Publish site to Surge.sh"});              
         }
         actions.push({ value: 'quit', label: "🚪 Quit"});
         if (!operation.action) {
@@ -122,13 +126,62 @@ export async function siteCommandDetected(commandRun) {
             });
         }
         switch (operation.action) {
-          case "status":
-            p.intro(`${color.bgBlue(color.white(` Title: ${activeHaxsite.manifest.title} `))}`);
-            p.intro(`${color.bgBlue(color.white(` Description: ${activeHaxsite.manifest.description} `))}`);
-            p.intro(`${color.bgBlue(color.white(` Theme: ${activeHaxsite.manifest.metadata.theme.name} (${activeHaxsite.manifest.metadata.theme.element})`))}`);
-            p.intro(`${color.bgBlue(color.white(` Pages: ${activeHaxsite.manifest.items.length} `))}`);  
+          case "site:stats":
             const date = new Date(activeHaxsite.manifest.metadata.site.updated*1000);
-            p.intro(`${color.bgBlue(color.white(` Last updated: ${date.toLocaleDateString("en-US")} `))}`);
+            let siteItems = [];
+            if (commandRun.options.itemId != null) {
+              siteItems = activeHaxsite.manifest.findBranch(commandRun.options.itemId);
+            }
+            else {
+              siteItems = activeHaxsite.manifest.orderTree(activeHaxsite.manifest.items);
+            }
+            let els = {};
+            for (var i in siteItems) {
+              let page = activeHaxsite.loadNode(siteItems[i].id);
+              let html = await activeHaxsite.getPageContent(page);
+              let dom = parse(`<div id="fullpage">${html}</div>`);
+              for (var j in dom.querySelector('#fullpage').childNodes) {
+                let node = dom.querySelector('#fullpage').childNodes[j];
+                if (node && node.getAttribute) {
+                  let haxel = await nodeToHaxElement(node, null);
+                  if (!els[haxel.tag]) {
+                    els[haxel.tag] = 0;
+                  }
+                  els[haxel.tag]++;
+                }
+              }
+            }
+            let siteStats = {
+              title: activeHaxsite.manifest.title,
+              description: activeHaxsite.manifest.description,
+              themeName: activeHaxsite.manifest.metadata.theme.name,
+              themeElement: activeHaxsite.manifest.metadata.theme.element,
+              pageCount: activeHaxsite.manifest.items.length,
+              lastUpdated: date.toLocaleDateString("en-US"),
+              tagUsage: els
+            }
+            if (!commandRun.options.format) {
+              p.intro(`${color.bgBlue(color.white(` Title: ${siteStats.title} `))}`);
+              p.intro(`${color.bgBlue(color.white(` Description: ${siteStats.description} `))}`);
+              p.intro(`${color.bgBlue(color.white(` Theme: ${siteStats.themeName} (${siteStats.themeElement})`))}`);
+              p.intro(`${color.bgBlue(color.white(` Pages: ${siteStats.pageCount} `))}`);  
+              p.intro(`${color.bgBlue(color.white(` Last updated: ${siteStats.lastUpdated} `))}`);
+              p.intro(`${color.bgBlue(color.white(` Tags used: ${JSON.stringify(siteStats.tagUsage, null, 2)} `))}`);
+            }
+            else if (commandRun.options.format === 'yaml') {
+              console.log(dump(siteStats));
+            }
+            else {
+              console.log(siteStats);
+            }
+          break;
+          case "site:items":
+            if (commandRun.options.format === 'yaml') {
+              console.log(dump(activeHaxsite.manifest.items));
+            }
+            else {
+              console.log(activeHaxsite.manifest.items);
+            }
           break;
           case "start":
             try {
@@ -360,7 +413,7 @@ export async function siteCommandDetected(commandRun) {
               console.log(e.stderr);
             }
           break;
-          case "sync":
+          case "site:sync":
             // @todo git sync might need other arguments / be combined with publishing
             try {
               await exec(`cd ${activeHaxsite.directory} && git pull && git push`);
@@ -369,7 +422,7 @@ export async function siteCommandDetected(commandRun) {
               console.log(e.stderr);
             }
           break;
-          case "theme":
+          case "site:theme":
             try {
               //theme
               let list = await siteThemeList();
@@ -393,7 +446,7 @@ export async function siteCommandDetected(commandRun) {
               console.log(e.stderr);
             }
           break;
-          case "surge":
+          case "site:surge":
             try {
               if (!commandRun.options.domain) {
                 commandRun.options.domain = await p.text({
@@ -414,7 +467,7 @@ export async function siteCommandDetected(commandRun) {
               console.log(e.stderr);
             }
           break;
-          case "file:list":
+          case "site:file-list":
             let res = new Res();
             await hax.RoutesMap.get.listFiles({query: activeHaxsite.name, filename: commandRun.options.filename}, res);
             if (commandRun.options.format === 'yaml') {
@@ -426,6 +479,7 @@ export async function siteCommandDetected(commandRun) {
             break;
           case "site:html":
           case "site:md":
+          case "site:schema":
             let siteContent = '';
             activeHaxsite = await hax.systemStructureContext();
             let items = [];
@@ -435,17 +489,41 @@ export async function siteCommandDetected(commandRun) {
             else {
               items = activeHaxsite.manifest.orderTree(activeHaxsite.manifest.items);
             }
-            for (var i in items) {
-              let page = activeHaxsite.loadNode(items[i].id); 
-              siteContent += `<h1>${items[i].title}</h1>\n\r`;
-              siteContent += `<div data-jos-item-id="${items[i].id}">\n\r${await activeHaxsite.getPageContent(page)}\n\r</div>\n\r`;
-            }
-            if (operation.action === 'site:md') {
-              let resp = await openApiBroker('@core', 'htmlToMd', { html: siteContent})
-              console.log(resp.res.data.data);
+            if (operation.action === 'site:schema') {
+              let els = [];
+              for (var i in items) {
+                let page = activeHaxsite.loadNode(items[i].id);
+                let html = await activeHaxsite.getPageContent(page);
+                let dom = parse(`<div id="fullpage">${html}</div>`);
+                els.push({
+                  tag: "h1",
+                  properties: {
+                    "data-jos-item-id": items[i].id
+                  },
+                  content: `${items[i].title}`
+                });
+                for (var j in dom.querySelector('#fullpage').childNodes) {
+                  let node = dom.querySelector('#fullpage').childNodes[j];
+                  if (node && node.getAttribute) {
+                    els.push(await nodeToHaxElement(node, null));
+                  }
+                }
+              }
+              console.log(els);
             }
             else {
-              console.log(siteContent);
+              for (var i in items) {
+                let page = activeHaxsite.loadNode(items[i].id); 
+                siteContent += `<h1>${items[i].title}</h1>\n\r`;
+                siteContent += `<div data-jos-item-id="${items[i].id}">\n\r${await activeHaxsite.getPageContent(page)}\n\r</div>\n\r`;
+              }
+              if (operation.action === 'site:md') {
+                let resp = await openApiBroker('@core', 'htmlToMd', { html: siteContent})
+                console.log(resp.res.data.data);
+              }
+              else {
+                console.log(siteContent);
+              }
             }
           break;
           case "quit":
@@ -595,20 +673,6 @@ export async function siteProcess(commandRun, project, port = '3000') {
     }
     // options for install, git and other extras
     // can't launch if we didn't install first so launch implies installation
-    if (project.extras.includes('launch') || project.extras.includes('install')) {
-        s.start(merlinSays(`Installation magic (${commandRun.options.npmClient} install)`));
-        try {
-        // monorepos install from top but then still need to launch from local location
-        if (!commandRun.options.isMonorepo) {
-            await exec(`cd ${project.path}/${project.name} && ${commandRun.options.npmClient} install`);
-        }
-        }
-        catch(e) {
-        console.log(e);
-        }
-        s.stop(merlinSays(`Everything is installed. It's go time`));
-    }
-    // autolaunch if default was selected
     if (project.extras.includes('launch')) {
       let optionPath = `${project.path}/${project.name}`;
       let command = `npx @haxtheweb/haxcms-nodejs`;
@@ -635,8 +699,8 @@ export async function siteProcess(commandRun, project, port = '3000') {
         }
     }
     else {
-      let nextSteps = `cd ${project.path}/${project.name} && ${project.extras.includes('install') ? '' : `${commandRun.options.npmClient} install && `}${commandRun.options.npmClient} start`;
-      p.note(`${project.name} is ready to go. Run the following to start development:`);
+      let nextSteps = `cd ${project.path}/${project.name} && hax start`;
+      p.note(`${project.name} is ready to go. Run the following to start working with it:`);
       p.outro(nextSteps);
     }
 }
@@ -788,7 +852,6 @@ async function nodeToHaxElement(node, eventName = "insert-element") {
     properties: props,
     content: slotContent,
   };
-
   if (eventName !== null) {
     element.eventName = eventName;
   }
