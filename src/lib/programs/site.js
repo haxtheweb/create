@@ -4,10 +4,10 @@ import * as fs from 'node:fs';
 
 import * as p from '@clack/prompts';
 import color from 'picocolors';
-import { dump } from 'js-yaml';
+import { dump, load } from 'js-yaml';
 
 import { parse } from 'node-html-parser';
-import { merlinSays, communityStatement } from "../statements.js";
+import { merlinSays, communityStatement, log } from "../statements.js";
 
 // trick MFR into giving local paths
 globalThis.MicroFrontendRegistryConfig = {
@@ -19,6 +19,8 @@ MicroFrontendRegistry.enableServices(['core', 'haxcms', 'experimental']);
 
 import * as haxcmsNodejsCli from "@haxtheweb/haxcms-nodejs/dist/cli.js";
 import * as hax from "@haxtheweb/haxcms-nodejs";
+import * as josfile from "@haxtheweb/haxcms-nodejs/dist/lib/JSONOutlineSchema.js";
+const JSONOutlineSchema = josfile.default;
 const HAXCMS = hax.HAXCMS;
 import * as child_process from "child_process";
 import * as util from "node:util";
@@ -65,6 +67,7 @@ export function siteActions() {
     { value: 'node:delete', label: "Delete a page"},
     { value: 'site:stats', label: "Site Status / stats" },
     { value: 'site:items', label: "Site items" },
+    { value: 'site:items-import', label: "Import items (JOS / site.json)" },
     { value: 'site:list-files', label: "List site files" },
     { value: 'site:theme', label: "Change theme"},
     { value: 'site:html', label: "Full site as HTML"},
@@ -81,7 +84,7 @@ export async function siteCommandDetected(commandRun) {
         commandRun.arguments.action = 'status';
       }
       commandRun.command = "site";
-      if (!commandRun.options.y && commandRun.options.i) {
+      if (!commandRun.options.y && commandRun.options.i && !commandRun.options.quiet) {
         p.intro(`${color.bgBlack(color.white(` HAXTheWeb : Site detected `))}`);
         p.intro(`${color.bgBlue(color.white(` Name: ${activeHaxsite.name} `))}`);  
       }
@@ -121,8 +124,10 @@ export async function siteCommandDetected(commandRun) {
             },
             {
               onCancel: () => {
-                p.cancel('🧙 Merlin: Canceling CLI.. HAX ya later 🪄');
-                communityStatement();
+                if (!commandRun.options.quiet) {
+                  p.cancel('🧙 Merlin: Canceling CLI.. HAX ya later 🪄');
+                  communityStatement();
+                }
                 process.exit(0);
               },
             });
@@ -162,7 +167,7 @@ export async function siteCommandDetected(commandRun) {
               lastUpdated: date.toLocaleDateString("en-US"),
               tagUsage: els
             }
-            if (!commandRun.options.format) {
+            if (!commandRun.options.format && !commandRun.options.quiet) {
               p.intro(`${color.bgBlue(color.white(` Title: ${siteStats.title} `))}`);
               p.intro(`${color.bgBlue(color.white(` Description: ${siteStats.description} `))}`);
               p.intro(`${color.bgBlue(color.white(` Theme: ${siteStats.themeName} (${siteStats.themeElement})`))}`);
@@ -171,10 +176,10 @@ export async function siteCommandDetected(commandRun) {
               p.intro(`${color.bgBlue(color.white(` Tags used: ${JSON.stringify(siteStats.tagUsage, null, 2)} `))}`);
             }
             else if (commandRun.options.format === 'yaml') {
-              console.log(dump(siteStats));
+              log(dump(siteStats));
             }
             else {
-              console.log(siteStats);
+              log(siteStats);
             }
             // simple redirecting to file
             if (commandRun.options.toFile) {
@@ -187,30 +192,131 @@ export async function siteCommandDetected(commandRun) {
             }
           break;
           case "site:items":
-            if (commandRun.options.format === 'yaml') {
-              console.log(dump(activeHaxsite.manifest.items));
+            let siteitems = [];
+            if (commandRun.options.itemId != null) {
+              siteitems = activeHaxsite.manifest.findBranch(commandRun.options.itemId);
             }
             else {
-              console.log(activeHaxsite.manifest.items);
+              siteitems = activeHaxsite.manifest.orderTree(activeHaxsite.manifest.items);
             }
-            // simple redirecting to file
+            for (let i in siteitems) {
+              let page = await activeHaxsite.loadNode(siteitems[i].id);
+              siteitems[i].content = await activeHaxsite.getPageContent(page);
+            }
+            // simple redirecting to file if asked for
             if (commandRun.options.toFile) {
+              let contents = '';
               if (commandRun.options.format === 'yaml') {
-                fs.writeFileSync(commandRun.options.toFile, dump(activeHaxsite.manifest.items))
+                contents = dump(siteitems);
               }
               else {
-                fs.writeFileSync(commandRun.options.toFile, JSON.stringify(activeHaxsite.manifest.items, null, 2))
+                contents = JSON.stringify(siteitems, null, 2);
               }
+              fs.writeFileSync(commandRun.options.toFile, contents);
+              
+            }
+            else {
+              if (commandRun.options.format === 'yaml') {
+                log(dump(siteitems));
+              }
+              else {
+                log(siteitems);
+              }
+            }
+          break;
+          case "site:items-import":
+            // need source, then resolve what it is
+            if (commandRun.options.itemsImport) {
+              let location = commandRun.options.itemsImport;
+              let josImport = new JSONOutlineSchema();
+              var itemsImport = [];
+              // support for address, as in import from some place else
+              if (location.startsWith('https://') || location.startsWith('http://')) {
+                if (location.endsWith('/site.json')) {
+                  location = location.replace('/site.json','');
+                }
+                else if (!location.endsWith('/')) {
+                  location = location + '/';
+                }
+                let f = await fetch(`${location}site.json`).then(d => d.ok ? d.json() : null);
+                if (f && f.items) {
+                  josImport.items = f.items;
+                }
+                else {
+                  // invalid data
+                  process.exit(0);
+                }
+              }
+              // look on prem
+              else if(fs.existsSync(location)) {
+                let fileContents = await fs.readFileSync(location);
+                if (location.endsWith('.json')) {
+                  josImport.items = JSON.parse(fileContents);
+
+                }
+                else if (location.endsWith('.yaml')) {
+                  josImport.items = await load(fileContents);
+                }
+              }
+              // allows for filtering
+              if (commandRun.options.itemId) {
+                itemsImport = josImport.findBranch(commandRun.options.itemId);
+              }
+              else {
+                itemsImport = josImport.items;
+              }
+              for (let i in josImport.items) {
+                if (josImport.items[i].location && !josImport.items[i].content) {
+                  josImport.items[i].content = await fetch(`${location}${josImport.items[i].location}`).then(d => d.ok ? d.text() : '');
+                }
+              }
+              let itemIdMap = {};
+              for (let i in josImport.items) {
+                // if we have a parent set by force to append this structure to
+                // then see if parent = null (implying top level in full site import)
+                // or match on itemId to imply that it's the top (no matter parent status)
+                if (commandRun.options.parentId) {
+                  if (josImport.items[i].parent === null || josImport.items[i].id === commandRun.options.itemId) {
+                    josImport.items[i].parent = commandRun.options.parentId;
+                  }
+                }
+                // see if map has an entry that is already set
+                if (itemIdMap[josImport.items[i].parent]) {
+                  // remaps the parent of this item bc the thing imported has changed ID
+                  josImport.items[i].parent = itemIdMap[josImport.items[i].parent];
+                }
+                let tmpAddedItem = await activeHaxsite.addPage(
+                  josImport.items[i].parent,
+                  josImport.items[i].title,
+                  'html',
+                  josImport.items[i].slug,
+                  null,
+                  josImport.items[i].indent,
+                  josImport.items[i].content,
+                  josImport.items[i].order,
+                  josImport.items[i].metadata
+                );
+                // set in the map for future translations
+                itemIdMap[josImport.items[i].id] = tmpAddedItem.id;
+              }
+              if (!commandRun.options.quiet) {
+                log(`${josImport.items.length} nodes imported`);
+              }
+            }
+            else if (!commandRun.options.quiet) {
+              log('Must specify --item-import as path to valid item export file or URL', 'error');
             }
           break;
           case "start":
             try {
-              p.intro(`Starting server.. `);
-              p.intro(`⌨️  To stop server, press: ${color.bold(color.black(color.bgRed(` CTRL + C `)))}`);
+              if (!commandRun.options.quiet) {
+                p.intro(`Starting server.. `);
+                p.intro(`⌨️  To stop server, press: ${color.bold(color.black(color.bgRed(` CTRL + C `)))}`);  
+              }
               await exec(`cd ${activeHaxsite.directory} && npx @haxtheweb/haxcms-nodejs`);
             }
             catch(e) {
-              console.log(e.stderr);
+              log(e.stderr);
             }
           break;
           case "node:stats":
@@ -236,10 +342,31 @@ export async function siteCommandDetected(commandRun) {
                 if (commandRun.options.nodeOp && siteNodeStatsOperations(commandRun.options.nodeOp)) {
                   switch(commandRun.options.nodeOp) {
                     case 'details':
-                      console.log(page);
+                      if (commandRun.options.format === 'yaml') {
+                        log(dump(page));
+                      }
+                      else {
+                        log(page);
+                      }
+                      // simple redirecting to file
+                      if (commandRun.options.toFile) {
+                        if (commandRun.options.format === 'yaml') {
+                          fs.writeFileSync(commandRun.options.toFile, dump(page))
+                        }
+                        else {
+                          fs.writeFileSync(commandRun.options.toFile, JSON.stringify(page, null, 2))
+                        }
+                      }
                     break;
                     case 'html':
-                      console.log(await activeHaxsite.getPageContent(page));
+                      let itemHTML = await activeHaxsite.getPageContent(page);
+                      // simple redirecting to file
+                      if (commandRun.options.toFile) {
+                        fs.writeFileSync(commandRun.options.toFile, itemHTML)
+                      }
+                      else {
+                        log(itemHTML);
+                      }
                     break;
                     case 'schema':
                       // next up
@@ -252,19 +379,41 @@ export async function siteCommandDetected(commandRun) {
                           els.push(await nodeToHaxElement(node, null));
                         }
                       }
-                      console.log(els);
+                      // simple redirecting to file
+                      if (commandRun.options.toFile) {
+                        if (commandRun.options.format === 'yaml') {
+                          fs.writeFileSync(commandRun.options.toFile, dump(els))
+                        }
+                        else {
+                          fs.writeFileSync(commandRun.options.toFile, JSON.stringify(els, null, 2))
+                        }
+                      }
+                      else {
+                        if (commandRun.options.format === 'yaml') {
+                          log(dump(els));
+                        }
+                        else {
+                          log(els);
+                        }
+                      }
                     break;
                     case 'md':
                     let resp = await openApiBroker('@core', 'htmlToMd', { html: await activeHaxsite.getPageContent(page)})
-                    console.log(resp.res.data.data);
+                    // simple redirecting to file
+                    if (commandRun.options.toFile) {
+                      fs.writeFileSync(commandRun.options.toFile, resp.res.data.data);
+                    }
+                    else {
+                      log(resp.res.data.data);
+                    }
                     break;
                   }
                 }
               }
             }
             catch(e) {
-              console.log(e.stderr);
-              console.log(e);
+              log(e.stderr);
+              log(e);
             }
           break;
           case "node:add":
@@ -284,12 +433,12 @@ export async function siteCommandDetected(commandRun) {
               }
               let resp = await haxcmsNodejsCli.cliBridge('createNode', { site: activeHaxsite, node: { title: commandRun.options.title }});
               if (commandRun.options.v) {
-                console.log(resp.res.data);
+                log(resp.res.data);
               }
-              console.log(`"${commandRun.options.title}" added to site`);
+              log(`"${commandRun.options.title}" added to site`);
             }
             catch(e) {
-              console.log(e.stderr);
+              log(e.stderr);
             }
           break;
           case "node:edit":
@@ -365,7 +514,7 @@ export async function siteCommandDetected(commandRun) {
                 if (typeof commandRun.options[commandRun.options.nodeOp] !== "undefined") {
                   if (commandRun.options.nodeOp === 'content') {
                     if (commandRun.options.content && await page.writeLocation(commandRun.options.content)) {
-                      console.log(`node:edit success updated page content: "${page.id}`);
+                      log(`node:edit success updated page content: "${page.id}`);
                     }
                     else {
                       console.warn(`node:edit failure to write page content : ${page.id}`);
@@ -384,14 +533,14 @@ export async function siteCommandDetected(commandRun) {
                     }
                     let resp = await activeHaxsite.updateNode(page);
                     if (commandRun.options.v) {
-                      console.log(resp);
+                      log(resp);
                     }
                   }
                 }
               }
             }
             catch(e) {
-              console.log(e.stderr);
+              log(e.stderr);
             }
           break;
           case "node:delete":
@@ -421,16 +570,16 @@ export async function siteCommandDetected(commandRun) {
                     console.warn(`node:delete failed "${commandRun.options.itemId} not found`);
                   }
                   else {
-                    console.log(`"${commandRun.options.itemId}" deleted`);
+                    log(`"${commandRun.options.itemId}" deleted`);
                   }    
                 }
                 else {
-                  console.log(`Delete operation canceled`);
+                  log(`Delete operation canceled`);
                 }
               }
             }
             catch(e) {
-              console.log(e.stderr);
+              log(e.stderr);
             }
           break;
           case "site:sync":
@@ -439,7 +588,7 @@ export async function siteCommandDetected(commandRun) {
               await exec(`cd ${activeHaxsite.directory} && git pull && git push`);
             }
             catch(e) {
-              console.log(e.stderr);
+              log(e.stderr);
             }
           break;
           case "site:theme":
@@ -463,7 +612,7 @@ export async function siteCommandDetected(commandRun) {
               }
             }
             catch(e) {
-              console.log(e.stderr);
+              log(e.stderr);
             }
           break;
           case "site:surge":
@@ -481,20 +630,20 @@ export async function siteCommandDetected(commandRun) {
                 });
               }
               let execOutput = await exec(`cd ${activeHaxsite.directory} && surge . ${commandRun.options.domain}`);
-              console.log(execOutput.stdout.trim());
+              log(execOutput.stdout.trim());
             }
             catch(e) {
-              console.log(e.stderr);
+              log(e.stderr);
             }
           break;
           case "site:file-list":
             let res = new Res();
             await hax.RoutesMap.get.listFiles({query: activeHaxsite.name, filename: commandRun.options.filename}, res);
             if (commandRun.options.format === 'yaml') {
-              console.log(dump(res.data));
+              log(dump(res.data));
             }
             else {
-              console.log(res.data);
+              log(res.data);
             }
             break;
           case "site:html":
@@ -529,7 +678,23 @@ export async function siteCommandDetected(commandRun) {
                   }
                 }
               }
-              console.log(els);
+              // simple redirecting to file
+              if (commandRun.options.toFile) {
+                if (commandRun.options.format === 'yaml') {
+                  fs.writeFileSync(commandRun.options.toFile, dump(els))
+                }
+                else {
+                  fs.writeFileSync(commandRun.options.toFile, JSON.stringify(els, null, 2))
+                }
+              }
+              else {
+                if (commandRun.options.format === 'yaml') {
+                  log(dump(els));
+                }
+                else {
+                  log(els);
+                }
+              }
             }
             else {
               for (var i in items) {
@@ -538,11 +703,16 @@ export async function siteCommandDetected(commandRun) {
                 siteContent += `<div data-jos-item-id="${items[i].id}">\n\r${await activeHaxsite.getPageContent(page)}\n\r</div>\n\r`;
               }
               if (operation.action === 'site:md') {
-                let resp = await openApiBroker('@core', 'htmlToMd', { html: siteContent})
-                console.log(resp.res.data.data);
+                let resp = await openApiBroker('@core', 'htmlToMd', { html: siteContent});
+                if (commandRun.options.toFile) {
+                  fs.writeFileSync(commandRun.options.toFile, resp.res.data.data);
+                }
+                else {
+                  log(resp.res.data.data);
+                }
               }
               else {
-                console.log(siteContent);
+                log(siteContent);
               }
             }
           break;
@@ -556,7 +726,9 @@ export async function siteCommandDetected(commandRun) {
         }
         operation.action = null;
       }
-      communityStatement();
+      if (!commandRun.options.quiet) {
+        communityStatement();
+      }
 }
 
 export function siteNodeStatsOperations(search = null){
@@ -626,117 +798,123 @@ async function openApiBroker(scope, call, body) {
 }
 // process site creation
 export async function siteProcess(commandRun, project, port = '3000') {    // auto select operations to perform if requested
-    if (!project.extras) {
-      project.extras = [];
-      if (commandRun.options.i) {
-        project.extras = ['launch'];
-      }
-    }
-    let s = p.spinner();
-    s.start(merlinSays(`Creating new site: ${project.name}`));
-    let siteRequest = {
-        "site": {
-            "name": project.name,
-            "description": "own course",
-            "theme": commandRun.options.theme ? commandRun.options.theme : "clean-one"
-        },
-        "build": {
-            "type": "own",
-            "structure": "course",
-            "items": null,
-            "files": null,
-        },
-        "theme": {
-            "color": "green",
-            "icon": "av:library-add"
-        },
-    };
-    // allow for importSite option
-    if (commandRun.options.importSite) {
-      if (!commandRun.options.importStructure) {
-        // assume hax to hax if it's not defined
-        commandRun.options.importStructure = 'haxcmsToSite';
-      }
-      // verify this is a valid way to do an import
-      if (commandRun.options.importStructure && MicroFrontendRegistry.get(`@haxcms/${commandRun.options.importStructure}`)) {
-        let resp = await openApiBroker('@haxcms', commandRun.options.importStructure, { repoUrl: commandRun.options.importSite});
-        if (resp.res.data && resp.res.data.data && resp.res.data.data.items) {
-          siteRequest.build.structure = 'import';
-          siteRequest.build.items = resp.res.data.data.items;
-        }
-        if (resp.res.data && resp.res.data.data && resp.res.data.data.files) {
-          siteRequest.build.files = resp.res.data.data.files;
-        }
-      }
-    }
-    HAXCMS.cliWritePath = `${project.path}`;
-    let res = new Res();
-    await hax.RoutesMap.post.createSite({body: siteRequest}, res);
-    if (commandRun.options.v) {
-      if (commandRun.options.format === 'yaml') {
-        console.log(dump(res.data));
-      }
-      else {
-        console.log(res.data);
-      }
-    }
-    s.stop(merlinSays(`${project.name} created!`));
-    await setTimeout(500);
-    
-    if (project.gitRepo && !commandRun.options.isMonorepo) {
-      try {
-        await exec(`cd ${project.path}/${project.name} && git init && git add -A && git commit -m "first commit" && git branch -M main${project.gitRepo ? ` && git remote add origin ${project.gitRepo}` : ''}`);    
-      }
-      catch(e) {        
-      }
-    }
-    // options for install, git and other extras
-    // can't launch if we didn't install first so launch implies installation
-    if (project.extras.includes('launch')) {
-      let optionPath = `${project.path}/${project.name}`;
-      let command = `npx @haxtheweb/haxcms-nodejs`;
-      p.note(`${merlinSays(`I have summoned a sub-process daemon 👹`)}
-
-  🚀  Running your ${color.bold(project.type)} ${color.bold(project.name)}:
-  ${color.underline(color.cyan(`http://localhost:${port}`))}
-
-  🏠  Launched: ${color.underline(color.bold(color.yellow(color.bgBlack(`${optionPath}`))))}
-  💻  Folder: ${color.bold(color.yellow(color.bgBlack(`cd ${optionPath}`)))}
-  📂  Open folder: ${color.bold(color.yellow(color.bgBlack(`open ${optionPath}`)))}
-  📘  VS Code Project: ${color.bold(color.yellow(color.bgBlack(`code ${optionPath}`)))}
-  🚧  Launch later: ${color.bold(color.yellow(color.bgBlack(`${command}`)))}
-
-  ⌨️  To resume 🧙 Merlin press: ${color.bold(color.black(color.bgRed(` CTRL + C `)))}
-  `);
-        // at least a second to see the message print at all
-        await setTimeout(1000);
-        try {
-        await exec(`cd ${optionPath} && ${command}`);
-        }
-        catch(e) {
-        // don't log bc output is weird
-        }
-    }
-    else {
-      let nextSteps = `cd ${project.path}/${project.name} && hax start`;
-      p.note(`${project.name} is ready to go. Run the following to start working with it:`);
-      p.outro(nextSteps);
+  var s = p.spinner();
+  if (!project.extras) {
+    project.extras = [];
+    if (commandRun.options.i) {
+      project.extras = ['launch'];
     }
   }
+  if (!commandRun.options.quiet) {
+    s.start(merlinSays(`Creating new site: ${project.name}`));
+  }
+  let siteRequest = {
+      "site": {
+          "name": project.name,
+          "description": "own course",
+          "theme": commandRun.options.theme ? commandRun.options.theme : "clean-one"
+      },
+      "build": {
+          "type": "own",
+          "structure": "course",
+          "items": null,
+          "files": null,
+      },
+      "theme": {
+          "color": "green",
+          "icon": "av:library-add"
+      },
+  };
+  // allow for importSite option
+  if (commandRun.options.importSite) {
+    if (!commandRun.options.importStructure) {
+      // assume hax to hax if it's not defined
+      commandRun.options.importStructure = 'haxcmsToSite';
+    }
+    // verify this is a valid way to do an import
+    if (commandRun.options.importStructure && MicroFrontendRegistry.get(`@haxcms/${commandRun.options.importStructure}`)) {
+      let resp = await openApiBroker('@haxcms', commandRun.options.importStructure, { repoUrl: commandRun.options.importSite});
+      if (resp.res.data && resp.res.data.data && resp.res.data.data.items) {
+        siteRequest.build.structure = 'import';
+        siteRequest.build.items = resp.res.data.data.items;
+      }
+      if (resp.res.data && resp.res.data.data && resp.res.data.data.files) {
+        siteRequest.build.files = resp.res.data.data.files;
+      }
+    }
+  }
+  HAXCMS.cliWritePath = `${project.path}`;
+  let res = new Res();
+  await hax.RoutesMap.post.createSite({body: siteRequest}, res);
+  if (commandRun.options.v) {
+    if (commandRun.options.format === 'yaml') {
+      log(dump(res.data));
+    }
+    else {
+      log(res.data);
+    }
+  }
+  if (!commandRun.options.quiet) {
+    s.stop(merlinSays(`${project.name} created!`));
+    await setTimeout(500);
+  }
+  
+  if (project.gitRepo && !commandRun.options.isMonorepo) {
+    try {
+      await exec(`cd ${project.path}/${project.name} && git init && git add -A && git commit -m "first commit" && git branch -M main${project.gitRepo ? ` && git remote add origin ${project.gitRepo}` : ''}`);    
+    }
+    catch(e) {        
+    }
+  }
+  // options for install, git and other extras
+  // can't launch if we didn't install first so launch implies installation
+  if (project.extras.includes('launch')) {
+    let optionPath = `${project.path}/${project.name}`;
+    let command = `npx @haxtheweb/haxcms-nodejs`;
+    if (!commandRun.options.quiet) {
+    p.note(`${merlinSays(`I have summoned a sub-process daemon 👹`)}
 
+🚀  Running your ${color.bold(project.type)} ${color.bold(project.name)}:
+${color.underline(color.cyan(`http://localhost:${port}`))}
+
+🏠  Launched: ${color.underline(color.bold(color.yellow(color.bgBlack(`${optionPath}`))))}
+💻  Folder: ${color.bold(color.yellow(color.bgBlack(`cd ${optionPath}`)))}
+📂  Open folder: ${color.bold(color.yellow(color.bgBlack(`open ${optionPath}`)))}
+📘  VS Code Project: ${color.bold(color.yellow(color.bgBlack(`code ${optionPath}`)))}
+🚧  Launch later: ${color.bold(color.yellow(color.bgBlack(`${command}`)))}
+
+⌨️  To resume 🧙 Merlin press: ${color.bold(color.black(color.bgRed(` CTRL + C `)))}
+`);
+    }
+      // at least a second to see the message print at all
+      await setTimeout(1000);
+      try {
+      await exec(`cd ${optionPath} && ${command}`);
+      }
+      catch(e) {
+      // don't log bc output is weird
+      }
+  }
+  else if (!commandRun.options.quiet) {
+    let nextSteps = `cd ${project.path}/${project.name} && hax start`;
+    p.note(`${project.name} is ready to go. Run the following to start working with it:`);
+    p.outro(nextSteps);
+  }
+}
 
 export async function siteItemsOptionsList(activeHaxsite, skipId = null) {
-  let items = [];
-  for (var i in activeHaxsite.manifest.items) {
+  let items = activeHaxsite.manifest.orderTree(activeHaxsite.manifest.items);
+  let optionItems = [];
+  for (var i in items) {
     // ensure we remove self if operation is about page in question like parent selector
-    if (activeHaxsite.manifest.items[i].id !== skipId) {
-      items.push({
-        value: activeHaxsite.manifest.items[i].id,
-        label: activeHaxsite.manifest.items[i].title
+    if (items[i].id !== skipId) {
+      optionItems.push({
+        value: items[i].id,
+        label: ` ${'-'.repeat(parseInt(items[i].indent))}${items[i].title}`
       })  
     }
   }
-  return items;
+  return optionItems;
 }
 
 export async function siteThemeList() {

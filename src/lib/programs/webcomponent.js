@@ -6,7 +6,7 @@ import * as ejs from "ejs";
 import * as p from '@clack/prompts';
 import color from 'picocolors';
 
-import { merlinSays } from "../statements.js";
+import { merlinSays, log } from "../statements.js";
 import { dashToCamel, readAllFiles } from '../utils.js';
 import * as hax from "@haxtheweb/haxcms-nodejs";
 const HAXCMS = hax.HAXCMS;
@@ -278,43 +278,52 @@ ${color.underline(color.cyan(`http://localhost:${port}`))}
     // don't log bc output is weird
     }
   }
-  else {
-      let nextSteps = `cd ${project.path}/${project.name} && ${project.extras.includes('install') ? '' : `${commandRun.options.npmClient} install && `}${commandRun.options.npmClient} start`;
-      p.note(`${project.name} is ready to go. Run the following to start development:`);
-      p.outro(nextSteps);
+  else if (!commandRun.options.quiet) {
+    let nextSteps = `cd ${project.path}/${project.name} && ${project.extras.includes('install') ? '' : `${commandRun.options.npmClient} install && `}${commandRun.options.npmClient} start`;
+    p.note(`${project.name} is ready to go. Run the following to start development:`);
+    p.outro(nextSteps);
   }
 }
 
 // autodetect webcomponent
 export async function webcomponentCommandDetected(commandRun, packageData = {}, port = "8000") {
-  p.intro(`${color.bgBlack(color.white(` HAXTheWeb : Webcomponent detected `))}`);
-  p.intro(`${color.bgBlue(color.white(` Web component name: ${packageData.name} `))}`);
+  if (!commandRun.options.quiet) {
+    p.intro(`${color.bgBlack(color.white(` HAXTheWeb : Webcomponent detected `))}`);
+    p.intro(`${color.bgBlue(color.white(` Web component name: ${packageData.name} `))}`);  
+  }
   // if we support customElement analyzer (hax wcs do) then generate if asked
   if (commandRun.options.writeHaxProperties && packageData.customElements) {
     webcomponentGenerateHAXSchema(commandRun, packageData);
   }
   else {
-    p.note(`${merlinSays(`I have summoned a sub-process daemon 👹`)}
-    
-    🚀  Running your ${color.bold('webcomponent')} ${color.bold(packageData.name)}:
-          ${color.underline(color.cyan(`http://localhost:${port}`))}
-    
-    🏠  Launched: ${color.underline(color.bold(color.yellow(color.bgBlack(`${process.cwd()}`))))}
-    💻  Folder: ${color.bold(color.yellow(color.bgBlack(`cd ${process.cwd()}`)))}
-    📂  Open folder: ${color.bold(color.yellow(color.bgBlack(`open ${process.cwd()}`)))}
-    📘  VS Code Project: ${color.bold(color.yellow(color.bgBlack(`code ${process.cwd()}`)))}
-    🚧  Launch later: ${color.bold(color.yellow(color.bgBlack(`${commandRun.options.npmClient} start`)))}
-    
-    ⌨️  To exit 🧙 Merlin press: ${color.bold(color.black(color.bgRed(` CTRL + C `)))}
-    `);
+    if (!commandRun.options.quiet) {
+      p.note(`${merlinSays(`I have summoned a sub-process daemon 👹`)}
+      
+      🚀  Running your ${color.bold('webcomponent')} ${color.bold(packageData.name)}:
+            ${color.underline(color.cyan(`http://localhost:${port}`))}
+      
+      🏠  Launched: ${color.underline(color.bold(color.yellow(color.bgBlack(`${process.cwd()}`))))}
+      💻  Folder: ${color.bold(color.yellow(color.bgBlack(`cd ${process.cwd()}`)))}
+      📂  Open folder: ${color.bold(color.yellow(color.bgBlack(`open ${process.cwd()}`)))}
+      📘  VS Code Project: ${color.bold(color.yellow(color.bgBlack(`code ${process.cwd()}`)))}
+      🚧  Launch later: ${color.bold(color.yellow(color.bgBlack(`${commandRun.options.npmClient} start`)))}
+      
+      ⌨️  To exit 🧙 Merlin press: ${color.bold(color.black(color.bgRed(` CTRL + C `)))}
+      `);
+    }
     try {
       // ensure it's installed first, unless it's a monorepo. basic check for node_modules
       // folder as far as if already installed so we don't double install needlessly
       if (!commandRun.options.isMonorepo && !fs.existsSync("./node_modules")) {
-        let s = p.spinner();
-        s.start(merlinSays(`Installation magic (${commandRun.options.npmClient} install)`));
-        await exec(`${commandRun.options.npmClient} install`);
-        s.stop(merlinSays(`Everything is installed. It's go time`));
+        if (!commandRun.options.quiet) {
+          let s = p.spinner();
+          s.start(merlinSays(`Installation magic (${commandRun.options.npmClient} install)`));
+          await exec(`${commandRun.options.npmClient} install`);
+          s.stop(merlinSays(`Everything is installed. It's go time`));
+        }
+        else {
+          await exec(`${commandRun.options.npmClient} install`);
+        }
       }
       await exec(`${commandRun.options.npmClient} start`);
     }
@@ -340,7 +349,7 @@ export async function webcomponentGenerateHAXSchema(commandRun, packageData) {
     });
     let wiring = new HAXWiring();
     if (commandRun.options.debug) {
-      console.log(ceFileData);
+      log(ceFileData);
     }
     if (ceFileData) {
       let ce = JSON.parse(ceFileData);
@@ -400,10 +409,10 @@ export async function webcomponentGenerateHAXSchema(commandRun, packageData) {
             }
           });
           if (commandRun.options.v) {
-            console.log(JSON.stringify(props, null, 2));
+            log(JSON.stringify(props, null, 2));
           }
           fs.writeFileSync(`./lib/${declarations.tagName}.haxProperties.json`, JSON.stringify(props, null, 2));
-          console.log(`schema written to: ./lib/${declarations.tagName}.haxProperties.json`)
+          log(`schema written to: ./lib/${declarations.tagName}.haxProperties.json`)
         });
       });
     }

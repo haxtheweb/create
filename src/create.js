@@ -7,7 +7,7 @@ import * as path from 'node:path';
 import * as p from '@clack/prompts';
 import color from 'picocolors';
 
-import { haxIntro, communityStatement } from "./lib/statements.js";
+import { haxIntro, communityStatement, log } from "./lib/statements.js";
 import { webcomponentProcess, webcomponentCommandDetected } from "./lib/programs/webcomponent.js";
 import { siteActions, siteNodeOperations, siteProcess, siteCommandDetected } from "./lib/programs/site.js";
 import { camelToDash } from "./lib/utils.js";
@@ -37,6 +37,7 @@ async function main() {
   .option('--npm-client <char>', 'npm client to use (must be installed) npm, yarn, pnpm', 'npm')
   .option('--y', 'yes to all questions')
   .option('--skip', 'skip frills like animations')
+  .option('--quiet', 'remove console logging')
   .option('--auto', 'yes to all questions, alias of y')
   .option('--no-i', 'prevent interactions / sub-process, good for scripting')
   .option('--to-file <char>', 'redirect command output to a file')
@@ -53,6 +54,7 @@ async function main() {
   .option('--item-id <char>', 'node ID to operate on')
   .option('--name <char>', 'name of the project')
   .option('--domain <char>', 'published domain name')
+  .option('--items-import <char>', 'import items from a file / site')
   .helpCommand(true);
 
   // default command which runs interactively
@@ -95,6 +97,7 @@ async function main() {
   .option('--node-op <char>', 'node operation to perform')
   .option('--no-i', 'prevent interactions / sub-process, good for scripting')
   .option('--to-file <char>', 'redirect command output to a file')
+  .option('--item-import <char>', 'import items from a file / site')
   .version(await HAXCMS.getHAXCMSVersion());
   let siteNodeOps = siteNodeOperations();
   for (var i in siteNodeOps) {
@@ -129,7 +132,7 @@ async function main() {
   program.parse();
   commandRun.options = {...commandRun.options, ...program.opts()};
   if (commandRun.options.debug) {
-    console.log(commandRun);
+    log(commandRun);
   }
   // auto and y assume same thing
   if (commandRun.options.y || commandRun.options.auto) {
@@ -143,9 +146,13 @@ async function main() {
     author = value.stdout.trim();
   }
   catch(e) {
-    console.log('git user name not configured. Run the following to do this:');
-    console.log('git config --global user.name "namehere"');
-    console.log('git config --global user.email "email@here');
+    log('git user name not configured. Run the following to do this:');
+    log('git config --global user.name "namehere"');
+    log('git config --global user.email "email@here');
+  }
+  // bridge to log so we can respect this setting
+  if (commandRun.options.quiet) {
+    process.haxquiet = true;
   }
   // only set path if not already set
   if (!commandRun.options.path && commandRun.options.skip) {
@@ -186,7 +193,9 @@ async function main() {
         }
         // see if we're in a monorepo
         if (packageData.useWorkspaces && packageData.workspaces && packageData.workspaces.packages && packageData.workspaces.packages[0]) {
-          p.intro(`${color.bgBlack(color.white(` Monorepo detected : Setting relative defaults `))}`);
+          if (!commandRun.options.quiet) {
+            p.intro(`${color.bgBlack(color.white(` Monorepo detected : Setting relative defaults `))}`);
+          }
           commandRun.options.isMonorepo = true;
           commandRun.options.auto = true;
           // assumed if monorepo
@@ -204,7 +213,7 @@ async function main() {
     }
   }
   if (commandRun.options.debug) {
-    console.log(packageData);
+    log(packageData);
   }
   // CLI works within context of the site if one is detected, otherwise we can do other thingss
   if (await hax.systemStructureContext()) {
@@ -218,17 +227,21 @@ async function main() {
     await webcomponentCommandDetected(commandRun, packageData);
   }
   else {
-    if (commandRun.command === 'start' && !commandRun.options.y && !commandRun.options.auto && !commandRun.options.skip) {
+    if (commandRun.command === 'start' && !commandRun.options.y && !commandRun.options.auto && !commandRun.options.skip && !commandRun.options.quiet) {
       await haxIntro();
     }
     let activeProject = null;
     let project = { type: null };
     while (project.type !== 'quit') {
       if (activeProject) {
-        p.note(` 🧙🪄 BE GONE ${color.bold(color.black(color.bgGreen(activeProject)))} sub-process daemon! 🪄 + ✨ 👹 = 💀 `);
+        if (!commandRun.options.quiet) {
+          p.note(` 🧙🪄 BE GONE ${color.bold(color.black(color.bgGreen(activeProject)))} sub-process daemon! 🪄 + ✨ 👹 = 💀 `);
+        }
         // ensure if we were automatically running the command we end
         if (commandRun.options.y) {
-          communityStatement();
+          if (!commandRun.options.quiet) {
+            communityStatement();
+          }
           process.exit(0);
         }
         // otherwise null to reset the program to run again
@@ -260,8 +273,10 @@ async function main() {
           },
           {
             onCancel: () => {
-              p.cancel('🧙🪄 Merlin: Leaving so soon? HAX ya later');
-              communityStatement();
+              if (!commandRun.options.quiet) {
+                p.cancel('🧙🪄 Merlin: Leaving so soon? HAX ya later');
+                communityStatement();
+              }
               process.exit(0);
             },
           }
@@ -273,7 +288,9 @@ async function main() {
       // detect being in a haxcms scaffold. easiest way is _sites being in this directory
       // set the path automatically so we skip the question
       if ((commandRun.command === "site") && fs.existsSync(`${process.cwd()}/_sites`)) {
-        p.intro(`${color.bgBlack(color.white(` HAXcms detected : Path set automatically `))}`);
+        if (!commandRun.options.quiet) {
+          p.intro(`${color.bgBlack(color.white(` HAXcms detected : Path set automatically `))}`);
+        }
         commandRun.options.path = `${process.cwd()}/_sites`;
       }
       activeProject = project.type;
@@ -401,8 +418,10 @@ async function main() {
           },
           {
             onCancel: () => {
-              p.cancel('🧙🪄 Merlin: Canceling CLI.. HAX ya later');
-              communityStatement();
+              if (!commandRun.options.quiet) {
+                p.cancel('🧙🪄 Merlin: Canceling CLI.. HAX ya later');
+                communityStatement();
+              }
               process.exit(0);
             },
           }
@@ -445,7 +464,9 @@ async function main() {
         }
       }
     }
-    communityStatement();
+    if (!commandRun.options.quiet) {
+      communityStatement();
+    }
   }
 }
 

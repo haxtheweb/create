@@ -3,6 +3,13 @@ import * as p from '@clack/prompts';
 import color from 'picocolors';
 import { setTimeout } from 'node:timers/promises';
 
+// wrapper so we can silence all log messages at the same time
+export function log(msg, level = 'log') {
+  if (!process.haxquiet) {
+    console[level](msg);
+  }
+}
+
 export async function haxIntro() {
     console.clear();
     await setTimeout(10);

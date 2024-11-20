@@ -1,3 +1,7 @@
+# defaults from testing
+mysite
+my-element
+
 # Logs
 logs
 *.log
