@@ -4,7 +4,7 @@ import * as p from '@clack/prompts';
 import color from 'picocolors';
 import { dump } from 'js-yaml';
 import { parse } from 'node-html-parser';
-import { merlinSays, communityStatement, playSound } from "../statements.js";
+import { merlinSays, communityStatement } from "../statements.js";
 import { dashToCamel } from "../utils.js";
 
 // trick MFR into giving local paths
@@ -661,7 +661,6 @@ export async function siteProcess(commandRun, project, port = '3000') {    // au
       }
     }
     s.stop(merlinSays(`${project.name} created!`));
-    playSound("success");
     await setTimeout(500);
     
     if (project.gitRepo && !commandRun.options.isMonorepo) {
