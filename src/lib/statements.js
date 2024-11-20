@@ -2,8 +2,6 @@ import { characters } from './art.js';
 import * as p from '@clack/prompts';
 import color from 'picocolors';
 import { setTimeout } from 'node:timers/promises';
-import * as path from 'node:path';
-
 
 export async function haxIntro() {
     console.clear();

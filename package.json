@@ -24,7 +24,7 @@
     "release": "npm run build && commit-and-tag-version && git push --follow-tags origin main && npm publish",
     "hax": "hax",
     "dev": "nodemon --watch src",
-    "haxcms-nodejs-cli": "haxcms-nodejs-cli"
+    "haxcms-nodejs": "haxcms-nodejs"
   },
   "bin": {
     "create-haxtheweb": "./dist/create.js",

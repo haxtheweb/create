@@ -1,11 +1,13 @@
 #!/usr/bin/env node
 import { setTimeout } from 'node:timers/promises';
+import * as fs from 'node:fs';
+
 import * as p from '@clack/prompts';
 import color from 'picocolors';
 import { dump } from 'js-yaml';
+
 import { parse } from 'node-html-parser';
 import { merlinSays, communityStatement } from "../statements.js";
-import { dashToCamel } from "../utils.js";
 
 // trick MFR into giving local paths
 globalThis.MicroFrontendRegistryConfig = {
@@ -174,6 +176,15 @@ export async function siteCommandDetected(commandRun) {
             else {
               console.log(siteStats);
             }
+            // simple redirecting to file
+            if (commandRun.options.toFile) {
+              if (commandRun.options.format === 'yaml') {
+                fs.writeFileSync(commandRun.options.toFile, dump(siteStats))
+              }
+              else {
+                fs.writeFileSync(commandRun.options.toFile, JSON.stringify(siteStats, null, 2))
+              }
+            }
           break;
           case "site:items":
             if (commandRun.options.format === 'yaml') {
@@ -181,6 +192,15 @@ export async function siteCommandDetected(commandRun) {
             }
             else {
               console.log(activeHaxsite.manifest.items);
+            }
+            // simple redirecting to file
+            if (commandRun.options.toFile) {
+              if (commandRun.options.format === 'yaml') {
+                fs.writeFileSync(commandRun.options.toFile, dump(activeHaxsite.manifest.items))
+              }
+              else {
+                fs.writeFileSync(commandRun.options.toFile, JSON.stringify(activeHaxsite.manifest.items, null, 2))
+              }
             }
           break;
           case "start":

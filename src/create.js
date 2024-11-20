@@ -39,6 +39,7 @@ async function main() {
   .option('--skip', 'skip frills like animations')
   .option('--auto', 'yes to all questions, alias of y')
   .option('--no-i', 'prevent interactions / sub-process, good for scripting')
+  .option('--to-file <char>', 'redirect command output to a file')
 
   // options for webcomponent
   .option('--org <char>', 'organization for package.json')
@@ -93,6 +94,7 @@ async function main() {
   .option('--domain <char>', 'published domain name')
   .option('--node-op <char>', 'node operation to perform')
   .option('--no-i', 'prevent interactions / sub-process, good for scripting')
+  .option('--to-file <char>', 'redirect command output to a file')
   .version(await HAXCMS.getHAXCMSVersion());
   let siteNodeOps = siteNodeOperations();
   for (var i in siteNodeOps) {
@@ -121,6 +123,7 @@ async function main() {
   .option('--org <char>', 'organization for package.json')
   .option('--author <char>', 'author for site / package.json')
   .option('--writeHaxProperties', 'Write haxProperties for the element')
+  .option('--to-file <char>', 'redirect command output to a file')
   .option('--no-i', 'prevent interactions / sub-process, good for scripting');
   // process program arguments
   program.parse();
