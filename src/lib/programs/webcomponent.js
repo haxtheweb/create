@@ -190,6 +190,14 @@ export async function webcomponentProcess(commandRun, project, port = "8000") {
     `${process.mainModule.path}/templates/${project.type}/hax/`,
     `${project.path}/${project.name}`
   );
+  // rename gitignore to improve copy cross platform compat
+  await fs.renameSync(`${project.path}/${project.name}/_github`, `${project.path}/${project.name}/.github`);
+  await fs.renameSync(`${project.path}/${project.name}/_editorconfig`, `${project.path}/${project.name}/.editorconfig`);
+  await fs.renameSync(`${project.path}/${project.name}/_gitignore`, `${project.path}/${project.name}/.gitignore`);
+  await fs.renameSync(`${project.path}/${project.name}/_nojekyll`, `${project.path}/${project.name}/.nojekyll`);
+  await fs.renameSync(`${project.path}/${project.name}/_npmignore`, `${project.path}/${project.name}/.npmignore`);
+  await fs.renameSync(`${project.path}/${project.name}/_surgeignore`, `${project.path}/${project.name}/.surgeignore`);
+  await fs.renameSync(`${project.path}/${project.name}/_travis.yml`, `${project.path}/${project.name}/.travis.yml`);
   // rename paths that are of the element name in question
   await fs.renameSync(`${project.path}/${project.name}/lib/webcomponent.haxProperties.json`, `${project.path}/${project.name}/lib/${project.name}.haxProperties.json`);
   // loop through and rename all the localization files
