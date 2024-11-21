@@ -418,7 +418,6 @@ export async function siteCommandDetected(commandRun) {
           break;
           case "node:add":
             try {
-              // @todo accept title if not supplied
               if (!commandRun.options.title) {
                 commandRun.options.title = await p.text({
                   message: `Title for this page`,
@@ -431,11 +430,64 @@ export async function siteCommandDetected(commandRun) {
                   }
                 });
               }
-              let resp = await haxcmsNodejsCli.cliBridge('createNode', { site: activeHaxsite, node: { title: commandRun.options.title }});
+              var createNodeBody = { 
+                site: activeHaxsite,
+                node: { 
+                  title: commandRun.options.title
+                }
+              };
+              // this would be odd but could be direct with no format specified
+              if (commandRun.options.content && !commandRun.options.format) {
+                // only API where it's called contents and already out there {facepalm}
+                // but user already has commands where it's --content as arg
+                createNodeBody.node.contents = commandRun.options.content;
+              }
+              else if (commandRun.options.content && commandRun.options.format) {
+                // @todo support for md,html,schema both local and remote resolution
+
+                // if we have format set, then  we need to interpret content as a url
+                let location = commandRun.options.content;
+                let locationContent = '';
+                // support for address, as in import from some place else
+                if (location.startsWith('https://') || location.startsWith('http://')) {                  
+                  locationContent = await fetch(location).then(d => d.ok ? d.text() : '');
+                }
+                // look on prem
+                else if(fs.existsSync(location)) {
+                  locationContent = await fs.readFileSync(location);
+                  if (location.endsWith('.json')) {
+                    locationContent = JSON.parse(locationContent);
+                  }
+                  else if (location.endsWith('.yaml')) {
+                    locationContent = await load(locationContent);
+                  }
+                  else if (location.endsWith('.md')) {
+                    let resp = await openApiBroker('@core', 'mdToHtml', { md: locationContent, raw: true});
+                    console.log(resp);
+                    if (resp.res.data) {
+                      locationContent = resp.res.data;
+                    }
+                  }
+                }
+                // support for scraper mode to find title from the content responsee
+                if (commandRun.options.titleScrape) {
+                  let dom = parse(`${locationContent}`);
+                  createNodeBody.node.title = dom.querySelector(`${commandRun.options.titleScrape}`).textContent;
+                }
+                // support scraper mode which targets a wrapper for the actual content
+                if (commandRun.options.contentScrape) {
+                  let dom = parse(`${locationContent}`);
+                  locationContent = dom.querySelector(`${commandRun.options.contentScrape}`).innerHTML;
+                }
+                createNodeBody.node.contents = locationContent;
+              }
+              let resp = await haxcmsNodejsCli.cliBridge('createNode', createNodeBody);
               if (commandRun.options.v) {
                 log(resp.res.data);
               }
-              log(`"${commandRun.options.title}" added to site`);
+              if (!commandRun.options.quiet) {
+                log(`"${createNodeBody.node.title}" added to site`);
+              }
             }
             catch(e) {
               log(e.stderr);
@@ -513,8 +565,47 @@ export async function siteCommandDetected(commandRun) {
                 // ensure we set empty values, just not completely undefined values
                 if (typeof commandRun.options[commandRun.options.nodeOp] !== "undefined") {
                   if (commandRun.options.nodeOp === 'content') {
-                    if (commandRun.options.content && await page.writeLocation(commandRun.options.content)) {
-                      log(`node:edit success updated page content: "${page.id}`);
+                    let locationContent = '';
+                    // this would be odd but could be direct with no format specified
+                    if (commandRun.options.content && !commandRun.options.format) {
+                      locationContent = commandRun.options.content;
+                    }
+                    // this implies what we were given needs processing as a file / url
+                    else if (commandRun.options.content && commandRun.options.format) {
+                      // if we have format set, then  we need to interpret content as a url
+                      let location = commandRun.options.content;
+                      // support for address, as in import from some place else
+                      if (location.startsWith('https://') || location.startsWith('http://')) {                  
+                        locationContent = await fetch(location).then(d => d.ok ? d.text() : '');
+                      }
+                      // look on prem
+                      else if(fs.existsSync(location)) {
+                        locationContent = await fs.readFileSync(location);
+                        if (location.endsWith('.json')) {
+                          locationContent = JSON.parse(locationContent);
+                        }
+                        else if (location.endsWith('.yaml')) {
+                          locationContent = await load(locationContent);
+                        }
+                        else if (location.endsWith('.md')) {
+                          let resp = await openApiBroker('@core', 'mdToHtml', { md: locationContent, raw: true});
+                          console.log(resp);
+                          if (resp.res.data) {
+                            locationContent = resp.res.data;
+                          }
+                        }
+                      }
+                      // support scraper mode which targets a wrapper for the actual content
+                      if (commandRun.options.contentScrape) {
+                        let dom = parse(`${locationContent}`);
+                        locationContent = dom.querySelector(`${commandRun.options.contentScrape}`).innerHTML;
+                      }
+                    }
+                    // if we have content (meaning it's not blank) then try to write the page location                    
+                    if (locationContent && await page.writeLocation(locationContent)) {
+                      if (!commandRun.options.quiet) {
+                        log(`node:edit success updated page content: "${page.id}`);
+                      }
                     }
                     else {
                       console.warn(`node:edit failure to write page content : ${page.id}`);
@@ -706,22 +797,34 @@ export async function siteCommandDetected(commandRun) {
                 let resp = await openApiBroker('@core', 'htmlToMd', { html: siteContent});
                 if (commandRun.options.toFile) {
                   fs.writeFileSync(commandRun.options.toFile, resp.res.data.data);
+                  if (!commandRun.options.quiet) {
+                    log(`${commandRun.options.toFile} written`);
+                  }
                 }
                 else {
                   log(resp.res.data.data);
                 }
               }
               else {
-                log(siteContent);
+                if (commandRun.options.toFile) {
+                  fs.writeFileSync(commandRun.options.toFile, siteContent);
+                  if (!commandRun.options.quiet) {
+                    log(`${commandRun.options.toFile} written`);
+                  }
+                }
+                else {
+                  log(siteContent);
+                }
               }
             }
           break;
           case "quit":
-            // quit
+          // quit
           process.exit(0);
           break;
         }
-        if (commandRun.options.y) {
+        // y or noi need to act like it ran and finish instead of looping options
+        if (commandRun.options.y || !commandRun.options.i) {
           process.exit(0);
         }
         operation.action = null;

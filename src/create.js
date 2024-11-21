@@ -54,6 +54,8 @@ async function main() {
   .option('--item-id <char>', 'node ID to operate on')
   .option('--name <char>', 'name of the project')
   .option('--domain <char>', 'published domain name')
+  .option('--title-scrape <char>', 'CSS Selector for `title` in resource')
+  .option('--content-scrape <char>', 'CSS Selector for `body` in resource')
   .option('--items-import <char>', 'import items from a file / site')
   .helpCommand(true);
 
