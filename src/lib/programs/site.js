@@ -945,6 +945,82 @@ export async function siteProcess(commandRun, project, port = '3000') {    // au
         siteRequest.build.files = resp.res.data.data.files;
       }
     }
+    // hidden import methodologies
+    else if (commandRun.options.importStructure) {
+      if (commandRun.options.importStructure === 'drupal7-book-print-html') {
+        let siteContent = await fetch(commandRun.options.importSite).then(d => d.ok ? d.text() : '');
+        if (siteContent) {
+          // @todo refactor to support 9 levels of heirarchy as this is technically what Drupal supports
+          let dom = parse(siteContent);
+          // pull all of level 1 of hierarchy
+          let depth;
+          let order = 0;
+          let parent = null;
+          let items = [];
+          for (let branch1 of dom.querySelectorAll('.section-2')) {
+            parent = null;
+            depth = 0;
+            let itemID = branch1.getAttribute('id');
+            let item = {
+              id: itemID,
+              order: order,
+              indent: depth,
+              title: branch1.querySelector('h1').innerText,
+              slug: itemID.replace('-','/'),
+              contents: branch1.querySelector(`.field.field-name-body .field-item`).innerHTML,
+              parent: parent,
+            };
+            items.push(item);
+            order++;
+            depth = 1;
+            let parent2 = itemID;
+            let order2 = 0;
+            for (let branch2 of branch1.querySelectorAll('.section-3')) {
+              itemID = branch2.getAttribute('id');
+              let item = {
+                id: itemID,
+                order: order2,
+                indent: depth,
+                title: branch2.querySelector('h1').innerText,
+                slug: itemID.replace('-','/'),
+                contents: branch2.querySelector(`.field.field-name-body .field-item`).innerHTML,
+                parent: parent2,
+              };
+              items.push(item);
+              order2++;
+              depth = 2;
+              let parent3 = itemID;
+              let order3 = 0;
+              for (let branch3 of branch2.querySelectorAll('.section-4')) {
+                itemID = branch3.getAttribute('id');
+                let item = {
+                  id: itemID,
+                  order: order3,
+                  indent: depth,
+                  title: branch3.querySelector('h1').innerText,
+                  slug: itemID.replace('-','/'),
+                  contents: branch3.querySelector(`.field.field-name-body .field-item`).innerHTML,
+                  parent: parent3,
+                };
+                items.push(item);
+                order3++;
+              }
+            }
+            // obtain all images on the system to bring along with additional spider request
+            let location = new URL(commandRun.options.importSite).origin;
+            var files = {};
+            for (let image of dom.querySelectorAll("img[src^='/']")) {
+              if (!image.getAttribute('src').startsWith('//')) {
+                files[image.getAttribute('src')] = `${location}${image.getAttribute('src')}`;
+              }
+            }
+            siteRequest.build.files = files;
+          }
+          siteRequest.build.structure = 'import';
+          siteRequest.build.items = items;
+        }
+      }
+    }
   }
   HAXCMS.cliWritePath = `${project.path}`;
   let res = new Res();

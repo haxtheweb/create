@@ -5,6 +5,8 @@
  * @license Apache-2.0, see License.md for full text.
  */
 
+import { log } from "./statements.js";
+
 // very basic class for micro
 const MicroFrontendKeys = [
     "endpoint",
@@ -52,10 +54,8 @@ const MicroFrontendKeys = [
        */
       define(item) {
         if (!(item instanceof MicroFrontend)) {
-          console.warn(
-            "MicroFrontendRegistry: use class MicroFrontend instance but if keys match it will register still.",
-          );
-          console.warn(item);
+          log("MicroFrontendRegistry: use class MicroFrontend instance but if keys match it will register still.", 'warn');
+          log(item, 'warn');
         }
         // validate item has all keys we care about
         if (Object.keys(item).every((key) => MicroFrontendKeys.includes(key))) {
@@ -116,9 +116,9 @@ const MicroFrontendKeys = [
           }
         }
         if (!testOnly) {
-          console.error(
+          log(
             `call for ${name} but not found in micro-frontend-registry`,
-          );
+          'error');
         }
         return null;
       }
@@ -196,7 +196,7 @@ const MicroFrontendKeys = [
                   return d.ok ? d.json() : { status: d.status, data: null };
                 })
                 .catch((e, d) => {
-                  console.warn("Request failed", e);
+                  log("Request failed", 'warn');
                   // this is endpoint completely failed to respond
                   return { status: 500, data: null };
                 });
@@ -212,7 +212,7 @@ const MicroFrontendKeys = [
                   return d.ok ? d.json() : { status: d.status, data: null };
                 })
                 .catch((e, d) => {
-                  console.warn("Request failed", e);
+                  log("Request failed", 'warn');
                   // this is endpoint completely failed to respond
                   return { status: 500, data: null };
                 });
