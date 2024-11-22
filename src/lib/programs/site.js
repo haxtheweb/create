@@ -915,7 +915,7 @@ export async function siteProcess(commandRun, project, port = '3000') {    // au
       "site": {
           "name": project.name,
           "description": "own course",
-          "theme": commandRun.options.theme ? commandRun.options.theme : "clean-one"
+          "theme": commandRun.options.theme ? commandRun.options.theme : (project.theme ? project.theme : "clean-one") 
       },
       "build": {
           "type": "own",
