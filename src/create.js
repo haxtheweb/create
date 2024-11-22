@@ -9,7 +9,7 @@ import color from 'picocolors';
 
 import { haxIntro, communityStatement, log } from "./lib/statements.js";
 import { webcomponentProcess, webcomponentCommandDetected } from "./lib/programs/webcomponent.js";
-import { siteActions, siteNodeOperations, siteProcess, siteCommandDetected } from "./lib/programs/site.js";
+import { siteActions, siteNodeOperations, siteProcess, siteCommandDetected, siteThemeList } from "./lib/programs/site.js";
 import { camelToDash } from "./lib/utils.js";
 import * as hax from "@haxtheweb/haxcms-nodejs";
 const HAXCMS = hax.HAXCMS;
@@ -386,6 +386,15 @@ async function main() {
                   initialValue: author,
                 });
               }
+            },
+            theme: async({ results }) => {
+              let themes = await siteThemeList();
+              return p.select({
+                message: "Theme:",
+                required: false,
+                options: themes,
+                initialValue: themes[0]
+              })
             },
             extras: ({ results }) => {
               if (!commandRun.options.auto && commandRun.options.i) {
