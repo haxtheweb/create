@@ -11,7 +11,7 @@ import { merlinSays, communityStatement, log } from "../statements.js";
 
 // trick MFR into giving local paths
 globalThis.MicroFrontendRegistryConfig = {
-  base: `@haxtheweb/open-apis/`
+  base: `@haxtheweb/open-apis`
 };
 import { MicroFrontendRegistry } from "../micro-frontend-registry.js";
 // emable HAXcms routes so we have name => path just like on frontend!
@@ -74,6 +74,7 @@ export function siteActions() {
     { value: 'site:md', label: "Full site as Markdown"},
     { value: 'site:schema', label: "Full site as HAXElementSchema"},
     { value: 'site:sync', label: "Sync git repo"},
+    { value: 'site:surge', label: "Publish site to Surge.sh"}
   ];
 }
 
@@ -102,9 +103,6 @@ export async function siteCommandDetected(commandRun) {
       // infinite loop until quitting the cli
       while (operation.action !== 'quit') {
         let actions = siteActions();
-        if (sysSurge) {
-          actions.push({ value: 'site:surge', label: "Publish site to Surge.sh"});              
-        }
         actions.push({ value: 'quit', label: "🚪 Quit"});
         if (!operation.action) {
           commandRun = {
@@ -443,11 +441,9 @@ export async function siteCommandDetected(commandRun) {
                 createNodeBody.node.contents = commandRun.options.content;
               }
               else if (commandRun.options.content && commandRun.options.format) {
-                // @todo support for md,html,schema both local and remote resolution
-
+                let locationContent = '';
                 // if we have format set, then  we need to interpret content as a url
                 let location = commandRun.options.content;
-                let locationContent = '';
                 // support for address, as in import from some place else
                 if (location.startsWith('https://') || location.startsWith('http://')) {                  
                   locationContent = await fetch(location).then(d => d.ok ? d.text() : '');
@@ -455,19 +451,21 @@ export async function siteCommandDetected(commandRun) {
                 // look on prem
                 else if(fs.existsSync(location)) {
                   locationContent = await fs.readFileSync(location);
-                  if (location.endsWith('.json')) {
+                }
+                // format dictates additional processing; html is default
+                switch (commandRun.options.format) {
+                  case 'json':
                     locationContent = JSON.parse(locationContent);
-                  }
-                  else if (location.endsWith('.yaml')) {
+                  break;
+                  case 'yaml':
                     locationContent = await load(locationContent);
-                  }
-                  else if (location.endsWith('.md')) {
+                  break;
+                  case 'md':
                     let resp = await openApiBroker('@core', 'mdToHtml', { md: locationContent, raw: true});
-                    console.log(resp);
                     if (resp.res.data) {
                       locationContent = resp.res.data;
                     }
-                  }
+                  break;
                 }
                 // support for scraper mode to find title from the content responsee
                 if (commandRun.options.titleScrape) {
@@ -581,19 +579,21 @@ export async function siteCommandDetected(commandRun) {
                       // look on prem
                       else if(fs.existsSync(location)) {
                         locationContent = await fs.readFileSync(location);
-                        if (location.endsWith('.json')) {
+                      }
+                      // format dictates additional processing; html is default
+                      switch (commandRun.options.format) {
+                        case 'json':
                           locationContent = JSON.parse(locationContent);
-                        }
-                        else if (location.endsWith('.yaml')) {
+                        break;
+                        case 'yaml':
                           locationContent = await load(locationContent);
-                        }
-                        else if (location.endsWith('.md')) {
+                        break;
+                        case 'md':
                           let resp = await openApiBroker('@core', 'mdToHtml', { md: locationContent, raw: true});
-                          console.log(resp);
                           if (resp.res.data) {
                             locationContent = resp.res.data;
                           }
-                        }
+                        break;
                       }
                       // support scraper mode which targets a wrapper for the actual content
                       if (commandRun.options.contentScrape) {
@@ -708,9 +708,20 @@ export async function siteCommandDetected(commandRun) {
           break;
           case "site:surge":
             try {
+              // attempt to install; implies they asked to publish with surge but
+              // system test did not see it globally
+              if (!sysSurge) {
+                let s = p.spinner();
+                s.start(merlinSays('Installing Surge.sh globally so we can publish'));
+                let execOutput = await exec(`npm install --global surge`);
+                s.stop(merlinSays('surge.sh installed globally'));
+                log(execOutput.stdout.trim());
+                sysSurge = true;
+              }
               if (!commandRun.options.domain) {
                 commandRun.options.domain = await p.text({
                   message: `Domain for surge`,
+                  initialValue: `haxcli-${activeHaxsite.name}.surge.sh`,
                   defaultValue: `haxcli-${activeHaxsite.name}.surge.sh`,
                   required: true,
                   validate: (value) => {
@@ -722,6 +733,7 @@ export async function siteCommandDetected(commandRun) {
               }
               let execOutput = await exec(`cd ${activeHaxsite.directory} && surge . ${commandRun.options.domain}`);
               log(execOutput.stdout.trim());
+              log(`Site published: ${commandRun.options.domain}`);
             }
             catch(e) {
               log(e.stderr);
