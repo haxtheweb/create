@@ -99,6 +99,8 @@ async function main() {
   .option('--domain <char>', 'published domain name')
   .option('--node-op <char>', 'node operation to perform')
   .option('--no-i', 'prevent interactions / sub-process, good for scripting')
+  .option('--title-scrape <char>', 'CSS Selector for `title` in resource')
+  .option('--content-scrape <char>', 'CSS Selector for `body` in resource')
   .option('--to-file <char>', 'redirect command output to a file')
   .option('--item-import <char>', 'import items from a file / site')
   .version(await HAXCMS.getHAXCMSVersion());
