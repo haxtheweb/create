@@ -57,6 +57,7 @@ async function main() {
   .option('--title-scrape <char>', 'CSS Selector for `title` in resource')
   .option('--content-scrape <char>', 'CSS Selector for `body` in resource')
   .option('--items-import <char>', 'import items from a file / site')
+  .version(await HAXCMS.getHAXCMSVersion())
   .helpCommand(true);
 
   // default command which runs interactively
@@ -129,7 +130,8 @@ async function main() {
   .option('--author <char>', 'author for site / package.json')
   .option('--writeHaxProperties', 'Write haxProperties for the element')
   .option('--to-file <char>', 'redirect command output to a file')
-  .option('--no-i', 'prevent interactions / sub-process, good for scripting');
+  .option('--no-i', 'prevent interactions / sub-process, good for scripting')
+  .version(await HAXCMS.getHAXCMSVersion());
   // process program arguments
   program.parse();
   commandRun.options = {...commandRun.options, ...program.opts()};
