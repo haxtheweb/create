@@ -389,12 +389,20 @@ async function main() {
             },
             theme: async({ results }) => {
               let themes = await siteThemeList();
-              return p.select({
-                message: "Theme:",
-                required: false,
-                options: themes,
-                initialValue: themes[0]
-              })
+              if (!commandRun.options.theme) {
+                // support having no theme but autoselecting
+                if (!commandRun.options.auto && !commandRun.options.skip) {
+                  commandRun.options.theme = themes[0];
+                }
+                else {
+                  return p.select({
+                    message: "Theme:",
+                    required: false,
+                    options: themes,
+                    initialValue: themes[0]
+                  })  
+                }
+              }
             },
             extras: ({ results }) => {
               if (!commandRun.options.auto && commandRun.options.i) {
