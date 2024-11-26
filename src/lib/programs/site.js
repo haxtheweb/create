@@ -733,7 +733,7 @@ export async function siteCommandDetected(commandRun) {
               }
               let execOutput = await exec(`cd ${activeHaxsite.directory} && surge . ${commandRun.options.domain}`);
               log(execOutput.stdout.trim());
-              log(`Site published: ${commandRun.options.domain}`);
+              log(`Site published: https://${commandRun.options.domain}`);
             }
             catch(e) {
               log(e.stderr);
