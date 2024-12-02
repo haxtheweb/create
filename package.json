@@ -26,6 +26,9 @@
     "dev": "nodemon --watch src",
     "haxcms-nodejs": "haxcms-nodejs"
   },
+  "man": [
+    "./docs/hax.1"
+  ],
   "bin": {
     "create-haxtheweb": "./dist/create.js",
     "hax": "./dist/create.js"
