@@ -1,13 +1,15 @@
-.TH HAX\-CREATE 1 hax
+.TH HAX\-CREATE 1 hax 9.0.18 "HAX COMMAND INTERFACE MANUAL"
 
 .SH NAME
-hax \- a tool to create HAX websites and web components
+hax \- a tool to create HAX websites and web components quickly.
 
 .SH SYNOPSIS
 hax [options] [command]
 
 .SH DESCRIPTION
-Create HAX based web components and websites.
+HAX seeks to be the smallest possible back-end CMS to make HAX work and be able to build websites with it. Leveraging JSON Outline Schema, HAX is able to author multiple pages, which it then writes onto the file system. This way a slim server layer is just for basic authentication, knowing how to save files, and placing them in version control.
+
+This command line tool can be used to create and modify two different HAX based file structures. Web components (essentially custom HTML tags) using Lit or HAX Single-Sites (a single website editable in the browser with the CMS tools)
 
 .SH COMMANDS
 .PP
@@ -31,13 +33,13 @@ Verbose output
 \--debug
 Output for developers
 .TP
-\--format [char]
+\--format [format]
 Output format\; json (default), yaml
 .TP
-\--path [char]
+\--path [path]
 Where to perform operation
 .TP
-\--npm\-client [char]
+\--npm\-client [client]
 NPM client to use (must be installed); npm (default), yarn, pnpm
 .TP
 \--y, \--auto
@@ -55,58 +57,58 @@ Prevent interactions / sub\-process, good for scripting
 \--to\-file [char]
 Redirect command output to a file
 .TP
-\--org [char]
+\--org [organization]
 Organization for package.json
 .TP
-\--author [char]
+\--author [author]
 Author for site / package.json
 .TP
 \--writeHaxProperties
 Write haxProperties for the element
 .TP
-\--import\-site [char]
+\--import\-site [url]
 URL of site to import
 .TP
-\--import\-structure [char]
+\--import\-structure [method]
 Import method to use: pressbooksToSite | elsmlnToSite | haxcmsToSite | notionToSite | gitbookToSite | evolutionToSite | htmlToSite | docxToSite
 .TP
-\--node\-op [char]
+\--node\-op [operation]
 Node operation to perform
 .TP
-\--item\-id [char]
+\--item\-id [id]
 Node ID to operate on
 .TP
-\--name [char]
+\--name [name]
 Name of the project
 .TP
-\--domain [char]
+\--domain [name]
 Published domain name
 .TP
 \--items\-import [char]
 Import items from a file / site
 .TP
-\--title [char]
+\--title [title]
 Title
 .TP
-\--content [char]
+\--content [content]
 Page content
 .TP
-\--slug [char]
+\--slug [slug]
 Path (slug)
 .TP
-\--published [char]
+\--published [status]
 Publishing status
 .TP
-\--tags [char]
+\--tags [tag]
 Tags
 .TP
-\--parent [char]
+\--parent [parent]
 Parent
 .TP
-\--order [char]
+\--order [order]
 Order
 .TP
-\--theme [char]
+\--theme [theme]
 Theme
 .TP
 \--hide\-in\-menu [char]
@@ -115,8 +117,21 @@ Hide in menu
 \-h, \--help
 Display help for command
 
+.SH EXAMPLES
+.TP
+.B hax start
+Navigatable interface
+.TP
+.B hax webcomponent my-element --y
+Make a new HAX capable, i18n wired, design system (DDD) driven web component
+.TP
+.B hax site mysite --y
+Create a new HAXsite (HAXcms, single site) 
+
 .SH BUGS
 Bugs can be viewed at GitHub Issues: https://github.com/haxtheweb/issues/issues
+
+Bugs can also be submitted through Merlin on a HAX Site (in the browser) by typing "Issue" to jump start a report!
 
 .SH EXTRA
 .PP
