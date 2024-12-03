@@ -393,7 +393,7 @@ async function main() {
             },
             theme: async({ results }) => {
               let themes = await siteThemeList();
-              if (!commandRun.options.theme) {
+              if (results.type === "site" && !commandRun.options.theme) {
                 // support having no theme but autoselecting
                 if (!commandRun.options.auto && !commandRun.options.skip) {
                   commandRun.options.theme = themes[0];
