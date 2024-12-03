@@ -27,7 +27,7 @@
     "haxcms-nodejs": "haxcms-nodejs"
   },
   "man": [
-    "./docs/hax.1"
+    "./dist/docs/hax.1"
   ],
   "bin": {
     "create-haxtheweb": "./dist/create.js",
