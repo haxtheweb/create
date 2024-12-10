@@ -145,11 +145,16 @@ class HAXWiring {
 export async function webcomponentProcess(commandRun, project, port = "8000") {
   // auto select operations to perform if requested
   if (!project.extras) {
-    let extras = ['launch', 'install', 'git'];
-    if (!sysGit || project.isMonorepo) {
-      extras.pop();
+    if (!commandRun.options.extras) {
+      project.extras = [];
     }
-    project.extras = extras;
+    else {
+      let extras = ['launch', 'install', 'git'];
+      if (!sysGit || project.isMonorepo) {
+        extras.pop();
+      }
+      project.extras = extras;  
+    }
   }
   // values not set by user but used in templating
   project.className = dashToCamel(project.name);

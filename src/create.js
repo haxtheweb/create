@@ -41,6 +41,7 @@ async function main() {
   .option('--auto', 'yes to all questions, alias of y')
   .option('--no-i', 'prevent interactions / sub-process, good for scripting')
   .option('--to-file <char>', 'redirect command output to a file')
+  .option('--no-extras', 'skip all extra / automatic command processing')
 
   // options for webcomponent
   .option('--org <char>', 'organization for package.json')
@@ -102,6 +103,7 @@ async function main() {
   .option('--title-scrape <char>', 'CSS Selector for `title` in resource')
   .option('--content-scrape <char>', 'CSS Selector for `body` in resource')
   .option('--to-file <char>', 'redirect command output to a file')
+  .option('--no-extras', 'skip all extra / automatic command processing')
   .option('--item-import <char>', 'import items from a file / site')
   .version(await HAXCMS.getHAXCMSVersion());
   let siteNodeOps = siteNodeOperations();
@@ -132,6 +134,7 @@ async function main() {
   .option('--author <char>', 'author for site / package.json')
   .option('--writeHaxProperties', 'Write haxProperties for the element')
   .option('--to-file <char>', 'redirect command output to a file')
+  .option('--no-extras', 'skip all extra / automatic command processing')
   .option('--no-i', 'prevent interactions / sub-process, good for scripting')
   .version(await HAXCMS.getHAXCMSVersion());
   // process program arguments
