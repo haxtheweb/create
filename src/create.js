@@ -7,7 +7,8 @@ import * as path from 'node:path';
 import * as p from '@clack/prompts';
 import color from 'picocolors';
 
-import { haxIntro, communityStatement, log } from "./lib/statements.js";
+import { haxIntro, communityStatement } from "./lib/statements.js";
+import { log, consoleTransport, logger } from "./lib/logging.js";
 import { webcomponentProcess, webcomponentCommandDetected } from "./lib/programs/webcomponent.js";
 import { siteActions, siteNodeOperations, siteProcess, siteCommandDetected, siteThemeList } from "./lib/programs/site.js";
 import { camelToDash } from "./lib/utils.js";
@@ -42,6 +43,7 @@ async function main() {
   .option('--no-i', 'prevent interactions / sub-process, good for scripting')
   .option('--to-file <char>', 'redirect command output to a file')
   .option('--no-extras', 'skip all extra / automatic command processing')
+  .option('--root <char>', 'root location to execute the command from')
 
   // options for webcomponent
   .option('--org <char>', 'organization for package.json')
@@ -105,13 +107,13 @@ async function main() {
   .option('--to-file <char>', 'redirect command output to a file')
   .option('--no-extras', 'skip all extra / automatic command processing')
   .option('--item-import <char>', 'import items from a file / site')
+  .option('--root <char>', 'root location to execute the command from')
   .version(await HAXCMS.getHAXCMSVersion());
   let siteNodeOps = siteNodeOperations();
   for (var i in siteNodeOps) {
     program.option(`--${camelToDash(siteNodeOps[i].value)} <char>`, `${siteNodeOps[i].label}`)
     siteProg.option(`--${camelToDash(siteNodeOps[i].value)} <char>`, `${siteNodeOps[i].label}`)
   }
-  
   // webcomponent program
   program
   .command('webcomponent')
@@ -136,12 +138,24 @@ async function main() {
   .option('--to-file <char>', 'redirect command output to a file')
   .option('--no-extras', 'skip all extra / automatic command processing')
   .option('--no-i', 'prevent interactions / sub-process, good for scripting')
+  .option('--root <char>', 'root location to execute the command from')
   .version(await HAXCMS.getHAXCMSVersion());
   // process program arguments
   program.parse();
   commandRun.options = {...commandRun.options, ...program.opts()};
+  // allow execution of the command from a different location
+  if (commandRun.options.root) {
+    process.chdir(commandRun.options.root);
+  }
+  // bridge to log so we can respect this setting
+  if (commandRun.options.quiet) {
+    process.haxquiet = true;
+    // don't output to the console any messages on this run since told to be silent
+    // logging still happens to log files
+    logger.remove(consoleTransport);
+  }
   if (commandRun.options.debug) {
-    log(commandRun);
+    log(commandRun, 'debug');
   }
   // auto and y assume same thing
   if (commandRun.options.y || commandRun.options.auto) {
@@ -155,15 +169,11 @@ async function main() {
     author = value.stdout.trim();
   }
   catch(e) {
-    log('git user name not configured. Run the following to do this:');
-    log('git config --global user.name "namehere"');
-    log('git config --global user.email "email@here');
+    log(`
+      git user name not configured. Run the following to do this:\n
+      git config --global user.name "namehere"\n
+      git config --global user.email "email@here`, 'debug');
   }
-  // bridge to log so we can respect this setting
-  if (commandRun.options.quiet) {
-    process.haxquiet = true;
-  }
-  // only set path if not already set
   if (!commandRun.options.path && commandRun.options.skip) {
     commandRun.options.path = process.cwd();
   }
@@ -222,7 +232,7 @@ async function main() {
     }
   }
   if (commandRun.options.debug) {
-    log(packageData);
+    log(packageData, 'debug');
   }
   // CLI works within context of the site if one is detected, otherwise we can do other thingss
   if (await hax.systemStructureContext()) {

@@ -355,7 +355,7 @@ export async function webcomponentGenerateHAXSchema(commandRun, packageData) {
     });
     let wiring = new HAXWiring();
     if (commandRun.options.debug) {
-      log(ceFileData);
+      log(ceFileData, 'debug');
     }
     if (ceFileData) {
       let ce = JSON.parse(ceFileData);
@@ -415,7 +415,7 @@ export async function webcomponentGenerateHAXSchema(commandRun, packageData) {
             }
           });
           if (commandRun.options.v) {
-            log(JSON.stringify(props, null, 2));
+            log(JSON.stringify(props, null, 2), 'silly');
           }
           fs.writeFileSync(`./lib/${declarations.tagName}.haxProperties.json`, JSON.stringify(props, null, 2));
           log(`schema written to: ./lib/${declarations.tagName}.haxProperties.json`)
