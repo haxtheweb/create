@@ -31,7 +31,7 @@ export const logger = winston.createLogger({
 });
 
 export function haxCliEnvOptions() {
-  return ['skip','npmClient','i','extras','root','path','org','author'];
+  return ['skip','npmClient','i','extras','root','path','org','author', 'y', 'auto'];
 }
 
 // wrapper so we can silence all log messages at the same time
@@ -51,7 +51,7 @@ export function commandString(commandRun) {
         comStr+= ` --no-${camelToDash(key)}`;
       }
       else {
-        comStr+= ` --${camelToDash(key)}="${commandRun.options[key]}"`;
+        comStr+= ` --${camelToDash(key)} "${commandRun.options[key]}"`;
       }
     }
   }

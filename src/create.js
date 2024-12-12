@@ -60,13 +60,14 @@ async function main() {
   .option('--title-scrape <char>', 'CSS Selector for `title` in resource')
   .option('--content-scrape <char>', 'CSS Selector for `body` in resource')
   .option('--items-import <char>', 'import items from a file / site')
+  .option('--recipe <char>', 'path to recipe file')
   .version(await HAXCMS.getHAXCMSVersion())
   .helpCommand(true);
 
   // default command which runs interactively
   program
   .command('start')
-  .description('Interactive program to pick options')
+  .description('Select which hax sub-program to run')
   .action(() => {
     commandRun = {
       command: 'start',
@@ -81,8 +82,8 @@ async function main() {
     strActions+= `${action.value} - ${action.label}` + "\n\r";
   });
   let siteProg = program
-  .command('site');
-  siteProg
+  .command('site')
+  .description('create or administer a HAXsite')
   .argument('[action]', 'Actions to perform on site include:' + "\n\r" + strActions)
   .action((action) => {
     commandRun = {
@@ -95,19 +96,29 @@ async function main() {
       commandRun.options.skip = true;
     }
   })
-  .option('--path <char>', 'path the project should be created in')
+  .option('--v', 'Verbose output')
+  .option('--debug', 'Output for developers')
+  .option('--format <char>', 'Output format; json (default), yaml')
+  .option('--path <char>', 'where to perform operation')
+  .option('--npm-client <char>', 'npm client to use (must be installed) npm, yarn, pnpm', 'npm')
+  .option('--y', 'yes to all questions')
+  .option('--skip', 'skip frills like animations')
+  .option('--quiet', 'remove console logging')
+  .option('--auto', 'yes to all questions, alias of y')
+  .option('--no-i', 'prevent interactions / sub-process, good for scripting')
+  .option('--to-file <char>', 'redirect command output to a file')
+  .option('--no-extras', 'skip all extra / automatic command processing')
+  .option('--root <char>', 'root location to execute the command from')
+
   .option('--import-site <char>', 'URL of site to import')
   .option('--import-structure <char>', `import method to use:\n\rpressbooksToSite\n\relmslnToSite\n\rhaxcmsToSite\n\rnotionToSite\n\rgitbookToSite\n\revolutionToSite\n\rhtmlToSite\n\rdocxToSite`)
   .option('--name <char>', 'name of the site (when creating a new one)')
   .option('--domain <char>', 'published domain name')
   .option('--node-op <char>', 'node operation to perform')
-  .option('--no-i', 'prevent interactions / sub-process, good for scripting')
   .option('--title-scrape <char>', 'CSS Selector for `title` in resource')
   .option('--content-scrape <char>', 'CSS Selector for `body` in resource')
-  .option('--to-file <char>', 'redirect command output to a file')
-  .option('--no-extras', 'skip all extra / automatic command processing')
   .option('--item-import <char>', 'import items from a file / site')
-  .option('--root <char>', 'root location to execute the command from')
+  .option('--recipe <char>', 'path to recipe file')
   .version(await HAXCMS.getHAXCMSVersion());
   let siteNodeOps = siteNodeOperations();
   for (var i in siteNodeOps) {
@@ -415,7 +426,7 @@ async function main() {
               if (results.type === "site" && !commandRun.options.theme) {
                 // support having no theme but autoselecting
                 if (commandRun.options.auto && commandRun.options.skip) {
-                  commandRun.options.theme = themes[0];
+                  commandRun.options.theme = themes[0].value;
                 }
                 else {
                   return p.select({
