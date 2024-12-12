@@ -4,7 +4,9 @@ import * as winston from 'winston';
 import { camelToDash } from "./utils.js";
 
 const logFileName = path.join(homedir(), '.haxtheweb', 'create.log');
-export const consoleTransport = new winston.transports.Console();
+export const consoleTransport = new winston.transports.Console({
+  format: winston.format.simple()
+});
 export const logFile = new winston.transports.File({
   filename: logFileName,
   level: 'info', // so we don't store everything else

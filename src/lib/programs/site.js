@@ -87,7 +87,7 @@ export function siteActions() {
 
 export async function siteCommandDetected(commandRun) {
     var activeHaxsite = await hax.systemStructureContext();
-    const recipeFileName = path.join(process.cwd(), 'site.recipe');
+    const recipeFileName = path.join(process.cwd(), siteRecipeFile);
     const recipeLogTransport = new winston.transports.File({
       filename: recipeFileName
     });
@@ -867,8 +867,8 @@ export async function siteCommandDetected(commandRun) {
         // @todo need to make these work..
         case "recipe:read":
           // just print the recipe out
-          if (fs.existsSync(path.join(process.cwd(), `/${siteRecipeFile}`))) {
-            let recContents = await fs.readFileSync(path.join(process.cwd(), `/${siteRecipeFile}`));
+          if (fs.existsSync(path.join(process.cwd(), `${siteRecipeFile}`))) {
+            let recContents = await fs.readFileSync(path.join(process.cwd(), `${siteRecipeFile}`));
             console.log(recContents);
             log(recContents);
           }
@@ -1099,7 +1099,8 @@ export async function siteProcess(commandRun, project, port = '3000') {    // au
   let res = new Res();
   await hax.RoutesMap.post.createSite({body: siteRequest}, res);
   // path different for this one as it's on the fly produced
-  const recipeFileName = path.join(project.path, '/', project.name, `/${siteRecipeFile}`);
+  const recipeFileName = path.join(project.path, '/', project.name, `${siteRecipeFile}`);
+  console.log(recipeFileName);
   const recipeLogTransport = new winston.transports.File({
     filename: recipeFileName
   });

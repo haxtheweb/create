@@ -143,6 +143,12 @@ async function main() {
   // process program arguments
   program.parse();
   commandRun.options = {...commandRun.options, ...program.opts()};
+  // this is a false positive bc of the no-extras flag. no-extras does not imply true if not there
+  // but that's how the CLI works. This then bombs things downstream. Its good to be false but NOT
+  // good to be true since we need an array of options
+  if (commandRun.options.extras === true) {
+    delete commandRun.options.extras;
+  }
   // allow execution of the command from a different location
   if (commandRun.options.root) {
     process.chdir(commandRun.options.root);
