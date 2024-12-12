@@ -147,7 +147,8 @@ class HAXWiring {
 export async function webcomponentProcess(commandRun, project, port = "8000") {
   // auto select operations to perform if requested
   if (!project.extras) {
-    if (!commandRun.options.extras) {
+    console.log(commandRun.options.extras);
+    if (commandRun.options.extras === false) {
       project.extras = [];
     }
     else {
