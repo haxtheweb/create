@@ -2,6 +2,8 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [9.0.23](https://github.com/haxtheweb/create/compare/v9.0.22...v9.0.23) (2024-12-12)
+
 ## [9.0.22](https://github.com/haxtheweb/create/compare/v9.0.21...v9.0.22) (2024-12-10)
 
 ## [9.0.21](https://github.com/haxtheweb/create/compare/v9.0.20...v9.0.21) (2024-12-09)
