@@ -892,6 +892,7 @@ export async function siteCommandDetected(commandRun) {
             let recContents = await fs.readFileSync(commandRun.options.recipe,'utf8');
             // split into commands
             let commandList = recContents.replaceAll('cli: ', '').split("\n");
+            let rootDir = '';
             // confirm each command or allow --y so that it auto applies
             for (var i in commandList) {
               // verify every command starts this way for safety
@@ -904,11 +905,28 @@ export async function siteCommandDetected(commandRun) {
                   confirmation = await p.confirm({
                     message: `Do you want to run ${commandList[i]}? (This cannot be undone)`,
                     initialValue: true,
-                  });  
+                  });
                 }
                 // confirmed; let's run!
                 if (confirmation) {
-                  await exec(`${commandList[i]} --y --no-i --auto --quiet`);
+                  let commandMatch = siteActions().filter((action) => action.value === commandList[i].split(' ')[2]);
+                  // if we found a command that means it is a valid command to run against the site
+                  if (commandMatch.length > 0) {
+                    await exec(`${commandList[i]} --y --no-i --auto --quiet${rootDir}`);
+                  }
+                  // 1st command won't match as the argument creates a new site
+                  // but ensure we don't have a site context prior to running this
+                  // or we'll get a site in a site with the same name which is not
+                  // the desired result
+                  else if (!await hax.systemStructureContext()) {
+                    await exec(`${commandList[i]} --y --no-i --auto --quiet --no-extras`);
+                    // site will have been created, obtain the site name and set root so
+                    // the other commands get piped into it correctly
+                    rootDir = ` --root ${commandList[i].split(' ')[2]}`;
+                  }
+                  else {
+                    log('Did not run because we already have a site', 'warn');
+                  }
                 }
               }
             }
