@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { setTimeout } from 'node:timers/promises';
 import * as fs from 'node:fs';
+import * as ejs from "ejs";
 
 import * as p from '@clack/prompts';
 import color from 'picocolors';
@@ -24,6 +25,7 @@ const JSONOutlineSchema = josfile.default;
 const HAXCMS = hax.HAXCMS;
 import * as child_process from "child_process";
 import * as util from "node:util";
+import { dashToCamel } from '../utils.js';
 const exec = util.promisify(child_process.exec);
 var sysSurge = true;
 exec('surge --version', error => {
@@ -697,6 +699,7 @@ export async function siteCommandDetected(commandRun) {
                 });
                 let themes = await HAXCMS.getThemes();
                 if (themes && commandRun.options.theme && themes[commandRun.options.theme]) {
+                  console.log(themes[commandRun.options.theme]);
                   activeHaxsite.manifest.metadata.theme = themes[commandRun.options.theme];
                   activeHaxsite.manifest.save(false);
                 }
@@ -1045,6 +1048,12 @@ export async function siteProcess(commandRun, project, port = '3000') {    // au
     catch(e) {        
     }
   }
+
+  // Write theme template to site/custom
+  if(project.customName && project.customTemplate) {
+    await customSiteTheme(commandRun, project);
+  }
+
   // options for install, git and other extras
   // can't launch if we didn't install first so launch implies installation
   if (project.extras.includes('launch')) {
@@ -1106,6 +1115,50 @@ export async function siteThemeList() {
     })
   }
   return items;
+}
+
+async function customSiteTheme(commandRun, project) {
+  project.className = dashToCamel(project.customName);
+  var sitePath = `${project.path}/${project.name}`;
+
+  const filePath = `${sitePath}/custom/src/${project.customName}.js`;
+  if(project.customTemplate === "base"){
+    await fs.copyFileSync(`${process.mainModule.path}/templates/sitetheme/base-theme.js`, `${sitePath}/custom/src/base-theme.js`)
+    await fs.renameSync(`${sitePath}/custom/src/base-theme.js`, filePath)
+  } else if(project.customTemplate === "polaris-flex") {
+    await fs.copyFileSync(`${process.mainModule.path}/templates/sitetheme/flex-theme.js`, `${sitePath}/custom/src/flex-theme.js`)
+    await fs.renameSync(`${sitePath}/custom/src/flex-theme.js`, filePath)
+  } else if(project.customTemplate === "polaris-sidebar") {
+    await fs.copyFileSync(`${process.mainModule.path}/templates/sitetheme/sidebar-theme.js`, `${sitePath}/custom/src/sidebar-theme.js`)
+    await fs.renameSync(`${sitePath}/custom/src/sidebar-theme.js`, filePath)
+  }
+
+  try {
+      // ensure we don't try to pattern rewrite image files
+      if (!filePath.endsWith('.jpg') && !filePath.endsWith('.png')) {
+        const ejsString = ejs.fileLoader(filePath, 'utf8');
+        let content = ejs.render(ejsString, project);
+        // file written successfully  
+        fs.writeFileSync(filePath, content);
+      }
+    } catch (err) {
+      console.error(filePath);
+      console.error(err);
+    }
+  
+  await fs.appendFileSync(`${sitePath}/custom/src/custom.js`, `\n import ./${project.customName}.js`);
+  var activeHaxsite = await hax.systemStructureContext(sitePath);
+
+  let themeObj = {
+      element: project.customName,
+      path: filePath,
+      name: project.className,
+  }
+
+  activeHaxsite.manifest.metadata.theme = themeObj;
+  activeHaxsite.manifest.save(false);
+
+  exec(`cd ${sitePath}/custom/ && ${commandRun.options.npmClient} install && ${commandRun.options.npmClient} build && cd ${sitePath}`);
 }
 
 // @fork of the hax core util for this so that we avoid api difference between real dom and parse nodejs dom
