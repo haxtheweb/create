@@ -2,6 +2,26 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [9.0.25](https://github.com/haxtheweb/create/compare/v9.0.24...v9.0.25) (2024-12-12)
+
+## [9.0.24](https://github.com/haxtheweb/create/compare/v9.0.23...v9.0.24) (2024-12-12)
+
+## [9.0.23](https://github.com/haxtheweb/create/compare/v9.0.22...v9.0.23) (2024-12-12)
+
+## [9.0.22](https://github.com/haxtheweb/create/compare/v9.0.21...v9.0.22) (2024-12-10)
+
+## [9.0.21](https://github.com/haxtheweb/create/compare/v9.0.20...v9.0.21) (2024-12-09)
+
+## [9.0.20](https://github.com/haxtheweb/create/compare/v9.0.19...v9.0.20) (2024-12-05)
+
+## [9.0.19](https://github.com/haxtheweb/create/compare/v9.0.18...v9.0.19) (2024-12-03)
+
+## [9.0.18](https://github.com/haxtheweb/create/compare/v9.0.17...v9.0.18) (2024-11-26)
+
+## [9.0.17](https://github.com/haxtheweb/create/compare/v9.0.16...v9.0.17) (2024-11-26)
+
+## [9.0.16](https://github.com/haxtheweb/create/compare/v9.0.15...v9.0.16) (2024-11-26)
+
 ## [9.0.15](https://github.com/haxtheweb/create/compare/v9.0.14...v9.0.15) (2024-11-20)
 
 ## [9.0.14](https://github.com/haxtheweb/create/compare/v9.0.13...v9.0.14) (2024-11-19)

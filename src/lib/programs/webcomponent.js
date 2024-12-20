@@ -6,7 +6,9 @@ import * as ejs from "ejs";
 import * as p from '@clack/prompts';
 import color from 'picocolors';
 
-import { merlinSays, log } from "../statements.js";
+import { merlinSays } from "../statements.js";
+import { log } from "../logging.js";
+
 import { dashToCamel, readAllFiles } from '../utils.js';
 import * as hax from "@haxtheweb/haxcms-nodejs";
 const HAXCMS = hax.HAXCMS;
@@ -145,16 +147,22 @@ class HAXWiring {
 export async function webcomponentProcess(commandRun, project, port = "8000") {
   // auto select operations to perform if requested
   if (!project.extras) {
-    let extras = ['launch', 'install', 'git'];
-    if (!sysGit || project.isMonorepo) {
-      extras.pop();
+    console.log(commandRun.options.extras);
+    if (commandRun.options.extras === false) {
+      project.extras = [];
     }
-    project.extras = extras;
+    else {
+      let extras = ['launch', 'install', 'git'];
+      if (!sysGit || project.isMonorepo) {
+        extras.pop();
+      }
+      project.extras = extras;  
+    }
   }
   // values not set by user but used in templating
   project.className = dashToCamel(project.name);
   // option to build github repo link for the user
-  if (project.extras.includes('git')) {
+  if (project.extras && project.extras.includes('git')) {
       // @todo need to support git@ and https methods
       if (commandRun.options.auto) {
         project.gitRepo = `https://github.com/${project.author}/${project.name}.git`;
@@ -192,6 +200,7 @@ export async function webcomponentProcess(commandRun, project, port = "8000") {
   );
   // rename gitignore to improve copy cross platform compat
   await fs.renameSync(`${project.path}/${project.name}/_github`, `${project.path}/${project.name}/.github`);
+  await fs.renameSync(`${project.path}/${project.name}/_vscode`, `${project.path}/${project.name}/.vscode`);
   await fs.renameSync(`${project.path}/${project.name}/_editorconfig`, `${project.path}/${project.name}/.editorconfig`);
   await fs.renameSync(`${project.path}/${project.name}/_gitignore`, `${project.path}/${project.name}/.gitignore`);
   await fs.renameSync(`${project.path}/${project.name}/_nojekyll`, `${project.path}/${project.name}/.nojekyll`);
@@ -239,7 +248,7 @@ export async function webcomponentProcess(commandRun, project, port = "8000") {
   }
   // options for install, git and other extras
   // can't launch if we didn't install first so launch implies installation
-  if (project.extras.includes('launch') || project.extras.includes('install')) {
+  if (project.extras && (project.extras.includes('launch') || project.extras.includes('install'))) {
       s.start(merlinSays(`Installation magic (${commandRun.options.npmClient} install)`));
       try {
         // monorepos install from top but then still need to launch from local location
@@ -253,7 +262,7 @@ export async function webcomponentProcess(commandRun, project, port = "8000") {
       s.stop(merlinSays(`Everything is installed. It's go time`));
   }
   // autolaunch if default was selected
-  if (project.extras.includes('launch')) {
+  if (project.extras && project.extras.includes('launch')) {
     let optionPath = `${project.path}/${project.name}`;
     let command = `${commandRun.options.npmClient} start`;
     p.note(`${merlinSays(`I have summoned a sub-process daemon 👹`)}
@@ -349,7 +358,7 @@ export async function webcomponentGenerateHAXSchema(commandRun, packageData) {
     });
     let wiring = new HAXWiring();
     if (commandRun.options.debug) {
-      log(ceFileData);
+      log(ceFileData, 'debug');
     }
     if (ceFileData) {
       let ce = JSON.parse(ceFileData);
@@ -409,7 +418,7 @@ export async function webcomponentGenerateHAXSchema(commandRun, packageData) {
             }
           });
           if (commandRun.options.v) {
-            log(JSON.stringify(props, null, 2));
+            log(JSON.stringify(props, null, 2), 'silly');
           }
           fs.writeFileSync(`./lib/${declarations.tagName}.haxProperties.json`, JSON.stringify(props, null, 2));
           log(`schema written to: ./lib/${declarations.tagName}.haxProperties.json`)

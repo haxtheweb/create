@@ -1,0 +1,11 @@
+{
+    "recommendations": [
+        "bierner.lit-html",
+        "deque-systems.vscode-axe-linter",
+        "ecmel.vscode-html-css",
+        "oliversturm.fix-json",
+        "runem.lit-plugin",
+        "streetsidesoftware.code-spell-checker",
+        "yzhang.markdown-all-in-one"
+    ]
+}

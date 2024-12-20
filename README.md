@@ -63,12 +63,18 @@ Commands:
   help [command]                 display help for command
 ```
 
-## Site  context
+## Manual
+
+### Linux / macOS
+
+Run `man hax` to get detailed manual.
+
+## Site context
 - listing stats
 - launch site
 - publish to surge.sh (if installed)
 
-## web component context
+## Web component context
 - launch element
 
 # Alternative Usage
@@ -83,7 +89,6 @@ npm init @haxtheweb
   "scripts": {
     "hax": "hax"
   }
-}
 ```
 
 ```bash
@@ -93,6 +98,15 @@ npm run hax -- --name my-element --y
 
 ## Windows problems?
 Try setting a different cache path to load from `npm config set cache C:\tmp\nodejs\npm-cache --global`
+
+If you wish to use PowerShell over Command Prompt, you may need to change your execution policy to allow scripts using the `Set-ExecutionPolicy` command with the `-ExecutionPolicy` and `-Scope` parameters. You should **not** need to do this if you are using Command Prompt.
+
+```powershell
+# To see your current execution policy
+Get-ExecutionPolicy
+```
+
+`Set-ExecutionPolicy` command documentation: https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.security/set-executionpolicy?view=powershell-7.4
 
 Follow the prompts and let's HAX the Web together!
 

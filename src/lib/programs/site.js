@@ -1,17 +1,20 @@
 #!/usr/bin/env node
 import { setTimeout } from 'node:timers/promises';
 import * as fs from 'node:fs';
+import * as path from 'node:path';
 
 import * as p from '@clack/prompts';
 import color from 'picocolors';
 import { dump, load } from 'js-yaml';
+import * as winston from 'winston';
 
 import { parse } from 'node-html-parser';
-import { merlinSays, communityStatement, log } from "../statements.js";
+import { merlinSays, communityStatement } from "../statements.js";
+import { log, commandString } from "../logging.js";
 
 // trick MFR into giving local paths
 globalThis.MicroFrontendRegistryConfig = {
-  base: `@haxtheweb/open-apis/`
+  base: `@haxtheweb/open-apis`
 };
 import { MicroFrontendRegistry } from "../micro-frontend-registry.js";
 // emable HAXcms routes so we have name => path just like on frontend!
@@ -31,6 +34,11 @@ exec('surge --version', error => {
     sysSurge = false;
   }
 });
+
+const siteRecipeFile = 'create-cli.recipe';
+const siteLoggingName = 'cli';
+const logLevels = {};
+logLevels[siteLoggingName] = 0;
 
 // fake response class so we can capture the response from the headless route as opposed to print to console
 // this way we can handle as data or if use is requesting output format to change we can respond
@@ -74,764 +82,870 @@ export function siteActions() {
     { value: 'site:md', label: "Full site as Markdown"},
     { value: 'site:schema', label: "Full site as HAXElementSchema"},
     { value: 'site:sync', label: "Sync git repo"},
+    { value: 'site:surge', label: "Publish site to Surge.sh"},
+    { value: 'recipe:read', label: "Read recipe file" },
+    { value: 'recipe:play', label: "Play recipe file" },
   ];
 }
 
 export async function siteCommandDetected(commandRun) {
     var activeHaxsite = await hax.systemStructureContext();
+    const recipeFileName = path.join(process.cwd(), siteRecipeFile);
+    const recipeLogTransport = new winston.transports.File({
+      filename: recipeFileName
+    });
+    const recipe = winston.createLogger({
+      levels: logLevels,
+      level: siteLoggingName,
+      transports: [
+        recipeLogTransport
+      ],
+      format: winston.format.simple(),
+    });
+    let actionAssigned = false;
     // default to status unless already set so we don't issue a create in a create
     if (!commandRun.arguments.action) {
-        commandRun.arguments.action = 'status';
-      }
-      commandRun.command = "site";
-      if (!commandRun.options.y && commandRun.options.i && !commandRun.options.quiet) {
-        p.intro(`${color.bgBlack(color.white(` HAXTheWeb : Site detected `))}`);
-        p.intro(`${color.bgBlue(color.white(` Name: ${activeHaxsite.name} `))}`);  
-      }
-      // defaults if nothing set via CLI
-      let operation = {
-        ...commandRun.arguments,
-        ...commandRun.options
-      };
-      if (!commandRun.options.title) {
-        commandRun.options.title = "New Page";
-      }
-      if (!commandRun.options.domain &&  commandRun.options.y) {
-        commandRun.options.domain = `haxcli-${activeHaxsite.name}.surge.sh`;
-      }
-      // infinite loop until quitting the cli
-      while (operation.action !== 'quit') {
-        let actions = siteActions();
-        if (sysSurge) {
-          actions.push({ value: 'site:surge', label: "Publish site to Surge.sh"});              
+      actionAssigned = true;
+      commandRun.arguments.action = 'site:status';
+    }
+    commandRun.command = "site";
+    if (!commandRun.options.y && commandRun.options.i && !commandRun.options.quiet) {
+      p.intro(`${color.bgBlack(color.white(` HAXTheWeb : Site detected `))}`);
+      p.intro(`${color.bgBlue(color.white(` Name: ${activeHaxsite.name} `))}`);  
+    }
+    // defaults if nothing set via CLI
+    let operation = {
+      ...commandRun.arguments,
+      ...commandRun.options
+    };
+    if (!commandRun.options.title) {
+      commandRun.options.title = "New Page";
+    }
+    if (!commandRun.options.domain &&  commandRun.options.y) {
+      commandRun.options.domain = `haxcli-${activeHaxsite.name}.surge.sh`;
+    }
+    // infinite loop until quitting the cli
+    while (operation.action !== 'quit') {
+      let actions = siteActions();
+      actions.push({ value: 'quit', label: "🚪 Quit"});
+      if (!operation.action) {
+        commandRun = {
+          command: null,
+          arguments: {},
+          options: {}
         }
-        actions.push({ value: 'quit', label: "🚪 Quit"});
-        if (!operation.action) {
-          commandRun = {
-            command: null,
-            arguments: {},
-            options: {}
-          }
-          // ensures data is updated and stateful per action
-          activeHaxsite = await hax.systemStructureContext();
-          operation = await p.group(
-            {
-              action: ({ results }) =>
-                p.select({
-                  message: `Actions you can take`,
-                  options: actions,
-                }),
+        // ensures data is updated and stateful per action
+        activeHaxsite = await hax.systemStructureContext();
+        operation = await p.group(
+          {
+            action: ({ results }) =>
+              p.select({
+                message: `Actions you can take`,
+                options: actions,
+              }),
+          },
+          {
+            onCancel: () => {
+              if (!commandRun.options.quiet) {
+                p.cancel('🧙 Merlin: Canceling CLI.. HAX ya later 🪄');
+                communityStatement();
+              }
+              process.exit(0);
             },
-            {
-              onCancel: () => {
-                if (!commandRun.options.quiet) {
-                  p.cancel('🧙 Merlin: Canceling CLI.. HAX ya later 🪄');
-                  communityStatement();
+          });
+      }
+      if (operation.action) {
+        p.intro(`hax site ${color.bold(operation.action)}`);
+      }
+      switch (operation.action) {
+        case "site:status": // easy mistype
+        case "site:stats":
+          const date = new Date(activeHaxsite.manifest.metadata.site.updated*1000);
+          let siteItems = [];
+          if (commandRun.options.itemId != null) {
+            siteItems = activeHaxsite.manifest.findBranch(commandRun.options.itemId);
+          }
+          else {
+            siteItems = activeHaxsite.manifest.orderTree(activeHaxsite.manifest.items);
+          }
+          let els = {};
+          for (var i in siteItems) {
+            let page = activeHaxsite.loadNode(siteItems[i].id);
+            let html = await activeHaxsite.getPageContent(page);
+            let dom = parse(`<div id="fullpage">${html}</div>`);
+            for (var j in dom.querySelector('#fullpage').childNodes) {
+              let node = dom.querySelector('#fullpage').childNodes[j];
+              if (node && node.getAttribute) {
+                let haxel = await nodeToHaxElement(node, null);
+                if (!els[haxel.tag]) {
+                  els[haxel.tag] = 0;
                 }
-                process.exit(0);
-              },
-            });
-        }
-        switch (operation.action) {
-          case "site:stats":
-            const date = new Date(activeHaxsite.manifest.metadata.site.updated*1000);
-            let siteItems = [];
-            if (commandRun.options.itemId != null) {
-              siteItems = activeHaxsite.manifest.findBranch(commandRun.options.itemId);
+                els[haxel.tag]++;
+              }
+            }
+          }
+          let siteStats = {
+            title: activeHaxsite.manifest.title,
+            description: activeHaxsite.manifest.description,
+            themeName: activeHaxsite.manifest.metadata.theme.name,
+            themeElement: activeHaxsite.manifest.metadata.theme.element,
+            pageCount: activeHaxsite.manifest.items.length,
+            lastUpdated: date.toLocaleDateString("en-US"),
+            tagUsage: els
+          }
+          if (!commandRun.options.format && !commandRun.options.quiet) {
+            p.intro(`${color.bgBlue(color.white(` Title: ${siteStats.title} `))}`);
+            p.intro(`${color.bgBlue(color.white(` Description: ${siteStats.description} `))}`);
+            p.intro(`${color.bgBlue(color.white(` Theme: ${siteStats.themeName} (${siteStats.themeElement})`))}`);
+            p.intro(`${color.bgBlue(color.white(` Pages: ${siteStats.pageCount} `))}`);  
+            p.intro(`${color.bgBlue(color.white(` Last updated: ${siteStats.lastUpdated} `))}`);
+            p.intro(`${color.bgBlue(color.white(` Tags used: ${JSON.stringify(siteStats.tagUsage, null, 2)} `))}`);
+          }
+          else if (commandRun.options.format === 'yaml') {
+            log(dump(siteStats));
+          }
+          else {
+            log(siteStats);
+          }
+          // simple redirecting to file
+          if (commandRun.options.toFile) {
+            if (commandRun.options.format === 'yaml') {
+              fs.writeFileSync(commandRun.options.toFile, dump(siteStats))
             }
             else {
-              siteItems = activeHaxsite.manifest.orderTree(activeHaxsite.manifest.items);
+              fs.writeFileSync(commandRun.options.toFile, JSON.stringify(siteStats, null, 2))
             }
-            let els = {};
-            for (var i in siteItems) {
-              let page = activeHaxsite.loadNode(siteItems[i].id);
-              let html = await activeHaxsite.getPageContent(page);
-              let dom = parse(`<div id="fullpage">${html}</div>`);
-              for (var j in dom.querySelector('#fullpage').childNodes) {
-                let node = dom.querySelector('#fullpage').childNodes[j];
-                if (node && node.getAttribute) {
-                  let haxel = await nodeToHaxElement(node, null);
-                  if (!els[haxel.tag]) {
-                    els[haxel.tag] = 0;
+          }
+        break;
+        case "site:items":
+          let siteitems = [];
+          if (commandRun.options.itemId != null) {
+            siteitems = activeHaxsite.manifest.findBranch(commandRun.options.itemId);
+          }
+          else {
+            siteitems = activeHaxsite.manifest.orderTree(activeHaxsite.manifest.items);
+          }
+          for (let i in siteitems) {
+            let page = await activeHaxsite.loadNode(siteitems[i].id);
+            siteitems[i].content = await activeHaxsite.getPageContent(page);
+          }
+          // simple redirecting to file if asked for
+          if (commandRun.options.toFile) {
+            let contents = '';
+            if (commandRun.options.format === 'yaml') {
+              contents = dump(siteitems);
+            }
+            else {
+              contents = JSON.stringify(siteitems, null, 2);
+            }
+            fs.writeFileSync(commandRun.options.toFile, contents);
+            
+          }
+          else {
+            if (commandRun.options.format === 'yaml') {
+              log(dump(siteitems));
+            }
+            else {
+              log(siteitems);
+            }
+          }
+        break;
+        case "site:items-import":
+          // need source, then resolve what it is
+          if (commandRun.options.itemsImport) {
+            let location = commandRun.options.itemsImport;
+            let josImport = new JSONOutlineSchema();
+            var itemsImport = [];
+            // support for address, as in import from some place else
+            if (location.startsWith('https://') || location.startsWith('http://')) {
+              if (location.endsWith('/site.json')) {
+                location = location.replace('/site.json','');
+              }
+              else if (!location.endsWith('/')) {
+                location = location + '/';
+              }
+              let f = await fetch(`${location}site.json`).then(d => d.ok ? d.json() : null);
+              if (f && f.items) {
+                josImport.items = f.items;
+              }
+              else {
+                // invalid data
+                process.exit(0);
+              }
+            }
+            // look on prem
+            else if(fs.existsSync(location)) {
+              let fileContents = await fs.readFileSync(location);
+              if (location.endsWith('.json')) {
+                josImport.items = JSON.parse(fileContents);
+
+              }
+              else if (location.endsWith('.yaml')) {
+                josImport.items = await load(fileContents);
+              }
+            }
+            // allows for filtering
+            if (commandRun.options.itemId) {
+              itemsImport = josImport.findBranch(commandRun.options.itemId);
+            }
+            else {
+              itemsImport = josImport.items;
+            }
+            for (let i in josImport.items) {
+              if (josImport.items[i].location && !josImport.items[i].content) {
+                josImport.items[i].content = await fetch(`${location}${josImport.items[i].location}`).then(d => d.ok ? d.text() : '');
+              }
+            }
+            let itemIdMap = {};
+            for (let i in josImport.items) {
+              // if we have a parent set by force to append this structure to
+              // then see if parent = null (implying top level in full site import)
+              // or match on itemId to imply that it's the top (no matter parent status)
+              if (commandRun.options.parentId) {
+                if (josImport.items[i].parent === null || josImport.items[i].id === commandRun.options.itemId) {
+                  josImport.items[i].parent = commandRun.options.parentId;
+                }
+              }
+              // see if map has an entry that is already set
+              if (itemIdMap[josImport.items[i].parent]) {
+                // remaps the parent of this item bc the thing imported has changed ID
+                josImport.items[i].parent = itemIdMap[josImport.items[i].parent];
+              }
+              let tmpAddedItem = await activeHaxsite.addPage(
+                josImport.items[i].parent,
+                josImport.items[i].title,
+                'html',
+                josImport.items[i].slug,
+                null,
+                josImport.items[i].indent,
+                josImport.items[i].content,
+                josImport.items[i].order,
+                josImport.items[i].metadata
+              );
+              // set in the map for future translations
+              itemIdMap[josImport.items[i].id] = tmpAddedItem.id;
+            }
+            if (!commandRun.options.quiet) {
+              log(`${josImport.items.length} nodes imported`);
+            }
+            recipe.log(siteLoggingName, commandString(commandRun));
+          }
+          else if (!commandRun.options.quiet) {
+            log('Must specify --item-import as path to valid item export file or URL', 'error');
+          }
+        break;
+        case "start":
+          try {
+            if (!commandRun.options.quiet) {
+              p.intro(`Starting server.. `);
+              p.intro(`⌨️  To stop server, press: ${color.bold(color.black(color.bgRed(` CTRL + C `)))}`);  
+            }
+            await exec(`cd ${activeHaxsite.directory} && npx @haxtheweb/haxcms-nodejs`);
+          }
+          catch(e) {
+            log(e.stderr);
+          }
+        break;
+        case "node:status": // easy mistype
+        case "node:stats":
+          try {
+            if (!commandRun.options.itemId) {
+              commandRun.options.itemId = await p.select({
+                message: `Select an item to edit`,
+                required: true,
+                options: [ {value: null, label: "-- edit nothing, exit --" }, ...await siteItemsOptionsList(activeHaxsite)],
+              });
+            }
+            if (commandRun.options.itemId) {
+              let nodeOps = siteNodeStatsOperations();
+              let page = activeHaxsite.loadNode(commandRun.options.itemId);
+              // select which aspect of this we are editing
+              if (!commandRun.options.nodeOp) {
+                commandRun.options.nodeOp = await p.select({
+                  message: `${page.title} (${page.id}) - Node operations`,
+                  required: true,
+                  options: [ {value: null, label: "-- Exit --"}, ...nodeOps],
+                });
+              }
+              if (commandRun.options.nodeOp && siteNodeStatsOperations(commandRun.options.nodeOp)) {
+                switch(commandRun.options.nodeOp) {
+                  case 'details':
+                    if (commandRun.options.format === 'yaml') {
+                      log(dump(page));
+                    }
+                    else {
+                      log(page);
+                    }
+                    // simple redirecting to file
+                    if (commandRun.options.toFile) {
+                      if (commandRun.options.format === 'yaml') {
+                        fs.writeFileSync(commandRun.options.toFile, dump(page))
+                      }
+                      else {
+                        fs.writeFileSync(commandRun.options.toFile, JSON.stringify(page, null, 2))
+                      }
+                    }
+                  break;
+                  case 'html':
+                    let itemHTML = await activeHaxsite.getPageContent(page);
+                    // simple redirecting to file
+                    if (commandRun.options.toFile) {
+                      fs.writeFileSync(commandRun.options.toFile, itemHTML)
+                    }
+                    else {
+                      log(itemHTML);
+                    }
+                  break;
+                  case 'schema':
+                    // next up
+                    let html = await activeHaxsite.getPageContent(page);
+                    let dom = parse(`<div id="fullpage">${html}</div>`);
+                    let els = [];
+                    for (var i in dom.querySelector('#fullpage').childNodes) {
+                      let node = dom.querySelector('#fullpage').childNodes[i];
+                      if (node && node.getAttribute) {
+                        els.push(await nodeToHaxElement(node, null));
+                      }
+                    }
+                    // simple redirecting to file
+                    if (commandRun.options.toFile) {
+                      if (commandRun.options.format === 'yaml') {
+                        fs.writeFileSync(commandRun.options.toFile, dump(els))
+                      }
+                      else {
+                        fs.writeFileSync(commandRun.options.toFile, JSON.stringify(els, null, 2))
+                      }
+                    }
+                    else {
+                      if (commandRun.options.format === 'yaml') {
+                        log(dump(els));
+                      }
+                      else {
+                        log(els);
+                      }
+                    }
+                  break;
+                  case 'md':
+                  let resp = await openApiBroker('@core', 'htmlToMd', { html: await activeHaxsite.getPageContent(page)})
+                  // simple redirecting to file
+                  if (commandRun.options.toFile) {
+                    fs.writeFileSync(commandRun.options.toFile, resp.res.data.data);
                   }
-                  els[haxel.tag]++;
+                  else {
+                    log(resp.res.data.data);
+                  }
+                  break;
                 }
               }
             }
-            let siteStats = {
-              title: activeHaxsite.manifest.title,
-              description: activeHaxsite.manifest.description,
-              themeName: activeHaxsite.manifest.metadata.theme.name,
-              themeElement: activeHaxsite.manifest.metadata.theme.element,
-              pageCount: activeHaxsite.manifest.items.length,
-              lastUpdated: date.toLocaleDateString("en-US"),
-              tagUsage: els
+          }
+          catch(e) {
+            log(e.stderr);
+            log(e);
+          }
+        break;
+        case "node:add":
+          try {
+            if (!commandRun.options.title) {
+              commandRun.options.title = await p.text({
+                message: `Title for this page`,
+                placeholder: "New page",
+                required: true,
+                validate: (value) => {
+                  if (!value) {
+                    return "Title must be set (tab writes default)";
+                  }
+                }
+              });
             }
-            if (!commandRun.options.format && !commandRun.options.quiet) {
-              p.intro(`${color.bgBlue(color.white(` Title: ${siteStats.title} `))}`);
-              p.intro(`${color.bgBlue(color.white(` Description: ${siteStats.description} `))}`);
-              p.intro(`${color.bgBlue(color.white(` Theme: ${siteStats.themeName} (${siteStats.themeElement})`))}`);
-              p.intro(`${color.bgBlue(color.white(` Pages: ${siteStats.pageCount} `))}`);  
-              p.intro(`${color.bgBlue(color.white(` Last updated: ${siteStats.lastUpdated} `))}`);
-              p.intro(`${color.bgBlue(color.white(` Tags used: ${JSON.stringify(siteStats.tagUsage, null, 2)} `))}`);
+            var createNodeBody = { 
+              site: activeHaxsite,
+              node: { 
+                title: commandRun.options.title
+              }
+            };
+            // this would be odd but could be direct with no format specified
+            if (commandRun.options.content && !commandRun.options.format) {
+              // only API where it's called contents and already out there {facepalm}
+              // but user already has commands where it's --content as arg
+              createNodeBody.node.contents = commandRun.options.content;
             }
-            else if (commandRun.options.format === 'yaml') {
-              log(dump(siteStats));
+            else if (commandRun.options.content && commandRun.options.format) {
+              let locationContent = '';
+              // if we have format set, then  we need to interpret content as a url
+              let location = commandRun.options.content;
+              // support for address, as in import from some place else
+              if (location.startsWith('https://') || location.startsWith('http://')) {                  
+                locationContent = await fetch(location).then(d => d.ok ? d.text() : '');
+              }
+              // look on prem
+              else if(fs.existsSync(location)) {
+                locationContent = await fs.readFileSync(location);
+              }
+              // format dictates additional processing; html is default
+              switch (commandRun.options.format) {
+                case 'json':
+                  locationContent = JSON.parse(locationContent);
+                break;
+                case 'yaml':
+                  locationContent = await load(locationContent);
+                break;
+                case 'md':
+                  let resp = await openApiBroker('@core', 'mdToHtml', { md: locationContent, raw: true});
+                  if (resp.res.data) {
+                    locationContent = resp.res.data;
+                  }
+                break;
+              }
+              // support for scraper mode to find title from the content responsee
+              if (commandRun.options.titleScrape) {
+                let dom = parse(`${locationContent}`);
+                createNodeBody.node.title = dom.querySelector(`${commandRun.options.titleScrape}`).textContent;
+              }
+              // support scraper mode which targets a wrapper for the actual content
+              if (commandRun.options.contentScrape) {
+                let dom = parse(`${locationContent}`);
+                locationContent = dom.querySelector(`${commandRun.options.contentScrape}`).innerHTML;
+              }
+              createNodeBody.node.contents = locationContent;
             }
-            else {
-              log(siteStats);
+            let resp = await haxcmsNodejsCli.cliBridge('createNode', createNodeBody);
+            recipe.log(siteLoggingName, commandString(commandRun));
+            if (commandRun.options.v) {
+              log(resp.res.data, 'silly');
+            }
+            if (!commandRun.options.quiet) {
+              log(`"${createNodeBody.node.title}" added to site`, 'info', createNodeBody.node);
+            }
+          }
+          catch(e) {
+            log(e.stderr);
+          }
+        break;
+        case "node:edit":
+          try {
+            if (!commandRun.options.itemId) {
+              commandRun.options.itemId = await p.select({
+                message: `Select an item to edit`,
+                required: true,
+                options: [ {value: null, label: "-- edit nothing, exit --" }, ...await siteItemsOptionsList(activeHaxsite)],
+              });
+            }
+            if (commandRun.options.itemId) {
+              let nodeOps = siteNodeOperations();
+              let page = activeHaxsite.loadNode(commandRun.options.itemId);
+              // select which aspect of this we are editing
+              if (!commandRun.options.nodeOp) {
+                commandRun.options.nodeOp = await p.select({
+                  message: `${page.title} (${page.id}) - Node operations`,
+                  required: true,
+                  options: [ {value: null, label: "-- Exit --"}, ...nodeOps],
+                });
+              }
+              if (commandRun.options.nodeOp && siteNodeOperations(commandRun.options.nodeOp)) {
+                let nodeProp = commandRun.options.nodeOp;
+                var propValue = commandRun.options[nodeProp];
+                // verify we have a setting for the operation requested
+                // otherwise we get interactive again
+                if (!commandRun.options[nodeProp]) {
+                  let val = page[nodeProp];
+                  if (['tags', 'published', 'hideInMenu', 'theme'].includes(nodeProp)) {
+                    val = page.metadata[nodeProp];
+                  }
+                  else if (nodeProp === 'content') {
+                    val = await activeHaxsite.getPageContent(page);
+                  }
+                  //  boolean is confirm
+                  if (['published', 'hideInMenu'].includes(nodeProp)) {
+                    propValue = await p.confirm({
+                      message: `${nodeProp}:`,
+                      initialValue: Boolean(val),
+                      defaultValue: Boolean(val),
+                    });
+                  }
+                  // these have fixed possible values
+                  else if (['parent', 'theme'].includes(nodeProp)) {
+                    let l = nodeProp === 'parent' ? "-- no parent --" : "-- no theme --";
+                    let list = nodeProp === 'parent' ? await siteItemsOptionsList(activeHaxsite,  page.id) : await siteThemeList();
+                    propValue = await p.select({
+                      message: `${nodeProp}:`,
+                      defaultValue: val,
+                      initialValue: val,
+                      options: [ {value: null, label: l }, ...list],
+                    });
+                  }
+                  else {
+                    propValue = await p.text({
+                      message: `${nodeProp}:`,
+                      initialValue: val,
+                      defaultValue: val,
+                    });
+                  }
+                }
+                if (nodeProp === 'order') {
+                  propValue = parseInt(propValue);
+                }
+                // account for CLI
+                if (propValue === "null") {
+                  propValue = null;
+                }
+                commandRun.options[nodeProp] = propValue;
+              }
+              // ensure we set empty values, just not completely undefined values
+              if (typeof commandRun.options[commandRun.options.nodeOp] !== "undefined") {
+                if (commandRun.options.nodeOp === 'content') {
+                  let locationContent = '';
+                  // this would be odd but could be direct with no format specified
+                  if (commandRun.options.content && !commandRun.options.format) {
+                    locationContent = commandRun.options.content;
+                  }
+                  // this implies what we were given needs processing as a file / url
+                  else if (commandRun.options.content && commandRun.options.format) {
+                    // if we have format set, then  we need to interpret content as a url
+                    let location = commandRun.options.content;
+                    // support for address, as in import from some place else
+                    if (location.startsWith('https://') || location.startsWith('http://')) {                  
+                      locationContent = await fetch(location).then(d => d.ok ? d.text() : '');
+                    }
+                    // look on prem
+                    else if(fs.existsSync(location)) {
+                      locationContent = await fs.readFileSync(location);
+                    }
+                    // format dictates additional processing; html is default
+                    switch (commandRun.options.format) {
+                      case 'json':
+                        locationContent = JSON.parse(locationContent);
+                      break;
+                      case 'yaml':
+                        locationContent = await load(locationContent);
+                      break;
+                      case 'md':
+                        let resp = await openApiBroker('@core', 'mdToHtml', { md: locationContent, raw: true});
+                        if (resp.res.data) {
+                          locationContent = resp.res.data;
+                        }
+                      break;
+                    }
+                    // support scraper mode which targets a wrapper for the actual content
+                    if (commandRun.options.contentScrape) {
+                      let dom = parse(`${locationContent}`);
+                      locationContent = dom.querySelector(`${commandRun.options.contentScrape}`).innerHTML;
+                    }
+                  }
+                  // if we have content (meaning it's not blank) then try to write the page location                    
+                  if (locationContent && await page.writeLocation(locationContent)) {
+                    recipe.log(siteLoggingName, commandString(commandRun));
+                    if (!commandRun.options.quiet) {
+                      log(`node:edit success updated page content: "${page.id}`);
+                    }
+                  }
+                  else {
+                    console.warn(`node:edit failure to write page content : ${page.id}`);
+                  }
+                }
+                else {
+                  if (['tags', 'published', 'hideInMenu'].includes(commandRun.options.nodeOp)) {
+                    page.metadata[commandRun.options.nodeOp] = commandRun.options[commandRun.options.nodeOp];
+                  }
+                  else if (commandRun.options.nodeOp === 'theme') {
+                    let themes = await HAXCMS.getThemes();
+                    page.metadata.theme = themes[commandRun.options[commandRun.options.nodeOp]];
+                  }
+                  else {
+                    page[commandRun.options.nodeOp] = commandRun.options[commandRun.options.nodeOp];
+                  }
+                  let resp = await activeHaxsite.updateNode(page);
+                  recipe.log(siteLoggingName, commandString(commandRun));
+                  if (commandRun.options.v) {
+                    log(resp, 'silly');
+                  }
+                }
+              }
+            }
+          }
+          catch(e) {
+            log(e.stderr);
+          }
+        break;
+        case "node:delete":
+          try {
+            if (!commandRun.options.itemId) {
+              commandRun.options.itemId = await p.select({
+                message: `Select an item to delete`,
+                required: true,
+                options: [ {value: null, label: "-- Delete nothing, exit --" }, ...await siteItemsOptionsList(activeHaxsite)],
+              });
+            }
+            if (commandRun.options.itemId) {
+              let del = false;
+              if (!commandRun.options.y) {
+                del = await p.confirm({
+                  message: `Are you sure you want to delete ${commandRun.options.itemId}? (This cannot be undone)`,
+                  initialValue: true,
+                });
+              }
+              else {
+                del = true;
+              }
+              // extra confirmation given destructive operation
+              if (del) {
+                let resp = await haxcmsNodejsCli.cliBridge('deleteNode', { site: activeHaxsite, node: { id: commandRun.options.itemId }});
+                if (resp.res.data === 500) {
+                  console.warn(`node:delete failed "${commandRun.options.itemId} not found`);
+                }
+                else {
+                  recipe.log(siteLoggingName, commandString(commandRun));
+                  log(`"${commandRun.options.itemId}" deleted`);
+                }    
+              }
+              else {
+                log(`Delete operation canceled`);
+              }
+            }
+          }
+          catch(e) {
+            log(e.stderr);
+          }
+        break;
+        case "site:sync":
+          // @todo git sync might need other arguments / be combined with publishing
+          try {
+            await exec(`cd ${activeHaxsite.directory} && git pull && git push`);
+          }
+          catch(e) {
+            log(e.stderr);
+          }
+        break;
+        case "site:theme":
+          try {
+            //theme
+            let list = await siteThemeList();
+            activeHaxsite = await hax.systemStructureContext();
+            let val = activeHaxsite.manifest.metadata.theme.element;
+            if (!commandRun.options.theme) {
+              commandRun.options.theme = await p.select({
+                message: `Select theme:`,
+                defaultValue: val,
+                initialValue: val,
+                options: list,
+              });
+              let themes = await HAXCMS.getThemes();
+              if (themes && commandRun.options.theme && themes[commandRun.options.theme]) {
+                activeHaxsite.manifest.metadata.theme = themes[commandRun.options.theme];
+                activeHaxsite.manifest.save(false);
+                recipe.log(siteLoggingName, commandString(commandRun));
+              }
+            }
+          }
+          catch(e) {
+            log(e.stderr);
+          }
+        break;
+        case "site:surge":
+          try {
+            // attempt to install; implies they asked to publish with surge but
+            // system test did not see it globally
+            if (!sysSurge) {
+              let s = p.spinner();
+              s.start(merlinSays('Installing Surge.sh globally so we can publish'));
+              let execOutput = await exec(`npm install --global surge`);
+              s.stop(merlinSays('surge.sh installed globally'));
+              log(execOutput.stdout.trim());
+              sysSurge = true;
+            }
+            if (!commandRun.options.domain) {
+              commandRun.options.domain = await p.text({
+                message: `Domain for surge`,
+                initialValue: `haxcli-${activeHaxsite.name}.surge.sh`,
+                defaultValue: `haxcli-${activeHaxsite.name}.surge.sh`,
+                required: true,
+                validate: (value) => {
+                  if (!value) {
+                    return "Domain must have a value";
+                  }
+                }
+              });
+            }
+            let execOutput = await exec(`cd ${activeHaxsite.directory} && surge . ${commandRun.options.domain}`);
+            log(execOutput.stdout.trim());
+            log(`Site published: https://${commandRun.options.domain}`);
+          }
+          catch(e) {
+            log(e.stderr);
+          }
+        break;
+        case "site:file-list":
+          let res = new Res();
+          await hax.RoutesMap.get.listFiles({query: activeHaxsite.name, filename: commandRun.options.filename}, res);
+          if (commandRun.options.format === 'yaml') {
+            log(dump(res.data));
+          }
+          else {
+            log(res.data);
+          }
+          break;
+        case "site:html":
+        case "site:md":
+        case "site:schema":
+          let siteContent = '';
+          activeHaxsite = await hax.systemStructureContext();
+          let items = [];
+          if (commandRun.options.itemId != null) {
+            items = activeHaxsite.manifest.findBranch(commandRun.options.itemId);
+          }
+          else {
+            items = activeHaxsite.manifest.orderTree(activeHaxsite.manifest.items);
+          }
+          if (operation.action === 'site:schema') {
+            let els = [];
+            for (var i in items) {
+              let page = activeHaxsite.loadNode(items[i].id);
+              let html = await activeHaxsite.getPageContent(page);
+              let dom = parse(`<div id="fullpage">${html}</div>`);
+              els.push({
+                tag: "h1",
+                properties: {
+                  "data-jos-item-id": items[i].id
+                },
+                content: `${items[i].title}`
+              });
+              for (var j in dom.querySelector('#fullpage').childNodes) {
+                let node = dom.querySelector('#fullpage').childNodes[j];
+                if (node && node.getAttribute) {
+                  els.push(await nodeToHaxElement(node, null));
+                }
+              }
             }
             // simple redirecting to file
             if (commandRun.options.toFile) {
               if (commandRun.options.format === 'yaml') {
-                fs.writeFileSync(commandRun.options.toFile, dump(siteStats))
+                fs.writeFileSync(commandRun.options.toFile, dump(els))
               }
               else {
-                fs.writeFileSync(commandRun.options.toFile, JSON.stringify(siteStats, null, 2))
+                fs.writeFileSync(commandRun.options.toFile, JSON.stringify(els, null, 2))
               }
-            }
-          break;
-          case "site:items":
-            let siteitems = [];
-            if (commandRun.options.itemId != null) {
-              siteitems = activeHaxsite.manifest.findBranch(commandRun.options.itemId);
-            }
-            else {
-              siteitems = activeHaxsite.manifest.orderTree(activeHaxsite.manifest.items);
-            }
-            for (let i in siteitems) {
-              let page = await activeHaxsite.loadNode(siteitems[i].id);
-              siteitems[i].content = await activeHaxsite.getPageContent(page);
-            }
-            // simple redirecting to file if asked for
-            if (commandRun.options.toFile) {
-              let contents = '';
-              if (commandRun.options.format === 'yaml') {
-                contents = dump(siteitems);
-              }
-              else {
-                contents = JSON.stringify(siteitems, null, 2);
-              }
-              fs.writeFileSync(commandRun.options.toFile, contents);
-              
             }
             else {
               if (commandRun.options.format === 'yaml') {
-                log(dump(siteitems));
+                log(dump(els));
               }
               else {
-                log(siteitems);
+                log(els);
               }
             }
-          break;
-          case "site:items-import":
-            // need source, then resolve what it is
-            if (commandRun.options.itemsImport) {
-              let location = commandRun.options.itemsImport;
-              let josImport = new JSONOutlineSchema();
-              var itemsImport = [];
-              // support for address, as in import from some place else
-              if (location.startsWith('https://') || location.startsWith('http://')) {
-                if (location.endsWith('/site.json')) {
-                  location = location.replace('/site.json','');
+          }
+          else {
+            for (var i in items) {
+              let page = activeHaxsite.loadNode(items[i].id); 
+              siteContent += `<h1>${items[i].title}</h1>\n\r`;
+              siteContent += `<div data-jos-item-id="${items[i].id}">\n\r${await activeHaxsite.getPageContent(page)}\n\r</div>\n\r`;
+            }
+            if (operation.action === 'site:md') {
+              let resp = await openApiBroker('@core', 'htmlToMd', { html: siteContent});
+              if (commandRun.options.toFile) {
+                fs.writeFileSync(commandRun.options.toFile, resp.res.data.data);
+                if (!commandRun.options.quiet) {
+                  log(`${commandRun.options.toFile} written`);
                 }
-                else if (!location.endsWith('/')) {
-                  location = location + '/';
+              }
+              else {
+                log(resp.res.data.data);
+              }
+            }
+            else {
+              if (commandRun.options.toFile) {
+                fs.writeFileSync(commandRun.options.toFile, siteContent);
+                if (!commandRun.options.quiet) {
+                  log(`${commandRun.options.toFile} written`);
                 }
-                let f = await fetch(`${location}site.json`).then(d => d.ok ? d.json() : null);
-                if (f && f.items) {
-                  josImport.items = f.items;
+              }
+              else {
+                log(siteContent);
+              }
+            }
+          }
+        break;
+        // @todo need to make these work..
+        case "recipe:read":
+          // just print the recipe out
+          if (fs.existsSync(path.join(process.cwd(), `${siteRecipeFile}`))) {
+            let recContents = await fs.readFileSync(path.join(process.cwd(), `${siteRecipeFile}`),'utf8');
+            console.log(recContents);
+          }
+        break;
+        case "recipe:play":
+          // step through and run each recipe once fed a file location
+          // this allows for storing commands from a site and then replaying them with ease
+          if (!commandRun.options.recipe) {
+            commandRun.options.recipe = await p.text({
+              message: `Select recipe:`,
+              defaultValue: process.cwd(),
+              initialValue: process.cwd(),
+              validate: (val) => {
+                if (!val.endsWith('.recipe')) {
+                  return 'HAX Recipe files must end in .recipe';
+                }
+              }
+            });
+          }
+          if (fs.existsSync(commandRun.options.recipe)) {
+            let recContents = await fs.readFileSync(commandRun.options.recipe,'utf8');
+            // split into commands
+            let commandList = recContents.replaceAll('cli: ', '').split("\n");
+            let rootDir = '';
+            // confirm each command or allow --y so that it auto applies
+            for (var i in commandList) {
+              // verify every command starts this way for safety
+              if (commandList[i].startsWith('hax site')) {
+                let confirmation;
+                if (commandRun.options.y) {
+                  confirmation = true;
                 }
                 else {
-                  // invalid data
-                  process.exit(0);
-                }
-              }
-              // look on prem
-              else if(fs.existsSync(location)) {
-                let fileContents = await fs.readFileSync(location);
-                if (location.endsWith('.json')) {
-                  josImport.items = JSON.parse(fileContents);
-
-                }
-                else if (location.endsWith('.yaml')) {
-                  josImport.items = await load(fileContents);
-                }
-              }
-              // allows for filtering
-              if (commandRun.options.itemId) {
-                itemsImport = josImport.findBranch(commandRun.options.itemId);
-              }
-              else {
-                itemsImport = josImport.items;
-              }
-              for (let i in josImport.items) {
-                if (josImport.items[i].location && !josImport.items[i].content) {
-                  josImport.items[i].content = await fetch(`${location}${josImport.items[i].location}`).then(d => d.ok ? d.text() : '');
-                }
-              }
-              let itemIdMap = {};
-              for (let i in josImport.items) {
-                // if we have a parent set by force to append this structure to
-                // then see if parent = null (implying top level in full site import)
-                // or match on itemId to imply that it's the top (no matter parent status)
-                if (commandRun.options.parentId) {
-                  if (josImport.items[i].parent === null || josImport.items[i].id === commandRun.options.itemId) {
-                    josImport.items[i].parent = commandRun.options.parentId;
-                  }
-                }
-                // see if map has an entry that is already set
-                if (itemIdMap[josImport.items[i].parent]) {
-                  // remaps the parent of this item bc the thing imported has changed ID
-                  josImport.items[i].parent = itemIdMap[josImport.items[i].parent];
-                }
-                let tmpAddedItem = await activeHaxsite.addPage(
-                  josImport.items[i].parent,
-                  josImport.items[i].title,
-                  'html',
-                  josImport.items[i].slug,
-                  null,
-                  josImport.items[i].indent,
-                  josImport.items[i].content,
-                  josImport.items[i].order,
-                  josImport.items[i].metadata
-                );
-                // set in the map for future translations
-                itemIdMap[josImport.items[i].id] = tmpAddedItem.id;
-              }
-              if (!commandRun.options.quiet) {
-                log(`${josImport.items.length} nodes imported`);
-              }
-            }
-            else if (!commandRun.options.quiet) {
-              log('Must specify --item-import as path to valid item export file or URL', 'error');
-            }
-          break;
-          case "start":
-            try {
-              if (!commandRun.options.quiet) {
-                p.intro(`Starting server.. `);
-                p.intro(`⌨️  To stop server, press: ${color.bold(color.black(color.bgRed(` CTRL + C `)))}`);  
-              }
-              await exec(`cd ${activeHaxsite.directory} && npx @haxtheweb/haxcms-nodejs`);
-            }
-            catch(e) {
-              log(e.stderr);
-            }
-          break;
-          case "node:stats":
-            try {
-              if (!commandRun.options.itemId) {
-                commandRun.options.itemId = await p.select({
-                  message: `Select an item to edit`,
-                  required: true,
-                  options: [ {value: null, label: "-- edit nothing, exit --" }, ...await siteItemsOptionsList(activeHaxsite)],
-                });
-              }
-              if (commandRun.options.itemId) {
-                let nodeOps = siteNodeStatsOperations();
-                let page = activeHaxsite.loadNode(commandRun.options.itemId);
-                // select which aspect of this we are editing
-                if (!commandRun.options.nodeOp) {
-                  commandRun.options.nodeOp = await p.select({
-                    message: `${page.title} (${page.id}) - Node operations`,
-                    required: true,
-                    options: [ {value: null, label: "-- Exit --"}, ...nodeOps],
-                  });
-                }
-                if (commandRun.options.nodeOp && siteNodeStatsOperations(commandRun.options.nodeOp)) {
-                  switch(commandRun.options.nodeOp) {
-                    case 'details':
-                      if (commandRun.options.format === 'yaml') {
-                        log(dump(page));
-                      }
-                      else {
-                        log(page);
-                      }
-                      // simple redirecting to file
-                      if (commandRun.options.toFile) {
-                        if (commandRun.options.format === 'yaml') {
-                          fs.writeFileSync(commandRun.options.toFile, dump(page))
-                        }
-                        else {
-                          fs.writeFileSync(commandRun.options.toFile, JSON.stringify(page, null, 2))
-                        }
-                      }
-                    break;
-                    case 'html':
-                      let itemHTML = await activeHaxsite.getPageContent(page);
-                      // simple redirecting to file
-                      if (commandRun.options.toFile) {
-                        fs.writeFileSync(commandRun.options.toFile, itemHTML)
-                      }
-                      else {
-                        log(itemHTML);
-                      }
-                    break;
-                    case 'schema':
-                      // next up
-                      let html = await activeHaxsite.getPageContent(page);
-                      let dom = parse(`<div id="fullpage">${html}</div>`);
-                      let els = [];
-                      for (var i in dom.querySelector('#fullpage').childNodes) {
-                        let node = dom.querySelector('#fullpage').childNodes[i];
-                        if (node && node.getAttribute) {
-                          els.push(await nodeToHaxElement(node, null));
-                        }
-                      }
-                      // simple redirecting to file
-                      if (commandRun.options.toFile) {
-                        if (commandRun.options.format === 'yaml') {
-                          fs.writeFileSync(commandRun.options.toFile, dump(els))
-                        }
-                        else {
-                          fs.writeFileSync(commandRun.options.toFile, JSON.stringify(els, null, 2))
-                        }
-                      }
-                      else {
-                        if (commandRun.options.format === 'yaml') {
-                          log(dump(els));
-                        }
-                        else {
-                          log(els);
-                        }
-                      }
-                    break;
-                    case 'md':
-                    let resp = await openApiBroker('@core', 'htmlToMd', { html: await activeHaxsite.getPageContent(page)})
-                    // simple redirecting to file
-                    if (commandRun.options.toFile) {
-                      fs.writeFileSync(commandRun.options.toFile, resp.res.data.data);
-                    }
-                    else {
-                      log(resp.res.data.data);
-                    }
-                    break;
-                  }
-                }
-              }
-            }
-            catch(e) {
-              log(e.stderr);
-              log(e);
-            }
-          break;
-          case "node:add":
-            try {
-              if (!commandRun.options.title) {
-                commandRun.options.title = await p.text({
-                  message: `Title for this page`,
-                  placeholder: "New page",
-                  required: true,
-                  validate: (value) => {
-                    if (!value) {
-                      return "Title must be set (tab writes default)";
-                    }
-                  }
-                });
-              }
-              var createNodeBody = { 
-                site: activeHaxsite,
-                node: { 
-                  title: commandRun.options.title
-                }
-              };
-              // this would be odd but could be direct with no format specified
-              if (commandRun.options.content && !commandRun.options.format) {
-                // only API where it's called contents and already out there {facepalm}
-                // but user already has commands where it's --content as arg
-                createNodeBody.node.contents = commandRun.options.content;
-              }
-              else if (commandRun.options.content && commandRun.options.format) {
-                // @todo support for md,html,schema both local and remote resolution
-
-                // if we have format set, then  we need to interpret content as a url
-                let location = commandRun.options.content;
-                let locationContent = '';
-                // support for address, as in import from some place else
-                if (location.startsWith('https://') || location.startsWith('http://')) {                  
-                  locationContent = await fetch(location).then(d => d.ok ? d.text() : '');
-                }
-                // look on prem
-                else if(fs.existsSync(location)) {
-                  locationContent = await fs.readFileSync(location);
-                  if (location.endsWith('.json')) {
-                    locationContent = JSON.parse(locationContent);
-                  }
-                  else if (location.endsWith('.yaml')) {
-                    locationContent = await load(locationContent);
-                  }
-                  else if (location.endsWith('.md')) {
-                    let resp = await openApiBroker('@core', 'mdToHtml', { md: locationContent, raw: true});
-                    console.log(resp);
-                    if (resp.res.data) {
-                      locationContent = resp.res.data;
-                    }
-                  }
-                }
-                // support for scraper mode to find title from the content responsee
-                if (commandRun.options.titleScrape) {
-                  let dom = parse(`${locationContent}`);
-                  createNodeBody.node.title = dom.querySelector(`${commandRun.options.titleScrape}`).textContent;
-                }
-                // support scraper mode which targets a wrapper for the actual content
-                if (commandRun.options.contentScrape) {
-                  let dom = parse(`${locationContent}`);
-                  locationContent = dom.querySelector(`${commandRun.options.contentScrape}`).innerHTML;
-                }
-                createNodeBody.node.contents = locationContent;
-              }
-              let resp = await haxcmsNodejsCli.cliBridge('createNode', createNodeBody);
-              if (commandRun.options.v) {
-                log(resp.res.data);
-              }
-              if (!commandRun.options.quiet) {
-                log(`"${createNodeBody.node.title}" added to site`);
-              }
-            }
-            catch(e) {
-              log(e.stderr);
-            }
-          break;
-          case "node:edit":
-            try {
-              if (!commandRun.options.itemId) {
-                commandRun.options.itemId = await p.select({
-                  message: `Select an item to edit`,
-                  required: true,
-                  options: [ {value: null, label: "-- edit nothing, exit --" }, ...await siteItemsOptionsList(activeHaxsite)],
-                });
-              }
-              if (commandRun.options.itemId) {
-                let nodeOps = siteNodeOperations();
-                let page = activeHaxsite.loadNode(commandRun.options.itemId);
-                // select which aspect of this we are editing
-                if (!commandRun.options.nodeOp) {
-                  commandRun.options.nodeOp = await p.select({
-                    message: `${page.title} (${page.id}) - Node operations`,
-                    required: true,
-                    options: [ {value: null, label: "-- Exit --"}, ...nodeOps],
-                  });
-                }
-                if (commandRun.options.nodeOp && siteNodeOperations(commandRun.options.nodeOp)) {
-                  let nodeProp = commandRun.options.nodeOp;
-                  var propValue = commandRun.options[nodeProp];
-                  // verify we have a setting for the operation requested
-                  // otherwise we get interactive again
-                  if (!commandRun.options[nodeProp]) {
-                    let val = page[nodeProp];
-                    if (['tags', 'published', 'hideInMenu', 'theme'].includes(nodeProp)) {
-                      val = page.metadata[nodeProp];
-                    }
-                    else if (nodeProp === 'content') {
-                      val = await activeHaxsite.getPageContent(page);
-                    }
-                    //  boolean is confirm
-                    if (['published', 'hideInMenu'].includes(nodeProp)) {
-                      propValue = await p.confirm({
-                        message: `${nodeProp}:`,
-                        initialValue: Boolean(val),
-                        defaultValue: Boolean(val),
-                      });
-                    }
-                    // these have fixed possible values
-                    else if (['parent', 'theme'].includes(nodeProp)) {
-                      let l = nodeProp === 'parent' ? "-- no parent --" : "-- no theme --";
-                      let list = nodeProp === 'parent' ? await siteItemsOptionsList(activeHaxsite,  page.id) : await siteThemeList();
-                      propValue = await p.select({
-                        message: `${nodeProp}:`,
-                        defaultValue: val,
-                        initialValue: val,
-                        options: [ {value: null, label: l }, ...list],
-                      });
-                    }
-                    else {
-                      propValue = await p.text({
-                        message: `${nodeProp}:`,
-                        initialValue: val,
-                        defaultValue: val,
-                      });
-                    }
-                  }
-                  if (nodeProp === 'order') {
-                    propValue = parseInt(propValue);
-                  }
-                  // account for CLI
-                  if (propValue === "null") {
-                    propValue = null;
-                  }
-                  commandRun.options[nodeProp] = propValue;
-                }
-                // ensure we set empty values, just not completely undefined values
-                if (typeof commandRun.options[commandRun.options.nodeOp] !== "undefined") {
-                  if (commandRun.options.nodeOp === 'content') {
-                    let locationContent = '';
-                    // this would be odd but could be direct with no format specified
-                    if (commandRun.options.content && !commandRun.options.format) {
-                      locationContent = commandRun.options.content;
-                    }
-                    // this implies what we were given needs processing as a file / url
-                    else if (commandRun.options.content && commandRun.options.format) {
-                      // if we have format set, then  we need to interpret content as a url
-                      let location = commandRun.options.content;
-                      // support for address, as in import from some place else
-                      if (location.startsWith('https://') || location.startsWith('http://')) {                  
-                        locationContent = await fetch(location).then(d => d.ok ? d.text() : '');
-                      }
-                      // look on prem
-                      else if(fs.existsSync(location)) {
-                        locationContent = await fs.readFileSync(location);
-                        if (location.endsWith('.json')) {
-                          locationContent = JSON.parse(locationContent);
-                        }
-                        else if (location.endsWith('.yaml')) {
-                          locationContent = await load(locationContent);
-                        }
-                        else if (location.endsWith('.md')) {
-                          let resp = await openApiBroker('@core', 'mdToHtml', { md: locationContent, raw: true});
-                          console.log(resp);
-                          if (resp.res.data) {
-                            locationContent = resp.res.data;
-                          }
-                        }
-                      }
-                      // support scraper mode which targets a wrapper for the actual content
-                      if (commandRun.options.contentScrape) {
-                        let dom = parse(`${locationContent}`);
-                        locationContent = dom.querySelector(`${commandRun.options.contentScrape}`).innerHTML;
-                      }
-                    }
-                    // if we have content (meaning it's not blank) then try to write the page location                    
-                    if (locationContent && await page.writeLocation(locationContent)) {
-                      if (!commandRun.options.quiet) {
-                        log(`node:edit success updated page content: "${page.id}`);
-                      }
-                    }
-                    else {
-                      console.warn(`node:edit failure to write page content : ${page.id}`);
-                    }
-                  }
-                  else {
-                    if (['tags', 'published', 'hideInMenu'].includes(commandRun.options.nodeOp)) {
-                      page.metadata[commandRun.options.nodeOp] = commandRun.options[commandRun.options.nodeOp];
-                    }
-                    else if (commandRun.options.nodeOp === 'theme') {
-                      let themes = await HAXCMS.getThemes();
-                      page.metadata.theme = themes[commandRun.options[commandRun.options.nodeOp]];
-                    }
-                    else {
-                      page[commandRun.options.nodeOp] = commandRun.options[commandRun.options.nodeOp];
-                    }
-                    let resp = await activeHaxsite.updateNode(page);
-                    if (commandRun.options.v) {
-                      log(resp);
-                    }
-                  }
-                }
-              }
-            }
-            catch(e) {
-              log(e.stderr);
-            }
-          break;
-          case "node:delete":
-            try {
-              if (!commandRun.options.itemId) {
-                commandRun.options.itemId = await p.select({
-                  message: `Select an item to delete`,
-                  required: true,
-                  options: [ {value: null, label: "-- Delete nothing, exit --" }, ...await siteItemsOptionsList(activeHaxsite)],
-                });
-              }
-              if (commandRun.options.itemId) {
-                let del = false;
-                if (!commandRun.options.y) {
-                  del = await p.confirm({
-                    message: `Are you sure you want to delete ${commandRun.options.itemId}? (This cannot be undone)`,
+                  confirmation = await p.confirm({
+                    message: `Do you want to run ${commandList[i]}? (This cannot be undone)`,
                     initialValue: true,
                   });
                 }
-                else {
-                  del = true;
-                }
-                // extra confirmation given destructive operation
-                if (del) {
-                  let resp = await haxcmsNodejsCli.cliBridge('deleteNode', { site: activeHaxsite, node: { id: commandRun.options.itemId }});
-                  if (resp.res.data === 500) {
-                    console.warn(`node:delete failed "${commandRun.options.itemId} not found`);
+                // confirmed; let's run!
+                if (confirmation) {
+                  let commandMatch = siteActions().filter((action) => action.value === commandList[i].split(' ')[2]);
+                  // if we found a command that means it is a valid command to run against the site
+                  if (commandMatch.length > 0) {
+                    await exec(`${commandList[i]} --y --no-i --auto --quiet${rootDir}`);
+                  }
+                  // 1st command won't match as the argument creates a new site
+                  // but ensure we don't have a site context prior to running this
+                  // or we'll get a site in a site with the same name which is not
+                  // the desired result
+                  else if (!await hax.systemStructureContext()) {
+                    await exec(`${commandList[i]} --y --no-i --auto --quiet --no-extras`);
+                    // site will have been created, obtain the site name and set root so
+                    // the other commands get piped into it correctly
+                    rootDir = ` --root ${commandList[i].split(' ')[2]}`;
                   }
                   else {
-                    log(`"${commandRun.options.itemId}" deleted`);
-                  }    
-                }
-                else {
-                  log(`Delete operation canceled`);
-                }
-              }
-            }
-            catch(e) {
-              log(e.stderr);
-            }
-          break;
-          case "site:sync":
-            // @todo git sync might need other arguments / be combined with publishing
-            try {
-              await exec(`cd ${activeHaxsite.directory} && git pull && git push`);
-            }
-            catch(e) {
-              log(e.stderr);
-            }
-          break;
-          case "site:theme":
-            try {
-              //theme
-              let list = await siteThemeList();
-              activeHaxsite = await hax.systemStructureContext();
-              let val = activeHaxsite.manifest.metadata.theme.element;
-              if (!commandRun.options.theme) {
-                commandRun.options.theme = await p.select({
-                  message: `Select theme:`,
-                  defaultValue: val,
-                  initialValue: val,
-                  options: list,
-                });
-                let themes = await HAXCMS.getThemes();
-                if (themes && commandRun.options.theme && themes[commandRun.options.theme]) {
-                  activeHaxsite.manifest.metadata.theme = themes[commandRun.options.theme];
-                  activeHaxsite.manifest.save(false);
-                }
-              }
-            }
-            catch(e) {
-              log(e.stderr);
-            }
-          break;
-          case "site:surge":
-            try {
-              if (!commandRun.options.domain) {
-                commandRun.options.domain = await p.text({
-                  message: `Domain for surge`,
-                  defaultValue: `haxcli-${activeHaxsite.name}.surge.sh`,
-                  required: true,
-                  validate: (value) => {
-                    if (!value) {
-                      return "Domain must have a value";
-                    }
-                  }
-                });
-              }
-              let execOutput = await exec(`cd ${activeHaxsite.directory} && surge . ${commandRun.options.domain}`);
-              log(execOutput.stdout.trim());
-            }
-            catch(e) {
-              log(e.stderr);
-            }
-          break;
-          case "site:file-list":
-            let res = new Res();
-            await hax.RoutesMap.get.listFiles({query: activeHaxsite.name, filename: commandRun.options.filename}, res);
-            if (commandRun.options.format === 'yaml') {
-              log(dump(res.data));
-            }
-            else {
-              log(res.data);
-            }
-            break;
-          case "site:html":
-          case "site:md":
-          case "site:schema":
-            let siteContent = '';
-            activeHaxsite = await hax.systemStructureContext();
-            let items = [];
-            if (commandRun.options.itemId != null) {
-              items = activeHaxsite.manifest.findBranch(commandRun.options.itemId);
-            }
-            else {
-              items = activeHaxsite.manifest.orderTree(activeHaxsite.manifest.items);
-            }
-            if (operation.action === 'site:schema') {
-              let els = [];
-              for (var i in items) {
-                let page = activeHaxsite.loadNode(items[i].id);
-                let html = await activeHaxsite.getPageContent(page);
-                let dom = parse(`<div id="fullpage">${html}</div>`);
-                els.push({
-                  tag: "h1",
-                  properties: {
-                    "data-jos-item-id": items[i].id
-                  },
-                  content: `${items[i].title}`
-                });
-                for (var j in dom.querySelector('#fullpage').childNodes) {
-                  let node = dom.querySelector('#fullpage').childNodes[j];
-                  if (node && node.getAttribute) {
-                    els.push(await nodeToHaxElement(node, null));
+                    log('Did not run because we already have a site', 'warn');
                   }
                 }
               }
-              // simple redirecting to file
-              if (commandRun.options.toFile) {
-                if (commandRun.options.format === 'yaml') {
-                  fs.writeFileSync(commandRun.options.toFile, dump(els))
-                }
-                else {
-                  fs.writeFileSync(commandRun.options.toFile, JSON.stringify(els, null, 2))
-                }
-              }
-              else {
-                if (commandRun.options.format === 'yaml') {
-                  log(dump(els));
-                }
-                else {
-                  log(els);
-                }
-              }
             }
-            else {
-              for (var i in items) {
-                let page = activeHaxsite.loadNode(items[i].id); 
-                siteContent += `<h1>${items[i].title}</h1>\n\r`;
-                siteContent += `<div data-jos-item-id="${items[i].id}">\n\r${await activeHaxsite.getPageContent(page)}\n\r</div>\n\r`;
-              }
-              if (operation.action === 'site:md') {
-                let resp = await openApiBroker('@core', 'htmlToMd', { html: siteContent});
-                if (commandRun.options.toFile) {
-                  fs.writeFileSync(commandRun.options.toFile, resp.res.data.data);
-                  if (!commandRun.options.quiet) {
-                    log(`${commandRun.options.toFile} written`);
-                  }
-                }
-                else {
-                  log(resp.res.data.data);
-                }
-              }
-              else {
-                if (commandRun.options.toFile) {
-                  fs.writeFileSync(commandRun.options.toFile, siteContent);
-                  if (!commandRun.options.quiet) {
-                    log(`${commandRun.options.toFile} written`);
-                  }
-                }
-                else {
-                  log(siteContent);
-                }
-              }
-            }
-          break;
-          case "quit":
-          // quit
-          process.exit(0);
-          break;
-        }
-        // y or noi need to act like it ran and finish instead of looping options
-        if (commandRun.options.y || !commandRun.options.i) {
-          process.exit(0);
-        }
-        operation.action = null;
+          }
+        break;
+        case "quit":
+        // quit
+        process.exit(0);
+        break;
       }
-      if (!commandRun.options.quiet) {
-        communityStatement();
+      // y or noi need to act like it ran and finish instead of looping options
+      if (commandRun.options.y || !commandRun.options.i || !actionAssigned) {
+        process.exit(0);
       }
+      operation.action = null;
+    }
+    if (!commandRun.options.quiet) {
+      communityStatement();
+    }
 }
 
 export function siteNodeStatsOperations(search = null){
@@ -902,6 +1016,7 @@ async function openApiBroker(scope, call, body) {
 // process site creation
 export async function siteProcess(commandRun, project, port = '3000') {    // auto select operations to perform if requested
   var s = p.spinner();
+  // if we have no extras, or they are empty then set for launch
   if (!project.extras) {
     project.extras = [];
     if (commandRun.options.i) {
@@ -1025,12 +1140,30 @@ export async function siteProcess(commandRun, project, port = '3000') {    // au
   HAXCMS.cliWritePath = `${project.path}`;
   let res = new Res();
   await hax.RoutesMap.post.createSite({body: siteRequest}, res);
+  // path different for this one as it's on the fly produced
+  const recipeFileName = path.join(project.path, '/', project.name, `${siteRecipeFile}`);
+  const recipeLogTransport = new winston.transports.File({
+    filename: recipeFileName
+  });
+
+  const recipe = winston.createLogger({
+    levels: logLevels,
+    level: siteLoggingName,
+    transports: [
+      recipeLogTransport
+    ],
+    format: winston.format.simple(),
+  });
+  // matching the common object elsewhere tho different reference in this command since it creates from nothing
+  // capture this if use input on the fly
+  commandRun.options.theme = project.theme;
+  recipe.log(siteLoggingName, commandString(commandRun));
   if (commandRun.options.v) {
     if (commandRun.options.format === 'yaml') {
-      log(dump(res.data));
+      log(dump(res.data), 'silly');
     }
     else {
-      log(res.data);
+      log(res.data, 'silly');
     }
   }
   if (!commandRun.options.quiet) {
@@ -1047,7 +1180,7 @@ export async function siteProcess(commandRun, project, port = '3000') {    // au
   }
   // options for install, git and other extras
   // can't launch if we didn't install first so launch implies installation
-  if (project.extras.includes('launch')) {
+  if (project.extras && project.extras.includes && project.extras.includes('launch')) {
     let optionPath = `${project.path}/${project.name}`;
     let command = `npx @haxtheweb/haxcms-nodejs`;
     if (!commandRun.options.quiet) {
