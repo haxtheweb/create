@@ -4,12 +4,14 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 
 import * as p from '@clack/prompts';
+import * as ejs from "ejs";
 import color from 'picocolors';
 import { dump, load } from 'js-yaml';
 import * as winston from 'winston';
 
 import { parse } from 'node-html-parser';
 import { merlinSays, communityStatement } from "../statements.js";
+import { dashToCamel } from "../utils.js";
 import { log, commandString } from "../logging.js";
 
 // trick MFR into giving local paths
@@ -1171,6 +1173,15 @@ export async function siteProcess(commandRun, project, port = '3000') {    // au
     await setTimeout(500);
   }
   
+  // Write theme template to site/custom
+  if(project.customName && project.customTemplate) {
+    s.start(merlinSays(`Creating new theme: ${project.customName}`));
+
+    await customSiteTheme(commandRun, project);
+    
+    s.stop(merlinSays(`${project.customName} theme created!`));
+  }
+
   if (project.gitRepo && !commandRun.options.isMonorepo) {
     try {
       await exec(`cd ${project.path}/${project.name} && git init && git add -A && git commit -m "first commit" && git branch -M main${project.gitRepo ? ` && git remote add origin ${project.gitRepo}` : ''}`);    
@@ -1239,6 +1250,50 @@ export async function siteThemeList() {
     })
   }
   return items;
+}
+
+async function customSiteTheme(commandRun, project) {
+  project.className = dashToCamel(project.customName);
+  var sitePath = `${project.path}/${project.name}`;
+
+  const filePath = `${sitePath}/custom/src/${project.customName}.js`;
+  if(project.customTemplate === "base"){
+    await fs.copyFileSync(`${process.mainModule.path}/templates/sitetheme/base-theme.js`, `${sitePath}/custom/src/base-theme.js`)
+    await fs.renameSync(`${sitePath}/custom/src/base-theme.js`, filePath)
+  } else if(project.customTemplate === "polaris-flex") {
+    await fs.copyFileSync(`${process.mainModule.path}/templates/sitetheme/flex-theme.js`, `${sitePath}/custom/src/flex-theme.js`)
+    await fs.renameSync(`${sitePath}/custom/src/flex-theme.js`, filePath)
+  } else if(project.customTemplate === "polaris-sidebar") {
+    await fs.copyFileSync(`${process.mainModule.path}/templates/sitetheme/sidebar-theme.js`, `${sitePath}/custom/src/sidebar-theme.js`)
+    await fs.renameSync(`${sitePath}/custom/src/sidebar-theme.js`, filePath)
+  }
+
+  try {
+      // ensure we don't try to pattern rewrite image files
+      if (!filePath.endsWith('.jpg') && !filePath.endsWith('.png')) {
+        const ejsString = ejs.fileLoader(filePath, 'utf8');
+        let content = ejs.render(ejsString, project);
+        // file written successfully  
+        fs.writeFileSync(filePath, content);
+      }
+    } catch (err) {
+      console.error(filePath);
+      console.error(err);
+    }
+  
+  await fs.appendFileSync(`${sitePath}/custom/src/custom.js`, `\n import "./${project.customName}.js"`);
+  var activeHaxsite = await hax.systemStructureContext(sitePath);
+
+  let themeObj = {
+      element: project.customName,
+      path: filePath,
+      name: project.className,
+  }
+
+  activeHaxsite.manifest.metadata.theme = themeObj;
+  activeHaxsite.manifest.save(false);
+
+  await exec(`cd ${sitePath}/custom/ && ${commandRun.options.npmClient} install && ${commandRun.options.npmClient} run build && cd ${sitePath}`);
 }
 
 // @fork of the hax core util for this so that we avoid api difference between real dom and parse nodejs dom
