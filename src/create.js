@@ -423,6 +423,12 @@ async function main() {
             },
             theme: async({ results }) => {
               let themes = await siteThemeList();
+              let custom = {
+                value: 'custom-theme',
+                label: 'Create Custom Theme',
+              }
+              themes.push(custom);
+              
               if (results.type === "site" && !commandRun.options.theme) {
                 // support having no theme but autoselecting
                 if (commandRun.options.auto && commandRun.options.skip) {
@@ -436,6 +442,44 @@ async function main() {
                     initialValue: themes[0]
                   })  
                 }
+              }
+            },
+            customName({ results }) {
+              if (results.theme === "custom-theme") {
+                return p.text({
+                  message: 'Theme Name:',
+                  placeholder: results.theme,
+                  required: false,
+                  validate: (value) => {
+                    if (!value) {
+                      return "Name is required (tab writes default)";
+                    }
+                    if (/^\d/.test(value)) {
+                      return "Name cannot start with a number";
+                    }
+                    if (value.indexOf(' ') !== -1) {
+                      return "No spaces allowed in project name";
+                    }
+                    if (value.indexOf('-') === -1 && value.indexOf('-') !== 0 && value.indexOf('-') !== value.length - 1) {
+                      return "Name must include at least one `-` and must not start or end name.";
+                    }
+                  }
+                })
+              }
+            },
+            customTemplate({ results }) {
+              if (results.theme === "custom-theme") {
+                const options = [
+                    { value: 'base', label: 'Vanilla Theme with Hearty Documentation' },
+                    { value: 'polaris-flex', label: 'Minimalist Theme with Horizontal Nav' },
+                    { value: 'polaris-sidebar', label: 'Content-Focused Theme with Flexible Sidebar' },
+                ]
+                return p.select({
+                  message: 'Template:',
+                  required: false,
+                  options: options,
+                  initialValue: `${results.theme}`
+                })
               }
             },
             extras: ({ results }) => {
