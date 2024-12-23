@@ -45,12 +45,12 @@
   "dependencies": {
     "@clack/core": "0.3.4",
     "@clack/prompts": "0.7.0",
-    "@haxtheweb/haxcms-nodejs": "^10.0.0",
+    "@haxtheweb/haxcms-nodejs": "^10.0.1",
     "@haxtheweb/open-apis": "^10.0.1",
     "commander": "12.1.0",
-    "node-html-parser": "6.1.13",
     "ejs": "3.1.10",
     "js-yaml": "4.1.0",
+    "node-html-parser": "6.1.13",
     "picocolors": "1.0.1",
     "winston": "3.17.0"
   },
