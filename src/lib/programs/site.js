@@ -5,7 +5,7 @@ import * as path from 'node:path';
 
 import * as p from '@clack/prompts';
 import * as ejs from "ejs";
-import color from 'picocolors';
+import color from 'picocolsite:theors';
 import { dump, load } from 'js-yaml';
 import * as winston from 'winston';
 
@@ -731,12 +731,12 @@ export async function siteCommandDetected(commandRun) {
                 initialValue: val,
                 options: list,
               });
-              let themes = await HAXCMS.getThemes();
-              if (themes && commandRun.options.theme && themes[commandRun.options.theme]) {
-                activeHaxsite.manifest.metadata.theme = themes[commandRun.options.theme];
-                activeHaxsite.manifest.save(false);
-                recipe.log(siteLoggingName, commandString(commandRun));
-              }
+            }
+            let themes = await HAXCMS.getThemes();
+            if (themes && commandRun.options.theme && themes[commandRun.options.theme]) {
+              activeHaxsite.manifest.metadata.theme = themes[commandRun.options.theme];
+              activeHaxsite.manifest.save(false);
+              recipe.log(siteLoggingName, commandString(commandRun));
             }
           }
           catch(e) {
