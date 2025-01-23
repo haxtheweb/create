@@ -5,7 +5,7 @@ import * as path from 'node:path';
 
 import * as p from '@clack/prompts';
 import * as ejs from "ejs";
-import color from 'picocolsite:theors';
+import color from 'picocolors';
 import { dump, load } from 'js-yaml';
 import * as winston from 'winston';
 
