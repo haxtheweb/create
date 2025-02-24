@@ -201,6 +201,7 @@ export async function webcomponentProcess(commandRun, project, port = "8000") {
   // rename gitignore to improve copy cross platform compat
   await fs.renameSync(`${project.path}/${project.name}/_github`, `${project.path}/${project.name}/.github`);
   await fs.renameSync(`${project.path}/${project.name}/_vscode`, `${project.path}/${project.name}/.vscode`);
+  await fs.renameSync(`${project.path}/${project.name}/_dddignore`, `${project.path}/${project.name}/.dddignore`);
   await fs.renameSync(`${project.path}/${project.name}/_editorconfig`, `${project.path}/${project.name}/.editorconfig`);
   await fs.renameSync(`${project.path}/${project.name}/_gitignore`, `${project.path}/${project.name}/.gitignore`);
   await fs.renameSync(`${project.path}/${project.name}/_nojekyll`, `${project.path}/${project.name}/.nojekyll`);

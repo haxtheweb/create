@@ -1,0 +1,23 @@
+# Directories
+.github
+.vscode
+.idea
+locales
+test
+
+# Files
+LICENSE
+README.md
+.dddignore
+.editorconfig
+.gitignore
+.nojekyll
+.npmignore
+.surgeignore
+.travis.yml
+index.html
+netlify.toml
+package.json
+package_lock.json
+rollup.config.js
+web-dev-server.config.mjs
