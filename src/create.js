@@ -9,6 +9,7 @@ import color from 'picocolors';
 
 import { haxIntro, communityStatement } from "./lib/statements.js";
 import { log, consoleTransport, logger } from "./lib/logging.js";
+import { auditCommandDetected } from './lib/programs/audit.js';
 import { webcomponentProcess, webcomponentCommandDetected } from "./lib/programs/webcomponent.js";
 import { siteActions, siteNodeOperations, siteProcess, siteCommandDetected, siteThemeList } from "./lib/programs/site.js";
 import { camelToDash } from "./lib/utils.js";
@@ -151,6 +152,24 @@ async function main() {
   .option('--no-i', 'prevent interactions / sub-process, good for scripting')
   .option('--root <char>', 'root location to execute the command from')
   .version(await HAXCMS.getHAXCMSVersion());
+
+  // audit program
+  program
+  .command('audit')
+  .description('Audits web components for compliance with DDD (HAX design system)')
+  .action((action) => {
+    commandRun = {
+      command: 'audit',
+      arguements: {},
+      options: {}
+    };
+    if (action) {
+      commandRun.arguements.action = action;
+      commandRun.options.skip = true;
+    }
+  })
+  .version(await HAXCMS.getHAXCMSVersion());
+
   // process program arguments
   program.parse();
   commandRun.options = {...commandRun.options, ...program.opts()};
@@ -262,6 +281,10 @@ async function main() {
     commandRun.options.skip = true;
     await webcomponentCommandDetected(commandRun, packageData);
   }
+  else if (commandRun.command === 'audit') {
+    console.log('This works')
+    await auditCommandDetected()
+  }
   else {
     if (commandRun.command === 'start' && !commandRun.options.y && !commandRun.options.auto && !commandRun.options.skip && !commandRun.options.quiet) {
       await haxIntro();
@@ -287,7 +310,7 @@ async function main() {
           options: {}
         };
       }
-      if (['site', 'webcomponent'].includes(commandRun.command)) {
+      if (['site', 'webcomponent', 'audit'].includes(commandRun.command)) {
         project = {
           type: commandRun.command
         };
