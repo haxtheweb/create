@@ -1174,12 +1174,12 @@ export async function siteProcess(commandRun, project, port = '3000') {    // au
   }
   
   // Write theme template to site/custom
-  if(project.customName && project.customTemplate) {
-    s.start(merlinSays(`Creating new theme: ${project.customName}`));
+  if(commandRun.options.theme === 'custom-theme' && commandRun.options.customThemeName && commandRun.options.customThemeTemplate || project.customThemeName && project.customThemeTemplate) {
+    s.start(merlinSays(`Creating new theme: ${commandRun.options.customThemeName ? commandRun.options.customThemeName : project.customThemeName}`));
 
     await customSiteTheme(commandRun, project);
     
-    s.stop(merlinSays(`${project.customName} theme created!`));
+    s.stop(merlinSays(`${commandRun.options.customThemeName ? commandRun.options.customThemeName : project.customThemeName} theme created!`));
   }
 
   if (project.gitRepo && !commandRun.options.isMonorepo) {
@@ -1253,19 +1253,43 @@ export async function siteThemeList() {
 }
 
 async function customSiteTheme(commandRun, project) {
-  project.className = dashToCamel(project.customName);
-  var sitePath = `${project.path}/${project.name}`;
+  // pass theme name for twig templates
+  project.customThemeName = commandRun.options.customThemeName ? commandRun.options.customThemeName : project.customThemeName;
 
-  const filePath = `${sitePath}/custom/src/${project.customName}.js`;
-  if(project.customTemplate === "base"){
-    await fs.copyFileSync(`${process.mainModule.path}/templates/sitetheme/base-theme.js`, `${sitePath}/custom/src/base-theme.js`)
-    await fs.renameSync(`${sitePath}/custom/src/base-theme.js`, filePath)
-  } else if(project.customTemplate === "polaris-flex") {
+  // validate start and end tags for theme name
+  if(/^custom/.test(project.customThemeName) && !/^custom-/.test(project.customThemeName)){
+    project.customThemeName = project.customThemeName.replace(/^custom/, "custom-");
+  } else if (!/^custom-/.test(project.className)) {
+    project.customThemeName = `custom-${project.customThemeName}`;
+  }
+
+  if(/theme$/.test(project.customThemeName) && !/-theme$/.test(project.customThemeName)){
+    project.customThemeName = project.customThemeName.replace(/theme$/, "-theme");
+  } else if (!/-theme$/.test(project.customThemeName)) {
+    project.customThemeName = `${project.customThemeName}-theme`;
+  }
+
+  // set camel case class name
+  project.className = dashToCamel(project.customThemeName);
+
+  // path to hax site
+  var sitePath = `${project.path}/${commandRun.options.name ? commandRun.options.name : project.name}`;
+
+  // path to new theme file
+  const filePath = `${sitePath}/custom/src/${project.customThemeName}.js`;
+
+  // theme template to use
+  const themeTemplate = commandRun.options.customThemeTemplate ? commandRun.options.customThemeTemplate : project.customThemeTemplate;
+  if(themeTemplate === "polaris-flex") {
     await fs.copyFileSync(`${process.mainModule.path}/templates/sitetheme/flex-theme.js`, `${sitePath}/custom/src/flex-theme.js`)
     await fs.renameSync(`${sitePath}/custom/src/flex-theme.js`, filePath)
-  } else if(project.customTemplate === "polaris-sidebar") {
+  } else if(themeTemplate === "polaris-sidebar") {
     await fs.copyFileSync(`${process.mainModule.path}/templates/sitetheme/sidebar-theme.js`, `${sitePath}/custom/src/sidebar-theme.js`)
     await fs.renameSync(`${sitePath}/custom/src/sidebar-theme.js`, filePath)
+  } else {
+    // vanilla theme is default
+    await fs.copyFileSync(`${process.mainModule.path}/templates/sitetheme/base-theme.js`, `${sitePath}/custom/src/base-theme.js`)
+    await fs.renameSync(`${sitePath}/custom/src/base-theme.js`, filePath)
   }
 
   try {
@@ -1281,11 +1305,13 @@ async function customSiteTheme(commandRun, project) {
       console.error(err);
     }
   
-  await fs.appendFileSync(`${sitePath}/custom/src/custom.js`, `\n import "./${project.customName}.js"`);
+  // import theme to custom.js
+  await fs.appendFileSync(`${sitePath}/custom/src/custom.js`, `\n import "./${project.customThemeName}.js"`);
   var activeHaxsite = await hax.systemStructureContext(sitePath);
 
+  // add theme to site.json
   let themeObj = {
-      element: project.customName,
+      element: project.customThemeName,
       path: filePath,
       name: project.className,
   }
@@ -1293,6 +1319,7 @@ async function customSiteTheme(commandRun, project) {
   activeHaxsite.manifest.metadata.theme = themeObj;
   activeHaxsite.manifest.save(false);
 
+  // install and build theme dependencies
   await exec(`cd ${sitePath}/custom/ && ${commandRun.options.npmClient} install && ${commandRun.options.npmClient} run build && cd ${sitePath}`);
 }
 
