@@ -16,7 +16,7 @@ import "@haxtheweb/haxcms-elements/lib/ui-components/blocks/site-children-block.
  *  - HAXCMSTheme - A super class that provides correct baseline wiring to build a new theme
  *
  * @demo demo/index.html
- * @element <%= customName %>
+ * @element <%= customThemeName %>
  */
 class <%= className %> extends PolarisFlexTheme {
   //styles function
@@ -55,7 +55,7 @@ class <%= className %> extends PolarisFlexTheme {
    * @notice function name must be here for tooling to operate correctly
    */
   static get tag() {
-    return "<%= customName %>";
+    return "<%= customThemeName %>";
   }
  
   constructor() {

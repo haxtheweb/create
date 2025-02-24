@@ -61,6 +61,8 @@ async function main() {
   .option('--content-scrape <char>', 'CSS Selector for `body` in resource')
   .option('--items-import <char>', 'import items from a file / site')
   .option('--recipe <char>', 'path to recipe file')
+  .option('--custom-theme-name <char>', 'custom theme name')
+  .option('--custom-theme-template <char>', 'custom theme template')
   .version(await HAXCMS.getHAXCMSVersion())
   .helpCommand(true);
 
@@ -119,6 +121,8 @@ async function main() {
   .option('--content-scrape <char>', 'CSS Selector for `body` in resource')
   .option('--item-import <char>', 'import items from a file / site')
   .option('--recipe <char>', 'path to recipe file')
+  .option('--custom-theme-name <char>', 'custom theme name')
+  .option('--custom-theme-template <char>', 'custom theme template')
   .version(await HAXCMS.getHAXCMSVersion());
   let siteNodeOps = siteNodeOperations();
   for (var i in siteNodeOps) {
@@ -203,6 +207,11 @@ async function main() {
       commandRun.options.author = author;
     }
   }
+  // validate theme cli commands
+  if (commandRun.options.theme !== 'custom-theme' && (commandRun.options.customThemeName || commandRun.options.customThemeTemplate)) {
+      program.error(color.red('ERROR: You can only use the --custom-theme-name option with --theme custom-theme'));
+  }
+
   let packageData = {};
   let testPackages = [
     path.join(process.cwd(), 'package.json'),
@@ -332,6 +341,15 @@ async function main() {
       activeProject = project.type;
       // silly but this way we don't have to take options for quitting
       if (project.type !== 'quit') {
+        // also silly temp spot
+        let themes = await siteThemeList();
+        const custom = {
+          value: 'custom-theme',
+          label: 'Create Custom Theme',
+        }
+        // Append custom option to list of core themes
+        themes.push(custom);
+
         project = await p.group(
           {
             type: ({ results }) => {
@@ -422,13 +440,6 @@ async function main() {
               }
             },
             theme: async({ results }) => {
-              let themes = await siteThemeList();
-              let custom = {
-                value: 'custom-theme',
-                label: 'Create Custom Theme',
-              }
-              themes.push(custom);
-              
               if (results.type === "site" && !commandRun.options.theme) {
                 // support having no theme but autoselecting
                 if (commandRun.options.auto && commandRun.options.skip) {
@@ -444,30 +455,34 @@ async function main() {
                 }
               }
             },
-            customName({ results }) {
+            customThemeName: async ({ results }) => {
               if (results.theme === "custom-theme") {
-                return p.text({
+                let tmpCustomName = await p.text({
                   message: 'Theme Name:',
-                  placeholder: results.theme,
+                  placeholder: `${results.name}`,
                   required: false,
                   validate: (value) => {
                     if (!value) {
-                      return "Name is required (tab writes default)";
+                      return "Theme name is required (tab writes default)";
+                    }
+                    if(themes.some(theme => theme.value === value)) {
+                      return "Theme name is already in use";
                     }
                     if (/^\d/.test(value)) {
-                      return "Name cannot start with a number";
+                      return "Theme name cannot start with a number";
+                    }
+                    if (/[A-Z]/.test(value)) {
+                      return "No uppercase letters allowed in theme name";
                     }
                     if (value.indexOf(' ') !== -1) {
-                      return "No spaces allowed in project name";
-                    }
-                    if (value.indexOf('-') === -1 && value.indexOf('-') !== 0 && value.indexOf('-') !== value.length - 1) {
-                      return "Name must include at least one `-` and must not start or end name.";
+                      return "No spaces allowed in theme name";
                     }
                   }
                 })
+                return tmpCustomName;
               }
             },
-            customTemplate({ results }) {
+            customThemeTemplate: ({ results }) => {
               if (results.theme === "custom-theme") {
                 const options = [
                     { value: 'base', label: 'Vanilla Theme with Hearty Documentation' },
