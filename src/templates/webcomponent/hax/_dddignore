@@ -5,7 +5,7 @@
 locales
 test
 
-# Files
+# Files (must include filename and extension, as seen below)
 LICENSE
 README.md
 .dddignore
