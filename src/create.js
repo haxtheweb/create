@@ -62,7 +62,7 @@ async function main() {
   .option('--items-import <char>', 'import items from a file / site')
   .option('--recipe <char>', 'path to recipe file')
   .option('--custom-theme-name <char>', 'custom theme name')
-  .option('--custom-theme-template <char>', 'custom theme template')
+  .option('--custom-theme-template <char>', 'custom theme template; (options: base, polaris-flex, polaris-sidebar)')
   .version(await HAXCMS.getHAXCMSVersion())
   .helpCommand(true);
 
@@ -122,7 +122,7 @@ async function main() {
   .option('--item-import <char>', 'import items from a file / site')
   .option('--recipe <char>', 'path to recipe file')
   .option('--custom-theme-name <char>', 'custom theme name')
-  .option('--custom-theme-template <char>', 'custom theme template')
+  .option('--custom-theme-template <char>', 'custom theme template (options: base, polaris-flex, polaris-sidebar)')
   .version(await HAXCMS.getHAXCMSVersion());
   let siteNodeOps = siteNodeOperations();
   for (var i in siteNodeOps) {
