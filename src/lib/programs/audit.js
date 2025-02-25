@@ -37,39 +37,30 @@ function dddignoreReader() {
 function helpIgnoreCollector(root) {
   const fs = require('node:fs');
   let list = [];
-  
-  console.log(`Root: ${root}`)
+
   fs.readdirSync(root).forEach(item => {
     const FULL_PATH = path.join(root, item);
 
     if (item !== "node_modules"  && item !== ".git" && fs.statSync(FULL_PATH).isDirectory()) { // Directory
-      console.log(`Found new path: ${FULL_PATH}`);
       list = list.concat(helpIgnoreCollector(FULL_PATH));
     }
     else if (FULL_PATH.endsWith(".dddignore")) { // File
-      console.log("Found a dddignore")
-      
-      let lines = fs.readFileSync(FULL_PATH, 'utf-8').split('\n').filter(Boolean);
+      let lines = fs.readFileSync(FULL_PATH, 'utf-8').split('\n').filter(Boolean); // TODO Check if the .filter is needed
       lines.forEach(line => {
         let trimmed = line.trim();
+        
         if (!trimmed.startsWith('#')) {
-          console.log(trimmed);
           const OBJECT = {
             "highest_path": root,
             "ignore": trimmed
           };
+          console.log(trimmed);
           list.push(OBJECT);
-        }
+        } 
       })
     }
-
   })
-    // Criteria to check for:
-    // // 1. Do not go into node_modules folder
-    // // 2. Record file paths from root of where the command is called. 
-    // // 2.1. Every .dddignore should contribute to the master list from it's current directory and sub directories, but none above.
-    // 3. If string begins with *, get everything after it, and if any file has that extension it needs to be added to the master ignore list
-    // // 4. This function needs to work recursively, so it needs to be able to pass the data back up.
+
   if (list.length !== 0) {
     console.log(list)
     return list;
