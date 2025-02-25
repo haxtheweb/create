@@ -21,3 +21,10 @@ package.json
 package_lock.json
 rollup.config.js
 web-dev-server.config.mjs
+
+# File extension (will also ignore any . folders if the name matches that of a file extension)
+.html
+.md
+.json
+.toml
+.mjs
