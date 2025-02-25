@@ -1,12 +1,13 @@
+import path from "node:path";
 import * as properties from "../css-properties.js";
-import * as ddd from "../ddd-styles.js";
 import * as styles from "../css-styles.js";
+import * as ddd from "../ddd-styles.js";
 
 /**
  * @description Runs the audit command, to be called when `hax audit` command is run
  */
 export async function auditCommandDetected() {
-  let dddignore = await dddignoreReader();
+  let dddignore = dddignoreReader();
   dddignore.forEach(item => {
     console.log(item)
   })
@@ -17,7 +18,7 @@ export async function auditCommandDetected() {
  * @description Recursively finds and reads information from .dddignore files
  * @returns Array of file names from .dddignore(s) as strings
  */
-async function dddignoreReader() {
+function dddignoreReader() {
   // console.log('Getting list of files from .dddignore');
   const PROJECT_ROOT = process.cwd();
   let collectedList = helpIgnoreCollector(PROJECT_ROOT)
@@ -27,7 +28,6 @@ async function dddignoreReader() {
     for any .dddignore files, adding any new lines if they do not
     begin with `#` and are not already in the list
   */
-
   return collectedList;
 }
 
@@ -35,50 +35,47 @@ async function dddignoreReader() {
  * @description Gets items from dddignore with a hierarchy (.dddignore affects folders below it, never above it)
  */
 function helpIgnoreCollector(root) {
-  const fs = require('fs');
-  const readline = require('readline');
+  const fs = require('node:fs');
   let list = [];
   
-  return new Promise((resolve, reject) => {
-    console.log(`Root: ${root}`)
-    fs.readdirSync(root).forEach(path => {
-      if (path !== "node_modules"  && path !== ".git" && fs.statSync(path).isDirectory()) { // Directory
-        // let newPath = `${root}/${path}`;
-        // console.log(`Found new path: ${newPath}`);
-        // helpIgnoreCollector(newPath);
-      }
-      else if (path === ".dddignore") { // File
-        const LINE_READER = readline.createInterface({
-          input: fs.createReadStream(path),
-          crlfDelay: Infinity
-        });
+  console.log(`Root: ${root}`)
+  fs.readdirSync(root).forEach(item => {
+    const FULL_PATH = path.join(root, item);
 
-        const processLines = new Promise((resolveLines) => {
-          LINE_READER.on('line', (line) => {
-            const STRIPPED_LINE = line.trim()
-            if (!STRIPPED_LINE.startsWith('#')) {
-              list.push(STRIPPED_LINE)
-            }
-          });
+    if (item !== "node_modules"  && item !== ".git" && fs.statSync(FULL_PATH).isDirectory()) { // Directory
+      console.log(`Found new path: ${FULL_PATH}`);
+      list = list.concat(helpIgnoreCollector(FULL_PATH));
+    }
+    else if (FULL_PATH.endsWith(".dddignore")) { // File
+      console.log("Found a dddignore")
+      
+      let lines = fs.readFileSync(FULL_PATH, 'utf-8').split('\n').filter(Boolean);
+      lines.forEach(line => {
+        let trimmed = line.trim();
+        if (!trimmed.startsWith('#')) {
+          console.log(trimmed);
+          const OBJECT = {
+            "highest_path": root,
+            "ignore": trimmed
+          };
+          list.push(OBJECT);
+        }
+      })
+    }
 
-          LINE_READER.on('close', () => {
-            resolveLines();
-          });
-        });
-
-        processLines.then(() => {
-          resolve(list)
-        })
-      }
-    });
   })
-  // Criteria to check for:
-    // 1. Do not go into node_modules folder
-    // 2. Record file paths from root of where the command is called. 
-      // 2.1. Every .dddignore should contribute to the master list from it's current directory and sub directories, but none above.
+    // Criteria to check for:
+    // // 1. Do not go into node_modules folder
+    // // 2. Record file paths from root of where the command is called. 
+    // // 2.1. Every .dddignore should contribute to the master list from it's current directory and sub directories, but none above.
     // 3. If string begins with *, get everything after it, and if any file has that extension it needs to be added to the master ignore list
-    // 4. This function needs to work recursively, so it needs to be able to pass the data back up.
-
+    // // 4. This function needs to work recursively, so it needs to be able to pass the data back up.
+  if (list.length !== 0) {
+    console.log(list)
+    return list;
+  } else {
+    return [];
+  }
 }
 
 /**
@@ -86,4 +83,13 @@ function helpIgnoreCollector(root) {
  */
 function createAuditList() {
   console.log('Creating audit list')
+
+  // using .endsWith should work because for just file names those
+  // should be in the top level directory, anything in lower level directories should apply.
+  // might need to alter dddignore collection for array of objects as follows
+  // {
+  //  "highest-directory": src
+  //  "ignore": index.html (example)
+  // }
+  // The above could likely be used for a path .contains(src) and .endsWith(index.html)
 }
