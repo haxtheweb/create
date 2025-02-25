@@ -37,13 +37,14 @@ async function dddignoreReader() {
 function helpIgnoreCollector(root) {
   const fs = require('fs');
   const readline = require('readline');
-  console.log(root)
   let list = [];
-
+  
   return new Promise((resolve, reject) => {
+    console.log(`Root: ${root}`)
     fs.readdirSync(root).forEach(path => {
-      if (path !== "node_modules" && fs.statSync(path).isDirectory()) { // Directory
-        // let newPath = `${root}/${path}`
+      if (path !== "node_modules"  && path !== ".git" && fs.statSync(path).isDirectory()) { // Directory
+        // let newPath = `${root}/${path}`;
+        // console.log(`Found new path: ${newPath}`);
         // helpIgnoreCollector(newPath);
       }
       else if (path === ".dddignore") { // File
@@ -69,7 +70,7 @@ function helpIgnoreCollector(root) {
           resolve(list)
         })
       }
-    })
+    });
   })
   // Criteria to check for:
     // 1. Do not go into node_modules folder
