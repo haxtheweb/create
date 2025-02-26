@@ -1,11 +1,14 @@
 # Directories
-.github
-.vscode
-.idea
-locales
-test
+# (Must start with with / or \, as seen below)
+/.github
+/.vscode
+/.idea
+/locales
+/test
+\windows
 
-# Files (must include filename and extension, as seen below)
+# Files 
+# (Must include filename and extension, as seen below)
 LICENSE
 README.md
 .dddignore
@@ -22,9 +25,10 @@ package_lock.json
 rollup.config.js
 web-dev-server.config.mjs
 
-# File extension (will also ignore any . folders if the name matches that of a file extension)
-.html
-.md
-.json
-.toml
-.mjs
+# File extension
+# (Must start with *, as seen below)
+*.html
+*.md
+*.json
+*.toml
+*.mjs

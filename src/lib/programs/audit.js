@@ -7,7 +7,7 @@ import * as ddd from "../ddd-styles.js";
  * @description Runs the audit command, to be called when `hax audit` command is run
  */
 export async function auditCommandDetected() {
-  let dddignore = dddignoreReader();
+  let dddignore = dddignoreCollector();
   dddignore.forEach(item => {
     console.log(item)
   })
@@ -18,23 +18,17 @@ export async function auditCommandDetected() {
  * @description Recursively finds and reads information from .dddignore files
  * @returns Array of file names from .dddignore(s) as strings
  */
-function dddignoreReader() {
-  // console.log('Getting list of files from .dddignore');
+function dddignoreCollector() {
   const PROJECT_ROOT = process.cwd();
-  let collectedList = helpIgnoreCollector(PROJECT_ROOT)
-
-  /*
-    TODO Recursively search file system from root of command call
-    for any .dddignore files, adding any new lines if they do not
-    begin with `#` and are not already in the list
-  */
+  let collectedList = dddignoreInterpreter(PROJECT_ROOT)
   return collectedList;
 }
 
 /**
  * @description Gets items from dddignore with a hierarchy (.dddignore affects folders below it, never above it)
+ * @returns list of files, directories, and file extensions to ignore, interpretted from .dddignore files
  */
-function helpIgnoreCollector(root) {
+function dddignoreInterpreter(root) {
   const fs = require('node:fs');
   let list = [];
 
@@ -42,19 +36,32 @@ function helpIgnoreCollector(root) {
     const FULL_PATH = path.join(root, item);
 
     if (item !== "node_modules"  && item !== ".git" && fs.statSync(FULL_PATH).isDirectory()) { // Directory
-      list = list.concat(helpIgnoreCollector(FULL_PATH));
+      list = list.concat(dddignoreInterpreter(FULL_PATH));
     }
-    else if (FULL_PATH.endsWith(".dddignore")) { // File
+    else if (FULL_PATH.endsWith(".dddignore")) { // File 
+      // TODO see about changing the above to item var instead, then make the condition (item === ".dddignore")
       let lines = fs.readFileSync(FULL_PATH, 'utf-8').split('\n').filter(Boolean); // TODO Check if the .filter is needed
       lines.forEach(line => {
         let trimmed = line.trim();
         
         if (!trimmed.startsWith('#')) {
+          let type = "file";
+
+          if (trimmed.startsWith('/') || trimmed.startsWith('\\')) {
+            trimmed = trimmed.substring(1);
+            type = "directory";
+          }
+          else if  (trimmed.startsWith('*')) {
+            trimmed = trimmed.substring(1);
+            type = "extension";
+          }
+          
           const OBJECT = {
             "highest_path": root,
-            "ignore": trimmed
+            "ignore": trimmed,
+            "type": type
           };
-          console.log(trimmed);
+
           list.push(OBJECT);
         } 
       })
@@ -62,7 +69,6 @@ function helpIgnoreCollector(root) {
   })
 
   if (list.length !== 0) {
-    console.log(list)
     return list;
   } else {
     return [];
