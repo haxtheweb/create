@@ -30,52 +30,71 @@ Usage: hax [options] [command]
 
 Options:
   --
-  --v                            Verbose output for developers
-  --path <char>                  where to perform operation
-  --npm-client <char>            npm client to use (must be installed) npm,
-                                 yarn, pnpm (default: "npm")
-  --y                            yes to all questions
-  --skip                         skip frills like animations
-  --auto                         yes to all questions, alias of y
-  --org <char>                   organization for package.json
-  --author <char>                author for site / package.json
-  --import-site <char>           URL of site to import
-  --node-op <char>               node operation to perform
-  --item-id <char>               node ID to operate on
-  --name <char>                  name of the project
-  --domain <char>                published domain name
-  --title <char>                 Title
-  --content <char>               Page content
-  --slug <char>                  Path (slug)
-  --published <char>             Publishing status
-  --tags <char>                  Tags
-  --parent <char>                Parent
-  --order <char>                 Order
-  --theme <char>                 Theme
-  --hide-in-menu <char>          Hide in menu
-  -h, --help                     display help for command
+  --v                             Verbose output
+  --debug                         Output for developers
+  --format <char>                 Output format; json (default), yaml
+  --path <char>                   where to perform operation
+  --npm-client <char>             npm client to use (must be installed) npm,
+                                  yarn, pnpm (default: "npm")
+  --y                             yes to all questions
+  --skip                          skip frills like animations
+  --quiet                         remove console logging
+  --auto                          yes to all questions, alias of y
+  --no-i                          prevent interactions / sub-process, good for
+                                  scripting
+  --to-file <char>                redirect command output to a file
+  --no-extras                     skip all extra / automatic command processing
+  --root <char>                   root location to execute the command from
+  --org <char>                    organization for package.json
+  --author <char>                 author for site / package.json
+  --writeHaxProperties            Write haxProperties for the element
+  --import-site <char>            URL of site to import
+  --import-structure <char>       import method to use:
+                                  pressbooksToSite
+                                  elmslnToSite
+                                  haxcmsToSite
+                                  notionToSite
+                                  gitbookToSite
+                                  evolutionToSite
+                                  htmlToSite
+                                  docxToSite
+  --node-op <char>                node operation to perform
+  --item-id <char>                node ID to operate on
+  --name <char>                   name of the project
+  --domain <char>                 published domain name
+  --title-scrape <char>           CSS Selector for `title` in resource
+  --content-scrape <char>         CSS Selector for `body` in resource
+  --items-import <char>           import items from a file / site
+  --recipe <char>                 path to recipe file
+  --custom-theme-name <char>      custom theme name
+  --custom-theme-template <char>  custom theme template; (options: base,
+                                  polaris-flex, polaris-sidebar)
+  -V, --version                   output the version number
+  --title <char>                  Title
+  --content <char>                Page content
+  --slug <char>                   Path (slug)
+  --published <char>              Publishing status
+  --tags <char>                   Tags
+  --parent <char>                 Parent
+  --order <char>                  Order
+  --theme <char>                  Theme
+  --hide-in-menu <char>           Hide in menu
+  -h, --help                      display help for command
 
 Commands:
-  start                          Interactive program to pick options
-  site [options] [action]
-  webcomponent [options] [name]  Create Lit based web components, with HAX
-                                 recommendations
-  help [command]                 display help for command
+  start                           Select which hax sub-program to run
+  site [options] [action]         create or administer a HAXsite
+  webcomponent [options] [name]   Create Lit based web components, with HAX
+                                  recommendations
+  help [command]                  display help for command
 ```
-
+## Examples
+For a detailed list of example commands that you can perform with `hax` see [examples](examples.md).
 ## Manual
 
 ### Linux / macOS
 
 Run `man hax` to get detailed manual.
-
-## Site context
-- listing stats
-- launch site
-- publish to surge.sh (if installed)
-
-## Web component context
-- launch element
 
 # Alternative Usage
 
