@@ -1067,7 +1067,7 @@ export async function siteProcess(commandRun, project, port = '3000') {    // au
       if (commandRun.options.importStructure === 'drupal7-book-print-html') {
         let siteContent = await fetch(commandRun.options.importSite).then(d => d.ok ? d.text() : '');
         if (siteContent) {
-          // @todo refactor to support 9 levels of heirarchy as this is technically what Drupal supports
+          // @todo refactor to support 9 levels of hierarchy as this is technically what Drupal supports
           let dom = parse(siteContent);
           // pull all of level 1 of hierarchy
           let depth;
