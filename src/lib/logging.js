@@ -3,7 +3,12 @@ import * as path from 'node:path';
 import * as winston from 'winston';
 import { camelToDash } from "./utils.js";
 
-const logFileName = path.join(homedir(), '.haxtheweb', 'create.log');
+// check for vercel running which is not allowed to write to home in logs
+let baseLogPath = homedir();
+if (process.env.VERCEL_ENV) {
+  baseLogPath = "/tmp/";
+}
+const logFileName = path.join(baseLogPath, '.haxtheweb', 'create.log');
 export const consoleTransport = new winston.transports.Console({
   format: winston.format.simple()
 });
@@ -31,7 +36,7 @@ export const logger = winston.createLogger({
 });
 
 export function haxCliEnvOptions() {
-  return ['skip','npmClient','i','extras','root','path','org','author', 'y', 'auto'];
+  return ['skip','npmClient','i','extras','root','path','org','author', 'y', 'auto', 'domain'];
 }
 
 // wrapper so we can silence all log messages at the same time
