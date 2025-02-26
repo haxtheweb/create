@@ -38,7 +38,7 @@ function dddignoreInterpreter(root) {
     if (item !== "node_modules"  && item !== ".git" && fs.statSync(FULL_PATH).isDirectory()) { // Directory
       list = list.concat(dddignoreInterpreter(FULL_PATH));
     }
-    else if (FULL_PATH.endsWith(".dddignore")) { // File 
+    else if (item === ".dddignore") { // File 
       // TODO see about changing the above to item var instead, then make the condition (item === ".dddignore")
       let lines = fs.readFileSync(FULL_PATH, 'utf-8').split('\n').filter(Boolean); // TODO Check if the .filter is needed
       lines.forEach(line => {
