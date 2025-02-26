@@ -9,7 +9,7 @@ import * as ddd from "../ddd-styles.js";
 export async function auditCommandDetected() {
   let dddignore = dddignoreCollector();
   dddignore.forEach(item => {
-    console.log(item)
+    console.table(item)
   })
   let auditList = createAuditList();
 }
@@ -20,8 +20,7 @@ export async function auditCommandDetected() {
  */
 function dddignoreCollector() {
   const PROJECT_ROOT = process.cwd();
-  let collectedList = dddignoreInterpreter(PROJECT_ROOT)
-  return collectedList;
+  return dddignoreInterpreter(PROJECT_ROOT);
 }
 
 /**
@@ -39,8 +38,7 @@ function dddignoreInterpreter(root) {
       list = list.concat(dddignoreInterpreter(FULL_PATH));
     }
     else if (item === ".dddignore") { // File 
-      // TODO see about changing the above to item var instead, then make the condition (item === ".dddignore")
-      let lines = fs.readFileSync(FULL_PATH, 'utf-8').split('\n').filter(Boolean); // TODO Check if the .filter is needed
+      let lines = fs.readFileSync(FULL_PATH, 'utf-8').split('\n').filter(Boolean);
       lines.forEach(line => {
         let trimmed = line.trim();
         
