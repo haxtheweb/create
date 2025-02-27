@@ -5,7 +5,7 @@
  * @license Apache-2.0, see License.md for full text.
  */
 
-import { log } from "./statements.js";
+import { log } from "./logging.js";
 
 // very basic class for micro
 const MicroFrontendKeys = [
