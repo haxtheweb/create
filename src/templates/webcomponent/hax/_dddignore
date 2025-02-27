@@ -4,8 +4,7 @@
 /.vscode
 /.idea
 /locales
-/test
-\windows
+\test
 
 # Files 
 # (Must include filename and extension, as seen below)
