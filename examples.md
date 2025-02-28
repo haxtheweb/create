@@ -1,3 +1,4 @@
+Video using these commands: https://www.youtube.com/watch?v=Woo-mjKKe7k
 These commands work after installing the `hax` cli globally
 ```bash
 npm install --global @haxtheweb/create
