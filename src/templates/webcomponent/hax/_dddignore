@@ -1,10 +1,14 @@
 # Directories
 # (Must start with with / or \, as seen below)
-/.github
+/.github # Inline comments are supported
 /.vscode
 /.idea
 /locales
 \test
+/dist
+/build
+/public
+/node_modules
 
 # Files 
 # (Must include filename and extension, as seen below)

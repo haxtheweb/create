@@ -1,8 +1,6 @@
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import path from "node:path";
 import * as properties from "../css-properties.js";
-import * as styles from "../css-styles.js";
-import * as ddd from "../ddd-styles.js";
 
 /**
  * @description Runs the audit command, to be called when `hax audit` command is run
@@ -27,13 +25,18 @@ function dddignoreInterpreter(root) {
   readdirSync(root).forEach(item => {
     const FULL_PATH = path.join(root, item);
 
-    if (item !== "node_modules"  && item !== ".git" && item !== "dist" && statSync(FULL_PATH).isDirectory()) { // Directory
+    if (item !== "node_modules"  && item !== ".git" && item !== "dist" && item !== "public" && statSync(FULL_PATH).isDirectory()) { // Directory
       list = list.concat(dddignoreInterpreter(FULL_PATH));
     }
     else if (item === ".dddignore") { // File 
       let lines = readFileSync(FULL_PATH, 'utf-8').split('\n').filter(Boolean);
       lines.forEach(line => {
         let trimmed = line.trim();
+        
+        if (line.includes('#') && !line.startsWith('#')) { // Inline comment support
+          let removeComment = trimmed.split('#')[0]
+          trimmed = removeComment.trim()
+        }
         
         if (!trimmed.startsWith('#')) {
           let type = "file";
@@ -73,7 +76,7 @@ function auditNavigator(root, dddignore) { // TODO there is problem when working
   readdirSync(root).forEach(item => {
     const FULL_PATH = path.join(root, item);
 
-    if (item !== "node_modules" && item !== ".git" && item !== "dist" && statSync(FULL_PATH).isDirectory()) { // Directory Navigator
+    if (item !== "node_modules" && item !== ".git" && item !== "dist" && item !=="public" && statSync(FULL_PATH).isDirectory()) { // Directory Navigator
       if (dddignore.length !== 0) {
         const IGNORE_DIRECTORY = dddignore.some(ignore =>
           root.startsWith(ignore.highestPath) &&
@@ -90,7 +93,7 @@ function auditNavigator(root, dddignore) { // TODO there is problem when working
       }
     }
     else { // If file does not match criteria to be ignored (both ext. and file), then audit permitted
-      if (item !== "node_modules" && item !== ".git" && item !== "dist") {
+      if (item !== "node_modules" && item !== ".git" && item !== "dist" && item !== "public") {
         if (dddignore.length !== 0) {
           const IGNORE_EXTENSION = dddignore.some(ignore => 
             root.startsWith(ignore.highestPath) &&
@@ -150,6 +153,7 @@ function auditFile(fileLocation, fileName) {
 
   if (data.length !== 0) {
     console.table(data);
+    // TODO needs to provide a link to DDD Documentation
   }
 }
 
