@@ -49,7 +49,7 @@ function dddignoreInterpreter(root) {
           }
           
           const OBJECT = {
-            "highest_path": root,
+            "highestPath": root,
             "name": trimmed,
             "type": type
           };
@@ -70,36 +70,49 @@ function dddignoreInterpreter(root) {
 /**
  * @description Navigate through file pathes, auditing any file that is not in the .dddignore
  */
-function auditNavigator(root, dddignore) { // TODO A LOT MORE TESTING!!!
+function auditNavigator(root, dddignore) { // TODO there is problem when working with live 
   readdirSync(root).forEach(item => {
     const FULL_PATH = path.join(root, item);
-    console.log(`Checking ${FULL_PATH}`)
 
     if (item !== "node_modules" && item !== ".git" && item !== "dist" && statSync(FULL_PATH).isDirectory()) { // Directory Navigator
-      console.log("Checking directory against DDDIgnore")
       if (dddignore.length !== 0) {
-        dddignore.forEach(ignore => {
-          if (!ignore.highest_path.startsWith(root) && ignore.name !== item && ignore.type !== "directory") {
-            auditNavigator(FULL_PATH, dddignore);
-          }
-        })
+        const ignoreDirectory = dddignore.some(ignore =>
+          root.startsWith(ignore.highestPath) &&
+          item === ignore.name &&
+          ignore.type === "directory"
+        )
+
+        if (!ignoreDirectory) {
+          auditNavigator(FULL_PATH, dddignore);
+        }
       }
       else {
         auditNavigator(FULL_PATH, dddignore)
       }
     }
-    else { 
-      if (dddignore.length !== 0) {
-        dddignore.forEach(ignore => {
-          // Check the file against all extensions first, then run it against all type === "file". If neither apply, then audit file
-          if (!ignore.highest_path.startsWith(root) && !item.endsWith(ignore.name) && ignore.type !== "extension") {
-            if (ignore.name !== item && ignore.type !== "file") {
+    else { // If file does not match criteria to be ignored (both ext. and file), then audit permitted
+      if (item !== "node_modules" && item !== ".git" && item !== "dist") {
+        if (dddignore.length !== 0) {
+          const ignoreExtension = dddignore.some(ignore => 
+            root.startsWith(ignore.highestPath) &&
+            item.endsWith(ignore.name) &&
+            ignore.type === "extension"
+          )
+  
+          if (!ignoreExtension) {
+            const ignoreFile = dddignore.some(ignore =>
+              root.startsWith(ignore.highestPath) &&
+              ignore.name === item &&
+              ignore.type === "file"
+            )
+  
+            if (!ignoreFile) {
               auditFile(FULL_PATH)
             }
           }
-        });
-      } else {
-        auditFile(FULL_PATH)
+        } else {
+          auditFile(FULL_PATH)
+        }
       }
     }
   })

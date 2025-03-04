@@ -20,7 +20,7 @@ README.md
 index.html
 netlify.toml
 package.json
-package_lock.json
+package-lock.json
 rollup.config.js
 web-dev-server.config.mjs
 
