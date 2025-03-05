@@ -285,14 +285,13 @@ async function main() {
     commandRun.options.skip = true;
     await siteCommandDetected(commandRun);
   }
+  else if (commandRun.command === 'audit') {
+    auditCommandDetected()
+  }
   else if (packageData && (packageData.customElements || packageData.hax && packageData.hax.cli) && packageData.scripts.start) {
     commandRun.program = 'webcomponent';
     commandRun.options.skip = true;
     await webcomponentCommandDetected(commandRun, packageData);
-  }
-  else if (commandRun.command === 'audit') {
-    console.log('This works')
-    await auditCommandDetected()
   }
   else {
     if (commandRun.command === 'start' && !commandRun.options.y && !commandRun.options.auto && !commandRun.options.skip && !commandRun.options.quiet) {
