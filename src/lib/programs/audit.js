@@ -1,5 +1,6 @@
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import path from "node:path";
+import { RADIUS } from "../ddd-styles";
 
 /**
  * @description Runs the audit command, to be called when `hax audit` command is run
@@ -11,7 +12,7 @@ export async function auditCommandDetected() {
   // console.table(dddignore)
 
   auditNavigator(PROJECT_ROOT, dddignore);
-  console.log('DDD documentation can be viewed at: https://oer.hax.psu.edu/bto108/sites/haxcellence/documentation/ddd')
+  console.log('For more information about DDD variables and capabilities, please visit: https://oer.hax.psu.edu/bto108/sites/haxcellence/documentation/ddd')
 }
 
 /**
@@ -189,6 +190,48 @@ function auditFile(fileLocation, fileName) {
     "inset-inline",
     "inset-inline-start",
     "inset-inline-end"
+  ];
+
+  const BORDER_SHORTHANDS = [
+    "border",
+    "outline",
+    "border-top",
+    "border-right",
+    "border-bottom",
+    "border-left",
+    "column-rule",
+  ]
+
+  const BORDER_THICKNESS_PROPERTIES = [
+    "border-width",
+    "border-top-width",
+    "border-right-width",
+    "border-bottom-width",
+    "border-left-width",
+    "border-block-width",
+    "border-block-start-width",
+    "border-block-end-width",
+    "border-inline-width",
+    "border-inline-start-width",
+    "border-inline-end-width",
+    "outline-width",
+    "column-rule-width",
+  ]
+
+  const RADIUS_PROPERTIES = [
+    "border-radius",
+
+    // Individual corners
+    "border-top-left-radius",
+    "border-top-right-radius",
+    "border-bottom-left-radius",
+    "border-bottom-right-radius",
+
+    // Shorthand variations
+    "border-top-radius",
+    "border-right-radius",
+    "border-bottom-radius",
+    "border-left-radius",
   ]
 
   lines.forEach(line => {
@@ -198,13 +241,33 @@ function auditFile(fileLocation, fileName) {
       lineProperty = lineProperty.toLowerCase();
       lineAttribute = lineAttribute.replace(';', '');
 
-      // Check border preset
-      if (lineProperty === "border" && !lineAttribute.includes("ddd")) {
+      // Check border shorthands
+      if (BORDER_SHORTHANDS.includes(lineProperty) && !lineAttribute.includes("ddd")) {
         data.push({
           "Line Number": lines.indexOf(line) + 1,
           "CSS Property": lineProperty,
           "Current Attribute": lineAttribute,
-          "Suggested Replacement Attribute": helpAuditBorderPreset(lineAttribute)
+          "Suggested Replacement Attribute": helpAuditBorderShorthands(lineAttribute)
+        });
+      }
+
+      // Check border thicknesses
+      if (BORDER_THICKNESS_PROPERTIES.includes(lineProperty) && !lineAttribute.includes("ddd")) {
+        data.push({
+          "Line Number": lines.indexOf(line) + 1,
+          "CSS Property": lineProperty,
+          "Current Attribute": lineAttribute,
+          "Suggested Replacement Attribute": helpAuditBorderThickness(lineAttribute)
+        });
+      }
+
+      // Check box shadows
+      if (lineProperty === "box-shadow" && !lineAttribute.includes("ddd")) {
+        data.push({
+          "Line Number": lines.indexOf(line) + 1,
+          "CSS Property": lineProperty,
+          "Current Attribute": lineAttribute,
+          "Suggested Replacement Attribute": helpAuditBoxShadow(lineAttribute)
         });
       }
 
@@ -268,6 +331,16 @@ function auditFile(fileLocation, fileName) {
         });
       }
 
+      // Check radius
+      if (RADIUS_PROPERTIES.includes(lineProperty) && !lineAttribute.includes("ddd")) {
+        data.push({
+          "Line Number": lines.indexOf(line) + 1,
+          "CSS Property": lineProperty,
+          "Current Attribute": lineAttribute,
+          "Suggested Replacement Attribute": helpAuditRadius(lineAttribute)
+        });
+      }
+
       // Check spacing
       if (SPACING_PROPERTIES.includes(lineProperty) && !lineAttribute.includes("ddd")) {
         data.push({
@@ -291,7 +364,7 @@ function auditFile(fileLocation, fileName) {
  * @description Audits border related CSS properties based on preset borders and thicknesses
  * @param border Pre-audit CSS border value
  */
-function helpAuditBorderPreset(borderPreset) {
+function helpAuditBorderShorthands(borderPreset) {
   if (borderPreset.includes('px')) {
     borderPreset = borderPreset.trim();
     borderPreset = Number(borderPreset.charAt(0));
@@ -307,6 +380,67 @@ function helpAuditBorderPreset(borderPreset) {
     }
     else if (borderPreset > 3) {
       return "--ddd-border-lg"; // 4px solid greyish
+    }
+  }
+
+  return "No available suggestions. Check DDD documentation.";
+}
+
+/**
+ * @description Audits border related CSS properties
+ * @param borderThickness Pre-audited CSS border thickness
+ */
+function helpAuditBorderThickness(borderThickness) {
+  if (borderThickness.includes("px")) {
+    borderThickness = Number(borderThickness.replace("px", ""));
+
+    if (borderThickness <= 1) {
+      return "--ddd-border-size-xs"; // 1px
+    }
+    else if (borderThickness > 1 && borderThickness <= 2) {
+      return "--ddd-border-size-sm"; // 2px
+    }
+    else if (borderThickness > 2 && borderThickness <= 3) {
+      return "--ddd-border-size-md"; // 3px
+    }
+    else if (borderThickness > 3) {
+      return "--ddd-border-size-lg"; // 4px
+    }
+  }
+
+  return "No available suggestions. Check DDD documentation.";  
+}
+
+/**
+ * @description Audits border related CSS properties
+ * @param boxShadow Pre-audited CSS box-shadow attribute
+ */
+function helpAuditBoxShadow(boxShadow) {
+  if (boxShadow.includes('px')) {
+    const SMALL = [ " 1px", " 2px", " 3px", " 4px" ];
+    const MEDIUM = [ " 5px", " 6px", " 7px", " 8px", ];
+    const LARGE = [ " 9px", " 10px", " 11px", " 12px", ];
+    const EXTRA_LARGE = [ " 13px", " 14px", " 15px", " 16px", ];
+
+    const HAS_SMALL = SMALL.some(i => boxShadow.includes(i));
+    const HAS_MEDIUM = MEDIUM.some(i => boxShadow.includes(i));
+    const HAS_LARGE = LARGE.some(i => boxShadow.includes(i));
+    const HAS_EXTRA_LARGE = EXTRA_LARGE.some(i => boxShadow.includes(i));
+
+    if (boxShadow.includes("0px") && !HAS_SMALL && !HAS_MEDIUM && !HAS_LARGE && !HAS_EXTRA_LARGE) {
+      return "--ddd-boxShadow-0"; // 0px
+    }
+    else if (HAS_SMALL) {
+      return "--ddd-boxShadow-sm"; // 4px
+    }
+    else if (HAS_MEDIUM) {
+      return "--ddd-boxShadow-md"; // 8px
+    }
+    else if (HAS_LARGE) {
+      return "--ddd-boxShadow-lg"; // 12px
+    }
+    else {
+      return "--ddd-boxShadow-xl"
     }
   }
 
@@ -860,7 +994,40 @@ function helpAuditLineHeight(lineHeight) {
  * @param radius Pre-audit CSS radius value
  */
 function helpAuditRadius(radius) {
+  if (radius.includes("px")) {
+    radius = Number(radius.replace("px", ""));
 
+    if (radius === 0) {
+      return "--ddd-radius-0"; // 0px
+    }
+    else if (radius > 0 && radius <= 4) {
+      return "--ddd-radius-xs"; // 4px
+    }
+    else if (radius > 4 && radius <= 8) {
+      return "--ddd-radius-sm"; // 8px
+    }
+    else if (radius > 8 && radius <= 12) {
+      return "--ddd-radius-md"; // 12px
+    }
+    else if (radius > 12 && radius <= 16) {
+      return "--ddd-radius-lg"; // 16px
+    }
+    else if (radius > 16 && radius <= 20) {
+      return "--ddd-radius-xl"; // 20px
+    }
+    else if (radius > 20) {
+      return "--ddd-radius-rounded"; // 100px
+    }
+  }
+  else if (radius.includes("%")) {
+    radius = Number(radius.replace("%", ""));
+
+    if (radius === 100) {
+      return "--ddd-radius-circle"; // 100%
+    }
+  }
+  
+  return "No available suggestions. Check DDD documentation.";
 }
 
 /**
