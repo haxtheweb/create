@@ -72,7 +72,7 @@ function dddignoreInterpreter(root) {
 /**
  * @description Navigate through file pathes, auditing any file that is not in the .dddignore
  */
-function auditNavigator(root, dddignore) { // TODO there is problem when working with live 
+function auditNavigator(root, dddignore) {
   readdirSync(root).forEach(item => {
     const FULL_PATH = path.join(root, item);
 
@@ -127,7 +127,7 @@ function auditNavigator(root, dddignore) { // TODO there is problem when working
 function auditFile(fileLocation, fileName) {
   let data = [];
   console.log(`Auditing 🪄: ${fileName}`)
-  let lines = readFileSync(fileLocation, 'utf-8').split('\n').filter(Boolean);
+  let lines = readFileSync(fileLocation, 'utf-8').split('\n');
 
   lines.forEach(line => {
     let trimmed = line.trim();
@@ -138,7 +138,7 @@ function auditFile(fileLocation, fileName) {
       // Check colors
       if (properties.COLOR.includes(lineProperty) && !lineAttribute.includes('ddd')) {
         const colorObject = {
-          "Line Number": lines.indexOf(line), // TODO line number is wrong, not counting blanks lol
+          "Line Number": lines.indexOf(line) + 1,
           "CSS Property": lineProperty,
           "Current Attribute": lineAttribute,
           "Suggested Replacement Attribute": helpAuditPresetColors(lineAttribute)
@@ -149,7 +149,7 @@ function auditFile(fileLocation, fileName) {
 
       if (properties.SPACING.includes(lineProperty) && !lineAttribute.includes('ddd')) {
         const spaceObject = {
-          "Line Number": lines.indexOf(line), // TODO line number is wrong
+          "Line Number": lines.indexOf(line) + 1,
           "CSS Property": lineProperty,
           "Current Attribute": lineAttribute,
           "Suggested Replacement Attribute": helpAuditSpacing(lineAttribute)
