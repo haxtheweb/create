@@ -263,13 +263,18 @@ async function main() {
           commandRun.options.isMonorepo = true;
           commandRun.options.auto = true;
           // assumed if monorepo
-          commandRun.command = 'webcomponent';
-          commandRun.options.path = path.join(process.cwd(), packageData.workspaces.packages[0].replace('/*',''));
-          if (packageData.orgNpm) {
-            commandRun.options.org = packageData.orgNpm;
+          if (commandRun.command === "audit") {
+            auditCommandDetected();
           }
-          commandRun.options.gitRepo = packageData.repository.url;
-          commandRun.options.author = packageData.author.name ? packageData.author.name : author;
+          else {
+            commandRun.command = 'webcomponent';
+            commandRun.options.path = path.join(process.cwd(), packageData.workspaces.packages[0].replace('/*',''));
+            if (packageData.orgNpm) {
+              commandRun.options.org = packageData.orgNpm;
+            }
+            commandRun.options.gitRepo = packageData.repository.url;
+            commandRun.options.author = packageData.author.name ? packageData.author.name : author;
+          }
         }
       } catch (err) {
         console.error(err)

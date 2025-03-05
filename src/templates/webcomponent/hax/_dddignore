@@ -32,6 +32,8 @@ web-dev-server.config.mjs
 # (Must start with *, as seen below)
 *.html
 *.md
+*.yml
 *.json
 *.toml
 *.mjs
+*.cjs
