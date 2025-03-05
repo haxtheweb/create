@@ -333,7 +333,7 @@ export async function siteCommandDetected(commandRun) {
             recipe.log(siteLoggingName, commandString(commandRun));
           }
           else if (!commandRun.options.quiet) {
-            log('Must specify --item-import as path to valid item export file or URL', 'error');
+            log('Must specify --items-import as path to valid item export file or URL', 'error');
           }
         break;
         case "start":
