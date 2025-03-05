@@ -1,6 +1,5 @@
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import path from "node:path";
-import * as properties from "../css-properties.js";
 
 /**
  * @description Runs the audit command, to be called when `hax audit` command is run
@@ -129,14 +128,88 @@ function auditFile(fileLocation, fileName) {
   console.log(`Auditing 🪄: ${fileName}`)
   let lines = readFileSync(fileLocation, 'utf-8').split('\n');
 
+  const COLOR_PROPERTIES = [
+    "accent-color",
+    "background-color",
+    "border-color",
+    "border-bottom-color",
+    "border-left-color",
+    "border-right-color",
+    "border-top-color",
+    "caret-color",
+    "color",
+  ];
+
+  const SPACING_PROPERTIES = [
+    // Margin properties
+    "margin",
+    "margin-top",
+    "margin-right",
+    "margin-bottom",
+    "margin-left",
+    "margin-inline",
+    "margin-inline-start",
+    "margin-inline-end",
+    "margin-block",
+    "margin-block-start",
+    "margin-block-end",
+
+    // Padding properties
+    "padding",
+    "padding-top",
+    "padding-right",
+    "padding-bottom",
+    "padding-left",
+    "padding-inline",
+    "padding-inline-start",
+    "padding-inline-end",
+    "padding-block",
+    "padding-block-start",
+    "padding-block-end",
+
+    // Gap properties
+    "gap",
+    "row-gap",
+    "column-gap",
+
+    // Spacing properties
+    "word-spacing",
+    "border-spacing",
+
+    // Indent and offset properties
+    "text-indent",
+    "top",
+    "right",
+    "bottom",
+    "left",
+    "inset",
+    "inset-block",
+    "inset-block-start",
+    "inset-block-end",
+    "inset-inline",
+    "inset-inline-start",
+    "inset-inline-end"
+  ]
+
   lines.forEach(line => {
     let trimmed = line.trim();
     if (trimmed.includes(':') && trimmed.endsWith(';')) {
       let [lineProperty, lineAttribute] = trimmed.split(":").map(item => item?.trim());
+      lineProperty = lineProperty.toLowerCase();
       lineAttribute = lineAttribute.replace(';', '');
 
+      // Check border preset
+      if (lineProperty === "border" && !lineAttribute.includes("ddd")) {
+        data.push({
+          "Line Number": lines.indexOf(line) + 1,
+          "CSS Property": lineProperty,
+          "Current Attribute": lineAttribute,
+          "Suggested Replacement Attribute": helpAuditBorderPreset(lineAttribute)
+        });
+      }
+
       // Check colors
-      if (properties.COLOR.includes(lineProperty) && !lineAttribute.includes("ddd")) {
+      if (COLOR_PROPERTIES.includes(lineProperty) && !lineAttribute.includes("ddd")) {
         data.push({
           "Line Number": lines.indexOf(line) + 1,
           "CSS Property": lineProperty,
@@ -196,7 +269,7 @@ function auditFile(fileLocation, fileName) {
       }
 
       // Check spacing
-      if (properties.SPACING.includes(lineProperty) && !lineAttribute.includes("ddd")) {
+      if (SPACING_PROPERTIES.includes(lineProperty) && !lineAttribute.includes("ddd")) {
         data.push({
           "Line Number": lines.indexOf(line) + 1,
           "CSS Property": lineProperty,
@@ -218,8 +291,26 @@ function auditFile(fileLocation, fileName) {
  * @description Audits border related CSS properties based on preset borders and thicknesses
  * @param border Pre-audit CSS border value
  */
-function helpAuditBorder(border) {
+function helpAuditBorderPreset(borderPreset) {
+  if (borderPreset.includes('px')) {
+    borderPreset = borderPreset.trim();
+    borderPreset = Number(borderPreset.charAt(0));
 
+    if (borderPreset <= 1) {
+      return "--ddd-border-xs"; // 1px solid greyish
+    }
+    else if (borderPreset > 1 && borderPreset <= 2) {
+      return "--ddd-border-sm"; // 2px solid greyish
+    }
+    else if (borderPreset > 2 && borderPreset <= 3) {
+      return "--ddd-border-md"; // 3px solid greyish
+    }
+    else if (borderPreset > 3) {
+      return "--ddd-border-lg"; // 4px solid greyish
+    }
+  }
+
+  return "No available suggestions. Check DDD documentation.";
 }
 
 /**
