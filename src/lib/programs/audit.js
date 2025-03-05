@@ -34,8 +34,8 @@ function dddignoreInterpreter(root) {
         let trimmed = line.trim();
         
         if (line.includes('#') && !line.startsWith('#')) { // Inline comment support
-          let removeComment = trimmed.split('#')[0]
-          trimmed = removeComment.trim()
+          let removeComment = trimmed.split('#')[0];
+          trimmed = removeComment.trim();
         }
         
         if (!trimmed.startsWith('#')) {
@@ -128,8 +128,6 @@ function auditFile(fileLocation, fileName) {
   let data = [];
   console.log(`Auditing 🪄: ${fileName}`)
   let lines = readFileSync(fileLocation, 'utf-8').split('\n').filter(Boolean);
-  let superStylesDetected = false;
-  let cssDetected = false;
 
   lines.forEach(line => {
     let trimmed = line.trim();
@@ -140,13 +138,24 @@ function auditFile(fileLocation, fileName) {
       // Check colors
       if (properties.COLOR.includes(lineProperty) && !lineAttribute.includes('ddd')) {
         const colorObject = {
-          "Line Number": lines.indexOf(line), // TODO line number is wrong
+          "Line Number": lines.indexOf(line), // TODO line number is wrong, not counting blanks lol
           "CSS Property": lineProperty,
           "Current Attribute": lineAttribute,
           "Suggested Replacement Attribute": helpAuditPresetColors(lineAttribute)
         }
 
         data.push(colorObject)
+      }
+
+      if (properties.SPACING.includes(lineProperty) && !lineAttribute.includes('ddd')) {
+        const spaceObject = {
+          "Line Number": lines.indexOf(line), // TODO line number is wrong
+          "CSS Property": lineProperty,
+          "Current Attribute": lineAttribute,
+          "Suggested Replacement Attribute": helpAuditSpacing(lineAttribute)
+        }
+
+        data.push(spaceObject)
       }
     }
   })
@@ -467,8 +476,107 @@ function helpAuditPresetColors(color) {
 }
 
 /**
- * 
+ * @description Audits spacing related CSS properties based on px values
+ * @param spacing The 
  */
 function helpAuditSpacing(spacing) {
-
+  if (spacing.includes('px')) {
+    let value = Number(spacing.replace('px', ''));
+    
+    if (value === 0) {
+      return "--ddd-spacing-0"; // 0px
+    } 
+    else if (value >= 1 && value <= 4) {
+      return "--ddd-spacing-1"; // 4px
+    } 
+    else if (value >= 5 && value <= 8) {
+      return "--ddd-spacing-2"; // 8px
+    } 
+    else if (value >= 9 && value <= 12) {
+      return "--ddd-spacing-3"; // 12px
+    } 
+    else if (value >= 13 && value <= 16) {
+      return "--ddd-spacing-4"; // 16px
+    } 
+    else if (value >= 17 && value <= 20) {
+      return "--ddd-spacing-5"; // 20px
+    } 
+    else if (value >= 21 && value <= 24) {
+      return "--ddd-spacing-6"; // 24px
+    } 
+    else if (value >= 25 && value <= 28) {
+      return "--ddd-spacing-7"; // 28px
+    } 
+    else if (value >= 29 && value <= 32) {
+      return "--ddd-spacing-8"; // 32px
+    } 
+    else if (value >= 33 && value <= 36) {
+      return "--ddd-spacing-9"; // 36px
+    }
+    else if (value >= 37 && value <= 40) {
+      return "--ddd-spacing-10"; // 40px
+    }
+    else if (value >= 41 && value <= 44) {
+      return "--ddd-spacing-11"; // 44px
+    }
+    else if (value >= 45 && value <= 48) {
+      return "--ddd-spacing-12"; // 48px
+    }
+    else if (value >= 49 && value <= 52) {
+      return "--ddd-spacing-13"; // 52px
+    }
+    else if (value >= 53 && value <= 56) {
+      return "--ddd-spacing-14"; // 56px
+    }
+    else if (value >= 57 && value <= 60) {
+      return "--ddd-spacing-15"; // 60px
+    }
+    else if (value >= 61 && value <= 64) {
+      return "--ddd-spacing-16"; // 64px
+    }
+    else if (value >= 65 && value <= 68) {
+      return "--ddd-spacing-17"; // 68px
+    }
+    else if (value >= 69 && value <= 72) {
+      return "--ddd-spacing-18"; // 72px
+    }
+    else if (value >= 73 && value <= 76) {
+      return "--ddd-spacing-19"; // 76px
+    }
+    else if (value >= 77 && value <= 80) {
+      return "--ddd-spacing-20"; // 80px
+    }
+    else if (value >= 81 && value <= 84) {
+      return "--ddd-spacing-21"; // 84px
+    }
+    else if (value >= 85 && value <= 88) {
+      return "--ddd-spacing-22"; // 88px
+    }
+    else if (value >= 89 && value <= 92) {
+      return "--ddd-spacing-23"; // 92px
+    }
+    else if (value >= 93 && value <= 96) {
+      return "--ddd-spacing-24"; // 96px
+    }
+    else if (value >= 97 && value <= 100) {
+      return "--ddd-spacing-25"; // 100px
+    }
+    else if (value >= 101 && value <= 104) {
+      return "--ddd-spacing-26"; // 104px
+    }
+    else if (value >= 105 && value <= 108) {
+      return "--ddd-spacing-27"; // 108px
+    }
+    else if (value >= 109 && value <= 112) {
+      return "--ddd-spacing-28"; // 112px
+    }
+    else if (value >= 113 && value <= 116) {
+      return "--ddd-spacing-29"; // 116px
+    }
+    else if (value >= 117) {
+      return "--ddd-spacing-30"; // 120px
+    }
+  }
+  
+  return "No available suggestions. Check DDD documentation.";
 }
