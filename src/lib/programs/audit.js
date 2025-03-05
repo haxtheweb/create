@@ -1,6 +1,5 @@
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import path from "node:path";
-import { RADIUS } from "../ddd-styles";
 
 /**
  * @description Runs the audit command, to be called when `hax audit` command is run
