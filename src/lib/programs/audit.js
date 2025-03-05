@@ -8,11 +8,11 @@ import * as properties from "../css-properties.js";
 export async function auditCommandDetected() {
   const PROJECT_ROOT = process.cwd();
   let dddignore = dddignoreInterpreter(PROJECT_ROOT);
-  
-  // TODO pass in pre-existing debug flag to allow this to output
-  console.table(dddignore)
+
+  // console.table(dddignore)
 
   auditNavigator(PROJECT_ROOT, dddignore);
+  console.log('DDD documentation can be viewed at: https://oer.hax.psu.edu/bto108/sites/haxcellence/documentation/ddd')
 }
 
 /**
@@ -134,43 +134,99 @@ function auditFile(fileLocation, fileName) {
     if (trimmed.includes(':') && trimmed.endsWith(';')) {
       let [lineProperty, lineAttribute] = trimmed.split(":").map(item => item?.trim());
       lineAttribute = lineAttribute.replace(';', '');
-      
+
       // Check colors
-      if (properties.COLOR.includes(lineProperty) && !lineAttribute.includes('ddd')) {
-        const colorObject = {
+      if (properties.COLOR.includes(lineProperty) && !lineAttribute.includes("ddd")) {
+        data.push({
           "Line Number": lines.indexOf(line) + 1,
           "CSS Property": lineProperty,
           "Current Attribute": lineAttribute,
-          "Suggested Replacement Attribute": helpAuditPresetColors(lineAttribute)
-        }
-
-        data.push(colorObject)
+          "Suggested Replacement Attribute": helpAuditColors(lineAttribute)
+        });
       }
 
-      if (properties.SPACING.includes(lineProperty) && !lineAttribute.includes('ddd')) {
-        const spaceObject = {
+      // Check font family
+      if (lineProperty === "font-family" && !lineAttribute.includes("ddd")) {
+        data.push({
+          "Line Number": lines.indexOf(line) + 1,
+          "CSS Property": lineProperty,
+          "Current Attribute": lineAttribute,
+          "Suggested Replacement Attribute": helpAuditFontFamily(lineAttribute)
+        });
+      }
+
+      // Check font size
+      if (lineProperty === "font-size" && !lineAttribute.includes("ddd")) {
+        data.push({
+          "Line Number": lines.indexOf(line) + 1,
+          "CSS Property": lineProperty,
+          "Current Attribute": lineAttribute,
+          "Suggested Replacement Attribute": helpAuditFontSize(lineAttribute)
+        });
+      }
+
+      // Check font weight
+      if (lineProperty === "font-weight" && !lineAttribute.includes("ddd")) {
+        data.push({
+          "Line Number": lines.indexOf(line) + 1,
+          "CSS Property": lineProperty,
+          "Current Attribute": lineAttribute,
+          "Suggested Replacement Attribute": helpAuditFontWeight(lineAttribute)
+        })
+      }
+
+      // Check letter spacing
+      if (lineProperty === "letter-spacing" && !lineAttribute.includes("ddd")) {
+        data.push({
+          "Line Number": lines.indexOf(line) + 1,
+          "CSS Property": lineProperty,
+          "Current Attribute": lineAttribute,
+          "Suggested Replacement Attribute": helpAuditLetterSpacing(lineAttribute)
+        });
+      }
+
+      // Check line height spacing
+      if (lineProperty === "line-height" && !lineAttribute.includes("ddd")) {
+        data.push({
+          "Line Number": lines.indexOf(line) + 1,
+          "CSS Property": lineProperty,
+          "Current Attribute": lineAttribute,
+          "Suggested Replacement Attribute": helpAuditLineHeight(lineAttribute)
+        });
+      }
+
+      // Check spacing
+      if (properties.SPACING.includes(lineProperty) && !lineAttribute.includes("ddd")) {
+        data.push({
           "Line Number": lines.indexOf(line) + 1,
           "CSS Property": lineProperty,
           "Current Attribute": lineAttribute,
           "Suggested Replacement Attribute": helpAuditSpacing(lineAttribute)
-        }
-
-        data.push(spaceObject)
+        });
       }
     }
   })
 
   if (data.length !== 0) {
     console.table(data);
-    // TODO needs to provide a link to DDD Documentation
   }
+}
+
+// ! Audit Helpers
+
+/**
+ * @description Audits border related CSS properties based on preset borders and thicknesses
+ * @param border Pre-audit CSS border value
+ */
+function helpAuditBorder(border) {
+
 }
 
 /**
  * @description Audits color related CSS properties based on the CSS preset colors
  * @param color CSS preset color
  */
-function helpAuditPresetColors(color) {
+function helpAuditColors(color) {
   switch (color.toLowerCase()) {
     case "aliceblue":
       return "--ddd-theme-default-slateLight";
@@ -476,104 +532,345 @@ function helpAuditPresetColors(color) {
 }
 
 /**
+ * @description Audits font-family CSS property
+ * @param fontFamily Pre-audit CSS font-family value
+ */
+function helpAuditFontFamily(fontFamily) {
+  fontFamily = fontFamily.toLowerCase();
+
+  if (fontFamily.includes('roboto') || 
+      fontFamily.includes('franklin gothic medium') ||
+      fontFamily.includes('tahoma') ||
+      fontFamily.includes('sans-serif')) {
+    return "--ddd-font-primary";
+  }
+  else if (fontFamily.includes('roboto slab') || fontFamily.includes('serif')) {
+    return "--ddd-font-secondary";
+  }
+  else if (fontFamily.includes('roboto condensed')) {
+    return "--ddd-font-navigation";
+  }
+
+  return "--ddd-font-primary";
+}
+
+/**
+ * @description Audits font-size CSS property
+ * @param fontSize Pre-audit CSS font-size value
+ */
+function helpAuditFontSize(fontSize) {
+  if (fontSize.includes('px')) {
+    fontSize = Number(fontSize.replace('px', ''))
+
+    if (fontSize <= 16) {
+      return "--ddd-font-size-4xs"; // 16px
+    }
+    else if (fontSize > 16 || fontSize <= 18) {
+      return "--ddd-font-size-3xs"; // 18px
+    }
+    else if (fontSize > 18 || fontSize <= 20) {
+      return "--ddd-font-size-xxs"; // 20px
+    }
+    else if (fontSize > 20 || fontSize <= 22) {
+      return "--ddd-font-size-xs"; // 22px
+    }
+    else if (fontSize > 22 || fontSize <= 24) {
+      return "--ddd-font-size-s"; // 24px
+    }
+    else if (fontSize > 24 && fontSize <= 28) {
+      return "--ddd-font-size-ms"; // 28px
+    }
+    else if (fontSize > 28 && fontSize <= 32) {
+      return "--ddd=font-size-m"; // 32px
+    }
+    else if (fontSize > 32 && fontSize <= 36) {
+      return "--ddd-font-size-ml"; // 36px
+    }
+    else if (fontSize > 36 && fontSize <= 42) {
+      return "--ddd-font-size-l"; // 40px
+    }
+    else if (fontSize > 42 && fontSize <= 52) {
+      return "--ddd-font-size-xl"; // 48px
+    }
+    else if (fontSize > 52 && fontSize <= 60) {
+      return "--ddd-font-size-xxl"; // 56px
+    }
+    else if (fontSize > 60 && fontSize <= 68) {
+      return "--ddd-font-size-3xl"; // 64px
+    }
+    else if (fontSize > 68 && fontSize <= 76) {
+      return "--ddd-font-size-4xl"; // 72px
+    }
+    else if (fontSize > 76 && fontSize <= 120) {
+      return "--ddd-font-size-type1-s" // 80px
+    }
+    else if (fontSize > 120 && fontSize <= 170) {
+      return "--ddd-font-size-type1-m" // 150px
+    }
+    else if (fontSize > 170) {
+      return "--ddd-font-size-type1-l" // 200px
+    }
+  }
+
+  return "No available suggestions. Check DDD documentation.";
+}
+
+/**
+ * @description Audits font-weight CSS property
+ * @param fontWeight Pre-audit CSS font-weight value
+ */
+function helpAuditFontWeight(fontWeight) {
+  const REGEX = /\d+/;
+  const IS_NUM = fontWeight.match(REGEX); 
+
+  if (IS_NUM) {
+    fontWeight = Number(IS_NUM[0]);
+
+    if (fontWeight <= 300) {
+      return "--ddd-font-weight-light"; // 300
+    }
+    else if (fontWeight > 300 && fontWeight <= 400) {
+      return "--ddd-font-weight-regular"; // 400
+    }
+    else if (fontWeight > 400 && fontWeight <= 500) {
+      return "--ddd-font-weight-medium"; // 500
+    }
+    else if (fontWeight > 500 && fontWeight <= 700) {
+      return "--ddd-font-size-bold"; // 700
+    }
+    else if (fontWeight > 700) {
+      return "--ddd-font-size-black"; // 900
+    }
+  }
+
+  switch(fontWeight.toLowerCase()) {
+    case "lighter":
+      return "--ddd-font-weight-light"; // 300
+    case "normal":
+      return "--ddd-font-weight-regular" // 400
+    case "bold":
+      return "--ddd-font-weight-bold" // 700
+    case "bolder":
+      return "--ddd-font-weight-black" // 900
+    default:
+      return "No available suggestions. Check DDD documentation.";
+  }
+}
+
+/**
+ * @description Audits letter-spacing CSS property
+ * @param letterSpacing Pre-audit CSS letter-spacing value
+ */
+function helpAuditLetterSpacing(letterSpacing) {
+  if (letterSpacing.includes('px')) {
+    letterSpacing = letterSpacing.replace('px', '');
+
+    if (letterSpacing <= 0.08) {
+      return "--ddd-ls-16-sm"; // 0.08px
+    } 
+    else if (letterSpacing > 0.08 && letterSpacing <= 0.09) {
+      return "--ddd-ls-18-sm"; // 0.09px
+    } 
+    else if (letterSpacing > 0.09 & letterSpacing <= 0.1) {
+      return "--ddd-ls-20-sm"; // 0.1px
+    }
+    else if (letterSpacing > 0.1 && letterSpacing <= 0.11) {
+      return "--ddd-ls-22-sm"; // 0.11px
+    }
+    else if (letterSpacing > 0.11 && letterSpacing <= 0.12) {
+      return "--ddd-ls-24-sm"; // 0.12px
+    }
+    else if (letterSpacing > 0.12 && letterSpacing <= 0.14) {
+      return "--ddd-ls-28-sm"; // 0.14px
+    }
+    else if (letterSpacing > 0.14 && letterSpacing <= 0.16) {
+      return "--ddd-ls-32-sm"; // 0.16px
+    }
+    else if (letterSpacing > 0.16 && letterSpacing <= 0.18) {
+      return "--ddd-ls-36-sm"; // 0.18px
+    }
+    else if (letterSpacing > 0.18 && letterSpacing <= 0.2) {
+      return "--ddd-ls-40-sm"; // 0.2px
+    }
+    else if (letterSpacing > 0.2 && letterSpacing <= 0.24) {
+      return "--ddd-ls-48-sm"; // 0.24px
+    }
+    else if (letterSpacing > 0.24 && letterSpacing <= 0.27) {
+      return "--ddd-ls-18-lg"; // 0.27px
+    }
+    else if (letterSpacing > 0.27 && letterSpacing <= 0.28) {
+      return "--ddd-ls-56-sm"; // 0.28px
+    }
+    else if (letterSpacing > 0.28 && letterSpacing <= 0.3) {
+      return "--ddd-ls-20-lg"; // 0.3px
+    }
+    else if (letterSpacing > 0.3 && letterSpacing <= 0.32) {
+      return "--ddd-ls-64-sm"; // 0.32px
+    }
+    else if (letterSpacing > 0.32 && letterSpacing <= 0.33) {
+      return "--ddd-ls-22-lg"; // 0.33px
+    }
+    else if (letterSpacing > 0.33 && letterSpacing <= 0.36) {
+      return "--ddd-ls-24-lg"; // 0.36px
+    }
+    else if (letterSpacing > 0.36 && letterSpacing <= 0.42) {
+      return "--ddd-ls-28-lg"; // 0.42px
+    }
+    else if (letterSpacing > 0.42 && letterSpacing <= 0.48) {
+      return "--ddd-ls-32-lg"; // 0.48px
+    }
+    else if (letterSpacing > 0.48 && letterSpacing <= 0.54) {
+      return "--ddd-ls-36-lg"; // 0.54px
+    }
+    else if (letterSpacing > 0.54 && letterSpacing <= 0.6) {
+      return "--ddd-ls-40-lg"; // 0.6px
+    }
+    else if (letterSpacing > 0.6 && letterSpacing <= 0.72) {
+      return "--ddd-ls-48-lg"; // 0.72px
+    }
+    else if (letterSpacing > 0.72 && letterSpacing <= 0.84) {
+      return "--ddd-ls-56-lg"; // 0.84px
+    }
+    else if (letterSpacing > 0.84 && letterSpacing <= 0.96) {
+      return "--ddd-ls-64-lg"; // 0.96px
+    }
+    else if (letterSpacing > 0.96) {
+      return "--ddd-ls-72-lg"; // 1.08px
+    }
+  }
+
+  return "No available suggestions. Check DDD documentation.";
+}
+
+/**
+ * @description Audits line-height CSS property
+ * @param lineHeight Pre-audit CSS line-height value
+ */
+function helpAuditLineHeight(lineHeight) {
+  if (lineHeight.includes('%')) {
+    lineHeight = lineHeight.replace('%', '');
+
+    if (lineHeight <= 120) {
+      return "--ddd-lh-120"; // 120%
+    }
+    else if (lineHeight > 120 && lineHeight <= 140) {
+      return "--ddd-lh-140"; // 140%
+    }
+    else if (lineHeight > 140) {
+      return "--ddd-lh-150"; // 150%
+    }
+  }
+
+  return "No available suggestions. Check DDD documentation.";
+}
+
+/**
+ * @description Audits radius related CSS properties based on px and % values
+ * @param radius Pre-audit CSS radius value
+ */
+function helpAuditRadius(radius) {
+
+}
+
+/**
  * @description Audits spacing related CSS properties based on px values
- * @param spacing The 
+ * @param spacing Pre-audit CSS spacing value
  */
 function helpAuditSpacing(spacing) {
   if (spacing.includes('px')) {
-    let value = Number(spacing.replace('px', ''));
+    spacing = Number(spacing.replace('px', ''));
     
-    if (value === 0) {
+    if (spacing === 0) {
       return "--ddd-spacing-0"; // 0px
     } 
-    else if (value >= 1 && value <= 4) {
+    else if (spacing > 0 && spacing <= 4) {
       return "--ddd-spacing-1"; // 4px
     } 
-    else if (value >= 5 && value <= 8) {
+    else if (spacing > 4 && spacing <= 8) {
       return "--ddd-spacing-2"; // 8px
     } 
-    else if (value >= 9 && value <= 12) {
+    else if (spacing > 8 && spacing <= 12) {
       return "--ddd-spacing-3"; // 12px
     } 
-    else if (value >= 13 && value <= 16) {
+    else if (spacing > 12 && spacing <= 16) {
       return "--ddd-spacing-4"; // 16px
     } 
-    else if (value >= 17 && value <= 20) {
+    else if (spacing > 16 && spacing <= 20) {
       return "--ddd-spacing-5"; // 20px
     } 
-    else if (value >= 21 && value <= 24) {
+    else if (spacing > 20 && spacing <= 24) {
       return "--ddd-spacing-6"; // 24px
     } 
-    else if (value >= 25 && value <= 28) {
+    else if (spacing > 24 && spacing <= 28) {
       return "--ddd-spacing-7"; // 28px
     } 
-    else if (value >= 29 && value <= 32) {
+    else if (spacing > 28 && spacing <= 32) {
       return "--ddd-spacing-8"; // 32px
     } 
-    else if (value >= 33 && value <= 36) {
+    else if (spacing > 32 && spacing <= 36) {
       return "--ddd-spacing-9"; // 36px
     }
-    else if (value >= 37 && value <= 40) {
+    else if (spacing > 36 && spacing <= 40) {
       return "--ddd-spacing-10"; // 40px
     }
-    else if (value >= 41 && value <= 44) {
+    else if (spacing > 40 && spacing <= 44) {
       return "--ddd-spacing-11"; // 44px
     }
-    else if (value >= 45 && value <= 48) {
+    else if (spacing > 44 && spacing <= 48) {
       return "--ddd-spacing-12"; // 48px
     }
-    else if (value >= 49 && value <= 52) {
+    else if (spacing > 48 && spacing <= 52) {
       return "--ddd-spacing-13"; // 52px
     }
-    else if (value >= 53 && value <= 56) {
+    else if (spacing > 52 && spacing <= 56) {
       return "--ddd-spacing-14"; // 56px
     }
-    else if (value >= 57 && value <= 60) {
+    else if (spacing > 56 && spacing <= 60) {
       return "--ddd-spacing-15"; // 60px
     }
-    else if (value >= 61 && value <= 64) {
+    else if (spacing > 60 && spacing <= 64) {
       return "--ddd-spacing-16"; // 64px
     }
-    else if (value >= 65 && value <= 68) {
+    else if (spacing > 64 && spacing <= 68) {
       return "--ddd-spacing-17"; // 68px
     }
-    else if (value >= 69 && value <= 72) {
+    else if (spacing > 68 && spacing <= 72) {
       return "--ddd-spacing-18"; // 72px
     }
-    else if (value >= 73 && value <= 76) {
+    else if (spacing > 72 && spacing <= 76) {
       return "--ddd-spacing-19"; // 76px
     }
-    else if (value >= 77 && value <= 80) {
+    else if (spacing > 76 && spacing <= 80) {
       return "--ddd-spacing-20"; // 80px
     }
-    else if (value >= 81 && value <= 84) {
+    else if (spacing > 80 && spacing <= 84) {
       return "--ddd-spacing-21"; // 84px
     }
-    else if (value >= 85 && value <= 88) {
+    else if (spacing > 84 && spacing <= 88) {
       return "--ddd-spacing-22"; // 88px
     }
-    else if (value >= 89 && value <= 92) {
+    else if (spacing > 88 && spacing <= 92) {
       return "--ddd-spacing-23"; // 92px
     }
-    else if (value >= 93 && value <= 96) {
+    else if (spacing > 92 && spacing <= 96) {
       return "--ddd-spacing-24"; // 96px
     }
-    else if (value >= 97 && value <= 100) {
+    else if (spacing > 96 && spacing <= 100) {
       return "--ddd-spacing-25"; // 100px
     }
-    else if (value >= 101 && value <= 104) {
+    else if (spacing > 100 && spacing <= 104) {
       return "--ddd-spacing-26"; // 104px
     }
-    else if (value >= 105 && value <= 108) {
+    else if (spacing > 104 && spacing <= 108) {
       return "--ddd-spacing-27"; // 108px
     }
-    else if (value >= 109 && value <= 112) {
+    else if (spacing > 108 && spacing <= 112) {
       return "--ddd-spacing-28"; // 112px
     }
-    else if (value >= 113 && value <= 116) {
+    else if (spacing > 112 && spacing <= 116) {
       return "--ddd-spacing-29"; // 116px
     }
-    else if (value >= 117) {
+    else if (spacing > 116) {
       return "--ddd-spacing-30"; // 120px
     }
   }

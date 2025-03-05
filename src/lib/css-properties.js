@@ -45,9 +45,7 @@ export const SPACING = [ // TODO some of these need to be moved to a different a
   "column-gap",
 
   // Spacing properties
-  "letter-spacing",
   "word-spacing",
-  "line-height",
   "border-spacing",
 
   // Indent and offset properties
