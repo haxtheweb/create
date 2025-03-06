@@ -11,10 +11,14 @@ hax start
 Create a new web component or interact with an existing one
 ```bash
 hax webcomponent
-``
+```
 Create a new site or interact with an existing one
 ```bash
 hax site
+```
+Audit HAX Web components
+```bash
+hax audit
 ```
 Print Help information for options and arguments
 ```bash
@@ -157,4 +161,13 @@ hax site recipe:play --recipe create-cli.recipe
 Play a site recipe against the current site named `create-cli.recipe`, scripted
 ```bash
 hax site recipe:play --recipe create-cli.recipe --y
+```
+# audit
+Audit HAX web component
+```bash
+hax audit
+```
+Audit HAX component while also printing all gathered .dddignore contents to console (for testing purposes)
+```bash
+hax --debug audit
 ```

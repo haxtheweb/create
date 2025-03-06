@@ -9,6 +9,7 @@ import color from 'picocolors';
 
 import { haxIntro, communityStatement } from "./lib/statements.js";
 import { log, consoleTransport, logger } from "./lib/logging.js";
+import { auditCommandDetected } from './lib/programs/audit.js';
 import { webcomponentProcess, webcomponentCommandDetected } from "./lib/programs/webcomponent.js";
 import { siteActions, siteNodeOperations, siteProcess, siteCommandDetected, siteThemeList } from "./lib/programs/site.js";
 import { camelToDash } from "./lib/utils.js";
@@ -155,6 +156,21 @@ async function main() {
   .option('--no-i', 'prevent interactions / sub-process, good for scripting')
   .option('--root <char>', 'root location to execute the command from')
   .version(await HAXCMS.getHAXCMSVersion());
+
+  // audit program
+  program
+  .command('audit')
+  .description('Audits web components for compliance with DDD (HAX design system)')
+  .action(() => {
+    commandRun = {
+      command: 'audit',
+      arguments: {},
+      options: {}
+    };
+  })
+  .option('--debug', 'Output for developers')
+  .version(await HAXCMS.getHAXCMSVersion());
+
   // process program arguments
   program.parse();
   commandRun.options = {...commandRun.options, ...program.opts()};
@@ -244,13 +260,18 @@ async function main() {
           commandRun.options.isMonorepo = true;
           commandRun.options.auto = true;
           // assumed if monorepo
-          commandRun.command = 'webcomponent';
-          commandRun.options.path = path.join(process.cwd(), packageData.workspaces.packages[0].replace('/*',''));
-          if (packageData.orgNpm) {
-            commandRun.options.org = packageData.orgNpm;
+          if (commandRun.command === "audit") {
+            auditCommandDetected(commandRun);
           }
-          commandRun.options.gitRepo = packageData.repository.url;
-          commandRun.options.author = packageData.author.name ? packageData.author.name : author;
+          else {
+            commandRun.command = 'webcomponent';
+            commandRun.options.path = path.join(process.cwd(), packageData.workspaces.packages[0].replace('/*',''));
+            if (packageData.orgNpm) {
+              commandRun.options.org = packageData.orgNpm;
+            }
+            commandRun.options.gitRepo = packageData.repository.url;
+            commandRun.options.author = packageData.author.name ? packageData.author.name : author;
+          }
         }
       } catch (err) {
         console.error(err)
@@ -265,6 +286,9 @@ async function main() {
     commandRun.program = 'site';
     commandRun.options.skip = true;
     await siteCommandDetected(commandRun);
+  }
+  else if (commandRun.command === 'audit') {
+    auditCommandDetected(commandRun)
   }
   else if (packageData && (packageData.customElements || packageData.hax && packageData.hax.cli) && packageData.scripts.start) {
     commandRun.program = 'webcomponent';
@@ -296,7 +320,7 @@ async function main() {
           options: {}
         };
       }
-      if (['site', 'webcomponent'].includes(commandRun.command)) {
+      if (['site', 'webcomponent', 'audit'].includes(commandRun.command)) {
         project = {
           type: commandRun.command
         };

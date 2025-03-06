@@ -22,6 +22,7 @@ hax start
 - `hax webcomponent my-element --y` - Make a new HAX capable, i18n wired, Design system (DDD) driven web component
   -  if in a monorepo root, will place in correct location / inherit settings
 - `hax site mysite --y` - create a new HAXsite (HAXcms, single site)
+- `hax audit` - Audits web components for compliance with DDD (HAX design system)
 
 ## --help
 Run `hax help` or `hax webcomponent --help` or `hax site --help` for up-to-date listing
@@ -86,6 +87,8 @@ Commands:
   site [options] [action]         create or administer a HAXsite
   webcomponent [options] [name]   Create Lit based web components, with HAX
                                   recommendations
+  audit [options]                 Audits web components for compliance with DDD
+                                  (HAX Design System)
   help [command]                  display help for command
 ```
 ## Examples
@@ -147,9 +150,58 @@ Build a HAX site that can be published and transported anywhere. Your users migh
 - Theme development starting point to be able to build themes locally
 - Primed to publish to gh-pages, vercel and more
 
+## HAX Audit
+Audits your HAX based web components to suggest improvements to better align with DDD, the design system built into HAX components.
+- Use `.dddignore` file to instruct audit program what files should be ignored. Each component generated comes with a `.dddignore` file in its root directory.
+- Run command from root of the component project.
+- Provides suggested changes for component CSS to align with DDD design standards, if a change cannot be suggested, developer will be refered to look at the manual for a change that works for them!
+
+### `.dddignore` Template
+
+```gitignore
+# Directories
+# (Must start with with / or \, as seen below)
+/.github # Inline comments are supported
+/.vscode
+/.idea
+/locales
+\test
+/dist
+/build
+/public # ignored by program regardless of presence in .dddignore
+/node_modules # ignored by program regardless of presence in .dddignore
+
+# Files 
+# (Must include filename and extension, as seen below)
+LICENSE
+.dddignore
+.editorconfig
+.gitignore
+.nojekyll
+.npmignore
+.surgeignore
+rollup.config.js
+
+# File extension
+# (Must start with *, as seen below)
+*.html
+*.md
+*.yml
+*.json
+*.toml
+*.mjs
+*.cjs
+*.png
+*.ico
+*.svg
+*.jpg
+*.jpeg
+```
+
 # Get Help / Issues / Support
 - Discord Channel - https://bit.ly/hax-discord
 - Unified issue queue - https://github.com/haxtheweb/issues/issues
+- DDD Documentation - https://oer.hax.psu.edu/bto108/sites/haxcellence/documentation/ddd
 - Using Merlin directly in any HAX spaces and type "Issue" to jump start a report!
 
 ## Watch and Learn more about HAX here:

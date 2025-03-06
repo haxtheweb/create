@@ -1,4 +1,4 @@
-.TH HAX\-CREATE 1 hax 9.0.18 "HAX COMMAND INTERFACE MANUAL"
+.TH HAX\-CREATE 1 hax hax "HAX COMMAND INTERFACE MANUAL"
 
 .SH NAME
 hax \- a tool to create HAX websites and web components quickly.
@@ -21,6 +21,9 @@ This command line tool can be used to create and modify two different HAX based 
 .PP
 .B webcomponent
 [options] [name] \- Create Lit based web components, with HAX recommendations
+.PP
+.B audit
+[options] \- Audits web components for compliance with DDD (HAX design system)
 .PP
 .B help
 [command] \- Display help for command
@@ -57,6 +60,12 @@ Prevent interactions / sub\-process, good for scripting
 \--to\-file [char]
 Redirect command output to a file
 .TP
+\--no\-extras
+Skip all extra / automatic commmand processing
+.TP
+\--root [location]
+Root location to execute the command from
+.TP
 \--org [organization]
 Organization for package.json
 .TP
@@ -84,8 +93,26 @@ Name of the project
 \--domain [name]
 Published domain name
 .TP
+\--title\-scrape [selector]
+CSS selector for `title` in resource
+.TP
+\--content\-scrape [selector[
+CSS selector for `body` in resource
+.TP
 \--items\-import [char]
 Import items from a file / site
+.TP
+\--recipe [path]
+Path to recipe file
+.TP
+\--custom\-theme\-name [name]
+Custom theme name
+.TP
+\--custom\-theme\-template [option]
+Custom theme template (Options: base | polaris-flex | polaris-sidebar)
+.TP
+\-V, \--version
+Output the version number
 .TP
 \--title [title]
 Title
@@ -122,11 +149,14 @@ Display help for command
 .B hax start
 Navigatable interface
 .TP
+.B hax site mysite --y
+Create a new HAXsite (HAXcms, single site) 
+.TP
 .B hax webcomponent my-element --y
 Make a new HAX capable, i18n wired, design system (DDD) driven web component
 .TP
-.B hax site mysite --y
-Create a new HAXsite (HAXcms, single site) 
+.B hax audit
+Audit web components for compliance with DDD (HAX design system)
 
 .SH BUGS
 Bugs can be viewed at GitHub Issues: https://github.com/haxtheweb/issues/issues
@@ -143,6 +173,10 @@ https://github.com/haxtheweb/create
 .PP
 .B Web Components Repository:
 https://github.com/haxtheweb/webcomponents
+.PP
+.B DDD Design System Documentation
+https://oer.hax.psu.edu/bto108/sites/haxcellence/documentation/ddd
+
 
 .SH AUTHORS
 .PP
