@@ -20,7 +20,7 @@ export function auditCommandDetected(commandRun) {
   p.outro(`
     🎉 Process Completed
     
-    📘 For more information about DDD variables and capabilities: ${color.underline(color.cyan(`https://oer.hax.psu.edu/bto108/sites/haxcellence/documentation/ddd`))}
+    📘 For more information about DDD variables and capabilities: ${color.underline(color.cyan(`https://haxtheweb.org/documentation/ddd`))}
   `)
 }
 
