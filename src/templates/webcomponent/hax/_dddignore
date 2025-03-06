@@ -37,3 +37,8 @@ web-dev-server.config.mjs
 *.toml
 *.mjs
 *.cjs
+*.png
+*.ico
+*.svg
+*.jpg
+*.jpeg

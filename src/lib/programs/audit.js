@@ -1,17 +1,27 @@
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import path from "node:path";
+import color from 'picocolors';
+import * as p from '@clack/prompts';
 
 /**
  * @description Runs the audit command, to be called when `hax audit` command is run
  */
-export async function auditCommandDetected() {
+export function auditCommandDetected(commandRun) {
   const PROJECT_ROOT = process.cwd();
+  p.intro(`${color.bgBlack(` 🚀 Auditing DDD Compliance: ${color.underline(color.bold(color.yellow(PROJECT_ROOT)))} `)}`)
   let dddignore = dddignoreInterpreter(PROJECT_ROOT);
 
-  // console.table(dddignore)
+  if (commandRun.options.debug) {
+    p.intro(`${color.bgBlack(color.white(` 🚧 Debug: displaying .dddignore contents `))}`)
+    console.table(dddignore)
+  }
 
   auditNavigator(PROJECT_ROOT, dddignore);
-  console.log('For more information about DDD variables and capabilities, please visit: https://oer.hax.psu.edu/bto108/sites/haxcellence/documentation/ddd')
+  p.outro(`
+    🎉 Process Completed
+    
+    📘 For more information about DDD variables and capabilities: ${color.underline(color.cyan(`https://oer.hax.psu.edu/bto108/sites/haxcellence/documentation/ddd`))}
+  `)
 }
 
 /**
@@ -125,7 +135,7 @@ function auditNavigator(root, dddignore) {
  */
 function auditFile(fileLocation, fileName) {
   let data = [];
-  console.log(`Auditing 🪄: ${fileName}`)
+  p.intro(`\n ${color.bgBlue(color.white(` 🪄 Auditing: ${fileName} `))}`)
   let lines = readFileSync(fileLocation, 'utf-8').split('\n');
 
   const COLOR_PROPERTIES = [
@@ -354,6 +364,8 @@ function auditFile(fileLocation, fileName) {
 
   if (data.length !== 0) {
     console.table(data);
+  } else {
+    p.note("No changes needed!")
   }
 }
 
@@ -1130,6 +1142,9 @@ function helpAuditSpacing(spacing) {
     else if (spacing > 116) {
       return "--ddd-spacing-30"; // 120px
     }
+  }
+  else if (spacing == 0) {
+    return "--ddd-spacing-0"; // 0px
   }
   
   return "No available suggestions. Check DDD documentation.";

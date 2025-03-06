@@ -161,17 +161,14 @@ async function main() {
   program
   .command('audit')
   .description('Audits web components for compliance with DDD (HAX design system)')
-  .action((action) => {
+  .action(() => {
     commandRun = {
       command: 'audit',
-      arguements: {},
+      arguments: {},
       options: {}
     };
-    if (action) {
-      commandRun.arguements.action = action;
-      commandRun.options.skip = true;
-    }
   })
+  .option('--debug', 'Output for developers')
   .version(await HAXCMS.getHAXCMSVersion());
 
   // process program arguments
@@ -264,7 +261,7 @@ async function main() {
           commandRun.options.auto = true;
           // assumed if monorepo
           if (commandRun.command === "audit") {
-            auditCommandDetected();
+            auditCommandDetected(commandRun);
           }
           else {
             commandRun.command = 'webcomponent';
@@ -291,7 +288,7 @@ async function main() {
     await siteCommandDetected(commandRun);
   }
   else if (commandRun.command === 'audit') {
-    auditCommandDetected()
+    auditCommandDetected(commandRun)
   }
   else if (packageData && (packageData.customElements || packageData.hax && packageData.hax.cli) && packageData.scripts.start) {
     commandRun.program = 'webcomponent';
