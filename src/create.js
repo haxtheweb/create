@@ -120,7 +120,7 @@ async function main() {
   .option('--node-op <char>', 'node operation to perform')
   .option('--title-scrape <char>', 'CSS Selector for `title` in resource')
   .option('--content-scrape <char>', 'CSS Selector for `body` in resource')
-  .option('--item-import <char>', 'import items from a file / site')
+  .option('--items-import <char>', 'import items from a file / site')
   .option('--recipe <char>', 'path to recipe file')
   .option('--custom-theme-name <char>', 'custom theme name')
   .option('--custom-theme-template <char>', 'custom theme template (options: base, polaris-flex, polaris-sidebar)')
