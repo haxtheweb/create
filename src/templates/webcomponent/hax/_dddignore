@@ -13,20 +13,13 @@
 # Files 
 # (Must include filename and extension, as seen below)
 LICENSE
-README.md
 .dddignore
 .editorconfig
 .gitignore
 .nojekyll
 .npmignore
 .surgeignore
-.travis.yml
-index.html
-netlify.toml
-package.json
-package-lock.json
 rollup.config.js
-web-dev-server.config.mjs
 
 # File extension
 # (Must start with *, as seen below)

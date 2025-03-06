@@ -58,14 +58,12 @@ function dddignoreInterpreter(root) {
             trimmed = trimmed.substring(1);
             type = "extension";
           }
-          
-          const OBJECT = {
+
+          list.push({
             "highestPath": root,
             "name": trimmed,
             "type": type
-          };
-
-          list.push(OBJECT);
+          });
         } 
       })
     }
