@@ -58,6 +58,10 @@ Create a new site called `zombocom`, set theme to `polaris-flex-theme` and open 
 ```bash
 hax site zombocom --theme "polaris-flex-theme" --y
 ```
+Create a new site called `zombocom`, that has a custom theme called `custom-zombocom-theme` using the `base` template to get started
+```bash
+hax site zombocom --theme "custom-theme" --custom-theme-name "custom-zombocom-theme" --custom-theme-template "base" --y
+```
 # site - existing site
 `--root ./zombocom` - implies to run the command as if it was executed from the `./zombocom` folder
 ## site node operations
