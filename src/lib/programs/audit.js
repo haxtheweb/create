@@ -3,7 +3,7 @@ import path from "node:path";
 import color from 'picocolors';
 import * as p from '@clack/prompts';
 
-let checksPass = true;
+let checksPassed = true;
 
 /**
  * @description Runs the audit command, to be called when `hax audit` command is run
@@ -23,18 +23,9 @@ export function auditCommandDetected(commandRun) {
     🎉 Process Completed
     
     📘 For more information about DDD variables and capabilities: ${color.underline(color.cyan(`https://haxtheweb.org/documentation/ddd`))}
-  `)
+  `);
 
-  if (checksPass) {
-    return "All checks good"; 
-    // this is where I think you'd want to return your codes for GitHub actions
-    // Don't know how to do it or how you would want it done so this is just boiler plate
-  } else {
-    return "A file was non-compliant";
-    // replace with return code for non-compliance
-    // up to you, but would suggest ensuring the code will issue a warning detailing non-compliance,
-    // rather than preventing any builds from passing or completing or anything like that
-  }
+  returnCode();
 }
 
 /**
@@ -375,10 +366,22 @@ function auditFile(fileLocation, fileName) {
 
   if (data.length !== 0) {
     console.table(data);
-    checksPass = false;
+    checksPassed = false;
   } else {
     p.note("No changes needed!")
   }
+}
+
+/**
+ * @description returns code for automation purposes. 0 = compliant, 1 = not compliant
+ */
+function returnCode() {
+  if (!checksPassed) { // Not-compliant
+    console.error("Component not compliant with DDD");
+    process.exit(1);
+  }
+  
+  process.exit(0) // Compliant
 }
 
 // ! Audit Helpers
