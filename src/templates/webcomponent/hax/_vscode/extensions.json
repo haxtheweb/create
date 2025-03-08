@@ -5,7 +5,7 @@
         "ecmel.vscode-html-css",
         "oliversturm.fix-json",
         "runem.lit-plugin",
-        "streetsidesoftware.code-spell-checker",
-        "yzhang.markdown-all-in-one"
+        "yzhang.markdown-all-in-one",
+        "zdodson.dddignore"
     ]
 }
