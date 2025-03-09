@@ -2,6 +2,7 @@ import { readdirSync, readFileSync, statSync } from "node:fs";
 import path from "node:path";
 import color from 'picocolors';
 import * as p from '@clack/prompts';
+import { program } from "commander";
 
 let checksPassed = true;
 
@@ -377,7 +378,7 @@ function auditFile(fileLocation, fileName) {
  */
 function returnCode() {
   if (!checksPassed) { // Not-compliant
-    console.error("Component not compliant with DDD");
+    program.error(color.red("Component not compliant with DDD"));
     process.exit(1);
   }
   

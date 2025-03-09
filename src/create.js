@@ -271,7 +271,7 @@ async function main() {
           commandRun.options.auto = true;
           // assumed if monorepo
           if (commandRun.command === "audit") {
-            auditCommandDetected(commandRun);
+            auditCommandDetected(commandRun, program);
           }
           else {
             commandRun.command = 'webcomponent';
@@ -434,12 +434,12 @@ async function main() {
                     if (value.indexOf(' ') !== -1) {
                       return "No spaces allowed in name";
                     }
-                    if (results.type === "webcomponent" && value.indexOf('-') === -1 && value.indexOf('-') !== 0 && value.indexOf('-') !== value.length-1) {
+                    if (results.type === "webcomponent" && (value.indexOf('-') === -1 || value.replace('--', '') !== value || value[0] === '-' || value[value.length-1] === '-')) {
                       return "Name must include at least one `-` and must not start or end name.";
                     }
                     // test that this is not an existing element we use in the registry
                     if (results.type === "webcomponent" && wcReg[value]) {
-                      return "Name is already a web component in the wc-registry published for HAX."
+                      return "Name is already a web component in the wc-registry published for HAX.";
                     }
                     // assumes auto was selected in CLI
                     let joint = process.cwd();
@@ -454,6 +454,45 @@ async function main() {
                     }
                   }
                 });  
+              }
+              if (commandRun.arguments.name) {
+                let value = commandRun.arguments.name;
+                if (!value) {
+                  program.error(color.red("Name is required (tab writes default)"));
+                  process.exit(1);
+                }
+                if (value.toLocaleLowerCase() !== value) {
+                  program.error(color.red("Name must be lowercase"));
+                  process.exit(1);
+                }
+                if (/^\d/.test(value)) {
+                  program.error(color.red("Name cannot start with a number"));
+                }
+                if (value.indexOf(' ') !== -1) {
+                  program.error(color.red("No spaces allowed in name"));
+                  process.exit(1);
+                }
+                if (results.type === "webcomponent" && (value.indexOf('-') === -1 || value.replace('--', '') !== value || value[0] === '-' || value[value.length-1] === '-')) {
+                  program.error(color.red("Name must include at least one `-` and must not start or end name."));
+                  process.exit(1);
+                }
+                // test that this is not an existing element we use in the registry
+                if (results.type === "webcomponent" && wcReg[value]) {
+                  program.error(color.red("Name is already a web component in the wc-registry published for HAX."));
+                  process.exit(1);
+                }
+                // assumes auto was selected in CLI
+                let joint = process.cwd();
+                if (commandRun.options.path) {
+                  joint = commandRun.options.path;
+                }
+                else if (results.path) {
+                  joint = results.path;
+                }
+                if (fs.existsSync(path.join(joint, value))) {
+                  program.error(color.red(`${path.join(joint, value)} exists, rename this project`));
+                  process.exit(1);
+                }
               }
             },
             org: ({ results }) => {
@@ -493,6 +532,12 @@ async function main() {
                     options: themes,
                     initialValue: themes[0]
                   })  
+                }
+              }
+              else if (results.type === "site" && commandRun.options.theme) {
+                if (themes.filter((item => item.value === commandRun.options.theme)).length === 0) {
+                  program.error(color.red('Theme is not in the list of valid themes'));
+                  process.exit(1);
                 }
               }
             },
