@@ -271,7 +271,7 @@ async function main() {
           commandRun.options.auto = true;
           // assumed if monorepo
           if (commandRun.command === "audit") {
-            auditCommandDetected(commandRun, program);
+            auditCommandDetected(commandRun);
           }
           else {
             commandRun.command = 'webcomponent';
@@ -566,6 +566,25 @@ async function main() {
                   }
                 })
                 return tmpCustomName;
+              }
+              else {
+                // need to validate theme
+                let value = results.name;
+                if (!value) {
+                  program.error(color.red("Theme name is required (tab writes default)"));
+                }
+                if(themes.some(theme => theme.value === value)) {
+                  program.error(color.red("Theme name is already in use"));
+                }
+                if (/^\d/.test(value)) {
+                  program.error(color.red("Theme name cannot start with a number"));
+                }
+                if (/[A-Z]/.test(value)) {
+                  program.error(color.red("No uppercase letters allowed in theme name"));
+                }
+                if (value.indexOf(' ') !== -1) {
+                  program.error(color.red("No spaces allowed in theme name"));
+                }
               }
             },
             customThemeTemplate: ({ results }) => {
