@@ -184,7 +184,6 @@ rollup.config.js
 
 # File extension
 # (Must start with *, as seen below)
-*.html
 *.md
 *.yml
 *.json

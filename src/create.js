@@ -567,7 +567,7 @@ async function main() {
                 })
                 return tmpCustomName;
               }
-              else {
+              else if (results.type === "site") {
                 // need to validate theme
                 let value = results.name;
                 if (!value) {

@@ -9,8 +9,8 @@
 
   <style>
     :root, html, body {
-      margin: 0;
-      padding: 0;
+      margin: var(--ddd-spacing-0);
+      padding: var(--ddd-spacing-0);
     }
     #demo {
       margin: var(--ddd-spacing-2);
@@ -48,21 +48,21 @@
   <!-- Take HAX, the Web and you further down the rabbit hole -->
   <style>
     #follow-the-white-rabbit {
-      margin: var(--ddd-spacing-4) auto 64px  16px;
+      margin: var(--ddd-spacing-4) auto var(--ddd-spacing-16)  var(--ddd-spacing-4);
       background-color: var(--ddd-accent-4);
-      color: black;
+      color: var(--ddd-theme-default-coalyGray);
     }
     #follow-the-white-rabbit[open] summary {
       background-color: var(--ddd-accent-4) !important;
-      color: black;
+      color: var(--ddd-theme-default-coalyGray);
     }
     #follow-the-white-rabbit[open] .content {
-      padding: 0 var(--ddd-spacing-4);
+      padding: var(--ddd-spacing-0) var(--ddd-spacing-4);
     }
     #follow-the-white-rabbit ul,
     #follow-the-white-rabbit li {
-      padding: 0;
-      margin: 0;
+      padding: var(--ddd-spacing-0);
+      margin: var(--ddd-spacing-0);
     }
     #follow-the-white-rabbit li {
       font-size: var(--ddd-font-size-xs);
@@ -71,14 +71,14 @@
     #follow-the-white-rabbit li strong,
     #follow-the-white-rabbit li a {
       padding: var(--ddd-spacing-2) var(--ddd-spacing-4);
-      color: black;
+      color: var(--ddd-theme-default-coalyGray);
       display: block;
-      font-weight: bold;
+      font-weight: var(--ddd-font-weight-bold);
     }
     #follow-the-white-rabbit li:focus-within a,
     #follow-the-white-rabbit li:hover a {
-      background-color: black;
-      color: yellow;
+      background-color: var(--ddd-theme-default-coalyGray);
+      color: var(--ddd-theme-default-globalNeon);
     }
   </style>
   <details id="follow-the-white-rabbit" open>

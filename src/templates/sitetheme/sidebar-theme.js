@@ -37,7 +37,7 @@ class <%= className %> extends PolarisFlexTheme {
         }
         aside section h4 {
           font-size: 16px;
-          margin: 0 0 24px 0;
+          margin: var(--ddd-spacing-0) var(--ddd-spacing-0) var(--ddd-spacing-6) var(--ddd-spacing-0);
           text-transform: uppercase;
           font-family: "Open Sans", sans-serif;
           font-weight: 300;
@@ -46,8 +46,8 @@ class <%= className %> extends PolarisFlexTheme {
         aside section {
           background-color: #fff;
           border-radius: 3px;
-          margin-bottom: 40px;
-          padding: 0px 40px 40px 0px;
+          margin-bottom: var(--ddd-spacing-10);
+          padding: 0px var(--ddd-spacing-10) var(--ddd-spacing-10) 0px;
         }
 
         site-children-block {

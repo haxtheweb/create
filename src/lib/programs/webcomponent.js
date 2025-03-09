@@ -170,7 +170,8 @@ export async function webcomponentProcess(commandRun, project, port = "8000") {
       else  {
         project.gitRepo = await p.text({
           message: 'Git Repo location:',
-          placeholder: `https://github.com/${project.author}/${project.name}.git`
+          placeholder: `https://github.com/${project.author}/${project.name}.git`,
+          initialValue: `https://github.com/${project.author}/${project.name}.git`,
         });  
       }
       // if they supplied one and it has github in it, build a link automatically for ejs index

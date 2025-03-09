@@ -65,8 +65,8 @@ class <%= className %> extends HAXCMSLitElementTheme {
         --my-theme-high-tone: var(--ddd-theme-default-coalyGray);
       }
       body {
-        padding: 0;
-        margin: 0;
+        padding: var(--ddd-spacing-0);
+        margin: var(--ddd-spacing-0);
         background-color: var(--my-theme-low-tone);
       }
       body.dark-mode {
@@ -86,7 +86,7 @@ class <%= className %> extends HAXCMSLitElementTheme {
           padding: var(--ddd-spacing-10) var(--ddd-spacing-20);
           max-width: 960px;
           min-width: 400px;
-          margin: 0 auto;
+          margin: var(--ddd-spacing-0) auto;
           border: var(--ddd-border-lg);
           border-width: var(--ddd-spacing-5);
           border-radius: var(--ddd-radius-lg);
@@ -105,13 +105,13 @@ class <%= className %> extends HAXCMSLitElementTheme {
           display: flex;
         }
         ul {
-          margin: 0;
-          padding: 0;
+          margin: var(--ddd-spacing-0);
+          padding: var(--ddd-spacing-0);
         }
         ul li {
           display: inline-block;
-          margin: 0;
-          padding: 0;
+          margin: var(--ddd-spacing-0);
+          padding: var(--ddd-spacing-0);
           list-style-type: none;
           vertical-align: top;
         }
@@ -120,9 +120,9 @@ class <%= className %> extends HAXCMSLitElementTheme {
         }
 
         button {
-          height: 32px;
-          width: 32px;
-          margin: 0;
+          height: var(--ddd-spacing-8);
+          width: var(--ddd-spacing-8);
+          margin: var(--ddd-spacing-0);
           padding: 0;
           font-size: var(--ddd-font-size-sm);
           cursor: pointer;
