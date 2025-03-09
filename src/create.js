@@ -29,6 +29,16 @@ exec('git --version', error => {
 });
 
 async function main() {
+  let wcReg = {};
+  let regPath = path.join(__dirname, './lib/wc-registry.json');
+  if (fs.existsSync(regPath)) {
+    try {
+      wcReg = JSON.parse(fs.readFileSync(regPath));
+    }
+    catch(e) {
+      // no registry for testing, probably busted package
+    }
+  }
   var commandRun = {};
   program
   .option('--')
@@ -415,14 +425,21 @@ async function main() {
                     if (!value) {
                       return "Name is required (tab writes default)";
                     }
+                    if (value.toLocaleLowerCase() !== value) {
+                      return "Name must be lowercase";
+                    }
                     if (/^\d/.test(value)) {
                       return "Name cannot start with a number";
                     }
                     if (value.indexOf(' ') !== -1) {
-                      return "No spaces allowed in project name";
+                      return "No spaces allowed in name";
                     }
                     if (results.type === "webcomponent" && value.indexOf('-') === -1 && value.indexOf('-') !== 0 && value.indexOf('-') !== value.length-1) {
                       return "Name must include at least one `-` and must not start or end name.";
+                    }
+                    // test that this is not an existing element we use in the registry
+                    if (results.type === "webcomponent" && wcReg[value]) {
+                      return "Name is already a web component in the wc-registry published for HAX."
                     }
                     // assumes auto was selected in CLI
                     let joint = process.cwd();

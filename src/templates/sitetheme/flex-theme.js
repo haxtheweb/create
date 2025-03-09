@@ -2,7 +2,7 @@
  * Copyright <%= year %> <%= author %>
  * @license Apache-2.0, see License.md for full text.
  */
-import { html, css, HAXCMSLitElementTheme } from "@haxtheweb/haxcms-elements/lib/core/HAXCMSLitElementTheme.js";
+import { HAXCMSLitElementTheme, css, unsafeCSS, html, store, autorun, toJS } from "@haxtheweb/haxcms-elements/lib/core/HAXCMSLitElementTheme.js";
 import { PolarisFlexTheme } from "@haxtheweb/polaris-theme/lib/polaris-flex-theme.js";
 import "@haxtheweb/haxcms-elements/lib/ui-components/blocks/site-children-block.js";
 
@@ -15,7 +15,11 @@ import "@haxtheweb/haxcms-elements/lib/ui-components/blocks/site-children-block.
  *  - HAXcms - A headless content management system
  *  - HAXCMSTheme - A super class that provides correct baseline wiring to build a new theme
  *
- * @demo demo/index.html
+ * @documentation - see HAX docs to learn more about theming
+ *  - Custom theme development - https://haxtheweb.org/documentation/developers/haxsite/custom-theme-development
+ *  - Theme Blocks - https://haxtheweb.org/documentation/developers/theme-blocks
+ *  - DDD - https://haxtheweb.org/documentation/ddd
+ *  - Data Store - https://haxtheweb.org/documentation/developers/haxsite/data-store
  * @element <%= customThemeName %>
  */
 class <%= className %> extends PolarisFlexTheme {
