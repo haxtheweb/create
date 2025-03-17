@@ -545,7 +545,7 @@ async function main() {
               if (results.theme === "custom-theme") {
                 let tmpCustomName = await p.text({
                   message: 'Theme Name:',
-                  placeholder: `${results.name}`,
+                  placeholder: `custom-${commandRun.arguments.action ? commandRun.arguments.action : results.name}-theme`,
                   required: false,
                   validate: (value) => {
                     if (!value) {
