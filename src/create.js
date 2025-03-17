@@ -571,8 +571,8 @@ async function main() {
                 return tmpCustomName;
               }
               else if (results.type === "site") {
-                // need to validate theme
-                let value = results.name;
+                // need to validate theme from CLI arguments
+                let value = `${commandRun.options.customThemeName ? commandRun.options.customThemeName : (results.name ? results.name : commandRun.arguments.action)}`;
                 if (!value) {
                   program.error(color.red("Theme name is required (tab writes default)"));
                 }
