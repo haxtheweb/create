@@ -1259,7 +1259,7 @@ async function customSiteTheme(commandRun, project) {
   // validate start and end tags for theme name
   if(/^custom/.test(project.customThemeName) && !/^custom-/.test(project.customThemeName)){
     project.customThemeName = project.customThemeName.replace(/^custom/, "custom-");
-  } else if (!/^custom-/.test(project.className)) {
+  } else if (!/^custom-/.test(project.customThemeName)) {
     project.customThemeName = `custom-${project.customThemeName}`;
   }
 
