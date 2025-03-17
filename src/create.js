@@ -375,14 +375,17 @@ async function main() {
       activeProject = project.type;
       // silly but this way we don't have to take options for quitting
       if (project.type !== 'quit') {
-        // also silly temp spot
-        let themes = await siteThemeList();
-        const custom = {
-          value: 'custom-theme',
-          label: 'Create Custom Theme',
-        }
-        // Append custom option to list of core themes
-        themes.push(custom);
+        // global spot for core themes list
+        const coreThemes = [
+          { value: 'clean-one', label: 'Clean One' },
+          { value: 'clean-two', label: 'Clean Two' },
+          { value: 'clean-portfolio-theme', label: 'Clean Portfolio' },
+          { value: 'haxor-slevin', label: 'Haxor Blog' },
+          { value: 'polaris-flex-theme', label: 'Polaris - Flex' },
+          { value: 'polaris-flex-sidebar', label: 'Polaris - Flex Sidebar' },
+          { value: 'polaris-invent-theme', label: 'Polaris - Invent' },
+          { value: 'custom-theme', label: 'Create Custom Theme' }
+        ]
 
         project = await p.group(
           {
@@ -523,19 +526,19 @@ async function main() {
               if (results.type === "site" && !commandRun.options.theme) {
                 // support having no theme but autoselecting
                 if (commandRun.options.auto && commandRun.options.skip) {
-                  commandRun.options.theme = themes[0].value;
+                  commandRun.options.theme = coreThemes[0].value;
                 }
                 else {
                   return p.select({
                     message: "Theme:",
                     required: false,
-                    options: themes,
-                    initialValue: themes[0]
+                    options: coreThemes,
+                    initialValue: coreThemes[0]
                   })  
                 }
               }
               else if (results.type === "site" && commandRun.options.theme) {
-                if (themes.filter((item => item.value === commandRun.options.theme)).length === 0) {
+                if (coreThemes.filter((item => item.value === commandRun.options.theme)).length === 0) {
                   program.error(color.red('Theme is not in the list of valid themes'));
                   process.exit(1);
                 }
@@ -545,13 +548,13 @@ async function main() {
               if (results.theme === "custom-theme") {
                 let tmpCustomName = await p.text({
                   message: 'Theme Name:',
-                  placeholder: `${results.name}`,
+                  placeholder: `custom-${commandRun.arguments.action ? commandRun.arguments.action : results.name}-theme`,
                   required: false,
                   validate: (value) => {
                     if (!value) {
                       return "Theme name is required (tab writes default)";
                     }
-                    if(themes.some(theme => theme.value === value)) {
+                    if(coreThemes.some(theme => theme.value === value)) {
                       return "Theme name is already in use";
                     }
                     if (/^\d/.test(value)) {
@@ -568,12 +571,12 @@ async function main() {
                 return tmpCustomName;
               }
               else if (results.type === "site") {
-                // need to validate theme
-                let value = results.name;
+                // need to validate theme from CLI arguments
+                let value = `${commandRun.options.customThemeName ? commandRun.options.customThemeName : (results.name ? results.name : commandRun.arguments.action)}`;
                 if (!value) {
                   program.error(color.red("Theme name is required (tab writes default)"));
                 }
-                if(themes.some(theme => theme.value === value)) {
+                if(coreThemes.some(theme => theme.value === value)) {
                   program.error(color.red("Theme name is already in use"));
                 }
                 if (/^\d/.test(value)) {
