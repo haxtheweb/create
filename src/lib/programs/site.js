@@ -568,7 +568,7 @@ export async function siteCommandDetected(commandRun) {
                   // these have fixed possible values
                   else if (['parent', 'theme'].includes(nodeProp)) {
                     let l = nodeProp === 'parent' ? "-- no parent --" : "-- no theme --";
-                    let list = nodeProp === 'parent' ? await siteItemsOptionsList(activeHaxsite,  page.id) : await siteThemeList();
+                    let list = nodeProp === 'parent' ? await siteItemsOptionsList(activeHaxsite,  page.id) : await siteThemeList(true);
                     propValue = await p.select({
                       message: `${nodeProp}:`,
                       defaultValue: val,
@@ -721,7 +721,7 @@ export async function siteCommandDetected(commandRun) {
         case "site:theme":
           try {
             //theme
-            let list = await siteThemeList();
+            let list = await siteThemeList(true);
             activeHaxsite = await hax.systemStructureContext();
             let val = activeHaxsite.manifest.metadata.theme.element;
             if (!commandRun.options.theme) {
@@ -1240,15 +1240,29 @@ export async function siteItemsOptionsList(activeHaxsite, skipId = null) {
   return optionItems;
 }
 
-export async function siteThemeList() {
-  let themes = await HAXCMS.getThemes();
+export async function siteThemeList(coreOnly = true) {
   let items = [];
-  for (var i in themes) {
-    items.push({
-      value: i,
-      label: themes[i].name
-    })
+  if(coreOnly){
+    items = [
+      { value: 'clean-one', label: 'Clean One' },
+      { value: 'clean-two', label: 'Clean Two' },
+      { value: 'clean-portfolio-theme', label: 'Clean Portfolio' },
+      { value: 'haxor-slevin', label: 'Haxor Blog' },
+      { value: 'polaris-flex-theme', label: 'Polaris - Flex' },
+      { value: 'polaris-flex-sidebar', label: 'Polaris - Flex Sidebar' },
+      { value: 'polaris-invent-theme', label: 'Polaris - Invent' },
+      { value: 'custom-theme', label: 'Create Custom Theme' }
+    ];
+  } else {
+    let themes = await HAXCMS.getThemes();
+    for (var i in themes) {
+      items.push({
+        value: i,
+        label: themes[i].name
+      })
+    }
   }
+  
   return items;
 }
 
@@ -1312,7 +1326,7 @@ async function customSiteTheme(commandRun, project) {
   // add theme to site.json
   let themeObj = {
       element: project.customThemeName,
-      path: filePath,
+      path: "./custom/build/custom.es6.js",
       name: project.className,
   }
 
