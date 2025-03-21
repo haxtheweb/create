@@ -568,7 +568,7 @@ export async function siteCommandDetected(commandRun) {
                   // these have fixed possible values
                   else if (['parent', 'theme'].includes(nodeProp)) {
                     let l = nodeProp === 'parent' ? "-- no parent --" : "-- no theme --";
-                    let list = nodeProp === 'parent' ? await siteItemsOptionsList(activeHaxsite,  page.id) : await siteThemeList();
+                    let list = nodeProp === 'parent' ? await siteItemsOptionsList(activeHaxsite,  page.id) : await siteThemeList(true);
                     propValue = await p.select({
                       message: `${nodeProp}:`,
                       defaultValue: val,
@@ -721,7 +721,7 @@ export async function siteCommandDetected(commandRun) {
         case "site:theme":
           try {
             //theme
-            let list = await siteThemeList();
+            let list = await siteThemeList(true);
             activeHaxsite = await hax.systemStructureContext();
             let val = activeHaxsite.manifest.metadata.theme.element;
             if (!commandRun.options.theme) {
@@ -732,11 +732,64 @@ export async function siteCommandDetected(commandRun) {
                 options: list,
               });
             }
+
+            if (commandRun.options.theme === "custom-theme"){
+              if(!commandRun.options.customThemeName) {
+                commandRun.options.customThemeName = await p.text({
+                  message: 'Theme Name:',
+                  placeholder: `custom-${activeHaxsite.name}-theme`,
+                  required: false,
+                  validate: (value) => {
+                    if (!value) {
+                      return "Theme name is required (tab writes default)";
+                    }
+                    if(list.some(theme => theme.value === value)) {
+                      return "Theme name is already in use";
+                    }
+                    if (/^\d/.test(value)) {
+                      return "Theme name cannot start with a number";
+                    }
+                    if (/[A-Z]/.test(value)) {
+                      return "No uppercase letters allowed in theme name";
+                    }
+                    if (value.indexOf(' ') !== -1) {
+                      return "No spaces allowed in theme name";
+                    }
+                  }
+                })
+              }
+
+              if (!commandRun.options.customThemeTemplate) {
+                const options = [
+                  { value: 'base', label: 'Vanilla Theme with Hearty Documentation' },
+                  { value: 'polaris-flex', label: 'Minimalist Theme with Horizontal Nav' },
+                  { value: 'polaris-sidebar', label: 'Content-Focused Theme with Flexible Sidebar' },
+                ]
+
+                commandRun.options.customThemeTemplate = await p.select({
+                  message: 'Template:',
+                  required: false,
+                  options: options,
+                  initialValue: options[0]
+                })
+              }
+            }
+
             let themes = await HAXCMS.getThemes();
-            if (themes && commandRun.options.theme && themes[commandRun.options.theme]) {
-              activeHaxsite.manifest.metadata.theme = themes[commandRun.options.theme];
-              activeHaxsite.manifest.save(false);
-              recipe.log(siteLoggingName, commandString(commandRun));
+
+            if (themes && commandRun.options.theme) {
+              if (themes[commandRun.options.theme]){
+                activeHaxsite.manifest.metadata.theme = themes[commandRun.options.theme];
+                activeHaxsite.manifest.save(false);
+                recipe.log(siteLoggingName, commandString(commandRun));
+              } else {
+                commandRun.options.name = activeHaxsite.name;
+                commandRun.options.directory = activeHaxsite.directory;
+                // temporary for proof of concept
+                commandRun.options.npmClient = 'npm';
+
+                await customSiteTheme(commandRun, {});
+              }
             }
           }
           catch(e) {
@@ -1158,6 +1211,9 @@ export async function siteProcess(commandRun, project, port = '3000') {    // au
   });
   // matching the common object elsewhere tho different reference in this command since it creates from nothing
   // capture this if use input on the fly
+  if(!commandRun.arguments.action){
+    commandRun.arguments.action = project.name;
+  }
   commandRun.options.theme = project.theme;
   recipe.log(siteLoggingName, commandString(commandRun));
   if (commandRun.options.v) {
@@ -1240,15 +1296,29 @@ export async function siteItemsOptionsList(activeHaxsite, skipId = null) {
   return optionItems;
 }
 
-export async function siteThemeList() {
-  let themes = await HAXCMS.getThemes();
+export async function siteThemeList(coreOnly = true) {
   let items = [];
-  for (var i in themes) {
-    items.push({
-      value: i,
-      label: themes[i].name
-    })
+  if(coreOnly){
+    items = [
+      { value: 'clean-one', label: 'Clean One' },
+      { value: 'clean-two', label: 'Clean Two' },
+      { value: 'clean-portfolio-theme', label: 'Clean Portfolio' },
+      { value: 'haxor-slevin', label: 'Haxor Blog' },
+      { value: 'polaris-flex-theme', label: 'Polaris - Flex' },
+      { value: 'polaris-flex-sidebar', label: 'Polaris - Flex Sidebar' },
+      { value: 'polaris-invent-theme', label: 'Polaris - Invent' },
+      { value: 'custom-theme', label: 'Create Custom Theme' }
+    ];
+  } else {
+    let themes = await HAXCMS.getThemes();
+    for (var i in themes) {
+      items.push({
+        value: i,
+        label: themes[i].name
+      })
+    }
   }
+  
   return items;
 }
 
@@ -1273,10 +1343,33 @@ async function customSiteTheme(commandRun, project) {
   project.className = dashToCamel(project.customThemeName);
 
   // path to hax site
-  var sitePath = `${project.path}/${commandRun.options.name ? commandRun.options.name : project.name}`;
+  var sitePath 
+  if(!commandRun.options.directory){
+    sitePath = `${commandRun.options.path ? commandRun.options.path : project.path}/${commandRun.options.name ? commandRun.options.name : project.name}`;
+  } else {
+    // existing sites
+    sitePath = commandRun.options.directory;
+  }
 
   // path to new theme file
   const filePath = `${sitePath}/custom/src/${project.customThemeName}.js`;
+
+  if (!project.year){
+    project.year = new Date().getFullYear();
+  }
+
+  if(!project.author){
+     try {
+        let value = await exec(`git config user.name`);
+        project.author = value.stdout.trim();
+      }
+      catch(e) {
+        log(`
+          git user name not configured. Run the following to do this:\n
+          git config --global user.name "namehere"\n
+          git config --global user.email "email@here`, 'debug');
+      }
+  }
 
   // theme template to use
   const themeTemplate = commandRun.options.customThemeTemplate ? commandRun.options.customThemeTemplate : project.customThemeTemplate;
@@ -1312,7 +1405,7 @@ async function customSiteTheme(commandRun, project) {
   // add theme to site.json
   let themeObj = {
       element: project.customThemeName,
-      path: filePath,
+      path: "./custom/build/custom.es6.js",
       name: project.className,
   }
 
