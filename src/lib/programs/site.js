@@ -731,8 +731,10 @@ export async function siteCommandDetected(commandRun) {
                 initialValue: val,
                 options: list,
               });
+            }
 
-              if (commandRun.options.theme === "custom-theme"){
+            if (commandRun.options.theme === "custom-theme"){
+              if(!commandRun.options.customThemeName) {
                 commandRun.options.customThemeName = await p.text({
                   message: 'Theme Name:',
                   placeholder: `custom-${activeHaxsite.name}-theme`,
@@ -755,7 +757,9 @@ export async function siteCommandDetected(commandRun) {
                     }
                   }
                 })
+              }
 
+              if (!commandRun.options.customThemeTemplate) {
                 const options = [
                   { value: 'base', label: 'Vanilla Theme with Hearty Documentation' },
                   { value: 'polaris-flex', label: 'Minimalist Theme with Horizontal Nav' },
@@ -770,6 +774,7 @@ export async function siteCommandDetected(commandRun) {
                 })
               }
             }
+
             let themes = await HAXCMS.getThemes();
 
             if (themes && commandRun.options.theme) {
