@@ -1206,6 +1206,9 @@ export async function siteProcess(commandRun, project, port = '3000') {    // au
   });
   // matching the common object elsewhere tho different reference in this command since it creates from nothing
   // capture this if use input on the fly
+  if(!commandRun.arguments.action){
+    commandRun.arguments.action = project.name;
+  }
   commandRun.options.theme = project.theme;
   recipe.log(siteLoggingName, commandString(commandRun));
   if (commandRun.options.v) {
