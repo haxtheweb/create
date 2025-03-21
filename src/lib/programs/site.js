@@ -731,12 +731,60 @@ export async function siteCommandDetected(commandRun) {
                 initialValue: val,
                 options: list,
               });
+
+              if (commandRun.options.theme === "custom-theme"){
+                commandRun.options.customThemeName = await p.text({
+                  message: 'Theme Name:',
+                  placeholder: `custom-${activeHaxsite.name}-theme`,
+                  required: false,
+                  validate: (value) => {
+                    if (!value) {
+                      return "Theme name is required (tab writes default)";
+                    }
+                    if(list.some(theme => theme.value === value)) {
+                      return "Theme name is already in use";
+                    }
+                    if (/^\d/.test(value)) {
+                      return "Theme name cannot start with a number";
+                    }
+                    if (/[A-Z]/.test(value)) {
+                      return "No uppercase letters allowed in theme name";
+                    }
+                    if (value.indexOf(' ') !== -1) {
+                      return "No spaces allowed in theme name";
+                    }
+                  }
+                })
+
+                const options = [
+                  { value: 'base', label: 'Vanilla Theme with Hearty Documentation' },
+                  { value: 'polaris-flex', label: 'Minimalist Theme with Horizontal Nav' },
+                  { value: 'polaris-sidebar', label: 'Content-Focused Theme with Flexible Sidebar' },
+                ]
+
+                commandRun.options.customThemeTemplate = await p.select({
+                  message: 'Template:',
+                  required: false,
+                  options: options,
+                  initialValue: options[0]
+                })
+              }
             }
             let themes = await HAXCMS.getThemes();
-            if (themes && commandRun.options.theme && themes[commandRun.options.theme]) {
-              activeHaxsite.manifest.metadata.theme = themes[commandRun.options.theme];
-              activeHaxsite.manifest.save(false);
-              recipe.log(siteLoggingName, commandString(commandRun));
+
+            if (themes && commandRun.options.theme) {
+              if (themes[commandRun.options.theme]){
+                activeHaxsite.manifest.metadata.theme = themes[commandRun.options.theme];
+                activeHaxsite.manifest.save(false);
+                recipe.log(siteLoggingName, commandString(commandRun));
+              } else {
+                commandRun.options.name = activeHaxsite.name;
+                commandRun.options.directory = activeHaxsite.directory;
+                // temporary for proof of concept
+                commandRun.options.npmClient = 'npm';
+
+                await customSiteTheme(commandRun, {});
+              }
             }
           }
           catch(e) {
@@ -1287,10 +1335,33 @@ async function customSiteTheme(commandRun, project) {
   project.className = dashToCamel(project.customThemeName);
 
   // path to hax site
-  var sitePath = `${project.path}/${commandRun.options.name ? commandRun.options.name : project.name}`;
+  var sitePath 
+  if(!commandRun.options.directory){
+    sitePath = `${commandRun.options.path ? commandRun.options.path : project.path}/${commandRun.options.name ? commandRun.options.name : project.name}`;
+  } else {
+    // existing sites
+    sitePath = commandRun.options.directory;
+  }
 
   // path to new theme file
   const filePath = `${sitePath}/custom/src/${project.customThemeName}.js`;
+
+  if (!project.year){
+    project.year = new Date().getFullYear();
+  }
+
+  if(!project.author){
+     try {
+        let value = await exec(`git config user.name`);
+        project.author = value.stdout.trim();
+      }
+      catch(e) {
+        log(`
+          git user name not configured. Run the following to do this:\n
+          git config --global user.name "namehere"\n
+          git config --global user.email "email@here`, 'debug');
+      }
+  }
 
   // theme template to use
   const themeTemplate = commandRun.options.customThemeTemplate ? commandRun.options.customThemeTemplate : project.customThemeTemplate;
