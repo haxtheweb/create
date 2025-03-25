@@ -721,8 +721,9 @@ export async function siteCommandDetected(commandRun) {
         case "site:theme":
           try {
             //theme
-            let list = await siteThemeList(true);
             activeHaxsite = await hax.systemStructureContext();
+            let list = await siteThemeList(true, activeHaxsite.directory);
+
             let val = activeHaxsite.manifest.metadata.theme.element;
             if (!commandRun.options.theme) {
               commandRun.options.theme = await p.select({
@@ -782,14 +783,23 @@ export async function siteCommandDetected(commandRun) {
                 activeHaxsite.manifest.metadata.theme = themes[commandRun.options.theme];
                 activeHaxsite.manifest.save(false);
                 recipe.log(siteLoggingName, commandString(commandRun));
-              } else {
+              } else if (commandRun.options.theme === "custom-theme") {
                 commandRun.options.name = activeHaxsite.name;
                 commandRun.options.directory = activeHaxsite.directory;
                 // temporary for proof of concept
                 commandRun.options.npmClient = 'npm';
 
                 await customSiteTheme(commandRun, {});
-              }
+              } else if (!themes[commandRun.options.theme]){
+                let themeObj = {
+                  element: commandRun.options.theme,
+                  path: "./custom/build/custom.es6.js",
+                  name: dashToCamel(commandRun.options.theme),
+                }
+              
+                activeHaxsite.manifest.metadata.theme = themeObj;
+                activeHaxsite.manifest.save(false);
+              } 
             }
           }
           catch(e) {
@@ -1296,7 +1306,7 @@ export async function siteItemsOptionsList(activeHaxsite, skipId = null) {
   return optionItems;
 }
 
-export async function siteThemeList(coreOnly = true) {
+export async function siteThemeList(coreOnly = true, directory = null) {
   let items = [];
   if(coreOnly){
     items = [
@@ -1309,6 +1319,20 @@ export async function siteThemeList(coreOnly = true) {
       { value: 'polaris-invent-theme', label: 'Polaris - Invent' },
       { value: 'custom-theme', label: 'Create Custom Theme' }
     ];
+    if(fs.existsSync(`${directory}/custom/custom-elements.json`)){
+      let customThemeArray = JSON.parse(fs.readFileSync(`${directory
+        }/custom/custom-elements.json`, 'utf8')).modules;
+      
+      for (var i in customThemeArray){
+        if(customThemeArray[i].declarations[0].superclass.name === "PolarisFlexTheme" ||
+          customThemeArray[i].declarations[0].superclass.name === "HAXCMSLitElementTheme") {
+            items.push({
+              value: customThemeArray[i].declarations[0].tagName,
+              label: customThemeArray[i].declarations[0].name
+            })
+        }
+      }
+    }
   } else {
     let themes = await HAXCMS.getThemes();
     for (var i in themes) {
@@ -1413,7 +1437,8 @@ async function customSiteTheme(commandRun, project) {
   activeHaxsite.manifest.save(false);
 
   // install and build theme dependencies
-  await exec(`cd ${sitePath}/custom/ && ${commandRun.options.npmClient} install && ${commandRun.options.npmClient} run build && cd ${sitePath}`);
+  await exec(`cd ${sitePath}/custom/ && ${commandRun.options.npmClient} install && ${commandRun.options.npmClient} run build 
+    && ${commandRun.options.npmClient} run analyze && cd ${sitePath}`);
 }
 
 // @fork of the hax core util for this so that we avoid api difference between real dom and parse nodejs dom
