@@ -404,44 +404,48 @@ export async function webcomponentCommandDetected(commandRun, packageData = {}, 
       case "wc:stats":
       case "webcomponent:status":
       case "webcomponent:stats":
-        let webcomponentStats = {};
-        if(packageData){
-          webcomponentStats.title = packageData.name;
-          webcomponentStats.description = packageData.description
-          webcomponentStats.git = packageData.repository.url;
-        }
-        webcomponentStats.modules = [];
-        webcomponentStats.superclasses = [];
-        if(fs.existsSync(`${process.cwd()}/custom-elements.json`)){
-              let components = JSON.parse(fs.readFileSync(`${process.cwd()
-                }/custom-elements.json`, 'utf8')).modules;
-              
-              for (var i in components){
-                webcomponentStats.modules.push(`${components[i].path}`)
-                if (components[i].declarations[0].superclass && !webcomponentStats.superclasses.includes(components[i].declarations[0].superclass.name)) {
-                  webcomponentStats.superclasses.push(`${components[i].declarations[0].superclass.name}`);
+        try {
+          let webcomponentStats = {};
+          if(packageData){
+            webcomponentStats.title = packageData.name;
+            webcomponentStats.description = packageData.description
+            webcomponentStats.git = packageData.repository.url;
+          }
+          webcomponentStats.modules = [];
+          webcomponentStats.superclasses = [];
+          if(fs.existsSync(`${process.cwd()}/custom-elements.json`)){
+                let components = JSON.parse(fs.readFileSync(`${process.cwd()
+                  }/custom-elements.json`, 'utf8')).modules;
+                
+                for (var i in components){
+                  webcomponentStats.modules.push(`${components[i].path}`)
+                  if (components[i].declarations[0].superclass && !webcomponentStats.superclasses.includes(components[i].declarations[0].superclass.name)) {
+                    webcomponentStats.superclasses.push(`${components[i].declarations[0].superclass.name}`);
+                  }
                 }
               }
-            }
 
-        if (!commandRun.options.format && !commandRun.options.quiet) {
-          p.intro(`${color.bgBlue(color.white(` Title: ${webcomponentStats.title} `))}`);
-          p.intro(`${color.bgBlue(color.white(` Description: ${webcomponentStats.description} `))}`);
-          if(webcomponentStats.git){
-            p.intro(`${color.bgBlue(color.white(` Git: ${webcomponentStats.git} `))}`);
+          if (!commandRun.options.format && !commandRun.options.quiet) {
+            p.intro(`${color.bgBlue(color.white(` Title: ${webcomponentStats.title} `))}`);
+            p.intro(`${color.bgBlue(color.white(` Description: ${webcomponentStats.description} `))}`);
+            if(webcomponentStats.git){
+              p.intro(`${color.bgBlue(color.white(` Git: ${webcomponentStats.git} `))}`);
+            }
+            if(webcomponentStats.modules.length !== 0){
+              p.intro(`${color.bgBlue(color.white(` Modules: ${webcomponentStats.modules} `))}`);  
+              p.intro(`${color.bgBlue(color.white(` Number of modules: ${webcomponentStats.modules.length} `))}`);
+            }
+            if(webcomponentStats.superclasses.length !== 0){
+              p.intro(`${color.bgBlue(color.white(` Inherited superclasses: ${webcomponentStats.superclasses} `))}`);
+            }
           }
-          if(webcomponentStats.modules.length !== 0){
-            p.intro(`${color.bgBlue(color.white(` Modules: ${webcomponentStats.modules} `))}`);  
-            p.intro(`${color.bgBlue(color.white(` Number of modules: ${webcomponentStats.modules.length} `))}`);
-          }
-          if(webcomponentStats.superclasses.length !== 0){
-            p.intro(`${color.bgBlue(color.white(` Inherited superclasses: ${webcomponentStats.superclasses} `))}`);
-          }
+        } catch(e) {
+          log(e.stderr)
         }
       break;
       case "wc:element":
       case "webcomponent:element":
-        if(packageData){
+        try {
           if(!commandRun.options.name){
             commandRun.options.name = await p.text({
               message: 'Component name:',
@@ -519,15 +523,12 @@ export async function webcomponentCommandDetected(commandRun, packageData = {}, 
           const filePath = `${project.path}/${project.name}.js`
           await fs.copyFileSync(`${process.mainModule.path}/templates/generic/webcomponent.js`, filePath)
 
-          try {
-            const ejsString = ejs.fileLoader(filePath, 'utf8');
-            let content = ejs.render(ejsString, project);
-            // file written successfully  
-            fs.writeFileSync(filePath, content);
-          } catch (err) {
-            console.error(filePath);
-            console.error(err);
-          }
+        
+          const ejsString = ejs.fileLoader(filePath, 'utf8');
+          let content = ejs.render(ejsString, project);
+          // file written successfully  
+          fs.writeFileSync(filePath, content);
+          
           if (packageData.customElements) {
             await webcomponentGenerateHAXSchema(commandRun, packageData);
           } 
@@ -536,17 +537,22 @@ export async function webcomponentCommandDetected(commandRun, packageData = {}, 
 💻  Add to an HTML file: ${color.bold(color.yellow(color.bgBlack(`<script type="module" src="${project.name}"></script>`)))}`);
               // at least a second to see the message print at all
           await setTimeout(1000);
-        } else {
-          console.error(color.red("Not a valid web component project"));
+        } catch(e) {
+          log(e.stderr)
+          // Original ejs.render error checking
+          console.error(color.red(filePath));
+          console.error(color.red(e));
         }
 
       break;
       case "wc:haxproperties":
       case "webcomponent:haxproperties":
-        if (packageData.customElements) {
-          await webcomponentGenerateHAXSchema(commandRun, packageData);
-        } else {
-          console.error(color.red("No custom-elements.json reference found in package.json"));
+        try{
+          if (packageData.customElements) {
+            await webcomponentGenerateHAXSchema(commandRun, packageData);
+          }
+        } catch(e) {
+          log(e.stderr)
         }
       break;
       case "quit":
