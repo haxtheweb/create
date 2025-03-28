@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import * as fs from 'node:fs';
+import * as path from 'node:path';
 import { setTimeout } from 'node:timers/promises';
 import * as ejs from "ejs";
 import * as p from '@clack/prompts';
@@ -283,7 +284,7 @@ ${color.underline(color.cyan(`http://localhost:${port}`))}
     // at least a second to see the message print at all
     await setTimeout(1000);
     try {
-      await exec(`cd ${optionPath} && ${command}`);
+      await exec(`cd ${optionPath} && ${command} && ${commandRun.options.npmClient} run analyze`);
     }
     catch(e) {
     // don't log bc output is weird
@@ -302,45 +303,254 @@ export async function webcomponentCommandDetected(commandRun, packageData = {}, 
     p.intro(`${color.bgBlack(color.white(` HAXTheWeb : Webcomponent detected `))}`);
     p.intro(`${color.bgBlue(color.white(` Web component name: ${packageData.name} `))}`);  
   }
-  // if we support customElement analyzer (hax wcs do) then generate if asked
-  if (commandRun.options.writeHaxProperties && packageData.customElements) {
-    webcomponentGenerateHAXSchema(commandRun, packageData);
+
+  let actions = [
+    { value: 'start', label: "Launch project"},
+    { value: 'wc:stats', label: "Check status of web component"},
+    { value: 'wc:element', label: "Add a new Lit module to an existing project"},
+    { value: 'wc:haxproperties', label: "Write haxProperties schema"},
+  ]
+
+  let actionAssigned = false;
+  // default to status unless already set so we don't issue a create in a create
+  if (!commandRun.arguments.action) {
+    actionAssigned = true;
+    commandRun.arguments.action = 'wc:status';
   }
-  else {
-    if (!commandRun.options.quiet) {
-      p.note(`${merlinSays(`I have summoned a sub-process daemon 👹`)}
-      
-      🚀  Running your ${color.bold('webcomponent')} ${color.bold(packageData.name)}:
-            ${color.underline(color.cyan(`http://localhost:${port}`))}
-      
-      🏠  Launched: ${color.underline(color.bold(color.yellow(color.bgBlack(`${process.cwd()}`))))}
-      💻  Folder: ${color.bold(color.yellow(color.bgBlack(`cd ${process.cwd()}`)))}
-      📂  Open folder: ${color.bold(color.yellow(color.bgBlack(`open ${process.cwd()}`)))}
-      📘  VS Code Project: ${color.bold(color.yellow(color.bgBlack(`code ${process.cwd()}`)))}
-      🚧  Launch later: ${color.bold(color.yellow(color.bgBlack(`${commandRun.options.npmClient} start`)))}
-      
-      ⌨️  To exit 🧙 Merlin press: ${color.bold(color.black(color.bgRed(` CTRL + C `)))}
-      `);
-    }
-    try {
-      // ensure it's installed first, unless it's a monorepo. basic check for node_modules
-      // folder as far as if already installed so we don't double install needlessly
-      if (!commandRun.options.isMonorepo && !fs.existsSync("./node_modules")) {
-        if (!commandRun.options.quiet) {
-          let s = p.spinner();
-          s.start(merlinSays(`Installation magic (${commandRun.options.npmClient} install)`));
-          await exec(`${commandRun.options.npmClient} install`);
-          s.stop(merlinSays(`Everything is installed. It's go time`));
-        }
-        else {
-          await exec(`${commandRun.options.npmClient} install`);
+
+  commandRun.command = "webcomponent";
+
+  let operation = {
+    ...commandRun.arguments,
+    ...commandRun.options
+  };
+
+  actions.push({ value: 'quit', label: "🚪 Quit"});
+
+  while (operation.action !== 'quit') {
+    if (!operation.action) {
+      commandRun = {
+        command: null,
+        arguments: {},
+        options: { 
+          npmClient: `${operation.npmClient}`
         }
       }
-      await exec(`${commandRun.options.npmClient} start`);
+      operation = await p.group(
+        {
+          action: ({ results }) =>
+            p.select({
+              message: `Actions you can take:`,
+              defaultValue: actions[0],
+              initialValue: actions[0],
+              options: actions,
+            }),
+        },
+        {
+          onCancel: () => {
+            if (!commandRun.options.quiet) {
+              p.cancel('🧙 Merlin: Canceling CLI.. HAX ya later 🪄');
+            }
+            process.exit(0);
+          },
+        });
     }
-    catch(e) {
-      // don't log bc output is odd
+    if (operation.action) {
+      p.intro(`hax wc ${color.bold(operation.action)}`);
     }
+    switch (operation.action) {
+      case "start":
+        if (!commandRun.options.quiet) {
+          // Multi-line clack spacing
+          p.note(`${merlinSays(`I have summoned a sub-process daemon 👹`)}
+
+🚀  Running your ${color.bold('webcomponent')} ${color.bold(packageData.name)}:
+      ${color.underline(color.cyan(`http://localhost:${port}`))}
+
+🏠  Launched: ${color.underline(color.bold(color.yellow(color.bgBlack(`${process.cwd()}`))))}
+💻  Folder: ${color.bold(color.yellow(color.bgBlack(`cd ${process.cwd()}`)))}
+📂  Open folder: ${color.bold(color.yellow(color.bgBlack(`open ${process.cwd()}`)))}
+📘  VS Code Project: ${color.bold(color.yellow(color.bgBlack(`code ${process.cwd()}`)))}
+🚧  Launch later: ${color.bold(color.yellow(color.bgBlack(`${commandRun.options.npmClient} start`)))}
+
+⌨️  To exit 🧙 Merlin press: ${color.bold(color.black(color.bgRed(` CTRL + C `)))}
+          `);
+        }
+        try {
+          // ensure it's installed first, unless it's a monorepo. basic check for node_modules
+          // folder as far as if already installed so we don't double install needlessly
+          if (!commandRun.options.isMonorepo && !fs.existsSync("./node_modules")) {
+            if (!commandRun.options.quiet) {
+              let s = p.spinner();
+              s.start(merlinSays(`Installation magic (${commandRun.options.npmClient} install)`));
+              await exec(`${commandRun.options.npmClient} install`);
+              s.stop(merlinSays(`Everything is installed. It's go time`));
+            }
+            else {
+              await exec(`${commandRun.options.npmClient} install`);
+            }
+          }
+          await exec(`${commandRun.options.npmClient} start`);
+        }
+        catch(e) {
+          // don't log bc output is odd
+        }
+      break;
+      case "wc:status":
+      case "wc:stats":
+        let webcomponentStats = {};
+        if(packageData){
+          webcomponentStats.title = packageData.name;
+          webcomponentStats.description = packageData.description
+          webcomponentStats.git = packageData.repository.url;
+        }
+        webcomponentStats.modules = [];
+        webcomponentStats.superclasses = [];
+        if(fs.existsSync(`${process.cwd()}/custom-elements.json`)){
+              let components = JSON.parse(fs.readFileSync(`${process.cwd()
+                }/custom-elements.json`, 'utf8')).modules;
+              
+              for (var i in components){
+                webcomponentStats.modules.push(`${components[i].path}`)
+                if (components[i].declarations[0].superclass && !webcomponentStats.superclasses.includes(components[i].declarations[0].superclass.name)) {
+                  webcomponentStats.superclasses.push(`${components[i].declarations[0].superclass.name}`);
+                }
+              }
+            }
+
+        if (!commandRun.options.format && !commandRun.options.quiet) {
+          p.intro(`${color.bgBlue(color.white(` Title: ${webcomponentStats.title} `))}`);
+          p.intro(`${color.bgBlue(color.white(` Description: ${webcomponentStats.description} `))}`);
+          if(webcomponentStats.git){
+            p.intro(`${color.bgBlue(color.white(` Git: ${webcomponentStats.git} `))}`);
+          }
+          if(webcomponentStats.modules.length !== 0){
+            p.intro(`${color.bgBlue(color.white(` Modules: ${webcomponentStats.modules} `))}`);  
+            p.intro(`${color.bgBlue(color.white(` Number of modules: ${webcomponentStats.modules.length} `))}`);
+          }
+          if(webcomponentStats.superclasses.length !== 0){
+            p.intro(`${color.bgBlue(color.white(` Inherited superclasses: ${webcomponentStats.superclasses} `))}`);
+          }
+        }
+      break;
+      case "wc:element":
+        if(packageData){
+          if(!commandRun.options.name){
+            commandRun.options.name = await p.text({
+              message: 'Component name:',
+              placeholder: 'my-component',
+              required: true,
+              validate: (value) => {
+                if (!value) {
+                  return "Name is required (tab writes default)";
+                }
+                if (value.toLocaleLowerCase() !== value) {
+                  return "Name must be lowercase";
+                }
+                if (/^\d/.test(value)) {
+                  return "Name cannot start with a number";
+                }
+                if (value.indexOf(' ') !== -1) {
+                  return "No spaces allowed in name";
+                }
+                if ((value.indexOf('-') === -1 || value.replace('--', '') !== value || value[0] === '-' || value[value.length-1] === '-')) {
+                  return "Name must include at least one `-` and must not start or end name.";
+                }
+                // assumes auto was selected in CLI
+                let joint = process.cwd();
+                if (commandRun.options.path) {
+                  joint = commandRun.options.path;
+                }
+                if (fs.existsSync(path.join(joint, value))) {
+                  return `${path.join(joint, value)} exists, rename this project`;
+                }
+              }
+            });
+          } else {
+              let value = commandRun.options.name;
+              if (!value) {
+                console.error(color.red("Name is required (tab writes default)"));
+                process.exit(1);
+              }
+              if (value.toLocaleLowerCase() !== value) {
+                console.error(color.red("Name must be lowercase"));
+                process.exit(1);
+              }
+              if (/^\d/.test(value)) {
+                console.error(color.red("Name cannot start with a number"));
+              }
+              if (value.indexOf(' ') !== -1) {
+                console.error(color.red("No spaces allowed in name"));
+                process.exit(1);
+              }
+              if ((value.indexOf('-') === -1 || value.replace('--', '') !== value || value[0] === '-' || value[value.length-1] === '-')) {
+                console.error(color.red("Name must include at least one `-` and must not start or end name."));
+                process.exit(1);
+              }
+              // assumes auto was selected in CLI
+              let joint = process.cwd();
+              if (commandRun.options.path) {
+                joint = commandRun.options.path;
+              }
+              if (fs.existsSync(path.join(joint, value))) {
+                console.error(color.red(`${path.join(joint, value)} exists, rename this project`));
+                process.exit(1);
+              }
+          }
+
+          const project = {
+              name: commandRun.options.name,
+              mainModule: packageData.name,
+              path: process.cwd(),
+              className: dashToCamel(commandRun.options.name),
+              year: new Date().getFullYear(),
+          }
+          if(packageData.author){
+            project.author = packageData.author.name;
+          }
+          
+          const filePath = `${project.path}/${project.name}.js`
+          await fs.copyFileSync(`${process.mainModule.path}/templates/webcomponent/generic/webcomponent.js`, filePath)
+
+          try {
+            const ejsString = ejs.fileLoader(filePath, 'utf8');
+            let content = ejs.render(ejsString, project);
+            // file written successfully  
+            fs.writeFileSync(filePath, content);
+          } catch (err) {
+            console.error(filePath);
+            console.error(err);
+          }
+          if (packageData.customElements) {
+            await webcomponentGenerateHAXSchema(commandRun, packageData);
+          } 
+
+          p.note(`🧙  Add to another web component (.js): ${color.underline(color.bold(color.yellow(color.bgBlack(`import ./${project.name}.js`))))}
+💻  Add to an HTML file: ${color.bold(color.yellow(color.bgBlack(`<script type="module" src="${project.name}"></script>`)))}`);
+              // at least a second to see the message print at all
+          await setTimeout(1000);
+        } else {
+          console.error(color.red("Not a valid web component project"));
+        }
+
+      break;
+      case "wc:haxproperties":
+        if (packageData.customElements) {
+          await webcomponentGenerateHAXSchema(commandRun, packageData);
+        } else {
+          console.error(color.red("No custom-elements.json reference found in package.json"));
+        }
+      break;
+      case "quit":
+        // quit
+        process.exit(0);
+      break;
+    }
+      // y or noi need to act like it ran and finish instead of looping options
+    if (commandRun.options.y || !commandRun.options.i || !actionAssigned) {
+      process.exit(0);
+    }
+    operation.action = null;
   }
 }
 
