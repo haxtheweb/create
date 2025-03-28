@@ -297,6 +297,15 @@ ${color.underline(color.cyan(`http://localhost:${port}`))}
   }
 }
 
+export function webcomponentActions(){
+  return [
+    { value: 'start', label: "Launch project"},
+    { value: 'wc:stats', label: "Check status of web component"},
+    { value: 'wc:element', label: "Add a new Lit module to an existing project"},
+    { value: 'wc:haxproperties', label: "Write haxProperties schema"},
+  ];
+}
+
 // autodetect webcomponent
 export async function webcomponentCommandDetected(commandRun, packageData = {}, port = "8000") {
   if (!commandRun.options.quiet) {
@@ -304,12 +313,7 @@ export async function webcomponentCommandDetected(commandRun, packageData = {}, 
     p.intro(`${color.bgBlue(color.white(` Web component name: ${packageData.name} `))}`);  
   }
 
-  let actions = [
-    { value: 'start', label: "Launch project"},
-    { value: 'wc:stats', label: "Check status of web component"},
-    { value: 'wc:element', label: "Add a new Lit module to an existing project"},
-    { value: 'wc:haxproperties', label: "Write haxProperties schema"},
-  ]
+  let actions = webcomponentActions();
 
   let actionAssigned = false;
   // default to status unless already set so we don't issue a create in a create
@@ -398,6 +402,8 @@ export async function webcomponentCommandDetected(commandRun, packageData = {}, 
       break;
       case "wc:status":
       case "wc:stats":
+      case "webcomponent:status":
+      case "webcomponent:stats":
         let webcomponentStats = {};
         if(packageData){
           webcomponentStats.title = packageData.name;
@@ -434,6 +440,7 @@ export async function webcomponentCommandDetected(commandRun, packageData = {}, 
         }
       break;
       case "wc:element":
+      case "webcomponent:element":
         if(packageData){
           if(!commandRun.options.name){
             commandRun.options.name = await p.text({
@@ -535,6 +542,7 @@ export async function webcomponentCommandDetected(commandRun, packageData = {}, 
 
       break;
       case "wc:haxproperties":
+      case "webcomponent:haxproperties":
         if (packageData.customElements) {
           await webcomponentGenerateHAXSchema(commandRun, packageData);
         } else {

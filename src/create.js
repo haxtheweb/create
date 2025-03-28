@@ -10,7 +10,7 @@ import color from 'picocolors';
 import { haxIntro, communityStatement } from "./lib/statements.js";
 import { log, consoleTransport, logger } from "./lib/logging.js";
 import { auditCommandDetected } from './lib/programs/audit.js';
-import { webcomponentProcess, webcomponentCommandDetected } from "./lib/programs/webcomponent.js";
+import { webcomponentProcess, webcomponentCommandDetected, webcomponentActions } from "./lib/programs/webcomponent.js";
 import { siteActions, siteNodeOperations, siteProcess, siteCommandDetected, siteThemeList } from "./lib/programs/site.js";
 import { camelToDash } from "./lib/utils.js";
 import * as hax from "@haxtheweb/haxcms-nodejs";
@@ -140,11 +140,17 @@ async function main() {
     program.option(`--${camelToDash(siteNodeOps[i].value)} <char>`, `${siteNodeOps[i].label}`)
     siteProg.option(`--${camelToDash(siteNodeOps[i].value)} <char>`, `${siteNodeOps[i].label}`)
   }
+
   // webcomponent program
+  let strWebcomponentActions = '';
+  webcomponentActions().forEach(action => {
+    strWebcomponentActions += `${action.value} - ${action.label}` + "\n\r";
+  });
   program
   .command('wc')
+  .alias('webcomponent')
   .description('Create Lit based web components, with HAX recommendations')
-  .argument('[action]', 'Actions to perform on web component include:')
+  .argument('[action]', 'Actions to perform on web component include:' + "\n\r" + strWebcomponentActions)
   .action((action) => {
     commandRun = {
       command: 'webcomponent',
