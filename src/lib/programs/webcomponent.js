@@ -510,7 +510,7 @@ export async function webcomponentCommandDetected(commandRun, packageData = {}, 
           }
           
           const filePath = `${project.path}/${project.name}.js`
-          await fs.copyFileSync(`${process.mainModule.path}/templates/webcomponent/generic/webcomponent.js`, filePath)
+          await fs.copyFileSync(`${process.mainModule.path}/templates/generic/webcomponent.js`, filePath)
 
           try {
             const ejsString = ejs.fileLoader(filePath, 'utf8');
