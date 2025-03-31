@@ -10,7 +10,7 @@ import color from 'picocolors';
 import { haxIntro, communityStatement } from "./lib/statements.js";
 import { log, consoleTransport, logger } from "./lib/logging.js";
 import { auditCommandDetected } from './lib/programs/audit.js';
-import { webcomponentProcess, webcomponentCommandDetected } from "./lib/programs/webcomponent.js";
+import { webcomponentProcess, webcomponentCommandDetected, webcomponentActions } from "./lib/programs/webcomponent.js";
 import { siteActions, siteNodeOperations, siteProcess, siteCommandDetected, siteThemeList } from "./lib/programs/site.js";
 import { camelToDash } from "./lib/utils.js";
 import * as hax from "@haxtheweb/haxcms-nodejs";
@@ -46,6 +46,7 @@ async function main() {
   .option('--debug', 'Output for developers')
   .option('--format <char>', 'Output format; json (default), yaml')
   .option('--path <char>', 'where to perform operation')
+  .option('--name <char>', 'name of the project/web component')
   .option('--npm-client <char>', 'npm client to use (must be installed) npm, yarn, pnpm', 'npm')
   .option('--y', 'yes to all questions')
   .option('--skip', 'skip frills like animations')
@@ -66,7 +67,6 @@ async function main() {
   .option('--import-structure <char>', `import method to use:\n\rpressbooksToSite\n\relmslnToSite\n\rhaxcmsToSite\n\rnotionToSite\n\rgitbookToSite\n\revolutionToSite\n\rhtmlToSite\n\rdocxToSite`)
   .option('--node-op <char>', 'node operation to perform')
   .option('--item-id <char>', 'node ID to operate on')
-  .option('--name <char>', 'name of the project')
   .option('--domain <char>', 'published domain name')
   .option('--title-scrape <char>', 'CSS Selector for `title` in resource')
   .option('--content-scrape <char>', 'CSS Selector for `body` in resource')
@@ -140,26 +140,33 @@ async function main() {
     program.option(`--${camelToDash(siteNodeOps[i].value)} <char>`, `${siteNodeOps[i].label}`)
     siteProg.option(`--${camelToDash(siteNodeOps[i].value)} <char>`, `${siteNodeOps[i].label}`)
   }
+
   // webcomponent program
+  let strWebcomponentActions = '';
+  webcomponentActions().forEach(action => {
+    strWebcomponentActions += `${action.value} - ${action.label}` + "\n\r";
+  });
   program
-  .command('webcomponent')
+  .command('wc')
+  .alias('webcomponent')
   .description('Create Lit based web components, with HAX recommendations')
-  .argument('[name]', 'name of the project')
-  .action((name) => {
+  .argument('[action]', 'Actions to perform on web component include:' + "\n\r" + strWebcomponentActions)
+  .action((action) => {
     commandRun = {
       command: 'webcomponent',
       arguments: {},
       options: {}
     };
     // if name set, populate
-    if (name) {
-      commandRun.arguments.name = name;
+    if (action) {
+      commandRun.arguments.action = action;
       commandRun.options.skip = true;
     }
   })
   .option('--path <char>', 'path the project should be created in')
   .option('--org <char>', 'organization for package.json')
   .option('--author <char>', 'author for site / package.json')
+  .option('--name <char>', 'name of the web component')
   .option('--writeHaxProperties', 'Write haxProperties for the element')
   .option('--to-file <char>', 'redirect command output to a file')
   .option('--no-extras', 'skip all extra / automatic command processing')
@@ -404,7 +411,7 @@ async function main() {
               }
             },
             name: ({ results }) => {
-              if (!commandRun.arguments.action && !commandRun.arguments.name) {
+              if (!commandRun.arguments.action) {
                 let placeholder = "mysite";
                 let message = "Site name:";
                 if (commandRun.command === "webcomponent" || results.type === "webcomponent") {
@@ -449,8 +456,8 @@ async function main() {
                   }
                 });  
               }
-              if (commandRun.arguments.name) {
-                let value = commandRun.arguments.name;
+              if (commandRun.arguments.action) {
+                let value = commandRun.arguments.action;
                 if (!value) {
                   program.error(color.red("Name is required (tab writes default)"));
                   process.exit(1);
@@ -639,7 +646,7 @@ async function main() {
         );
         // merge cli options with project options assume this is NOT a monorepo
         // but spread will overwrite if needed
-        if (commandRun.command === 'webcomponent' && !commandRun.arguments.name) {
+        if (commandRun.command === 'webcomponent' && !commandRun.arguments.action) {
           project = {
             isMonorepo: false,
             ...project,
@@ -656,12 +663,13 @@ async function main() {
         }
         project.year = new Date().getFullYear();
         project.version = await HAXCMS.getHAXCMSVersion();
+        if (!project.name && commandRun.arguments.action) {
+          project.name = commandRun.arguments.action;
+        }
+
         // resolve site vs multi-site
         switch (project.type) {
           case 'site':
-            if (!project.name && commandRun.arguments.action) {
-              project.name = commandRun.arguments.action;
-            }
             // only set path if not already set
             if (!commandRun.options.path) {
               commandRun.options.path = process.cwd();
