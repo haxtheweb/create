@@ -1367,7 +1367,7 @@ async function customSiteTheme(commandRun, project) {
   project.className = dashToCamel(project.customThemeName);
 
   // path to hax site
-  var sitePath 
+  var sitePath;
   if(!commandRun.options.directory){
     sitePath = `${commandRun.options.path ? commandRun.options.path : project.path}/${commandRun.options.name ? commandRun.options.name : project.name}`;
   } else {
@@ -1437,8 +1437,7 @@ async function customSiteTheme(commandRun, project) {
   activeHaxsite.manifest.save(false);
 
   // install and build theme dependencies
-  await exec(`cd ${sitePath}/custom/ && ${commandRun.options.npmClient} install && ${commandRun.options.npmClient} run build 
-    && ${commandRun.options.npmClient} run analyze && cd ${sitePath}`);
+  await exec(`cd ${sitePath}/custom/ && ${commandRun.options.npmClient} install && ${commandRun.options.npmClient} run build && ${commandRun.options.npmClient} run analyze && cd ${sitePath}`);
 }
 
 // @fork of the hax core util for this so that we avoid api difference between real dom and parse nodejs dom

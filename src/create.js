@@ -670,10 +670,15 @@ async function main() {
         // resolve site vs multi-site
         switch (project.type) {
           case 'site':
-            // only set path if not already set
-            if (!commandRun.options.path) {
-              commandRun.options.path = process.cwd();
+            // only set path if not already set, normalize across clack and commander
+            if (commandRun.options.path && !project.path) {
               project.path = commandRun.options.path;
+            }
+            if (!project.path) {
+              project.path = process.cwd();
+            }
+            if (!commandRun.options.path) {
+              commandRun.options.path = project.path;
             }
             await siteProcess(commandRun, project);
           break;
