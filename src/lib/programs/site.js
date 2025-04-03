@@ -1255,6 +1255,16 @@ export async function siteProcess(commandRun, project, port = '3000') {    // au
     catch(e) {        
     }
   }
+  // ensure dot files is there because it doesn't copy for some reason for sites :\
+  if (!fs.existsSync(`${project.path}/${project.name}/.gitignore`)) {
+    await fs.copyFileSync(`${process.mainModule.path}/templates/sitedotfiles/_gitignore`, `${project.path}/${project.name}/.gitignore`);
+  }
+  if (!fs.existsSync(`${project.path}/${project.name}/._npmignore`)) {
+    await fs.copyFileSync(`${process.mainModule.path}/templates/sitedotfiles/_npmignore`, `${project.path}/${project.name}/.npmignore`);
+  }
+  if (!fs.existsSync(`${project.path}/${project.name}/._surgeignore`)) {
+    await fs.copyFileSync(`${process.mainModule.path}/templates/sitedotfiles/_surgeignore`, `${project.path}/${project.name}/.surgeignore`);    
+  }
   // options for install, git and other extras
   // can't launch if we didn't install first so launch implies installation
   if (project.extras && project.extras.includes && project.extras.includes('launch')) {
