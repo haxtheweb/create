@@ -30,6 +30,27 @@ const HAXCMS = hax.HAXCMS;
 import * as child_process from "child_process";
 import * as util from "node:util";
 const exec = util.promisify(child_process.exec);
+const spawn = (child_process.spawn);
+
+async function interactiveExec(command, args = [], options = {}) {
+  return new Promise((resolve, reject) => {
+    process.env.NODE_NO_WARNINGS = 1;
+    const child = spawn(command, args, { stdio: 'inherit', ...options });
+    child.on('exit', (code) => {
+      if (code === 0) {
+        resolve();
+      } else {
+        reject(new Error(`Command failed with code ${code}`));
+      }
+    });
+    child.on('error', (err) => {
+      reject(err);
+    });
+  });
+}
+
+
+
 var sysSurge = true;
 exec('surge --version', error => {
   if (error) {
@@ -123,7 +144,7 @@ export async function siteCommandDetected(commandRun) {
     if (!commandRun.options.title) {
       commandRun.options.title = "New Page";
     }
-    if (!commandRun.options.domain &&  commandRun.options.y) {
+    if (!commandRun.options.domain && commandRun.options.y) {
       commandRun.options.domain = `haxcli-${activeHaxsite.name}.surge.sh`;
     }
     // infinite loop until quitting the cli
@@ -818,24 +839,26 @@ export async function siteCommandDetected(commandRun) {
               log(execOutput.stdout.trim());
               sysSurge = true;
             }
-            if (!commandRun.options.domain) {
-              commandRun.options.domain = await p.text({
-                message: `Domain for surge`,
-                initialValue: `haxcli-${activeHaxsite.name}.surge.sh`,
-                defaultValue: `haxcli-${activeHaxsite.name}.surge.sh`,
-                required: true,
-                validate: (value) => {
-                  if (!value) {
-                    return "Domain must have a value";
-                  }
-                }
-              });
+            let execOutput;
+            if (commandRun.options.domain && commandRun.options.y) {
+              let s = p.spinner();
+              s.start(merlinSays('Sending site to Surge.sh ..'));
+              execOutput = await exec(`cd ${activeHaxsite.directory} && surge . ${commandRun.options.domain}`);
+              log(execOutput.stdout.trim());
+              s.stop(merlinSays(`Site published: https://${commandRun.options.domain}`));
             }
-            let execOutput = await exec(`cd ${activeHaxsite.directory} && surge . ${commandRun.options.domain}`);
-            log(execOutput.stdout.trim());
-            log(`Site published: https://${commandRun.options.domain}`);
+            else {
+              let surgeArgs = ['.'];
+              // could get here bc of being interactive, yet passed in a domain...
+              if (commandRun.options.domain) {
+                surgeArgs.push(commandRun.options.domain);
+              }
+              execOutput = await interactiveExec('surge', surgeArgs, {cwd: activeHaxsite.directory});
+              log(merlinSays(`Site published: https://${commandRun.options.domain}`));
+            }
           }
           catch(e) {
+            console.log("?");
             log(e.stderr);
           }
         break;
@@ -1088,9 +1111,6 @@ export async function siteProcess(commandRun, project, port = '3000') {    // au
       project.extras = ['launch'];
     }
   }
-  if (!commandRun.options.quiet) {
-    s.start(merlinSays(`Creating new site: ${project.name}`));
-  }
   let siteRequest = {
       "site": {
           "name": project.name,
@@ -1204,7 +1224,16 @@ export async function siteProcess(commandRun, project, port = '3000') {    // au
   }
   HAXCMS.cliWritePath = `${project.path}`;
   let res = new Res();
+  // unfortunately the twig exception is not blockable from output at this layer
   await hax.RoutesMap.post.createSite({body: siteRequest}, res);
+  // so we run it and then clear the screen
+  // this is a bit of a hack but it works to give the user the feedback that the site was
+  // created successfully, but only if not in quiet mode (default)
+  if (!commandRun.options.quiet) {
+    process.stdout.write('\x1Bc');
+    s.start(merlinSays(`Creating new site: ${project.name}`));
+    await setTimeout(1000);
+  }
   // path different for this one as it's on the fly produced
   const recipeFileName = path.join(project.path, '/', project.name, `${siteRecipeFile}`);
   const recipeLogTransport = new winston.transports.File({
@@ -1235,7 +1264,7 @@ export async function siteProcess(commandRun, project, port = '3000') {    // au
     }
   }
   if (!commandRun.options.quiet) {
-    s.stop(merlinSays(`${project.name} created!`));
+    s.stop(merlinSays(`${project.name} created successfully!`));
     await setTimeout(500);
   }
   
