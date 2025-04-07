@@ -21,6 +21,8 @@ import * as util from "node:util";
 import { program } from "commander";
 const exec = util.promisify(child_process.exec);
 
+import packageJson from '../package.json' with { type: 'json' };
+
 let sysGit = true;
 exec('git --version', error => {
   if (error) {
@@ -74,7 +76,7 @@ async function main() {
   .option('--recipe <char>', 'path to recipe file')
   .option('--custom-theme-name <char>', 'custom theme name')
   .option('--custom-theme-template <char>', 'custom theme template; (options: base, polaris-flex, polaris-sidebar)')
-  .version(await HAXCMS.getHAXCMSVersion())
+  .version(packageJson.version)
   .helpCommand(true);
 
   // default command which runs interactively
@@ -134,7 +136,7 @@ async function main() {
   .option('--recipe <char>', 'path to recipe file')
   .option('--custom-theme-name <char>', 'custom theme name')
   .option('--custom-theme-template <char>', 'custom theme template (options: base, polaris-flex, polaris-sidebar)')
-  .version(await HAXCMS.getHAXCMSVersion());
+  .version(packageJson.version);
   let siteNodeOps = siteNodeOperations();
   for (var i in siteNodeOps) {
     program.option(`--${camelToDash(siteNodeOps[i].value)} <char>`, `${siteNodeOps[i].label}`)
@@ -172,7 +174,7 @@ async function main() {
   .option('--no-extras', 'skip all extra / automatic command processing')
   .option('--no-i', 'prevent interactions / sub-process, good for scripting')
   .option('--root <char>', 'root location to execute the command from')
-  .version(await HAXCMS.getHAXCMSVersion());
+  .version(packageJson.version);
 
   // audit program
   program
@@ -186,7 +188,7 @@ async function main() {
     };
   })
   .option('--debug', 'Output for developers')
-  .version(await HAXCMS.getHAXCMSVersion());
+  .version(packageJson.version);
 
   // process program arguments
   program.parse();
@@ -662,7 +664,7 @@ async function main() {
           };
         }
         project.year = new Date().getFullYear();
-        project.version = await HAXCMS.getHAXCMSVersion();
+        project.version = packageJson.version;
         if (!project.name && commandRun.arguments.action) {
           project.name = commandRun.arguments.action;
         }
