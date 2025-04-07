@@ -279,7 +279,7 @@ ${color.underline(color.cyan(`http://localhost:${port}`))}
 📘  VS Code Project: ${color.bold(color.yellow(color.bgBlack(`code ${optionPath}`)))}
 🚧  Launch later: ${color.bold(color.yellow(color.bgBlack(`${command}`)))}
 
-⌨️  To resume 🧙 Merlin press: ${color.bold(color.black(color.bgRed(` CTRL + C `)))}
+⌨️  To resume 🧙 Merlin press: ${color.bold(color.black(color.bgRed(` CTRL + C or CTRL + BREAK `)))}
 `);
     // at least a second to see the message print at all
     await setTimeout(1000);
@@ -377,7 +377,7 @@ export async function webcomponentCommandDetected(commandRun, packageData = {}, 
 📘  VS Code Project: ${color.bold(color.yellow(color.bgBlack(`code ${process.cwd()}`)))}
 🚧  Launch later: ${color.bold(color.yellow(color.bgBlack(`${commandRun.options.npmClient} start`)))}
 
-⌨️  To exit 🧙 Merlin press: ${color.bold(color.black(color.bgRed(` CTRL + C `)))}
+⌨️  To exit 🧙 Merlin press: ${color.bold(color.black(color.bgRed(` CTRL + C or CTRL + BREAK `)))}
           `);
         }
         try {

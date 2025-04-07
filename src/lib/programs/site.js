@@ -361,7 +361,7 @@ export async function siteCommandDetected(commandRun) {
           try {
             if (!commandRun.options.quiet) {
               p.intro(`Starting server.. `);
-              p.intro(`⌨️  To stop server, press: ${color.bold(color.black(color.bgRed(` CTRL + C `)))}`);  
+              p.intro(`⌨️  To stop server, press: ${color.bold(color.black(color.bgRed(` CTRL + C or CTRL + BREAK `)))}`);  
             }
             await exec(`cd ${activeHaxsite.directory} && npx @haxtheweb/haxcms-nodejs`);
           }
@@ -1311,7 +1311,7 @@ ${color.underline(color.cyan(`http://localhost:${port}`))}
 📘  VS Code Project: ${color.bold(color.yellow(color.bgBlack(`code ${optionPath}`)))}
 🚧  Launch later: ${color.bold(color.yellow(color.bgBlack(`${command}`)))}
 
-⌨️  To resume 🧙 Merlin press: ${color.bold(color.black(color.bgRed(` CTRL + C `)))}
+⌨️  To resume 🧙 Merlin press: ${color.bold(color.black(color.bgRed(` CTRL + C or CTRL + BREAK `)))}
 `);
     }
       // at least a second to see the message print at all
