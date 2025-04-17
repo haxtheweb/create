@@ -1462,7 +1462,7 @@ async function customSiteTheme(commandRun, project) {
     }
   
   // import theme to custom.js
-  await fs.appendFileSync(`${sitePath}/custom/src/custom.js`, `\n import "./${project.customThemeName}.js"`);
+  await fs.appendFileSync(`${sitePath}/custom/src/custom.js`, `\n import "./${project.customThemeName}.js";`);
   var activeHaxsite = await hax.systemStructureContext(sitePath);
 
   // add theme to site.json
