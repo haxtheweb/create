@@ -1,0 +1,14 @@
+{
+  "boards": [
+    {
+      "name": "f",
+      "id": "board-2e21e292-ef77-4de3-aeb4-ae866a22e3de",
+      "gitConfig": {
+        "owner": "haxtheweb",
+        "repo": "create",
+        "path": "boards/f.json"
+      }
+    }
+  ],
+  "libraries": []
+}
