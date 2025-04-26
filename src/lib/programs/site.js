@@ -1352,10 +1352,9 @@ export async function siteThemeList(coreOnly = true, directory = null) {
       { value: 'clean-one', label: 'Clean One' },
       { value: 'clean-two', label: 'Clean Two' },
       { value: 'clean-portfolio-theme', label: 'Clean Portfolio' },
-      { value: 'haxor-slevin', label: 'Haxor Blog' },
-      { value: 'polaris-flex-theme', label: 'Polaris - Flex' },
-      { value: 'polaris-flex-sidebar', label: 'Polaris - Flex Sidebar' },
-      { value: 'polaris-invent-theme', label: 'Polaris - Invent' },
+      { value: 'journey-theme', label: 'Journey' },
+      { value: 'polaris-flex-theme', label: 'Flex' },
+      { value: 'polaris-flex-sidebar', label: 'Flex Sidebar' },
       { value: 'custom-theme', label: 'Create Custom Theme' }
     ];
     if(fs.existsSync(`${directory}/custom/custom-elements.json`)){
