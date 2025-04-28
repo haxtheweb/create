@@ -313,29 +313,31 @@ async function main() {
   if (commandRun.options.debug) {
     log(packageData, 'debug');
   }
-  // If CLI is in a site context and we want to serve the dev environment
-  if (commandRun.command === 'serve'){
-    if(await hax.systemStructureContext()){
+  // CLI works within context of the site if one is detected, otherwise we can do other thingss
+  if (await hax.systemStructureContext()) {
+    if (commandRun.command === 'serve'){
       commandRun.program = 'serve';
       commandRun.options.skip = true;
       await siteCommandDetected(commandRun);
     } else {
-      console.error(color.red('Must be in HAXsite context to run serve command'));
+      commandRun.program = 'site';
+      commandRun.options.skip = true;
+      await siteCommandDetected(commandRun);
     }
-  }
-  // CLI works within context of the site if one is detected, otherwise we can do other thingss
-  else if (await hax.systemStructureContext()) {
-    commandRun.program = 'site';
-    commandRun.options.skip = true;
-    await siteCommandDetected(commandRun);
   }
   else if (commandRun.command === 'audit') {
     auditCommandDetected(commandRun)
   }
   else if (packageData && (packageData.customElements || packageData.hax && packageData.hax.cli) && packageData.scripts.start) {
-    commandRun.program = 'webcomponent';
-    commandRun.options.skip = true;
-    await webcomponentCommandDetected(commandRun, packageData);
+    if (commandRun.command === 'serve'){
+      commandRun.program = 'serve';
+      commandRun.options.skip = true;
+      await webcomponentCommandDetected(commandRun, packageData);
+    } else {
+      commandRun.program = 'webcomponent';
+      commandRun.options.skip = true;
+      await webcomponentCommandDetected(commandRun, packageData);
+    }
   }
   else {
     if (commandRun.command === 'start' && !commandRun.options.y && !commandRun.options.auto && !commandRun.options.skip && !commandRun.options.quiet) {
