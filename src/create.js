@@ -91,6 +91,19 @@ async function main() {
     };
   });
 
+  program
+  .command('serve')
+  .description('Launch HAXsite in development mode (http://localhost)')
+  .action(() => {
+    commandRun = {
+      command: 'serve',
+      arguments: {
+        action: 'serve'
+      },
+      options: {}
+    };
+  });
+
   // site operations and actions
   let strActions = '';
   siteActions().forEach(action => {
@@ -300,8 +313,18 @@ async function main() {
   if (commandRun.options.debug) {
     log(packageData, 'debug');
   }
+  // If CLI is in a site context and we want to serve the dev environment
+  if (commandRun.command === 'serve'){
+    if(await hax.systemStructureContext()){
+      commandRun.program = 'serve';
+      commandRun.options.skip = true;
+      await siteCommandDetected(commandRun);
+    } else {
+      console.error(color.red('Must be in HAXsite context to run serve command'));
+    }
+  }
   // CLI works within context of the site if one is detected, otherwise we can do other thingss
-  if (await hax.systemStructureContext()) {
+  else if (await hax.systemStructureContext()) {
     commandRun.program = 'site';
     commandRun.options.skip = true;
     await siteCommandDetected(commandRun);
