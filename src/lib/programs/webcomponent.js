@@ -301,7 +301,7 @@ export function webcomponentActions(){
   return [
     { value: 'start', label: "Launch project"},
     { value: 'wc:stats', label: "Check status of web component"},
-    { value: 'wc:element', label: "Add a new Lit module to an existing project"},
+    { value: 'wc:element', label: "Add new Lit component to existing project"},
     { value: 'wc:haxproperties', label: "Write haxProperties schema"},
   ];
 }

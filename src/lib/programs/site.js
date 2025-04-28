@@ -101,6 +101,7 @@ export function siteActions() {
     { value: 'site:items-import', label: "Import items (JOS / site.json)" },
     { value: 'site:list-files', label: "List site files" },
     { value: 'site:theme', label: "Change theme"},
+    { value: 'site:element', label: "Add new Lit component to custom/src"},
     { value: 'site:html', label: "Full site as HTML"},
     { value: 'site:md', label: "Full site as Markdown"},
     { value: 'site:schema', label: "Full site as HAXElementSchema"},
@@ -826,6 +827,118 @@ export async function siteCommandDetected(commandRun) {
           catch(e) {
             log(e.stderr);
           }
+        break;
+        case "site:element":
+          try {
+            activeHaxsite = await hax.systemStructureContext();
+            if(!commandRun.options.name){
+              commandRun.options.name = await p.text({
+                message: 'Component name:',
+                placeholder: 'my-component',
+                required: true,
+                validate: (value) => {
+                  if (!value) {
+                    return "Name is required (tab writes default)";
+                  }
+                  if (value.toLocaleLowerCase() !== value) {
+                    return "Name must be lowercase";
+                  }
+                  if (/^\d/.test(value)) {
+                    return "Name cannot start with a number";
+                  }
+                  if (value.indexOf(' ') !== -1) {
+                    return "No spaces allowed in name";
+                  }
+                  if ((value.indexOf('-') === -1 || value.replace('--', '') !== value || value[0] === '-' || value[value.length-1] === '-')) {
+                    return "Name must include at least one `-` and must not start or end name.";
+                  }
+                  // assumes auto was selected in CLI
+                  let joint = process.cwd();
+                  if (commandRun.options.path) {
+                    joint = commandRun.options.path;
+                  }
+                  if (fs.existsSync(path.join(joint, value))) {
+                    return `${path.join(joint, value)} exists, rename this project`;
+                  }
+                }
+              });
+            } else {
+                let value = commandRun.options.name;
+                if (!value) {
+                  console.error(color.red("Name is required (tab writes default)"));
+                  process.exit(1);
+                }
+                if (value.toLocaleLowerCase() !== value) {
+                  console.error(color.red("Name must be lowercase"));
+                  process.exit(1);
+                }
+                if (/^\d/.test(value)) {
+                  console.error(color.red("Name cannot start with a number"));
+                }
+                if (value.indexOf(' ') !== -1) {
+                  console.error(color.red("No spaces allowed in name"));
+                  process.exit(1);
+                }
+                if ((value.indexOf('-') === -1 || value.replace('--', '') !== value || value[0] === '-' || value[value.length-1] === '-')) {
+                  console.error(color.red("Name must include at least one `-` and must not start or end name."));
+                  process.exit(1);
+                }
+                // assumes auto was selected in CLI
+                let joint = process.cwd();
+                if (commandRun.options.path) {
+                  joint = commandRun.options.path;
+                }
+                if (fs.existsSync(path.join(joint, value))) {
+                  console.error(color.red(`${path.join(joint, value)} exists, rename this project`));
+                  process.exit(1);
+                }
+            }
+  
+            const project = {
+                name: commandRun.options.name,
+                path: activeHaxsite.directory,
+                className: dashToCamel(commandRun.options.name),
+                year: new Date().getFullYear(),
+            }
+
+            if(!project.author){
+              try {
+                 let value = await exec(`git config user.name`);
+                 project.author = value.stdout.trim();
+               }
+               catch(e) {
+                 log(`
+                   git user name not configured. Run the following to do this:\n
+                   git config --global user.name "namehere"\n
+                   git config --global user.email "email@here`, 'debug');
+               }
+           }
+            
+            const filePath = `${project.path}/custom/src/${project.name}.js`
+            await fs.copyFileSync(`${process.mainModule.path}/templates/generic/sitecomponent.js`, filePath)
+  
+          
+            const ejsString = ejs.fileLoader(filePath, 'utf8');
+            let content = ejs.render(ejsString, project);
+            // file written successfully  
+            fs.writeFileSync(filePath, content);
+            
+            if(!commandRun.options.npmClient){
+              commandRun.options.npmClient = 'npm';
+            }
+            if(fs.existsSync(`${project.path}/custom/custom-elements.json`)){
+              await exec(`cd custom && ${commandRun.options.npmClient} run analyze`)
+            }
+  
+            p.note(`🧙  Add to another web component (.js): ${color.underline(color.bold(color.yellow(color.bgBlack(`import ./${project.name}.js`))))}`);
+            // at least a second to see the message print at all
+            await setTimeout(1000);
+          } catch(e) {
+            log(e.stderr)
+            // Original ejs.render error checking
+            console.error(color.red(process.cwd()));
+            console.error(color.red(e));
+          }  
         break;
         case "site:surge":
           try {
