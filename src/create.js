@@ -314,7 +314,15 @@ async function main() {
     log(packageData, 'debug');
   }
   // CLI works within context of the site if one is detected, otherwise we can do other thingss
-  if (await hax.systemStructureContext()) {
+  if (commandRun.command === 'audit') {
+    let customPath = null;
+    // test for haxcms context
+    if (await hax.systemStructureContext() && fs.existsSync(`${process.cwd()}/custom`)) { 
+      customPath = path.join(process.cwd(), 'custom');
+    }
+    auditCommandDetected(commandRun, customPath)
+  }
+  else if (await hax.systemStructureContext()) {
     if (commandRun.command === 'serve'){
       commandRun.program = 'serve';
       commandRun.options.skip = true;
@@ -324,9 +332,6 @@ async function main() {
       commandRun.options.skip = true;
       await siteCommandDetected(commandRun);
     }
-  }
-  else if (commandRun.command === 'audit') {
-    auditCommandDetected(commandRun)
   }
   else if (packageData && (packageData.customElements || packageData.hax && packageData.hax.cli) && packageData.scripts.start) {
     if (commandRun.command === 'serve'){

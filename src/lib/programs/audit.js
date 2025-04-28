@@ -9,8 +9,8 @@ let checksPassed = true;
 /**
  * @description Runs the audit command, to be called when `hax audit` command is run
  */
-export function auditCommandDetected(commandRun) {
-  const PROJECT_ROOT = process.cwd();
+export function auditCommandDetected(commandRun, path = null) {
+  const PROJECT_ROOT = path || process.cwd();
   p.intro(`${color.bgBlack(` 🚀 Auditing DDD Compliance: ${color.underline(color.bold(color.yellow(PROJECT_ROOT)))} `)}`)
   let dddignore = dddignoreInterpreter(PROJECT_ROOT);
 
@@ -39,7 +39,7 @@ function dddignoreInterpreter(root) {
   readdirSync(root).forEach(item => {
     const FULL_PATH = path.join(root, item);
 
-    if (item !== "node_modules"  && item !== ".git" && item !== "dist" && item !== "public" && statSync(FULL_PATH).isDirectory()) { // Directory
+    if (item !== "node_modules"  && item !== ".git" && item !== "dist" && item !== "assets" && item !== "build" && item !== "public" && statSync(FULL_PATH).isDirectory()) { // Directory
       list = list.concat(dddignoreInterpreter(FULL_PATH));
     }
     else if (item === ".dddignore") { // File 
