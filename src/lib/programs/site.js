@@ -374,7 +374,7 @@ export async function siteCommandDetected(commandRun) {
         case "serve":
           try {
             if (!commandRun.options.quiet) {
-              p.intro(`Starting server.. `);
+              p.intro(`Starting server in development mode.. `);
               p.note(`🚀 Server running at: ${color.underline(color.cyan(`http://localhost:3000`))}
 💻 Site will live reload on changes to ${color.bold('custom/src')}
 ⌨️  To stop server, press: ${color.bold(color.black(color.bgRed(` CTRL + C or CTRL + BREAK `)))}`);

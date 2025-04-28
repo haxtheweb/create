@@ -400,6 +400,56 @@ export async function webcomponentCommandDetected(commandRun, packageData = {}, 
           // don't log bc output is odd
         }
       break;
+      case "serve":
+        try {
+          if (!commandRun.options.quiet) {
+            console.log(commandRun.options.npmClient);
+            p.intro(`Launching development server.. `);
+          }
+          if (packageData.scripts.serve){
+            if (!commandRun.options.quiet) {
+            p.note(`${merlinSays(`Project launched in development mode`)}
+
+🚀  Running your ${color.bold('webcomponent')} ${color.bold(packageData.name)}:
+      ${color.underline(color.cyan(`http://localhost:${port}`))}
+
+🏠  Launched: ${color.underline(color.bold(color.yellow(color.bgBlack(`${process.cwd()}`))))}
+💻  Folder: ${color.bold(color.yellow(color.bgBlack(`cd ${process.cwd()}`)))}
+📂  Open folder: ${color.bold(color.yellow(color.bgBlack(`open ${process.cwd()}`)))}
+📘  VS Code Project: ${color.bold(color.yellow(color.bgBlack(`code ${process.cwd()}`)))}
+🚧  Launch later: ${color.bold(color.yellow(color.bgBlack(`${commandRun.options.npmClient} serve`)))}
+
+⌨️  To exit 🧙 Merlin press: ${color.bold(color.black(color.bgRed(` CTRL + C or CTRL + BREAK `)))}
+          `);
+            }
+
+            await exec(`${commandRun.options.npmClient} run serve`);
+          } else {
+            // if no serve script, run start instead
+            if (!commandRun.options.quiet) {
+            p.note(`${merlinSays(`No ${color.bold('serve')} script found, running ${color.bold(`${commandRun.options.npmClient} start`)} instead`)}
+
+🚀  Running your ${color.bold('webcomponent')} ${color.bold(packageData.name)}:
+      ${color.underline(color.cyan(`http://localhost:${port}`))}
+
+🏠  Launched: ${color.underline(color.bold(color.yellow(color.bgBlack(`${process.cwd()}`))))}
+💻  Folder: ${color.bold(color.yellow(color.bgBlack(`cd ${process.cwd()}`)))}
+📂  Open folder: ${color.bold(color.yellow(color.bgBlack(`open ${process.cwd()}`)))}
+📘  VS Code Project: ${color.bold(color.yellow(color.bgBlack(`code ${process.cwd()}`)))}
+🚧  Launch later: ${color.bold(color.yellow(color.bgBlack(`${commandRun.options.npmClient} start`)))}
+
+⌨️  To exit 🧙 Merlin press: ${color.bold(color.black(color.bgRed(` CTRL + C or CTRL + BREAK `)))}
+          `);
+            }
+
+            await exec(`${commandRun.options.npmClient} start`);
+          }
+        }
+        catch(e) {
+          // don't log bc output is odd
+          console.log("error", e);
+        }
+      break;
       case "wc:status":
       case "wc:stats":
       case "webcomponent:status":

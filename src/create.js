@@ -91,6 +91,19 @@ async function main() {
     };
   });
 
+  program
+  .command('serve')
+  .description('Launch HAXsite in development mode (http://localhost)')
+  .action(() => {
+    commandRun = {
+      command: 'serve',
+      arguments: {
+        action: 'serve'
+      },
+      options: {}
+    };
+  });
+
   // site operations and actions
   let strActions = '';
   siteActions().forEach(action => {
@@ -302,17 +315,29 @@ async function main() {
   }
   // CLI works within context of the site if one is detected, otherwise we can do other thingss
   if (await hax.systemStructureContext()) {
-    commandRun.program = 'site';
-    commandRun.options.skip = true;
-    await siteCommandDetected(commandRun);
+    if (commandRun.command === 'serve'){
+      commandRun.program = 'serve';
+      commandRun.options.skip = true;
+      await siteCommandDetected(commandRun);
+    } else {
+      commandRun.program = 'site';
+      commandRun.options.skip = true;
+      await siteCommandDetected(commandRun);
+    }
   }
   else if (commandRun.command === 'audit') {
     auditCommandDetected(commandRun)
   }
   else if (packageData && (packageData.customElements || packageData.hax && packageData.hax.cli) && packageData.scripts.start) {
-    commandRun.program = 'webcomponent';
-    commandRun.options.skip = true;
-    await webcomponentCommandDetected(commandRun, packageData);
+    if (commandRun.command === 'serve'){
+      commandRun.program = 'serve';
+      commandRun.options.skip = true;
+      await webcomponentCommandDetected(commandRun, packageData);
+    } else {
+      commandRun.program = 'webcomponent';
+      commandRun.options.skip = true;
+      await webcomponentCommandDetected(commandRun, packageData);
+    }
   }
   else {
     if (commandRun.command === 'start' && !commandRun.options.y && !commandRun.options.auto && !commandRun.options.skip && !commandRun.options.quiet) {
