@@ -578,10 +578,6 @@ export async function webcomponentCommandDetected(commandRun, packageData = {}, 
           let content = ejs.render(ejsString, project);
           // file written successfully  
           fs.writeFileSync(filePath, content);
-          
-          if (packageData.customElements) {
-            await webcomponentGenerateHAXSchema(commandRun, packageData);
-          } 
 
           p.note(`🧙  Add to another web component (.js): ${color.underline(color.bold(color.yellow(color.bgBlack(`import ./${project.name}.js`))))}
 💻  Add to an HTML file: ${color.bold(color.yellow(color.bgBlack(`<script type="module" src="${project.name}"></script>`)))}`);
