@@ -92,6 +92,7 @@ class Res {
 export function siteActions() {
   return [
     { value: 'start', label: "Launch site in browser (http://localhost)"},
+    { value: 'serve', label: "Launch site in development mode"},
     { value: 'node:stats', label: "Node Stats / data"},
     { value: 'node:add', label: "Add a new page"},
     { value: 'node:edit', label: "Edit a page"},
@@ -362,9 +363,23 @@ export async function siteCommandDetected(commandRun) {
           try {
             if (!commandRun.options.quiet) {
               p.intro(`Starting server.. `);
-              p.intro(`⌨️  To stop server, press: ${color.bold(color.black(color.bgRed(` CTRL + C or CTRL + BREAK `)))}`);  
-            }
+              p.note(`🚀 Server running at: ${color.underline(color.cyan(`http://localhost:3000`))}
+⌨️  To stop server, press: ${color.bold(color.black(color.bgRed(` CTRL + C or CTRL + BREAK `)))}`);            }
             await exec(`cd ${activeHaxsite.directory} && npx @haxtheweb/haxcms-nodejs`);
+          }
+          catch(e) {
+            log(e.stderr);
+          }
+        break;
+        case "serve":
+          try {
+            if (!commandRun.options.quiet) {
+              p.intro(`Starting server.. `);
+              p.note(`🚀 Server running at: ${color.underline(color.cyan(`http://localhost:3000`))}
+💻 Site will live reload on changes to ${color.bold('custom/src')}
+⌨️  To stop server, press: ${color.bold(color.black(color.bgRed(` CTRL + C or CTRL + BREAK `)))}`);
+            }
+            await exec(`cd ${activeHaxsite.directory} && NODE_ENV=development npx ~/Workspace/hax/haxcms-nodejs`);
           }
           catch(e) {
             log(e.stderr);
