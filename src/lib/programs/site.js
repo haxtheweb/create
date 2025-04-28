@@ -379,7 +379,7 @@ export async function siteCommandDetected(commandRun) {
 💻 Site will live reload on changes to ${color.bold('custom/src')}
 ⌨️  To stop server, press: ${color.bold(color.black(color.bgRed(` CTRL + C or CTRL + BREAK `)))}`);
             }
-            await exec(`cd ${activeHaxsite.directory} && NODE_ENV=development npx ~/Workspace/hax/haxcms-nodejs`);
+            await exec(`cd ${activeHaxsite.directory} && NODE_ENV=development npx @haxtheweb/haxcms-nodejs`);
           }
           catch(e) {
             log(e.stderr);
