@@ -540,7 +540,7 @@ export async function webcomponentCommandDetected(commandRun, packageData = {}, 
         } catch(e) {
           log(e.stderr)
           // Original ejs.render error checking
-          console.error(color.red(filePath));
+          console.error(color.red(process.cwd()));
           console.error(color.red(e));
         }
 
