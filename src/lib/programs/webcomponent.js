@@ -10,13 +10,9 @@ import color from 'picocolors';
 import { merlinSays } from "../statements.js";
 import { log } from "../logging.js";
 
-import { dashToCamel, readAllFiles } from '../utils.js';
+import { dashToCamel, readAllFiles, exec } from '../utils.js';
 import * as hax from "@haxtheweb/haxcms-nodejs";
 const HAXCMS = hax.HAXCMS;
-
-import * as child_process from "child_process";
-import * as util from "node:util";
-const exec = util.promisify(child_process.exec);
 
 let sysGit = true;
 exec('git --version', error => {

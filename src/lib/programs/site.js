@@ -11,7 +11,7 @@ import * as winston from 'winston';
 
 import { parse } from 'node-html-parser';
 import { merlinSays, communityStatement } from "../statements.js";
-import { dashToCamel } from "../utils.js";
+import { dashToCamel, interactiveExec, exec } from "../utils.js";
 import { log, commandString } from "../logging.js";
 
 // trick MFR into giving local paths
@@ -27,28 +27,6 @@ import * as hax from "@haxtheweb/haxcms-nodejs";
 import * as josfile from "@haxtheweb/haxcms-nodejs/dist/lib/JSONOutlineSchema.js";
 const JSONOutlineSchema = josfile.default;
 const HAXCMS = hax.HAXCMS;
-import * as child_process from "child_process";
-import * as util from "node:util";
-const exec = util.promisify(child_process.exec);
-const spawn = (child_process.spawn);
-
-async function interactiveExec(command, args = [], options = {}) {
-  return new Promise((resolve, reject) => {
-    process.env.NODE_NO_WARNINGS = 1;
-    const child = spawn(command, args, { stdio: 'inherit', ...options });
-    child.on('exit', (code) => {
-      if (code === 0) {
-        resolve();
-      } else {
-        reject(new Error(`Command failed with code ${code}`));
-      }
-    });
-    child.on('error', (err) => {
-      reject(err);
-    });
-  });
-}
-
 
 
 var sysSurge = true;

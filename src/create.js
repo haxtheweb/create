@@ -4,6 +4,7 @@ process.env.haxcms_middleware = "node-cli";
 
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import * as os from "node:os";
 import * as p from '@clack/prompts';
 import color from 'picocolors';
 
@@ -12,14 +13,21 @@ import { log, consoleTransport, logger } from "./lib/logging.js";
 import { auditCommandDetected } from './lib/programs/audit.js';
 import { webcomponentProcess, webcomponentCommandDetected, webcomponentActions } from "./lib/programs/webcomponent.js";
 import { siteActions, siteNodeOperations, siteProcess, siteCommandDetected, siteThemeList } from "./lib/programs/site.js";
-import { camelToDash } from "./lib/utils.js";
+import { camelToDash, exec, interactiveExec, writeTempFile, readTempFile, getTimeDifference } from "./lib/utils.js";
 import * as hax from "@haxtheweb/haxcms-nodejs";
 const HAXCMS = hax.HAXCMS;
 
-import * as child_process from "child_process";
-import * as util from "node:util";
+
+// @todo make this relative to last time update was checked
+// if update never checked, check and report back that a new version is available
+// if update last checked is more than a week, then check and report back
+// also need to confirm before doing the update
+let lastTime = readTempFile('hax-cli-last-run');
+console.log(getTimeDifference(new Date().toISOString(), lastTime));
+writeTempFile('hax-cli-last-run', new Date().toISOString());
+
+
 import { program } from "commander";
-const exec = util.promisify(child_process.exec);
 
 import packageJson from '../package.json' with { type: 'json' };
 
@@ -86,6 +94,18 @@ async function main() {
   .action(() => {
     commandRun = {
       command: 'start',
+      arguments: {},
+      options: {}
+    };
+  });
+
+  program
+  .command('update')
+  .description('hax cli self update')
+  .option('--y', 'yes to all questions')
+  .action(() => {
+    commandRun = {
+      command: 'update',
       arguments: {},
       options: {}
     };
@@ -313,8 +333,37 @@ async function main() {
   if (commandRun.options.debug) {
     log(packageData, 'debug');
   }
-  // CLI works within context of the site if one is detected, otherwise we can do other thingss
-  if (commandRun.command === 'audit') {
+  // test for updating to latest or just run the command
+  if (commandRun.command === "update") {
+    await fetch('https://registry.npmjs.com/@haxtheweb/create')
+    .then(res => res.json())
+    .then(async (data) => {
+      let latest = data['dist-tags'].latest;
+      if (latest !== packageJson.version || commandRun.options.y) {
+        if (!commandRun.options.quiet) {
+          p.intro(`${color.bgBlack(color.white(` HAX CLI update available! `))}`);
+          p.note(`Current version: ${packageJson.version}`);
+          p.note(`Latest version: ${latest}`);
+        }
+        await interactiveExec('npm', ['install', '--global', '@haxtheweb/create']);
+        if (!commandRun.options.quiet) {
+          p.outro(`
+            🔮  HAX CLI updated to : ${color.yellow(latest)}
+            
+            🧙  Type "${color.yellow('hax help')}" for latest commands
+            
+            💡  ${color.bold(color.white(`Never. Stop. Innovating.`))}
+          `);
+        }
+      }
+      else {
+        if (!commandRun.options.quiet) {
+          p.intro(`${color.bgBlack(color.white(` HAX CLI (${packageJson.version}) is up to date `))}`);
+        }
+      }
+    });
+  }
+  else if (commandRun.command === 'audit') {
     let customPath = null;
     // test for haxcms context
     if (await hax.systemStructureContext() && fs.existsSync(`${process.cwd()}/custom`)) { 
@@ -322,6 +371,7 @@ async function main() {
     }
     auditCommandDetected(commandRun, customPath)
   }
+  // CLI works within context of the site if one is detected, otherwise we can do other things
   else if (await hax.systemStructureContext()) {
     if (commandRun.command === 'serve'){
       commandRun.program = 'serve';
