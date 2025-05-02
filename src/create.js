@@ -33,7 +33,7 @@ import { program } from "commander";
 import packageJson from '../package.json' with { type: 'json' };
 
 let sysGit = true;
-exec('git --version', error => {
+exec('which git', error => {
   if (error) {
     sysGit = false;
   }

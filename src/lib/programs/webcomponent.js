@@ -15,7 +15,7 @@ import * as hax from "@haxtheweb/haxcms-nodejs";
 const HAXCMS = hax.HAXCMS;
 
 let sysGit = true;
-exec('git --version', error => {
+exec('which git', error => {
   if (error) {
     sysGit = false;
   }
