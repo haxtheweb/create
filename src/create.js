@@ -13,19 +13,20 @@ import { log, consoleTransport, logger } from "./lib/logging.js";
 import { auditCommandDetected } from './lib/programs/audit.js';
 import { webcomponentProcess, webcomponentCommandDetected, webcomponentActions } from "./lib/programs/webcomponent.js";
 import { siteActions, siteNodeOperations, siteProcess, siteCommandDetected, siteThemeList } from "./lib/programs/site.js";
-import { camelToDash, exec, interactiveExec, writeTempFile, readTempFile, getTimeDifference } from "./lib/utils.js";
+import { camelToDash, exec, interactiveExec, writeConfigFile, readConfigFile, getTimeDifference } from "./lib/utils.js";
 import * as hax from "@haxtheweb/haxcms-nodejs";
 const HAXCMS = hax.HAXCMS;
 
-
-// @todo make this relative to last time update was checked
-// if update never checked, check and report back that a new version is available
-// if update last checked is more than a week, then check and report back
-// also need to confirm before doing the update
-let lastTime = readTempFile('hax-cli-last-run');
-console.log(getTimeDifference(new Date().toISOString(), lastTime));
-writeTempFile('hax-cli-last-run', new Date().toISOString());
-
+// check the last time this was run
+let lastTime = readConfigFile('hax-cli-last-run');
+// first run in the event it is null assume now
+if (!lastTime) {
+  lastTime = new Date().toISOString();
+}
+// check time difference broken down by unit
+const timeSince = getTimeDifference(new Date().toISOString(), lastTime);
+// write last run so that we know last time they were here
+writeConfigFile('hax-cli-last-run', new Date().toISOString());
 
 import { program } from "commander";
 
@@ -335,33 +336,7 @@ async function main() {
   }
   // test for updating to latest or just run the command
   if (commandRun.command === "update") {
-    await fetch('https://registry.npmjs.com/@haxtheweb/create')
-    .then(res => res.json())
-    .then(async (data) => {
-      let latest = data['dist-tags'].latest;
-      if (latest !== packageJson.version || commandRun.options.y) {
-        if (!commandRun.options.quiet) {
-          p.intro(`${color.bgBlack(color.white(` HAX CLI update available! `))}`);
-          p.note(`Current version: ${packageJson.version}`);
-          p.note(`Latest version: ${latest}`);
-        }
-        await interactiveExec('npm', ['install', '--global', '@haxtheweb/create']);
-        if (!commandRun.options.quiet) {
-          p.outro(`
-            🔮  HAX CLI updated to : ${color.yellow(latest)}
-            
-            🧙  Type "${color.yellow('hax help')}" for latest commands
-            
-            💡  ${color.bold(color.white(`Never. Stop. Innovating.`))}
-          `);
-        }
-      }
-      else {
-        if (!commandRun.options.quiet) {
-          p.intro(`${color.bgBlack(color.white(` HAX CLI (${packageJson.version}) is up to date `))}`);
-        }
-      }
-    });
+    await testForUpdates(commandRun);
   }
   else if (commandRun.command === 'audit') {
     let customPath = null;
@@ -398,9 +373,21 @@ async function main() {
     if (commandRun.command === 'start' && !commandRun.options.y && !commandRun.options.auto && !commandRun.options.skip && !commandRun.options.quiet) {
       await haxIntro();
     }
+    // it's been 7 days since last check, do the check and offer command to resolve if needed
+    if (timeSince.days > 7) {
+      // check for updates
+      let execOut = await exec(`npm view @haxtheweb/create version`);
+      let updateCheck = execOut.stdout.trim();
+      if (updateCheck !== packageJson.version && !commandRun.options.quiet) {
+        p.intro(`${color.bgBlack(color.white(` HAX cli updates available! `))}`);
+        p.intro(`Current version: ${packageJson.version}`);
+        p.intro(`Latest version: ${updateCheck}`);  
+        p.intro(`Run ${color.bold(color.black(color.bgGreen('hax update')))} to update to the latest version`);
+      }
+    }
     let activeProject = null;
     let project = { type: null };
-    while (project.type !== 'quit') {
+    while (project.type !== 'quit' && project.type !== 'update') {
       if (activeProject) {
         if (!commandRun.options.quiet) {
           p.note(` 🧙🪄 BE GONE ${color.bold(color.black(color.bgGreen(activeProject)))} sub-process daemon! 🪄 + ✨ 👹 = 💀 `);
@@ -425,6 +412,12 @@ async function main() {
         };
       }
       else if (commandRun.options.i) {
+        let buildOptions = [
+          { value: 'webcomponent', label: '🏗️ Create a Web Component' },
+          { value: 'site', label: '🏡 Create a HAXsite'},
+          { value: 'update', label: '🤓 Check for hax cli updates' },
+          { value: 'quit', label: '🚪 Quit' },
+        ];
         project = await p.group(
           {
             type: ({ results }) =>
@@ -432,17 +425,13 @@ async function main() {
               message: !activeProject ? `What should we build?` : `Thirsty for more? What should we create now?`,
               initialValue: 'webcomponent',
               required: true,
-              options: [
-                { value: 'webcomponent', label: '🏗️ Create a Web Component' },
-                { value: 'site', label: '🏡 Create a HAXsite'},
-                { value: 'quit', label: '🚪 Quit'},
-              ],
+              options: buildOptions,
             }),
           },
           {
             onCancel: () => {
               if (!commandRun.options.quiet) {
-                p.cancel('🧙🪄 Merlin: Leaving so soon? HAX ya later');
+                p.cancel('🧙🪄 Merlin: Canceling cli.. HAX ya later');
                 communityStatement();
               }
               process.exit(0);
@@ -453,9 +442,12 @@ async function main() {
       else if (!commandRun.options.i) {
         process.exit(0);
       }
+      if (project.type === "update") {
+        await testForUpdates(commandRun);
+      }
       // detect being in a haxcms scaffold. easiest way is _sites being in this directory
       // set the path automatically so we skip the question
-      if ((commandRun.command === "site") && fs.existsSync(`${process.cwd()}/_sites`)) {
+      else if ((commandRun.command === "site") && fs.existsSync(`${process.cwd()}/_sites`)) {
         if (!commandRun.options.quiet) {
           p.intro(`${color.bgBlack(color.white(` HAXcms detected : Path set automatically `))}`);
         }
@@ -463,7 +455,7 @@ async function main() {
       }
       activeProject = project.type;
       // silly but this way we don't have to take options for quitting
-      if (project.type !== 'quit') {
+      if (['site', 'webcomponent'].includes(project.type)) {
         // global spot for core themes list
         let coreThemes = await siteThemeList(true);
 
@@ -719,7 +711,7 @@ async function main() {
           {
             onCancel: () => {
               if (!commandRun.options.quiet) {
-                p.cancel('🧙🪄 Merlin: Canceling CLI.. HAX ya later');
+                p.cancel('🧙🪄 Merlin: Canceling cli.. HAX ya later');
                 communityStatement();
               }
               process.exit(0);
@@ -770,8 +762,76 @@ async function main() {
         }
       }
     }
-    if (!commandRun.options.quiet) {
+    if (!commandRun.options.quiet && project.type !== 'update') {
       communityStatement();
+    }
+  }
+}
+
+// check for updates
+async function testForUpdates(commandRun) {
+  let execOut = await exec(`npm view @haxtheweb/create version`);
+  let latest = execOut.stdout.trim();
+  if (latest !== packageJson.version) {
+    if (!commandRun.options.quiet) {
+      p.intro(`${color.bgBlack(color.white(` HAX cli updates available! `))}`);
+      p.intro(`Current version: ${packageJson.version}`);
+      p.intro(`Latest version: ${latest}`); 
+    }
+    let runUpdates = { answer: false };
+    if (!commandRun.options.y) {
+      runUpdates = await p.group(
+        {
+          answer: ({ results }) =>
+          p.confirm({
+            message: `Do you want to update the cli to the latest version? (${latest})`,
+            initialValue: true,
+          }),
+        },
+        {
+          onCancel: () => {
+            if (!commandRun.options.quiet) {
+              p.cancel('🧙🪄 Merlin: Leaving so soon? HAX ya later');
+              p.outro(`
+                🧙  Upgrade at any time: ${color.yellow('npm install --global @haxtheweb/create')}
+                
+                💡  ${color.bold(color.white(`Never. Stop. Innovating.`))}
+              `);
+            }
+            process.exit(0);
+          },
+        }
+      );
+    }
+    else {
+      runUpdates.answer = true; // automatic
+    }
+    // ensure they wanted to run them
+    if (runUpdates.answer) {
+      await interactiveExec('npm', ['install', '--global', '@haxtheweb/create']);
+      if (!commandRun.options.quiet) {
+        p.outro(`
+          🔮  HAX CLI updated to : ${color.yellow(latest)}
+          
+          🧙  Type ${color.yellow('hax help')} for latest commands
+          
+          💡  ${color.bold(color.white(`Never. Stop. Innovating.`))}
+        `);
+      }
+    }
+    else {
+      if (!commandRun.options.quiet) {
+        p.outro(`
+          🧙  Upgrade at any time: ${color.yellow('npm install --global @haxtheweb/create')}
+          
+          💡  ${color.bold(color.white(`Never. Stop. Innovating.`))}
+        `);
+      }
+    }
+  }
+  else {
+    if (!commandRun.options.quiet) {
+      p.intro(`${color.bgBlack(color.white(` HAX CLI (${packageJson.version}) is up to date `))}`);
     }
   }
 }

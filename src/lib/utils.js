@@ -26,15 +26,16 @@ export function getTimeDifference(timestamp1, timestamp2) {
     hours: hours % 24,
     minutes: minutes % 60,
     seconds: seconds % 60,
-    milliseconds: difference % 1000,
   };
 }
 
-
-export function writeTempFile(filename, data) {
-  const tempDir = os.tmpdir();
-  const filePath = path.join(tempDir, filename);
-
+// write user config file
+export function writeConfigFile(filename, data) {
+  let tempDir = os.homedir();
+  if (process.env.VERCEL_ENV) {
+    tempDir = "/tmp/";
+  }
+  const filePath = path.join(tempDir, '.haxtheweb', filename);
   try {
     fs.writeFileSync(filePath, data);
     return filePath
@@ -43,9 +44,13 @@ export function writeTempFile(filename, data) {
   }
 }
 
-export function readTempFile(filename) {
-  const tempDir = os.tmpdir();
-  const filePath = path.join(tempDir, filename);
+// read user config file
+export function readConfigFile(filename) {
+  let tempDir = os.homedir();
+  if (process.env.VERCEL_ENV) {
+    tempDir = "/tmp/";
+  }
+  const filePath = path.join(tempDir, '.haxtheweb', filename);
   try {
     let file = fs.readFileSync(filePath, 'utf8');
     return file;
