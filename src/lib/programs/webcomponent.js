@@ -399,7 +399,6 @@ export async function webcomponentCommandDetected(commandRun, packageData = {}, 
       case "serve":
         try {
           if (!commandRun.options.quiet) {
-            console.log(commandRun.options.npmClient);
             p.intro(`Launching development server.. `);
           }
           if (packageData.scripts.serve){

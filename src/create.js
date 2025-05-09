@@ -11,6 +11,7 @@ import color from 'picocolors';
 import { haxIntro, communityStatement } from "./lib/statements.js";
 import { log, consoleTransport, logger } from "./lib/logging.js";
 import { auditCommandDetected } from './lib/programs/audit.js';
+import { partyCommandDetected } from './lib/programs/party.js';
 import { webcomponentProcess, webcomponentCommandDetected, webcomponentActions } from "./lib/programs/webcomponent.js";
 import { siteActions, siteNodeOperations, siteProcess, siteCommandDetected, siteThemeList } from "./lib/programs/site.js";
 import { camelToDash, exec, interactiveExec, writeConfigFile, readConfigFile, getTimeDifference } from "./lib/utils.js";
@@ -85,6 +86,10 @@ async function main() {
   .option('--recipe <char>', 'path to recipe file')
   .option('--custom-theme-name <char>', 'custom theme name')
   .option('--custom-theme-template <char>', 'custom theme template; (options: base, polaris-flex, polaris-sidebar)')
+
+  // options for party
+  .option('--repos <char...>', 'repositories to clone') 
+
   .version(packageJson.version)
   .helpCommand(true);
 
@@ -224,6 +229,24 @@ async function main() {
   .option('--debug', 'Output for developers')
   .version(packageJson.version);
 
+  program
+  .command('party')
+  .description('Party time! Join the HAX community and get involved!')
+  .argument('[action]', 'Actions to perform on web component include:' + "\n\r" + "test")
+  .action((action) => {
+    commandRun = {
+      command: 'party',
+      arguments: {},
+      options: {}
+    };
+    if (action) {
+      commandRun.arguments.action = action;
+      commandRun.options.skip = true;
+    }
+  })
+  .option('--repos <char...>', 'repositories to clone')
+  .version(packageJson.version);
+
   // process program arguments
   program.parse();
   commandRun.options = {...commandRun.options, ...program.opts()};
@@ -346,6 +369,9 @@ async function main() {
     }
     auditCommandDetected(commandRun, customPath)
   }
+  else if (commandRun.command === 'party') {
+    await partyCommandDetected(commandRun);
+  }
   // CLI works within context of the site if one is detected, otherwise we can do other things
   else if (await hax.systemStructureContext()) {
     if (commandRun.command === 'serve'){
@@ -415,6 +441,7 @@ async function main() {
         let buildOptions = [
           { value: 'webcomponent', label: '🏗️ Create a Web Component' },
           { value: 'site', label: '🏡 Create a HAXsite'},
+          { value: 'party', label: '🎉 Join the HAX community' },
           { value: 'update', label: '🤓 Check for hax cli updates' },
           { value: 'quit', label: '🚪 Quit' },
         ];
@@ -444,6 +471,8 @@ async function main() {
       }
       if (project.type === "update") {
         await testForUpdates(commandRun);
+      } else if (project.type === "party") {
+        await partyCommandDetected(commandRun);
       }
       // detect being in a haxcms scaffold. easiest way is _sites being in this directory
       // set the path automatically so we skip the question
