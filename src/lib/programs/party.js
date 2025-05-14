@@ -2,6 +2,23 @@ import * as p from '@clack/prompts';
 import color from 'picocolors';
 import { exec } from "../utils.js";
 import open from 'open';
+import { merlinSays } from "../statements.js";
+
+let sysGit = true;
+exec('which git', error => {
+  if (error) {
+    sysGit = false;
+  }
+});
+
+let sysSSH = true;
+exec('ssh -T git@github.com', (error, stdout, stderr) => {
+  const output = stdout + stderr;
+  // The GitHub SSH test always returns as stderr
+  if (!output.includes('successfully authenticated')) {
+    sysSSH = false;
+  }
+});
 
 export function partyActions(){
     return [
@@ -14,26 +31,6 @@ export function partyActions(){
       { value: 'github', label: "Become a core developer for HAX"},
     ];
   }
-
-//   async function runConfetti(duration = 500, options = {}) {
-//     const cliConfetti = require("cli-confetti");
-//     const CliUpdate = require("cli-update");
-
-//     let stopped = false;
-
-//     cliConfetti(options, function (err, confettiFrame) {
-//         if (err) throw err;
-//         if (stopped) return true;
-//         CliUpdate.render(confettiFrame);
-//     });
-
-//     setTimeout(() => {
-//         console.clear();
-//         stopped = true;
-//     //     // CliUpdate.done(); // optional
-//     //     // process.exit(0);  // optional
-//     }, duration);
-// }
 
 export async function partyCommandDetected(commandRun) {
   if (!commandRun.options.quiet) {
@@ -92,8 +89,16 @@ export async function partyCommandDetected(commandRun) {
     switch (operation.action) {
       case "party:status":
       case "party:stats":
-        p.intro(`${color.bgBlue(color.white(` Party time `))}`);
-
+      p.intro(`${color.green(color.bold(`         
+                       888            
+                       888            
+88888b.  8888b. 888d888888888888  888 
+888 "88b    "88b888P"  888   888  888 
+888  888.d888888888    888   888  888 
+888 d88P888  888888    Y88b. Y88b 888 
+88888P" "Y888888888     "Y888 "Y88888 
+888                               888 
+888                           Y8bd88P`))}`);
       break;
       case "docs":
         // open the docs
@@ -133,7 +138,7 @@ export async function partyCommandDetected(commandRun) {
           const initialValues = [ "webcomponents" ];
           const options = [ 
             { value: "webcomponents", label: "Webcomponents Monorepo" }, 
-            { value: "create", label: "Create-CLI" }, 
+            { value: "create", label: "Create CLI" }, 
             { value: "hax-the-club", label: "HAX The Club" },
             { value: "open-apis", label: "Open APIs" }, 
             { value: "haxcms-nodejs", label: "HAXcms Node.js" }, 
@@ -141,6 +146,9 @@ export async function partyCommandDetected(commandRun) {
             { value: "desktop", label: "HAXcms Desktop" }, 
             { value: "haxiam", label: "HAXiam" }
           ];
+
+          p.note(`${merlinSays(`${color.magenta(color.bold('HAX is a party,'))} so you can select ${color.bold('multiple')} repositories at once!`)}
+      Remember to ${color.bold('fork each project')} on ${color.bold('GitHub')} (or you'll be asked to later!)`);
           if(!commandRun.options.repos) {
             commandRun.options.repos = await p.multiselect({
               message: 'Choose GitHub repositories to clone',
@@ -149,10 +157,8 @@ export async function partyCommandDetected(commandRun) {
               required: false,
             })
           }
-          await createDevEnvironment(commandRun);
-        } catch (e) {
-          console.log(e);
-        }
+          await cloneHAXRepositories(commandRun);
+        } catch (e) { }
       break;
       case "quit":
         // quit
@@ -167,37 +173,81 @@ export async function partyCommandDetected(commandRun) {
   }
 }
 
-async function createDevEnvironment(commandRun) {
-  let sysGit = true;
-  exec('which git', error => {
-    if (error) {
-      sysGit = false;
-    }
-  });
+async function cloneHAXRepositories(commandRun) {
+  let s = p.spinner();
+
+  // check for system dependencies: ssh, yarn, etc.
+  if(!sysGit) {
+    console.error(`${color.red(`Git is not installed. The Git CLI is required to access GitHub with ${color.bold('hax party')}.`)}
+    Please follow the instructions at:
+    ${color.underline(color.cyan(`https://git-scm.com/book/en/v2/Getting-Started-Installing-Git`))}`);
+    process.exit(1);
+  }
+
+  if(!sysSSH) {
+      console.error(`${color.red(`SSH keys are not set up correctly. SSH is required to access GitHub with ${color.bold('hax party')}.`)}
+      Please follow the instructions at:
+      ${color.underline(color.cyan(`https://docs.github.com/en/authentication/connecting-to-github-with-ssh`))}`);
+      process.exit(1);
+  }
   
-  let author = '';
-  // should be able to grab if not predefined
   try {
-    let value = await exec(`git config user.name`);
-    author = value.stdout.trim();
-  }
-  catch(e) {
-    log(`
-      git user name not configured. Run the following to do this:\n
-      git config --global user.name "namehere"\n
-      git config --global user.email "email@here`, 'debug');
+    await exec(`yarn --version`);
+  } catch(e) {
+    await exec(`npm install -g yarn`);
   }
 
-  console.log(commandRun.options.repos);
   for (const item of commandRun.options.repos) {
-    console.log(`Cloning ${item} to ${process.cwd()}`);
-    try {
-      await exec(`git clone git@github.com:${author}/${item}.git`);
-    } catch (e) {
-      p.note(`Error: Fork the repository on GitHub: https://github.com/haxtheweb/${item}/fork`)
+    // while loop keeps HAX active until the user is ready
+    let isForked = false;
+    let firstRun = true;
+    while(!isForked) {
+      try {
+        // ssh link is used since https prompts for password
+        if(firstRun){
+          s.start(`Cloning ${color.bold(item)} to ${color.bold(process.cwd())}`);
+        } else {
+          s.start(`Trying again... Cloning ${item} to ${color.bold(process.cwd())}`);
+        }
+
+        await exec(`git clone git@github.com:${commandRun.options.author}/${item}.git`);
+        s.stop(`${color.green("Successfully")} cloned ${color.bold(item)} to ${color.bold(process.cwd())}`);
+
+        isForked = true;
+      } catch (e) {
+        // skip the loop if the repo already exists
+        if(e.stderr.includes("already exists and is not an empty directory")){
+          s.stop(`${color.yellow(`${color.bold(`${item}`)} already exists in ${color.bold(process.cwd())}`)}`);
+          break;
+        }
+
+        s.stop(`${color.red("Failed")} to clone ${color.bold(item)} to ${color.bold(process.cwd())}`);
+
+        p.note(`${color.red(`Error: HAX cannot find a personal ${color.bold("fork")} of the ${color.bold(item)} repository on your GitHub account`)}
+    Use the following link to fork ${color.bold(item)}: ${color.underline(color.cyan(`https://github.com/haxtheweb/${item}/fork`))}`);
+
+        // We don't want to spam the link every time
+        if(firstRun){  
+          p.intro(`${merlinSays("The link will open in your browser in a few seconds")}`)
+          setTimeout(async () => {
+            await open(`https://github.com/haxtheweb/${item}/fork`)
+          }, 3000);
+          firstRun = false;
+        }
+
+        let response = await p.confirm({
+          message: `Have you forked the repository? Would you like to try again?`,
+          initialValue: true,
+        });
+
+        // Multiple ways to quit (select no, ctrl+c, etc)
+        if(p.isCancel(response) || !response) {
+          p.cancel('🧙 Merlin: Canceling CLI.. HAX ya later 🪄');
+          process.exit(0);
+        }
+      }
     }
 
-    let s = p.spinner();
     s.start(`Installing dependencies for ${item}`);
     switch (item) {
       case "webcomponents":
@@ -209,7 +259,7 @@ async function createDevEnvironment(commandRun) {
       case "open-apis":
       case "haxcms-nodejs":
       case "desktop":
-        await exec(`cd ${process.cwd()}/${item} && npm install`)
+        await exec(`cd ${process.cwd()}/${item} && ${commandRun.options.npmClient} install`)
       break;
       case "haxcms-php":
         // ddev setup

@@ -4,7 +4,6 @@ process.env.haxcms_middleware = "node-cli";
 
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import * as os from "node:os";
 import * as p from '@clack/prompts';
 import color from 'picocolors';
 
