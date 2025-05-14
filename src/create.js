@@ -4,13 +4,13 @@ process.env.haxcms_middleware = "node-cli";
 
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import * as os from "node:os";
 import * as p from '@clack/prompts';
 import color from 'picocolors';
 
 import { haxIntro, communityStatement } from "./lib/statements.js";
 import { log, consoleTransport, logger } from "./lib/logging.js";
 import { auditCommandDetected } from './lib/programs/audit.js';
+import { partyCommandDetected } from './lib/programs/party.js';
 import { webcomponentProcess, webcomponentCommandDetected, webcomponentActions } from "./lib/programs/webcomponent.js";
 import { siteActions, siteNodeOperations, siteProcess, siteCommandDetected, siteThemeList } from "./lib/programs/site.js";
 import { camelToDash, exec, interactiveExec, writeConfigFile, readConfigFile, getTimeDifference } from "./lib/utils.js";
@@ -85,6 +85,10 @@ async function main() {
   .option('--recipe <char>', 'path to recipe file')
   .option('--custom-theme-name <char>', 'custom theme name')
   .option('--custom-theme-template <char>', 'custom theme template; (options: base, polaris-flex, polaris-sidebar)')
+
+  // options for party
+  .option('--repos <char...>', 'repositories to clone') 
+
   .version(packageJson.version)
   .helpCommand(true);
 
@@ -224,6 +228,27 @@ async function main() {
   .option('--debug', 'Output for developers')
   .version(packageJson.version);
 
+  program
+  .command('party')
+  .description('Party time! Join the HAX community and get involved!')
+  .argument('[action]', 'Actions to perform on web component include:' + "\n\r" + "test")
+  .action((action) => {
+    commandRun = {
+      command: 'party',
+      arguments: {},
+      options: {}
+    };
+    if (action) {
+      commandRun.arguments.action = action;
+      commandRun.options.skip = true;
+    }
+  })
+  .option('--root <char>', 'root location to execute the command from')
+  .option('--y', 'yes to all questions')
+  .option('--auto', 'yes to all questions, alias of y')
+  .option('--repos <char...>', 'repositories to clone')
+  .version(packageJson.version);
+
   // process program arguments
   program.parse();
   commandRun.options = {...commandRun.options, ...program.opts()};
@@ -346,6 +371,9 @@ async function main() {
     }
     auditCommandDetected(commandRun, customPath)
   }
+  else if (commandRun.command === 'party') {
+    await partyCommandDetected(commandRun);
+  }
   // CLI works within context of the site if one is detected, otherwise we can do other things
   else if (await hax.systemStructureContext()) {
     if (commandRun.command === 'serve'){
@@ -415,6 +443,7 @@ async function main() {
         let buildOptions = [
           { value: 'webcomponent', label: '🏗️ Create a Web Component' },
           { value: 'site', label: '🏡 Create a HAXsite'},
+          { value: 'party', label: '🎉 Join the HAX community' },
           { value: 'update', label: '🤓 Check for hax cli updates' },
           { value: 'quit', label: '🚪 Quit' },
         ];
@@ -444,6 +473,8 @@ async function main() {
       }
       if (project.type === "update") {
         await testForUpdates(commandRun);
+      } else if (project.type === "party") {
+        await partyCommandDetected(commandRun);
       }
       // detect being in a haxcms scaffold. easiest way is _sites being in this directory
       // set the path automatically so we skip the question
@@ -485,6 +516,8 @@ async function main() {
               }
             },
             name: ({ results }) => {
+              const reservedNames = ["annotation-xml", "color-profile", "font-face", "font-face-src", "font-face-uri", "font-face-format", "font-face-name", "missing-glyph"];
+
               if (!commandRun.arguments.action) {
                 let placeholder = "mysite";
                 let message = "Site name:";
@@ -500,11 +533,17 @@ async function main() {
                     if (!value) {
                       return "Name is required (tab writes default)";
                     }
+                    if(reservedNames.includes(value)) {
+                      return `Reserved name ${color.bold(value)} cannot be used`
+                    }
                     if (value.toLocaleLowerCase() !== value) {
                       return "Name must be lowercase";
                     }
                     if (/^\d/.test(value)) {
                       return "Name cannot start with a number";
+                    }
+                    if (/[`~!@#$%^&*()_=+\[\]{}|;:\'",<.>\/?\\]/.test(value)) {
+                      return "No special characters allowed in name";
                     }
                     if (value.indexOf(' ') !== -1) {
                       return "No spaces allowed in name";
@@ -515,6 +554,10 @@ async function main() {
                     // test that this is not an existing element we use in the registry
                     if (results.type === "webcomponent" && wcReg[value]) {
                       return "Name is already a web component in the wc-registry published for HAX.";
+                    }
+                    // Check for any other syntax errors
+                    if(results.type === "webcomponent" && !/^[a-z][a-z0-9.\-]*\-[a-z0-9.\-]*$/.test(value)){
+                      return `Name must follow the syntax ${color.bold("my-component")}`;
                     }
                     // assumes auto was selected in CLI
                     let joint = process.cwd();
@@ -536,12 +579,17 @@ async function main() {
                   program.error(color.red("Name is required (tab writes default)"));
                   process.exit(1);
                 }
+                if(reservedNames.includes(value)) {
+                  program.error(color.red(`Reserved name ${color.bold(value)} cannot be used`));
+                  process.exit(1);
+                }
                 if (value.toLocaleLowerCase() !== value) {
                   program.error(color.red("Name must be lowercase"));
                   process.exit(1);
                 }
                 if (/^\d/.test(value)) {
                   program.error(color.red("Name cannot start with a number"));
+                  process.exit(1);
                 }
                 if (value.indexOf(' ') !== -1) {
                   program.error(color.red("No spaces allowed in name"));
@@ -554,6 +602,11 @@ async function main() {
                 // test that this is not an existing element we use in the registry
                 if (results.type === "webcomponent" && wcReg[value]) {
                   program.error(color.red("Name is already a web component in the wc-registry published for HAX."));
+                  process.exit(1);
+                }
+                // Check for any other syntax errors
+                if(results.type === "webcomponent" && !/^[a-z][a-z0-9.\-]*\-[a-z0-9.\-]*$/.test(value)){
+                  program.error(color.red(`Name must follow the syntax ${color.bold("my-component")}`));
                   process.exit(1);
                 }
                 // assumes auto was selected in CLI
