@@ -138,6 +138,7 @@ export async function partyCommandDetected(commandRun) {
       case "gh":
       case "github":
         try {
+          // auto and y are aliases
           if(!commandRun.options.root && !commandRun.options.auto){
             commandRun.options.root = await p.text({
               message: 'What folder will your HAX projects live in?',
@@ -171,13 +172,17 @@ export async function partyCommandDetected(commandRun) {
 
           p.note(`${merlinSays(`${color.magenta(color.bold('HAX is a party,'))} so you can select ${color.bold('multiple')} repositories at once!`)}
       Remember to ${color.bold('fork each project')} on ${color.bold('GitHub')} (or you'll be asked to later!)`);
-          if(!commandRun.options.repos) {
+          if(!commandRun.options.repos && commandRun.options.auto){
+            commandRun.options.repos = initialValues;
+          } else if(!commandRun.options.repos) {
             commandRun.options.repos = await p.multiselect({
               message: 'Choose GitHub repositories to clone',
               initialValues: initialValues,
               options: options,
               required: false,
             })
+          } else if (commandRun.options.repos.includes("all")) {
+            commandRun.options.repos = options.map((item) => item.value);
           }
           await cloneHAXRepositories(commandRun);
         } catch (e) { }

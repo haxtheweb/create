@@ -244,6 +244,8 @@ async function main() {
     }
   })
   .option('--root <char>', 'root location to execute the command from')
+  .option('--y', 'yes to all questions')
+  .option('--auto', 'yes to all questions, alias of y')
   .option('--repos <char...>', 'repositories to clone')
   .version(packageJson.version);
 
