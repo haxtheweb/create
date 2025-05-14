@@ -514,6 +514,8 @@ async function main() {
               }
             },
             name: ({ results }) => {
+              const reservedNames = ["annotation-xml", "color-profile", "font-face", "font-face-src", "font-face-uri", "font-face-format", "font-face-name", "missing-glyph"];
+
               if (!commandRun.arguments.action) {
                 let placeholder = "mysite";
                 let message = "Site name:";
@@ -529,11 +531,17 @@ async function main() {
                     if (!value) {
                       return "Name is required (tab writes default)";
                     }
+                    if(reservedNames.includes(value)) {
+                      return `Reserved name ${color.bold(value)} cannot be used`
+                    }
                     if (value.toLocaleLowerCase() !== value) {
                       return "Name must be lowercase";
                     }
                     if (/^\d/.test(value)) {
                       return "Name cannot start with a number";
+                    }
+                    if (/[`~!@#$%^&*()_=+\[\]{}|;:\'",<.>\/?\\]/.test(value)) {
+                      return "No special characters allowed in name";
                     }
                     if (value.indexOf(' ') !== -1) {
                       return "No spaces allowed in name";
@@ -544,6 +552,10 @@ async function main() {
                     // test that this is not an existing element we use in the registry
                     if (results.type === "webcomponent" && wcReg[value]) {
                       return "Name is already a web component in the wc-registry published for HAX.";
+                    }
+                    // Check for any other syntax errors
+                    if(results.type === "webcomponent" && !/^[a-z][a-z0-9.\-]*\-[a-z0-9.\-]*$/.test(value)){
+                      return `Name must follow the syntax ${color.bold("my-component")}`;
                     }
                     // assumes auto was selected in CLI
                     let joint = process.cwd();
@@ -565,12 +577,17 @@ async function main() {
                   program.error(color.red("Name is required (tab writes default)"));
                   process.exit(1);
                 }
+                if(reservedNames.includes(value)) {
+                  program.error(color.red(`Reserved name ${color.bold(value)} cannot be used`));
+                  process.exit(1);
+                }
                 if (value.toLocaleLowerCase() !== value) {
                   program.error(color.red("Name must be lowercase"));
                   process.exit(1);
                 }
                 if (/^\d/.test(value)) {
                   program.error(color.red("Name cannot start with a number"));
+                  process.exit(1);
                 }
                 if (value.indexOf(' ') !== -1) {
                   program.error(color.red("No spaces allowed in name"));
@@ -583,6 +600,11 @@ async function main() {
                 // test that this is not an existing element we use in the registry
                 if (results.type === "webcomponent" && wcReg[value]) {
                   program.error(color.red("Name is already a web component in the wc-registry published for HAX."));
+                  process.exit(1);
+                }
+                // Check for any other syntax errors
+                if(results.type === "webcomponent" && !/^[a-z][a-z0-9.\-]*\-[a-z0-9.\-]*$/.test(value)){
+                  program.error(color.red(`Name must follow the syntax ${color.bold("my-component")}`));
                   process.exit(1);
                 }
                 // assumes auto was selected in CLI
