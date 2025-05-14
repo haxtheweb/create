@@ -106,33 +106,45 @@ export async function partyCommandDetected(commandRun) {
       break;
       case "docs":
         // open the docs
+        p.intro(`${color.bgBlue(color.white(` HAX Documentation `))}`);
         p.intro(`${color.bgBlue(color.white(` Opening in browser `))}`);
         await open("https://haxtheweb.org/");
+        p.outro(`${color.bgBlue(color.white(` https://haxtheweb.org/ `))}`);
       break;
       case "playground":
         // open the playground
+        p.intro(`${color.bgBlue(color.white(` HAX Playground `))}`);
         p.intro(`${color.bgBlue(color.white(` Opening in browser `))}`);
         await open("https://hax.cloud/");
+        p.outro(`${color.bgBlue(color.white(` https://hax.cloud/ `))}`);
       break;
       case "psu":
         // open the psu site
+        p.intro(`${color.bgBlue(color.white(` HAX PSU `))}`);
         p.intro(`${color.bgBlue(color.white(` Opening in browser `))}`);
         await open("https://hax.psu.edu/");
+        p.outro(`${color.bgBlue(color.white(` https://hax.psu.edu/ `))}`);
       break;
       case "issues":
         // open the issues
+        p.intro(`${color.bgBlue(color.white(` HAX Issues on Github `))}`);
         p.intro(`${color.bgBlue(color.white(` Opening in browser `))}`);
         await open("https://github.com/haxtheweb/issues/issues");
+        p.outro(`${color.bgBlue(color.white(` https://github.com/haxtheweb/issues/issues `))}`);
       break;
       case "discord":
         // open the discord
+        p.intro(`${color.bgBlue(color.white(` HAX Discord `))}`);
         p.intro(`${color.bgBlue(color.white(` Opening in browser `))}`);
-        await open("https://discord.gg/haxtheweb");
+        await open("https://discord.gg/EKYJAjqGhf");
+        p.outro(`${color.bgBlue(color.white(` https://discord.gg/EKYJAjqGhf `))}`);
       break;
       case "club":
         // open the club
+        p.intro(`${color.bgBlue(color.white(` HAX The Club is a student organization at PSU `))}`);
         p.intro(`${color.bgBlue(color.white(` Opening in browser `))}`);
         await open("https://orgcentral.psu.edu/organization/hax-the-club");
+        p.outro(`${color.bgBlue(color.white(` https://orgcentral.psu.edu/organization/hax-the-club `))}`);
         // we can change this to the club website when it's up
       break;
       case "gh":
