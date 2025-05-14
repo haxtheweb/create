@@ -27,10 +27,10 @@ export function partyActions(){
       { value: 'docs', label: "View the HAX documentation"},
       { value: 'playground', label: "Explore HAX.cloud playground"},
       { value: 'psu', label: "Visit official hax.psu.edu site"},
-      { value: 'issues', label: "View HAX issues on GitHub"},
+      { value: 'issues', label: "Engage with HAX issues on GitHub"},
       { value: 'discord', label: "Join the HAX Discord community"},
       { value: 'club', label: "Check out HAX The Club at PSU"},
-      { value: 'github', label: "Become a core developer for HAX"},
+      { value: 'github', label: "Contribute to core development for HAX"},
     ];
   }
 
