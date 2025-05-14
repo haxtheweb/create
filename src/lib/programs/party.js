@@ -167,7 +167,7 @@ export async function partyCommandDetected(commandRun) {
             { value: "haxcms-nodejs", label: "HAXcms Node.js - haxtheweb/haxcms-nodejs" }, 
             { value: "haxcms-php", label: "HAXcms PHP - haxtheweb/haxcms-php" }, 
             { value: "desktop", label: "HAX The Desktop - haxtheweb/desktop" }, 
-            { value: "haxiam", label: "HAXiam - haxtheweb/HAXiam" }
+            { value: "HAXiam", label: "HAXiam - haxtheweb/HAXiam" }
           ];
 
           p.note(`${merlinSays(`${color.magenta(color.bold('HAX is a party,'))} so you can select ${color.bold('multiple')} repositories at once!`)}
