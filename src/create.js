@@ -243,6 +243,7 @@ async function main() {
       commandRun.options.skip = true;
     }
   })
+  .option('--root <char>', 'root location to execute the command from')
   .option('--repos <char...>', 'repositories to clone')
   .version(packageJson.version);
 

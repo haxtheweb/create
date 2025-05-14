@@ -1,7 +1,9 @@
-import * as p from '@clack/prompts';
-import color from 'picocolors';
+import * as fs from 'node:fs';
 import { exec } from "../utils.js";
 import open from 'open';
+
+import * as p from '@clack/prompts';
+import color from 'picocolors';
 import { merlinSays } from "../statements.js";
 
 let sysGit = true;
@@ -89,7 +91,8 @@ export async function partyCommandDetected(commandRun) {
     switch (operation.action) {
       case "party:status":
       case "party:stats":
-      p.intro(`${color.green(color.bold(`         
+      if(!commandRun.options.quiet) {
+        p.intro(`${color.green(color.bold(`         
                        888            
                        888            
 88888b.  8888b. 888d888888888888  888 
@@ -99,6 +102,7 @@ export async function partyCommandDetected(commandRun) {
 88888P" "Y888888888     "Y888 "Y88888 
 888                               888 
 888                           Y8bd88P`))}`);
+      };
       break;
       case "docs":
         // open the docs
@@ -134,17 +138,35 @@ export async function partyCommandDetected(commandRun) {
       case "gh":
       case "github":
         try {
-          // open the repos
+          if(!commandRun.options.root && !commandRun.options.auto){
+            commandRun.options.root = await p.text({
+              message: 'What folder will your HAX projects live in?',
+              placeholder: process.cwd(),
+              required: true,
+              validate: (value) => {
+                if (!value) {
+                  return "Path is required (tab writes default)";
+                }
+                if (!fs.existsSync(value)) {
+                  return `${value} does not exist. Select a valid folder`;
+                }
+              }
+            })
+            // subprocesses are based on the root process folder
+            process.chdir(commandRun.options.root);
+          }
+
+          // list HAX repos
           const initialValues = [ "webcomponents" ];
           const options = [ 
-            { value: "webcomponents", label: "Webcomponents Monorepo" }, 
-            { value: "create", label: "Create CLI" }, 
-            { value: "hax-the-club", label: "HAX The Club" },
-            { value: "open-apis", label: "Open APIs" }, 
-            { value: "haxcms-nodejs", label: "HAXcms Node.js" }, 
-            { value: "haxcms-php", label: "HAXcms PHP"}, 
-            { value: "desktop", label: "HAXcms Desktop" }, 
-            { value: "haxiam", label: "HAXiam" }
+            { value: "webcomponents", label: "Webcomponents Monorepo - haxtheweb/webcomponents" }, 
+            { value: "create", label: "Create CLI - haxtheweb/create" }, 
+            { value: "hax-the-club", label: "HAX The Club - haxtheweb/hax-the-club" },
+            { value: "open-apis", label: "Open APIs - haxtheweb/open-apis" }, 
+            { value: "haxcms-nodejs", label: "HAXcms Node.js - haxtheweb/haxcms-nodejs" }, 
+            { value: "haxcms-php", label: "HAXcms PHP - haxtheweb/haxcms-php" }, 
+            { value: "desktop", label: "HAX The Desktop - haxtheweb/desktop" }, 
+            { value: "haxiam", label: "HAXiam - haxtheweb/HAXiam" }
           ];
 
           p.note(`${merlinSays(`${color.magenta(color.bold('HAX is a party,'))} so you can select ${color.bold('multiple')} repositories at once!`)}
