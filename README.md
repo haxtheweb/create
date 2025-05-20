@@ -31,65 +31,73 @@ Usage: hax [options] [command]
 
 Options:
   --
-  --v                             Verbose output
-  --debug                         Output for developers
-  --format <char>                 Output format; json (default), yaml
-  --path <char>                   where to perform operation
-  --npm-client <char>             npm client to use (must be installed) npm,
-                                  yarn, pnpm (default: "npm")
-  --y                             yes to all questions
-  --skip                          skip frills like animations
-  --quiet                         remove console logging
-  --auto                          yes to all questions, alias of y
-  --no-i                          prevent interactions / sub-process, good for
-                                  scripting
-  --to-file <char>                redirect command output to a file
-  --no-extras                     skip all extra / automatic command processing
-  --root <char>                   root location to execute the command from
-  --org <char>                    organization for package.json
-  --author <char>                 author for site / package.json
-  --writeHaxProperties            Write haxProperties for the element
-  --import-site <char>            URL of site to import
-  --import-structure <char>       import method to use:
-                                  pressbooksToSite
-                                  elmslnToSite
-                                  haxcmsToSite
-                                  notionToSite
-                                  gitbookToSite
-                                  evolutionToSite
-                                  htmlToSite
-                                  docxToSite
-  --node-op <char>                node operation to perform
-  --item-id <char>                node ID to operate on
-  --name <char>                   name of the project
-  --domain <char>                 published domain name
-  --title-scrape <char>           CSS Selector for `title` in resource
-  --content-scrape <char>         CSS Selector for `body` in resource
-  --items-import <char>           import items from a file / site
-  --recipe <char>                 path to recipe file
-  --custom-theme-name <char>      custom theme name
-  --custom-theme-template <char>  custom theme template; (options: base,
-                                  polaris-flex, polaris-sidebar)
-  -V, --version                   output the version number
-  --title <char>                  Title
-  --content <char>                Page content
-  --slug <char>                   Path (slug)
-  --published <char>              Publishing status
-  --tags <char>                   Tags
-  --parent <char>                 Parent
-  --order <char>                  Order
-  --theme <char>                  Theme
-  --hide-in-menu <char>           Hide in menu
-  -h, --help                      display help for command
+  --v                                 Verbose output
+  --debug                             Output for developers
+  --format <char>                     Output format; json (default), yaml
+  --path <char>                       where to perform operation
+  --name <char>                       name of the project/web component
+  --npm-client <char>                 npm client to use (must be installed)
+                                      npm, yarn, pnpm (default: "npm")
+  --y                                 yes to all questions
+  --skip                              skip frills like animations
+  --quiet                             remove console logging
+  --auto                              yes to all questions, alias of y
+  --no-i                              prevent interactions / sub-process, good
+                                      for scripting
+  --to-file <char>                    redirect command output to a file
+  --no-extras                         skip all extra / automatic command
+                                      processing
+  --root <char>                       root location to execute the command from
+  --org <char>                        organization for package.json
+  --author <char>                     author for site / package.json
+  --writeHaxProperties                Write haxProperties for the element
+  --import-site <char>                URL of site to import
+  --import-structure <char>           import method to use:
+                                      pressbooksToSite
+                                      elmslnToSite
+                                      haxcmsToSite
+                                      notionToSite
+                                      gitbookToSite
+                                      evolutionToSite
+                                      htmlToSite
+                                      docxToSite
+  --node-op <char>                    node operation to perform
+  --item-id <char>                    node ID to operate on
+  --domain <char>                     published domain name
+  --title-scrape <char>               CSS Selector for `title` in resource
+  --content-scrape <char>             CSS Selector for `body` in resource
+  --items-import <char>               import items from a file / site
+  --recipe <char>                     path to recipe file
+  --custom-theme-name <char>          custom theme name
+  --custom-theme-template <char>      custom theme template; (options: base,
+                                      polaris-flex, polaris-sidebar)
+  --repos <char...>                   repositories to clone
+  -V, --version                       output the version number
+  --title <char>                      Title
+  --content <char>                    Page content
+  --slug <char>                       Path (slug)
+  --published <char>                  Publishing status
+  --tags <char>                       Tags
+  --parent <char>                     Parent
+  --order <char>                      Order
+  --theme <char>                      Theme
+  --hide-in-menu <char>               Hide in menu
+  -h, --help                          display help for command
 
 Commands:
-  start                           Select which hax sub-program to run
-  site [options] [action]         create or administer a HAXsite
-  webcomponent [options] [name]   Create Lit based web components, with HAX
-                                  recommendations
-  audit [options]                 Audits web components for compliance with DDD
-                                  (HAX Design System)
-  help [command]                  display help for command
+  start                               Select which hax sub-program to run
+  update [options]                    hax cli self update
+  serve                               Launch HAXsite in development mode
+                                      (http://localhost)
+  site [options] [action]             create or administer a HAXsite
+  wc|webcomponent [options] [action]  Create Lit based web components, with HAX
+                                      recommendations
+  audit [options]                     Audits web components for compliance with
+                                      DDD (HAX design system)
+  party [options] [action]            Party time! Join the HAX community and
+                                      get involved!
+  help [command]                      display help for command
+
 ```
 ## Examples
 For a detailed list of example commands that you can perform with `hax` see [examples](examples.md).
