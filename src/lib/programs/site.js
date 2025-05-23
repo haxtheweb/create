@@ -2,7 +2,7 @@
 import { setTimeout } from 'node:timers/promises';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-
+import open from 'open';
 import * as p from '@clack/prompts';
 import * as ejs from "ejs";
 import color from 'picocolors';
@@ -88,6 +88,8 @@ export function siteActions() {
     { value: 'site:surge', label: "Publish site to Surge.sh"},
     { value: 'recipe:read', label: "Read recipe file" },
     { value: 'recipe:play', label: "Play recipe file" },
+    { value: 'issue:general', label: "Issue: Submit an issue or suggestion"},
+    { value: 'issue:theme', label: "Issue: Suggest custom theme"},
   ];
 }
 
@@ -1151,6 +1153,42 @@ export async function siteCommandDetected(commandRun) {
               }
             }
           }
+        break;
+        case "issue:general":
+          // open the issues
+          p.intro(`${color.bgBlue(color.white(` Submit issue / suggestion on Github `))}`);
+          p.intro(`${color.bgBlue(color.white(` Opening in browser `))}`);
+          await open("https://github.com/haxtheweb/issues/issues/new");
+          p.outro(`${color.bgBlue(color.white(` https://github.com/haxtheweb/issues/issues/new `))}`);
+        break;
+        case "issue:theme":
+          // open the issues
+          p.intro(`${color.bgBlue(color.white(` Submit custom theme on Github `))}`);
+          p.intro(`${color.bgBlue(color.white(` Opening in browser `))}`);
+          let allContents= '';
+          fs.readdir(`${activeHaxsite.directory}/custom/src`, (err, files) => {
+            if (err) {
+              console.error('Error reading directory:', err);
+              return;
+            }
+            files.forEach((file, index) => {
+              const filePath = path.join(`${activeHaxsite.directory}/custom/src`, file);
+
+              if (fs.lstatSync(filePath).isFile()) {
+                const content = fs.readFileSync(filePath, 'utf-8');
+                // append file name as a JS comment
+                allContents += `\n// FILENAME: ${file}\n` + content + '\n'; // Add newline between files if desired
+              }
+
+              if (index === files.length - 1) {
+                console.log('Combined contents of all files:\n', allContents);
+              }
+            });
+          });
+          console.log(allContents);
+          await open(`https://github.com/haxtheweb/issues/issues/new?template=new-design.md`);
+          p.outro(`${color.bgBlue(color.white(` Copy the output of the console into the issue's js template area `))}`);
+          p.outro(`${color.bgBlue(color.white(` https://github.com/haxtheweb/issues/issues/new?template=new-design.md `))}`);            
         break;
         case "quit":
         // quit
