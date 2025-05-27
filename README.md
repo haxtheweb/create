@@ -114,11 +114,6 @@ Run `man hax` to get detailed manual.
 npx @haxtheweb/create
 # this is same as above, better windows CLI support
 npm init @haxtheweb
-- Try Hax: https://hax.cloud
-- HAXCellence https://haxtheweb.org/what-is-hax
-  "scripts": {
-    "hax": "hax"
-  }
 ```
 
 ```bash
