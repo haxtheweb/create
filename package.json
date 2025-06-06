@@ -51,7 +51,7 @@
     "ejs": "3.1.10",
     "js-yaml": "4.1.0",
     "node-html-parser": "6.1.13",
-    "open": "^10.1.2",
+    "open": "^8.4.2",
     "picocolors": "1.0.1",
     "winston": "3.17.0"
   },
