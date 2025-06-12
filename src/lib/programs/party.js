@@ -1,5 +1,5 @@
 import * as fs from 'node:fs';
-import { exec } from "../utils.js";
+import { exec, interactiveExec } from "../utils.js";
 import open from 'open';
 
 import * as p from '@clack/prompts';
@@ -14,13 +14,6 @@ exec('which git', error => {
 });
 
 let sysSSH = true;
-exec('ssh -T git@github.com', (error, stdout, stderr) => {
-  const output = stdout + stderr;
-  // The GitHub SSH test always returns as stderr
-  if (!output.includes('successfully authenticated')) {
-    sysSSH = false;
-  }
-});
 
 export function partyActions(){
     return [
@@ -222,6 +215,13 @@ async function cloneHAXRepositories(commandRun) {
     ${color.underline(color.cyan(`https://git-scm.com/book/en/v2/Getting-Started-Installing-Git`))}`);
     process.exit(1);
   }
+  await interactiveExec('ssh -T git@github.com', (error, stdout, stderr) => {
+    const output = stdout + stderr;
+    // The GitHub SSH test always returns as stderr
+    if (!output.includes('successfully authenticated')) {
+      sysSSH = false;
+    }
+  });
 
   if(!sysSSH) {
       console.error(`${color.red(`SSH keys are not set up correctly. SSH is required to access GitHub with ${color.bold('hax party')}.`)}
