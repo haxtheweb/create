@@ -1395,7 +1395,16 @@ export async function siteProcess(commandRun, project, port = '3000') {    // au
   HAXCMS.cliWritePath = `${project.path}`;
   let res = new Res();
   // unfortunately the twig exception is not blockable from output at this layer
-  await hax.RoutesMap.post.createSite({body: siteRequest}, res);
+  await hax.RoutesMap.post.createSite(
+    {
+      body: siteRequest,
+      query: {
+        user_token: "fakeToken",
+        site_token: "fakeToken"
+      },
+    },
+    res
+  );
   // so we run it and then clear the screen
   // this is a bit of a hack but it works to give the user the feedback that the site was
   // created successfully, but only if not in quiet mode (default)
