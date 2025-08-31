@@ -19,4 +19,4 @@
 ## Notes
 <!-- Any additional context, decisions, or follow-up work -->
 
-## Console Output ScreenShot
+## Console Output Screenshot
