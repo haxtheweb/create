@@ -31,7 +31,7 @@ export class <%= className %> extends DDDSuper(I18NMixin(LitElement)) {
       localesPath:
         new URL("./locales/<%= name %>.ar.json", import.meta.url).href +
         "/../",
-      locales: ["ar", "es", "hi", "zh"],
+      locales: ["ar", "es", "hi", "zh", "pt", "bn", "ru", "fr", "ja"],
     });
   }
 
