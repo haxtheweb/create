@@ -36,6 +36,20 @@ exec('surge --version', error => {
   }
 });
 
+var sysNetlify = true;
+exec('netlify --version', error => {
+  if (error) {
+    sysNetlify = false;
+  }
+});
+
+var sysVercel = true;
+exec('vercel --version', error => {
+  if (error) {
+    sysVercel = false;
+  }
+});
+
 const siteRecipeFile = 'create-cli.recipe';
 const siteLoggingName = 'cli';
 const logLevels = {};
@@ -86,6 +100,8 @@ export function siteActions() {
     { value: 'site:schema', label: "Full site as HAXElementSchema"},
     { value: 'site:sync', label: "Sync git repo"},
     { value: 'site:surge', label: "Publish site to Surge.sh"},
+    { value: 'site:netlify', label: "Publish site to Netlify"},
+    { value: 'site:vercel', label: "Publish site to Vercel"},
     { value: 'recipe:read', label: "Read recipe file" },
     { value: 'recipe:play', label: "Play recipe file" },
     { value: 'issue:general', label: "Issue: Submit an issue or suggestion"},
@@ -996,6 +1012,86 @@ export async function siteCommandDetected(commandRun) {
             log(e.stderr);
           }
         break;
+        case "site:netlify":
+          try {
+            // attempt to install; implies they asked to publish with netlify but
+            // system test did not see it globally
+            if (!sysNetlify) {
+              let s = p.spinner();
+              s.start(merlinSays('Installing Netlify CLI globally so we can publish'));
+              let execOutput = await exec(`npm install --global netlify-cli`);
+              s.stop(merlinSays('Netlify CLI installed globally'));
+              log(execOutput.stdout.trim());
+              sysNetlify = true;
+            }
+            let execOutput;
+            if (commandRun.options.y) {
+              let s = p.spinner();
+              s.start(merlinSays('Deploying site to Netlify ..'));
+              if (commandRun.options.domain) {
+                // If specific site/domain is specified, deploy to existing site
+                execOutput = await exec(`cd ${activeHaxsite.directory} && netlify deploy --prod --site ${commandRun.options.domain}`);
+              } else {
+                // Auto deploy - will create a new site or use existing site config
+                execOutput = await exec(`cd ${activeHaxsite.directory} && netlify deploy --prod`);
+              }
+              log(execOutput.stdout.trim());
+              s.stop(merlinSays(`Site deployed to Netlify`));
+            }
+            else {
+              let netlifyArgs = ['deploy', '--prod'];
+              if (commandRun.options.domain) {
+                netlifyArgs.push('--site', commandRun.options.domain);
+              }
+              execOutput = await interactiveExec('netlify', netlifyArgs, {cwd: activeHaxsite.directory});
+              log(merlinSays(`Site deployed to Netlify`));
+            }
+          }
+          catch(e) {
+            console.log("?");
+            log(e.stderr);
+          }
+        break;
+        case "site:vercel":
+          try {
+            // attempt to install; implies they asked to publish with vercel but
+            // system test did not see it globally
+            if (!sysVercel) {
+              let s = p.spinner();
+              s.start(merlinSays('Installing Vercel CLI globally so we can publish'));
+              let execOutput = await exec(`npm install --global vercel`);
+              s.stop(merlinSays('Vercel CLI installed globally'));
+              log(execOutput.stdout.trim());
+              sysVercel = true;
+            }
+            let execOutput;
+            if (commandRun.options.y) {
+              let s = p.spinner();
+              s.start(merlinSays('Deploying site to Vercel ..'));
+              if (commandRun.options.domain) {
+                // Deploy with specific domain/project name
+                execOutput = await exec(`cd ${activeHaxsite.directory} && vercel --prod --name ${commandRun.options.domain}`);
+              } else {
+                // Auto deploy with default settings
+                execOutput = await exec(`cd ${activeHaxsite.directory} && vercel --prod`);
+              }
+              log(execOutput.stdout.trim());
+              s.stop(merlinSays(`Site deployed to Vercel`));
+            }
+            else {
+              let vercelArgs = ['--prod'];
+              if (commandRun.options.domain) {
+                vercelArgs.push('--name', commandRun.options.domain);
+              }
+              execOutput = await interactiveExec('vercel', vercelArgs, {cwd: activeHaxsite.directory});
+              log(merlinSays(`Site deployed to Vercel`));
+            }
+          }
+          catch(e) {
+            console.log("?");
+            log(e.stderr);
+          }
+        break;
         case "site:file-list":
           let res = new Res();
           await hax.RoutesMap.get.listFiles({query: activeHaxsite.name, filename: commandRun.options.filename}, res);
@@ -1472,6 +1568,12 @@ export async function siteProcess(commandRun, project, port = '3000') {    // au
   }
   if (!fs.existsSync(`${project.path}/${project.name}/._surgeignore`)) {
     await fs.copyFileSync(`${process.mainModule.path}/templates/sitedotfiles/_surgeignore`, `${project.path}/${project.name}/.surgeignore`);    
+  }
+  if (!fs.existsSync(`${project.path}/${project.name}/.netlifyignore`)) {
+    await fs.copyFileSync(`${process.mainModule.path}/templates/sitedotfiles/_netlifyignore`, `${project.path}/${project.name}/.netlifyignore`);
+  }
+  if (!fs.existsSync(`${project.path}/${project.name}/.vercelignore`)) {
+    await fs.copyFileSync(`${process.mainModule.path}/templates/sitedotfiles/_vercelignore`, `${project.path}/${project.name}/.vercelignore`);
   }
   // options for install, git and other extras
   // can't launch if we didn't install first so launch implies installation
