@@ -50,6 +50,13 @@ exec('vercel --version', error => {
   }
 });
 
+var sysRsync = true;
+exec('rsync --version', error => {
+  if (error) {
+    sysRsync = false;
+  }
+});
+
 const siteRecipeFile = 'create-cli.recipe';
 const siteLoggingName = 'cli';
 const logLevels = {};
@@ -99,9 +106,12 @@ export function siteActions() {
     { value: 'site:md', label: "Full site as Markdown"},
     { value: 'site:schema', label: "Full site as HAXElementSchema"},
     { value: 'site:sync', label: "Sync git repo"},
+    { value: 'site:rsync', label: "Rsync site to remote/local directory"},
     { value: 'site:surge', label: "Publish site to Surge.sh"},
     { value: 'site:netlify', label: "Publish site to Netlify"},
     { value: 'site:vercel', label: "Publish site to Vercel"},
+    { value: 'setup:github-actions', label: "Setup GitHub Actions deployment"},
+    { value: 'setup:gitlab-ci', label: "Setup GitLab CI deployment"},
     { value: 'recipe:read', label: "Read recipe file" },
     { value: 'recipe:play', label: "Play recipe file" },
     { value: 'issue:general', label: "Issue: Submit an issue or suggestion"},
@@ -751,6 +761,146 @@ export async function siteCommandDetected(commandRun) {
             log(e.stderr);
           }
         break;
+        case "site:rsync":
+          try {
+            if (!sysRsync) {
+              if (!commandRun.options.quiet) {
+                p.intro(`${color.bgRed(color.white(` ERROR: rsync not found `))}`);
+                p.outro(`${color.red('rsync is required but not installed on this system.')}`);
+                p.outro(`${color.yellow('Install rsync:')}`);
+                p.outro(`${color.gray('  Ubuntu/Debian: sudo apt install rsync')}`);
+                p.outro(`${color.gray('  macOS: brew install rsync')}`);
+                p.outro(`${color.gray('  CentOS/RHEL: sudo yum install rsync')}`);
+              }
+              break;
+            }
+
+            let source = commandRun.options.source || activeHaxsite.directory;
+            let destination = commandRun.options.destination;
+            let excludePatterns = commandRun.options.exclude ? commandRun.options.exclude.split(',').map(p => p.trim()) : ['node_modules', '.git', '.DS_Store', 'dist', 'build'];
+            let dryRun = commandRun.options.dryRun || false;
+
+            // Interactive prompts if not provided via CLI
+            if (!commandRun.options.y && !destination) {
+              let action = await p.select({
+                message: 'Rsync action:',
+                options: [
+                  { value: 'to-remote', label: 'Sync site to remote server' },
+                  { value: 'to-local', label: 'Sync site to local directory' },
+                  { value: 'from-remote', label: 'Sync from remote server to site' },
+                  { value: 'test', label: 'Test sync (dry run)' }
+                ]
+              });
+
+              if (action === 'test') {
+                dryRun = true;
+              }
+
+              if (action === 'from-remote') {
+                source = await p.text({
+                  message: 'Source (user@host:/path):',
+                  placeholder: 'user@example.com:/var/www/html',
+                  validate: (value) => {
+                    if (!value) return 'Source is required';
+                  }
+                });
+                destination = activeHaxsite.directory;
+              } else {
+                destination = await p.text({
+                  message: action === 'to-remote' ? 'Destination (user@host:/path):' : 'Destination directory:',
+                  placeholder: action === 'to-remote' ? 'user@example.com:/var/www/html' : '/backup/location',
+                  validate: (value) => {
+                    if (!value) return 'Destination is required';
+                  }
+                });
+              }
+
+              let excludeInput = await p.text({
+                message: 'Exclude patterns (comma-separated):',
+                placeholder: 'node_modules,.git,.DS_Store,dist,build',
+                initialValue: 'node_modules,.git,.DS_Store,dist,build'
+              });
+              
+              if (excludeInput) {
+                excludePatterns = excludeInput.split(',').map(p => p.trim());
+              }
+
+              if (!dryRun && action !== 'test') {
+                dryRun = await p.confirm({
+                  message: 'Perform dry run first?',
+                  initialValue: true
+                });
+              }
+            }
+
+            if (!destination) {
+              if (!commandRun.options.quiet) {
+                p.intro(`${color.bgRed(color.white(` ERROR: destination required `))}`); 
+              }
+              break;
+            }
+
+            // Build rsync command
+            let rsyncArgs = [
+              '-avz', // archive, verbose, compress
+              '--progress', // show progress
+              '--stats' // show stats
+            ];
+
+            // Add dry run flag if requested
+            if (dryRun) {
+              rsyncArgs.push('--dry-run');
+            }
+
+            // Add exclude patterns
+            excludePatterns.forEach(pattern => {
+              rsyncArgs.push('--exclude', pattern);
+            });
+
+            // Add delete flag to mirror source (be careful with this)
+            if (commandRun.options.delete) {
+              rsyncArgs.push('--delete');
+            }
+
+            // Add source and destination
+            // Ensure source ends with / for directory contents
+            if (!source.endsWith('/') && fs.lstatSync(source).isDirectory()) {
+              source += '/';
+            }
+            
+            rsyncArgs.push(source, destination);
+
+            if (!commandRun.options.quiet) {
+              p.intro(`${dryRun ? color.yellow('🧪 Dry run: ') : color.green('🚀 Running: ')}rsync ${rsyncArgs.join(' ')}`);
+            }
+
+            if (commandRun.options.i && !commandRun.options.quiet) {
+              // Interactive execution for real-time progress
+              await interactiveExec('rsync', rsyncArgs);
+            } else {
+              // Silent execution
+              const result = await exec(`rsync ${rsyncArgs.join(' ')}`);
+              if (!commandRun.options.quiet && result.stdout) {
+                console.log(result.stdout);
+              }
+              if (result.stderr) {
+                console.error(result.stderr);
+              }
+            }
+            
+            recipe.log(siteLoggingName, commandString(commandRun));
+            if (!commandRun.options.quiet) {
+              p.outro(`${color.green('✓')} ${dryRun ? 'Dry run completed' : 'Rsync completed successfully'}`);
+            }
+          }
+          catch(e) {
+            log(`Rsync error: ${e.message}`, 'error');
+            if (!commandRun.options.quiet) {
+              p.intro(`${color.bgRed(color.white(` Rsync Error `))}`);
+              p.outro(`${color.red('✗')} ${e.message}`);
+            }
+          }
+        break;
         case "site:theme":
           try {
             //theme
@@ -1085,6 +1235,80 @@ export async function siteCommandDetected(commandRun) {
               }
               execOutput = await interactiveExec('vercel', vercelArgs, {cwd: activeHaxsite.directory});
               log(merlinSays(`Site deployed to Vercel`));
+            }
+          }
+          catch(e) {
+            console.log("?");
+            log(e.stderr);
+          }
+        break;
+        case "setup:github-actions":
+          try {
+            let s = p.spinner();
+            s.start(merlinSays('Setting up GitHub Actions deployment workflow'));
+            
+            // Create .github/workflows directory
+            const workflowDir = path.join(activeHaxsite.directory, '.github', 'workflows');
+            if (!fs.existsSync(workflowDir)) {
+              fs.mkdirSync(workflowDir, { recursive: true });
+            }
+            
+            // Copy the workflow file
+            const workflowFile = path.join(workflowDir, 'deploy.yml');
+            if (fs.existsSync(workflowFile) && !commandRun.options.y) {
+              s.stop(merlinSays('GitHub Actions workflow already exists'));
+              let overwrite = await p.confirm({ 
+                message: 'GitHub Actions workflow file already exists. Overwrite?',
+                initialValue: false
+              });
+              if (!overwrite) {
+                log('Skipped GitHub Actions setup');
+                break;
+              }
+            }
+            
+            await fs.copyFileSync(
+              path.join(process.mainModule.path, 'templates/sitedotfiles/_github_workflows_deploy.yml'),
+              workflowFile
+            );
+            
+            s.stop(merlinSays('GitHub Actions workflow created successfully'));
+            if (!commandRun.options.quiet) {
+              p.note(`🚀 GitHub Actions workflow has been set up!\n\nNext steps:\n1. Push your changes: ${color.bold('git add . && git commit -m "Add GitHub Actions workflow" && git push')}\n2. Enable GitHub Pages in your repository settings\n3. Select "GitHub Actions" as the source\n4. Your site will automatically deploy on every push to main/master`);
+            }
+          }
+          catch(e) {
+            console.log("?");
+            log(e.stderr);
+          }
+        break;
+        case "setup:gitlab-ci":
+          try {
+            let s = p.spinner();
+            s.start(merlinSays('Setting up GitLab CI deployment pipeline'));
+            
+            // Copy the GitLab CI file
+            const ciFile = path.join(activeHaxsite.directory, '.gitlab-ci.yml');
+            if (fs.existsSync(ciFile) && !commandRun.options.y) {
+              s.stop(merlinSays('GitLab CI file already exists'));
+              let overwrite = await p.confirm({ 
+                message: '.gitlab-ci.yml already exists. Overwrite?',
+                initialValue: false
+              });
+              if (!overwrite) {
+                log('Skipped GitLab CI setup');
+                break;
+              }
+            }
+            
+            await fs.copyFileSync(
+              path.join(process.mainModule.path, 'templates/sitedotfiles/_gitlab-ci.yml'),
+              ciFile
+            );
+            
+            s.stop(merlinSays('GitLab CI pipeline created successfully'));
+            if (!commandRun.options.quiet) {
+              p.note(`🚀 GitLab CI pipeline has been set up!\n\nNext steps:\n1. Push your changes: ${color.bold('git add . && git commit -m "Add GitLab CI pipeline" && git push')}\n2. GitLab Pages will be automatically enabled\n3. Your site will deploy on every push to main/master\n4. Access your site at: ${color.cyan('https://yourusername.gitlab.io/yourproject')}`);
             }
           }
           catch(e) {

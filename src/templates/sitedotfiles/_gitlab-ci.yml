@@ -1,0 +1,62 @@
+# GitLab CI/CD configuration for HAX Site deployment
+# This file will automatically deploy your HAX site to GitLab Pages on every push to main/master
+
+# Docker image with Node.js for any potential build steps
+image: node:20-alpine
+
+# Cache node_modules for faster builds
+cache:
+  paths:
+    - node_modules/
+
+# Define stages
+stages:
+  - build
+  - deploy
+
+# Variables
+variables:
+  # Disable git submodule strategy for faster clone
+  GIT_SUBMODULE_STRATEGY: none
+
+# Build stage (optional for HAX sites)
+build:
+  stage: build
+  script:
+    - echo "HAX site build stage"
+    - npm ci --only=production --silent 2>/dev/null || echo "No package.json found, skipping npm install"
+    - echo "HAX site ready for deployment"
+  artifacts:
+    paths:
+      - public
+    expire_in: 1 hour
+  only:
+    - main
+    - master
+
+# GitLab Pages deployment
+pages:
+  stage: deploy
+  script:
+    - echo "Preparing HAX site for GitLab Pages"
+    - mkdir -p public
+    - cp -r * public/ 2>/dev/null || true
+    - rm -rf public/public  # Remove nested public folder if it exists
+    - ls -la public/
+  artifacts:
+    paths:
+      - public
+  only:
+    - main
+    - master
+
+# Optional: Test stage for pull requests
+test:
+  stage: build
+  script:
+    - echo "Testing HAX site structure"
+    - test -f index.html || test -f site.json || (echo "Warning: No index.html or site.json found" && exit 1)
+    - echo "HAX site structure looks good"
+  except:
+    - main
+    - master

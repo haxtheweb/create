@@ -174,6 +174,22 @@ Publish site to Vercel, setting the project name
 ```bash
 hax site site:vercel --domain my-project-name --y
 ```
+Setup GitHub Actions deployment workflow (deploys automatically on git push)
+```bash
+hax site setup:github-actions
+```
+Setup GitHub Actions deployment workflow, overwrite existing file
+```bash
+hax site setup:github-actions --y
+```
+Setup GitLab CI deployment pipeline (deploys automatically on git push)
+```bash
+hax site setup:gitlab-ci
+```
+Setup GitLab CI deployment pipeline, overwrite existing file
+```bash
+hax site setup:gitlab-ci --y
+```
 Print out the recipe used in building the current site
 ```bash
 hax site recipe:read
