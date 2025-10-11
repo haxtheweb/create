@@ -16,14 +16,23 @@ This command line tool can be used to create and modify two different HAX based 
 .B start
 \- Interactive program to pick options
 .PP
-.B site
-[options] [action] \- Create a HAX website
+.B update
+[options] \- HAX CLI self update
 .PP
-.B webcomponent
-[options] [name] \- Create Lit based web components, with HAX recommendations
+.B serve
+\- Launch HAXsite in development mode (http://localhost)
+.PP
+.B site
+[options] [action] \- Create or administer a HAX website
+.PP
+.B wc | webcomponent
+[options] [action] \- Create Lit based web components, with HAX recommendations
 .PP
 .B audit
 [options] \- Audits web components for compliance with DDD (HAX design system)
+.PP
+.B party
+[options] [actions] \- Party time! Join the HAX community and get involved!
 .PP
 .B help
 [command] \- Display help for command
@@ -41,6 +50,9 @@ Output format\; json (default), yaml
 .TP
 \--path [path]
 Where to perform operation
+.TP
+\--name [name]
+Name of the project / web component
 .TP
 \--npm\-client [client]
 NPM client to use (must be installed); npm (default), yarn, pnpm
@@ -87,9 +99,6 @@ Node operation to perform
 \--item\-id [id]
 Node ID to operate on
 .TP
-\--name [name]
-Name of the project
-.TP
 \--domain [name]
 Published domain name
 .TP
@@ -110,6 +119,24 @@ Custom theme name
 .TP
 \--custom\-theme\-template [option]
 Custom theme template (Options: base | polaris-flex | polaris-sidebar)
+.TP
+\--source [char]
+rsync source directory or remote path
+.TP
+\--destination [char]
+rsync destination directory or remote path
+.TP
+\--exclude [char]
+comma-separated patterns to exclude from rsync
+.TP
+\--dry-run
+perform rsync dry run
+.TP
+\--delete
+delete extraneous files from destination
+.TP
+\--repos [char...]
+repositories to clone
 .TP
 \-V, \--version
 Output the version number
