@@ -24,7 +24,8 @@
     "release": "npm run build && commit-and-tag-version && git push --follow-tags origin main && npm publish",
     "hax": "hax",
     "dev": "nodemon --watch src",
-    "haxcms-nodejs": "haxcms-nodejs"
+    "haxcms-nodejs": "haxcms-nodejs",
+    "local": "npm run build && npm link"
   },
   "man": [
     "./dist/docs/hax.1"
