@@ -6,10 +6,19 @@ import * as p from '@clack/prompts';
 import color from 'picocolors';
 import { merlinSays } from "../statements.js";
 
+const osPathCmd = process.platform === "win32" ? "where.exe" : "which";
+
 let sysGit = true;
-exec('which git', error => {
+exec(`${osPathCmd} git`, error => {
   if (error) {
     sysGit = false;
+  }
+});
+
+let sysGh = true;
+exec(`${osPathCmd} gh`, error => {
+  if (error) {
+    sysGh = false;
   }
 });
 
@@ -56,7 +65,7 @@ export async function partyCommandDetected(commandRun) {
         command: null,
         arguments: {},
         options: { 
-          // npmClient: `${operation.npmClient}`
+          npmClient: `${operation.npmClient}`
         }
       }
       operation = await p.group(
@@ -207,7 +216,6 @@ export async function partyCommandDetected(commandRun) {
 
 async function cloneHAXRepositories(commandRun) {
   let s = p.spinner();
-
   // check for system dependencies: ssh, yarn, etc.
   if(!sysGit) {
     console.error(`${color.red(`Git is not installed. The Git CLI is required to access GitHub with ${color.bold('hax party')}.`)}
@@ -215,13 +223,15 @@ async function cloneHAXRepositories(commandRun) {
     ${color.underline(color.cyan(`https://git-scm.com/book/en/v2/Getting-Started-Installing-Git`))}`);
     process.exit(1);
   }
-  await interactiveExec('ssh -T git@github.com', (error, stdout, stderr) => {
-    const output = stdout + stderr;
+
+  try { 
+    const { stdout, stderr } = await exec('ssh -T git@github.com');
+  } catch(error) {
     // The GitHub SSH test always returns as stderr
-    if (!output.includes('successfully authenticated')) {
+    if (!error.stderr.includes('successfully authenticated')) {
       sysSSH = false;
     }
-  });
+  }
 
   if(!sysSSH) {
       console.error(`${color.red(`SSH keys are not set up correctly. SSH is required to access GitHub with ${color.bold('hax party')}.`)}
@@ -240,6 +250,7 @@ async function cloneHAXRepositories(commandRun) {
     // while loop keeps HAX active until the user is ready
     let isForked = false;
     let firstRun = true;
+
     while(!isForked) {
       try {
         // ssh link is used since https prompts for password
