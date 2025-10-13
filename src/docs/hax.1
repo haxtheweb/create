@@ -14,28 +14,133 @@ This command line tool can be used to create and modify two different HAX based 
 .SH COMMANDS
 .PP
 .B start
-\- Interactive program to pick options
+\- Select which hax sub\-program to run
 .PP
 .B update
-[options] \- HAX CLI self update
+[options] \- hax cli self update
 .PP
 .B serve
 \- Launch HAXsite in development mode (http://localhost)
 .PP
 .B site
-[options] [action] \- Create or administer a HAX website
+[options] [action] \- create or administer a HAXsite
+.RS
+Actions to perform on site include:
+.RS
+.B start
+\- Launch site in browser (http://localhost)
+.br
+.B serve
+\- Launch site in development mode
+.br
+.B node:stats
+\- Node Stats / data
+.br
+.B node:add
+\- Add a new page
+.br
+.B node:edit
+\- Edit a page
+.br
+.B node:delete
+\- Delete a page
+.br
+.B site:stats
+\- Site Status / stats
+.br
+.B site:items
+\- Site items
+.br
+.B site:items\-import
+\- Import items (JOS / site.json)
+.br
+.B site:list\-files
+\- List site files
+.br
+.B site:theme
+\- Change theme
+.br
+.B site:element
+\- Add new Lit component to custom/src
+.br
+.B site:html
+\- Full site as HTML
+.br
+.B site:md
+\- Full site as Markdown
+.br
+.B site:schema
+\- Full site as HAXElementSchema
+.br
+.B site:sync
+\- Sync git repo
+.br
+.B site:rsync
+\- Rsync site to remote/local directory
+.br
+.B site:surge
+\- Publish site to Surge.sh
+.br
+.B site:netlify
+\- Publish site to Netlify
+.br
+.B site:vercel
+\- Publish site to Vercel
+.br
+.B setup:github\-actions
+\- Setup GitHub Actions deployment
+.br
+.B setup:gitlab\-ci
+\- Setup GitLab CI deployment
+.br
+.B recipe:read
+\- Read recipe file
+.br
+.B recipe:play
+\- Play recipe file
+.br
+.B issue:general
+\- Issue: Submit an issue or suggestion
+.br
+.B issue:theme
+\- Issue: Suggest custom theme
+.RE
+.RE
 .PP
 .B wc | webcomponent
 [options] [action] \- Create Lit based web components, with HAX recommendations
+.RS
+Actions to perform on web component include:
+.RS
+.B start
+\- Launch project
+.br
+.B wc:stats
+\- Check status of web component
+.br
+.B wc:element
+\- Add new Lit component to existing project
+.br
+.B wc:haxproperties
+\- Write haxProperties schema
+.RE
+.RE
 .PP
 .B audit
 [options] \- Audits web components for compliance with DDD (HAX design system)
 .PP
 .B party
 [options] [action] \- Party time! Join the HAX community and get involved!
+.RS
+Actions to perform include:
+.RS
+.B test
+\- Test action
+.RE
+.RE
 .PP
 .B help
-[command] \- Display help for command
+[command] \- display help for command
 
 .SH OPTIONS
 .TP
@@ -43,147 +148,187 @@ This command line tool can be used to create and modify two different HAX based 
 Verbose output
 .TP
 \--debug
-Output for developers
+output for developers
 .TP
-\--format [format]
-Output format\; json (default), yaml
+\--format <char>
+output format; json (default), yaml
 .TP
-\--path [path]
-Where to perform operation
+\--path <char>
+where to perform operation
 .TP
-\--name [name]
-Name of the project / web component
+\--name <char>
+name of the project/web component
 .TP
-\--npm\-client [client]
-NPM client to use (must be installed); npm (default), yarn, pnpm
+\--npm\-client <char>
+npm client to use (must be installed) npm, yarn, pnpm (default: "npm")
 .TP
-\--y, \--auto
-Yes to all questions
+\--y
+yes to all questions
 .TP
 \--skip
-Skip extras (e.g. animations) in tool
+skip frills like animations
 .TP
 \--quiet
-Remove console logging
+remove console logging
+.TP
+\--auto
+yes to all questions, alias of y
 .TP
 \--no\-i
-Prevent interactions / sub\-process, good for scripting
+prevent interactions / sub\-process, good for scripting
 .TP
-\--to\-file [char]
-Redirect command output to a file
+\--to\-file <char>
+redirect command output to a file
 .TP
 \--no\-extras
-Skip all extra / automatic commmand processing
+skip all extra / automatic command processing
 .TP
-\--root [location]
-Root location to execute the command from
+\--root <char>
+root location to execute the command from
 .TP
-\--org [organization]
-Organization for package.json
+\--org <char>
+organization for package.json
 .TP
-\--author [author]
-Author for site / package.json
+\--author <char>
+author for site / package.json
 .TP
 \--writeHaxProperties
-Write haxProperties for the element
+write haxProperties for the element
 .TP
-\--import\-site [url]
+\--import\-site <char>
 URL of site to import
 .TP
-\--import\-structure [method]
-Import method to use: pressbooksToSite | elsmlnToSite | haxcmsToSite | notionToSite | gitbookToSite | evolutionToSite | htmlToSite | docxToSite
+\--import\-structure <char>
+import method to use:
+.br
+pressbooksToSite
+.br
+elmslnToSite
+.br
+haxcmsToSite
+.br
+notionToSite
+.br
+gitbookToSite
+.br
+evolutionToSite
+.br
+htmlToSite
+.br
+docxToSite
 .TP
-\--node\-op [operation]
-Node operation to perform
+\--node\-op <char>
+node operation to perform
 .TP
-\--item\-id [id]
-Node ID to operate on
+\--item\-id <char>
+node ID to operate on
 .TP
-\--domain [name]
-Published domain name
+\--domain <char>
+published domain name
 .TP
-\--title\-scrape [selector]
-CSS selector for `title` in resource
+\--title\-scrape <char>
+CSS Selector for `title` in resource
 .TP
-\--content\-scrape [selector[
-CSS selector for `body` in resource
+\--content\-scrape <char>
+CSS Selector for `body` in resource
 .TP
-\--items\-import [char]
-Import items from a file / site
+\--items\-import <char>
+import items from a file / site
 .TP
-\--recipe [path]
-Path to recipe file
+\--recipe <char>
+path to recipe file
 .TP
-\--custom\-theme\-name [name]
-Custom theme name
+\--custom\-theme\-name <char>
+custom theme name
 .TP
-\--custom\-theme\-template [option]
-Custom theme template (Options: base | polaris-flex | polaris-sidebar)
+\--custom\-theme\-template <char>
+custom theme template; (options: base, polaris\-flex, polaris\-sidebar)
 .TP
-\--source [char]
+\--source <char>
 rsync source directory or remote path
 .TP
-\--destination [char]
+\--destination <char>
 rsync destination directory or remote path
 .TP
-\--exclude [char]
-comma-separated patterns to exclude from rsync
+\--exclude <char>
+comma\-separated patterns to exclude from rsync
 .TP
-\--dry-run
+\--dry\-run
 perform rsync dry run
 .TP
 \--delete
 delete extraneous files from destination
 .TP
-\--repos [char...]
+\--repos <char...>
 repositories to clone
 .TP
 \-V, \--version
-Output the version number
+output the version number
 .TP
-\--title [title]
-Title
+\--title <char>
+title
 .TP
-\--content [content]
-Page content
+\--content <char>
+page content
 .TP
-\--slug [slug]
-Path (slug)
+\--slug <char>
+path (slug)
 .TP
-\--published [status]
-Publishing status
+\--published <char>
+publishing status
 .TP
-\--tags [tag]
-Tags
+\--tags <char>
+tags
 .TP
-\--parent [parent]
-Parent
+\--parent <char>
+parent
 .TP
-\--order [order]
-Order
+\--order <char>
+order
 .TP
-\--theme [theme]
-Theme
+\--theme <char>
+theme
 .TP
-\--hide\-in\-menu [char]
-Hide in menu
+\--hide\-in\-menu <char>
+hide in menu
 .TP
 \-h, \--help
-Display help for command
+display help for command
 
 .SH EXAMPLES
 .TP
 .B hax start
-Navigatable interface
+Navigatable interface to select which hax sub\-program to run
 .TP
-.B hax site mysite --y
-Create a new HAXsite (HAXcms, single site) 
+.B hax site mysite \--y
+Create a new HAXsite (HAXcms, single site) with automatic yes to all questions
 .TP
-.B hax webcomponent my-element --y
+.B hax site mysite \--path /var/www \--author "John Doe"
+Create a new HAXsite in a specific path with custom author
+.TP
+.B hax webcomponent my\-element \--y
 Make a new HAX capable, i18n wired, design system (DDD) driven web component
 .TP
-.B hax audit
-Audit web components for compliance with DDD (HAX design system)
+.B hax wc my\-button \--org @mycompany \--author "Developer Name"
+Create a web component with specific organization and author
+.TP
+.B hax serve
+Launch HAXsite in development mode (http://localhost)
+.TP
+.B hax site site:theme \--theme polaris\-flex
+Change the theme of an existing site
+.TP
+.B hax site node:add \--title "New Page" \--content "Page content"
+Add a new page to an existing site
+.TP
+.B hax audit \--debug
+Audit web components for compliance with DDD (HAX design system) with debug output
+.TP
+.B hax party \--repos haxtheweb/webcomponents
+Join the HAX community by cloning specific repositories
+.TP
+.B hax update \--y
+Update HAX CLI to the latest version automatically
 
 .SH BUGS
 Bugs can be viewed at GitHub Issues: https://github.com/haxtheweb/issues/issues
