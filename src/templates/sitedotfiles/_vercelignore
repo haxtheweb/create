@@ -1,0 +1,34 @@
+# Local files
+.DS_Store
+Thumbs.db
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Dependencies (handled by Vercel build process)
+!node_modules/
+
+# Development files
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# IDE files
+.vscode/
+.idea/
+
+# Version control
+.git/
+
+# Build artifacts (if not needed for deployment)
+# dist/
+# build/
+
+# Cache directories
+.cache/
+.tmp/

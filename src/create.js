@@ -86,6 +86,13 @@ async function main() {
   .option('--custom-theme-name <char>', 'custom theme name')
   .option('--custom-theme-template <char>', 'custom theme template; (options: base, polaris-flex, polaris-sidebar)')
 
+  // options for rsync
+  .option('--source <char>', 'rsync source directory or remote path')
+  .option('--destination <char>', 'rsync destination directory or remote path')
+  .option('--exclude <char>', 'comma-separated patterns to exclude from rsync')
+  .option('--dry-run', 'perform rsync dry run')
+  .option('--delete', 'delete extraneous files from destination')
+
   // options for party
   .option('--repos <char...>', 'repositories to clone') 
 
@@ -174,6 +181,11 @@ async function main() {
   .option('--recipe <char>', 'path to recipe file')
   .option('--custom-theme-name <char>', 'custom theme name')
   .option('--custom-theme-template <char>', 'custom theme template (options: base, polaris-flex, polaris-sidebar)')
+  .option('--source <char>', 'rsync source directory or remote path')
+  .option('--destination <char>', 'rsync destination directory or remote path')
+  .option('--exclude <char>', 'comma-separated patterns to exclude from rsync')
+  .option('--dry-run', 'perform rsync dry run')
+  .option('--delete', 'delete extraneous files from destination')
   .version(packageJson.version);
   let siteNodeOps = siteNodeOperations();
   for (var i in siteNodeOps) {

@@ -150,6 +150,46 @@ Publish site to surge.sh, setting the domain to be `my-cool-blog.surge.sh`
 ```bash
 hax site site:surge --domain my-cool-blog.surge.sh
 ```
+Publish site to Netlify, interactively
+```bash
+hax site site:netlify
+```
+Publish site to Netlify, automated deployment
+```bash
+hax site site:netlify --y
+```
+Publish site to Netlify, setting the site ID to deploy to an existing site
+```bash
+hax site site:netlify --domain my-site-id --y
+```
+Publish site to Vercel, interactively
+```bash
+hax site site:vercel
+```
+Publish site to Vercel, automated deployment
+```bash
+hax site site:vercel --y
+```
+Publish site to Vercel, setting the project name
+```bash
+hax site site:vercel --domain my-project-name --y
+```
+Setup GitHub Actions deployment workflow (deploys automatically on git push)
+```bash
+hax site setup:github-actions
+```
+Setup GitHub Actions deployment workflow, overwrite existing file
+```bash
+hax site setup:github-actions --y
+```
+Setup GitLab CI deployment pipeline (deploys automatically on git push)
+```bash
+hax site setup:gitlab-ci
+```
+Setup GitLab CI deployment pipeline, overwrite existing file
+```bash
+hax site setup:gitlab-ci --y
+```
 Print out the recipe used in building the current site
 ```bash
 hax site recipe:read

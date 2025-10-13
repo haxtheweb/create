@@ -23,6 +23,8 @@ hax start
   -  if in a monorepo root, will place in correct location / inherit settings
 - `hax site mysite --y` - create a new HAXsite (HAXcms, single site)
 - `hax audit` - Audits web components for compliance with DDD (HAX design system)
+- `hax update` - HAX CLI self update
+- `hax party` - Display options to join the HAX community and get involved!
 
 ## --help
 Run `hax help` or `hax webcomponent --help` or `hax site --help` for up-to-date listing
