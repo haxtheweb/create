@@ -65,7 +65,8 @@ export async function partyCommandDetected(commandRun) {
         command: null,
         arguments: {},
         options: { 
-          npmClient: `${operation.npmClient}`
+          npmClient: `${operation.npmClient}`,
+          author: `${operation.author}`
         }
       }
       operation = await p.group(

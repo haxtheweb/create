@@ -372,6 +372,7 @@ async function main() {
     auditCommandDetected(commandRun, customPath)
   }
   else if (commandRun.command === 'party') {
+    commandRun.options.author = author;
     await partyCommandDetected(commandRun);
   }
   // CLI works within context of the site if one is detected, otherwise we can do other things
