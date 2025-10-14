@@ -1,6 +1,7 @@
 # Contributing
 
 - [Communication](#communication)
+- [Setting up a Development Environment](#setting-up-your-development-environment)
 - [GitHub workflow](#github-workflow)
 - [Open a Pull Request](#opening-a-pull-request)
 - [Code Review](#code-review)
@@ -17,10 +18,20 @@ Please do not ever hesitate to ask a question or send a pull request.
 
 Beginner focused information can be found below in [Open a Pull Request](#opening-a-pull-request) and [Code Review](#code-review).
 
-### Communication
+## Communication
 
 Reporting issues? Our unified issue queue is a good place for this: https://github.com/haxtheweb/issues/issues
 Need to discuss something via chat? Our [Discord can be joined here](https://bit.ly/hax-discord).
+
+## Setting up a Development Environment
+HAX has a built-in module for onboarding `hax party`! It'll get you up and running with tooling, repositories, and the community.
+
+### System dependencies
+* [git](https://git-scm.com/)
+* [gh](https://cli.github.com/) (optional)
+* [yarn](https://yarnpkg.com/)
+
+`hax party` works great with just `git`, but contributors can get some extra convenience with GitHub's own `gh` utility. (You can fork repos directly from the CLI, rather than visiting the browser every time!)
 
 ## GitHub workflow
 

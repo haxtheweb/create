@@ -6,10 +6,19 @@ import * as p from '@clack/prompts';
 import color from 'picocolors';
 import { merlinSays } from "../statements.js";
 
+const osPathCmd = process.platform === "win32" ? "where.exe" : "which";
+
 let sysGit = true;
-exec('which git', error => {
+exec(`${osPathCmd} git`, error => {
   if (error) {
     sysGit = false;
+  }
+});
+
+let sysGh = true;
+exec(`${osPathCmd} gh`, error => {
+  if (error) {
+    sysGh = false;
   }
 });
 
@@ -56,7 +65,8 @@ export async function partyCommandDetected(commandRun) {
         command: null,
         arguments: {},
         options: { 
-          // npmClient: `${operation.npmClient}`
+          npmClient: `${operation.npmClient}`,
+          author: `${operation.author}`
         }
       }
       operation = await p.group(
@@ -207,7 +217,6 @@ export async function partyCommandDetected(commandRun) {
 
 async function cloneHAXRepositories(commandRun) {
   let s = p.spinner();
-
   // check for system dependencies: ssh, yarn, etc.
   if(!sysGit) {
     console.error(`${color.red(`Git is not installed. The Git CLI is required to access GitHub with ${color.bold('hax party')}.`)}
@@ -215,19 +224,34 @@ async function cloneHAXRepositories(commandRun) {
     ${color.underline(color.cyan(`https://git-scm.com/book/en/v2/Getting-Started-Installing-Git`))}`);
     process.exit(1);
   }
-  await interactiveExec('ssh -T git@github.com', (error, stdout, stderr) => {
-    const output = stdout + stderr;
-    // The GitHub SSH test always returns as stderr
-    if (!output.includes('successfully authenticated')) {
-      sysSSH = false;
-    }
-  });
 
-  if(!sysSSH) {
-      console.error(`${color.red(`SSH keys are not set up correctly. SSH is required to access GitHub with ${color.bold('hax party')}.`)}
-      Please follow the instructions at:
-      ${color.underline(color.cyan(`https://docs.github.com/en/authentication/connecting-to-github-with-ssh`))}`);
-      process.exit(1);
+  if(!sysGh){
+    try { 
+      const { stdout, stderr } = await exec('ssh -T git@github.com');
+    } catch(error) {
+      // The GitHub SSH test always returns as stderr
+      if (!error.stderr.includes('successfully authenticated')) {
+        sysSSH = false;
+      }
+    }
+
+    if(!sysSSH) {
+        console.error(`${color.red(`SSH keys are not set up correctly. SSH is required to access GitHub with ${color.bold('hax party')}.`)}
+        Please follow the instructions at:
+        ${color.underline(color.cyan(`https://docs.github.com/en/authentication/connecting-to-github-with-ssh`))}`);
+        process.exit(1);
+    }
+  } else {
+    // gh cli can make new ssh keys and push them to GitHub
+    try {
+      await exec('gh auth status')
+    } catch {
+      console.log(`${color.red(`You have GitHub CLI installed, but it is not properly authenticated.`)}
+To access GitHub with ${color.bold('hax party')}, please follow this guided login:
+Select the ${color.cyan(`Generate a new SSH key`)} and ${color.cyan(`Login with a web browser`)} options`);
+      
+      await interactiveExec('gh', ['auth', 'login', '-p', 'ssh', '--clipboard'])
+    }
   }
   
   try {
@@ -237,22 +261,13 @@ async function cloneHAXRepositories(commandRun) {
   }
 
   for (const item of commandRun.options.repos) {
-    // while loop keeps HAX active until the user is ready
-    let isForked = false;
-    let firstRun = true;
-    while(!isForked) {
+    // If GitHub CLI is installed
+    if(sysGh){
       try {
         // ssh link is used since https prompts for password
-        if(firstRun){
-          s.start(`Cloning ${color.bold(item)} to ${color.bold(process.cwd())}`);
-        } else {
-          s.start(`Trying again... Cloning ${item} to ${color.bold(process.cwd())}`);
-        }
-
+        s.start(`Cloning ${color.bold(item)} to ${color.bold(process.cwd())}`);
         await exec(`git clone git@github.com:${commandRun.options.author}/${item}.git`);
         s.stop(`${color.green("Successfully")} cloned ${color.bold(item)} to ${color.bold(process.cwd())}`);
-
-        isForked = true;
       } catch (e) {
         // skip the loop if the repo already exists
         if(e.stderr.includes("already exists and is not an empty directory")){
@@ -262,27 +277,63 @@ async function cloneHAXRepositories(commandRun) {
 
         s.stop(`${color.red("Failed")} to clone ${color.bold(item)} to ${color.bold(process.cwd())}`);
 
-        p.note(`${color.red(`Error: HAX cannot find a personal ${color.bold("fork")} of the ${color.bold(item)} repository on your GitHub account`)}
-    Use the following link to fork ${color.bold(item)}: ${color.underline(color.cyan(`https://github.com/haxtheweb/${item}/fork`))}`);
+        p.note(`${color.red(`Error: HAX could not find your personal ${color.bold("fork")} of the ${color.bold(item)} repository on GitHub`)}`)
+        
+        s.start(`Using ${color.bold(`gh repo`)} utility to fork and clone ${color.bold(item)}`);
+        await exec(`gh repo fork haxtheweb/${item} --clone`)
+        s.stop(`${color.green("Successfully")} cloned ${color.bold(item)} to ${color.bold(process.cwd())}`);
+      }
+    } 
+    // Standard git, not GitHub CLI
+    else {
+      // while loop keeps HAX active until the user is ready
+      let isForked = false;
+      let firstRun = true;
 
-        // We don't want to spam the link every time
-        if(firstRun){  
-          p.intro(`${merlinSays("The link will open in your browser in a few seconds")}`)
-          setTimeout(async () => {
-            await open(`https://github.com/haxtheweb/${item}/fork`)
-          }, 3000);
-          firstRun = false;
-        }
+      while(!isForked) {
+        try {
+          // ssh link is used since https prompts for password
+          if(firstRun){
+            s.start(`Cloning ${color.bold(item)} to ${color.bold(process.cwd())}`);
+          } else {
+            s.start(`Trying again... Cloning ${item} to ${color.bold(process.cwd())}`);
+          }
 
-        let response = await p.confirm({
-          message: `Have you forked the repository? Would you like to try again?`,
-          initialValue: true,
-        });
+          await exec(`git clone git@github.com:${commandRun.options.author}/${item}.git`);
+          s.stop(`${color.green("Successfully")} cloned ${color.bold(item)} to ${color.bold(process.cwd())}`);
 
-        // Multiple ways to quit (select no, ctrl+c, etc)
-        if(p.isCancel(response) || !response) {
-          p.cancel('🧙 Merlin: Canceling CLI.. HAX ya later 🪄');
-          process.exit(0);
+          isForked = true;
+        } catch (e) {
+          // skip the loop if the repo already exists
+          if(e.stderr.includes("already exists and is not an empty directory")){
+            s.stop(`${color.yellow(`${color.bold(`${item}`)} already exists in ${color.bold(process.cwd())}`)}`);
+            break;
+          }
+
+          s.stop(`${color.red("Failed")} to clone ${color.bold(item)} to ${color.bold(process.cwd())}`);
+
+          p.note(`${color.red(`Error: HAX cannot find a personal ${color.bold("fork")} of the ${color.bold(item)} repository on your GitHub account`)}
+      Use the following link to fork ${color.bold(item)}: ${color.underline(color.cyan(`https://github.com/haxtheweb/${item}/fork`))}`);
+
+          // We don't want to spam the link every time
+          if(firstRun){  
+            p.intro(`${merlinSays("The link will open in your browser in a few seconds")}`)
+            setTimeout(async () => {
+              await open(`https://github.com/haxtheweb/${item}/fork`)
+            }, 3000);
+            firstRun = false;
+          }
+
+          let response = await p.confirm({
+            message: `Have you forked the repository? Would you like to try again?`,
+            initialValue: true,
+          });
+
+          // Multiple ways to quit (select no, ctrl+c, etc)
+          if(p.isCancel(response) || !response) {
+            p.cancel('🧙 Merlin: Canceling CLI.. HAX ya later 🪄');
+            process.exit(0);
+          }
         }
       }
     }
