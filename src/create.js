@@ -72,6 +72,7 @@ async function main() {
   .option('--org <char>', 'organization for package.json')
   .option('--author <char>', 'author for site / package.json')
   .option('--writeHaxProperties', 'Write haxProperties for the element')
+  .option('--force', 'force creation even if name exists in registry')
 
   // options for site
   .option('--import-site <char>', 'URL of site to import')
@@ -224,6 +225,7 @@ async function main() {
   .option('--no-extras', 'skip all extra / automatic command processing')
   .option('--no-i', 'prevent interactions / sub-process, good for scripting')
   .option('--root <char>', 'root location to execute the command from')
+  .option('--force', 'force creation even if name exists in registry')
   .version(packageJson.version);
 
   // audit program
@@ -565,7 +567,7 @@ async function main() {
                       return "Name must include at least one `-` and must not start or end name.";
                     }
                     // test that this is not an existing element we use in the registry
-                    if (results.type === "webcomponent" && wcReg[value]) {
+                    if (results.type === "webcomponent" && wcReg[value] && !commandRun.options.force) {
                       return "Name is already a web component in the wc-registry published for HAX.";
                     }
                     // Check for any other syntax errors
@@ -613,7 +615,7 @@ async function main() {
                   process.exit(1);
                 }
                 // test that this is not an existing element we use in the registry
-                if (results.type === "webcomponent" && wcReg[value]) {
+                if (results.type === "webcomponent" && wcReg[value] && !commandRun.options.force) {
                   program.error(color.red("Name is already a web component in the wc-registry published for HAX."));
                   process.exit(1);
                 }
