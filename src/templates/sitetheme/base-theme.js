@@ -93,6 +93,15 @@ class <%= className %> extends HAXCMSLitElementTheme {
           background-color: light-dark(var(--my-theme-low-tone), var(--my-theme-high-tone));
           color: light-dark(var(--my-theme-high-tone), var(--my-theme-low-tone));
         }
+        :host([edit-mode]) {
+          /* Shift the theme over when the HAX tray is open, matching Polaris flex behavior */
+          margin: var(
+            --hax-tray-element-align-margin,
+            0 0 0
+              calc(var(--hax-tray-width) - var(--hax-tray-menubar-min-width))
+          );
+          transition: margin 0.6s ease-in-out;
+        }
         .wrapper {
           border-radius: var(--ddd-radius-lg);
         }
