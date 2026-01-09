@@ -46,8 +46,8 @@
   "dependencies": {
     "@clack/core": "0.5.0",
     "@clack/prompts": "0.11.0",
-    "@haxtheweb/haxcms-nodejs": "^11.0.15",
-    "@haxtheweb/open-apis": "^11.0.3",
+    "@haxtheweb/haxcms-nodejs": "^25.0.0",
+    "@haxtheweb/open-apis": "^25.0.0",
     "commander": "12.1.0",
     "ejs": "3.1.10",
     "js-yaml": "4.1.0",
