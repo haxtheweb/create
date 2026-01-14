@@ -132,7 +132,7 @@ npm run hax -- --name my-element --y
 Try setting a different cache path to load from `npm config set cache C:\tmp\nodejs\npm-cache --global`
 
 If you wish to use PowerShell over Command Prompt, you may need to change your execution policy to allow scripts using the `Set-ExecutionPolicy` command with the `-ExecutionPolicy` and `-Scope` parameters. You should **not** need to do this if you are using Command Prompt.
-
+ 
 ```powershell
 # To see your current execution policy
 Get-ExecutionPolicy
