@@ -1,13 +1,14 @@
+import * as p from '@clack/prompts';
+import { program } from "commander";
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import path from "node:path";
 import color from 'picocolors';
-import * as p from '@clack/prompts';
-import { program } from "commander";
 
 let checksPassed = true;
 
 /**
  * @description Runs the audit command, to be called when `hax audit` command is run
+ * @param commandRun Enables command line flags (such as `--debug`)
  */
 export function auditCommandDetected(commandRun, path = null) {
   const PROJECT_ROOT = path || process.cwd();
@@ -31,6 +32,7 @@ export function auditCommandDetected(commandRun, path = null) {
 
 /**
  * @description Gets items from dddignore with a hierarchy (.dddignore affects folders below it, never above it)
+ * @param root The root of the project directory (should be where the command is run from)
  * @returns Array of objects detailing what directories, files, and file extensions to ignore
  */
 function dddignoreInterpreter(root) {
@@ -51,7 +53,7 @@ function dddignoreInterpreter(root) {
           let removeComment = trimmed.split('#')[0];
           trimmed = removeComment.trim();
         }
-        
+
         if (!trimmed.startsWith('#')) {
           let type = "file";
 
@@ -74,15 +76,13 @@ function dddignoreInterpreter(root) {
     }
   })
 
-  if (list.length !== 0) {
-    return list;
-  } else {
-    return [];
-  }
+  return list;
 }
 
 /**
  * @description Navigate through file pathes, auditing any file that is not in the .dddignore
+ * @param root The root of the project directory (should be where the command is run from)
+ * @param dddignore Files, directories, and file types to ignore in file navigation and auditing
  */
 function auditNavigator(root, dddignore) {
   readdirSync(root).forEach(item => {
@@ -135,13 +135,14 @@ function auditNavigator(root, dddignore) {
 /**
  * @description Audits component line by line to suggest CSS changes
  * @param fileLocation Full file path of file to be audited
+ * @param fileName Name of the file being audited
  */
 function auditFile(fileLocation, fileName) {
   let data = [];
   p.intro(`\n ${color.bgBlue(color.white(` 🪄 Auditing: ${fileName} `))}`)
   let lines = readFileSync(fileLocation, 'utf-8').split('\n');
 
-  const COLOR_PROPERTIES = [
+  const COLOR_PROPERTIES = new Set([
     "accent-color",
     "background-color",
     "border-color",
@@ -151,9 +152,9 @@ function auditFile(fileLocation, fileName) {
     "border-top-color",
     "caret-color",
     "color",
-  ];
+  ]);
 
-  const SPACING_PROPERTIES = [
+  const SPACING_PROPERTIES = new Set([
     // Margin properties
     "margin",
     "margin-top",
@@ -202,9 +203,9 @@ function auditFile(fileLocation, fileName) {
     "inset-inline",
     "inset-inline-start",
     "inset-inline-end"
-  ];
+  ]);
 
-  const BORDER_SHORTHANDS = [
+  const BORDER_SHORTHANDS = new Set([
     "border",
     "outline",
     "border-top",
@@ -212,9 +213,9 @@ function auditFile(fileLocation, fileName) {
     "border-bottom",
     "border-left",
     "column-rule",
-  ]
+  ]);
 
-  const BORDER_THICKNESS_PROPERTIES = [
+  const BORDER_THICKNESS_PROPERTIES = new Set([
     "border-width",
     "border-top-width",
     "border-right-width",
@@ -228,9 +229,9 @@ function auditFile(fileLocation, fileName) {
     "border-inline-end-width",
     "outline-width",
     "column-rule-width",
-  ]
+  ]);
 
-  const RADIUS_PROPERTIES = [
+  const RADIUS_PROPERTIES = new Set([
     "border-radius",
 
     // Individual corners
@@ -244,7 +245,7 @@ function auditFile(fileLocation, fileName) {
     "border-right-radius",
     "border-bottom-radius",
     "border-left-radius",
-  ]
+  ]);
 
   lines.forEach(line => {
     let trimmed = line.trim();
@@ -254,7 +255,7 @@ function auditFile(fileLocation, fileName) {
       lineAttribute = lineAttribute.replace(';', '');
 
       // Check border shorthands
-      if (BORDER_SHORTHANDS.includes(lineProperty) && !lineAttribute.includes("ddd")) {
+      if (BORDER_SHORTHANDS.has(lineProperty) && !lineAttribute.includes("ddd")) {
         data.push({
           "Line Number": lines.indexOf(line) + 1,
           "CSS Property": lineProperty,
@@ -264,7 +265,7 @@ function auditFile(fileLocation, fileName) {
       }
 
       // Check border thicknesses
-      if (BORDER_THICKNESS_PROPERTIES.includes(lineProperty) && !lineAttribute.includes("ddd")) {
+      if (BORDER_THICKNESS_PROPERTIES.has(lineProperty) && !lineAttribute.includes("ddd")) {
         data.push({
           "Line Number": lines.indexOf(line) + 1,
           "CSS Property": lineProperty,
@@ -284,7 +285,7 @@ function auditFile(fileLocation, fileName) {
       }
 
       // Check colors
-      if (COLOR_PROPERTIES.includes(lineProperty) && !lineAttribute.includes("ddd")) {
+      if (COLOR_PROPERTIES.has(lineProperty) && !lineAttribute.includes("ddd")) {
         data.push({
           "Line Number": lines.indexOf(line) + 1,
           "CSS Property": lineProperty,
@@ -344,7 +345,7 @@ function auditFile(fileLocation, fileName) {
       }
 
       // Check radius
-      if (RADIUS_PROPERTIES.includes(lineProperty) && !lineAttribute.includes("ddd")) {
+      if (RADIUS_PROPERTIES.has(lineProperty) && !lineAttribute.includes("ddd")) {
         data.push({
           "Line Number": lines.indexOf(line) + 1,
           "CSS Property": lineProperty,
@@ -354,7 +355,7 @@ function auditFile(fileLocation, fileName) {
       }
 
       // Check spacing
-      if (SPACING_PROPERTIES.includes(lineProperty) && !lineAttribute.includes("ddd")) {
+      if (SPACING_PROPERTIES.has(lineProperty) && !lineAttribute.includes("ddd")) {
         data.push({
           "Line Number": lines.indexOf(line) + 1,
           "CSS Property": lineProperty,
@@ -374,7 +375,7 @@ function auditFile(fileLocation, fileName) {
 }
 
 /**
- * @description returns code for automation purposes. 0 = compliant, 1 = not compliant
+ * @description Exits program with a return code for automation purposes. 0 = compliant, 1 = not compliant
  */
 function returnCode() {
   if (!checksPassed) { // Not-compliant
@@ -390,6 +391,7 @@ function returnCode() {
 /**
  * @description Audits border related CSS properties based on preset borders and thicknesses
  * @param border Pre-audit CSS border value
+ * @returns String containing suggested changes
  */
 function helpAuditBorderShorthands(borderPreset) {
   if (borderPreset.includes('px')) {
@@ -416,6 +418,7 @@ function helpAuditBorderShorthands(borderPreset) {
 /**
  * @description Audits border related CSS properties
  * @param borderThickness Pre-audited CSS border thickness
+ * @returns String containing suggested changes
  */
 function helpAuditBorderThickness(borderThickness) {
   if (borderThickness.includes("px")) {
@@ -441,6 +444,7 @@ function helpAuditBorderThickness(borderThickness) {
 /**
  * @description Audits border related CSS properties
  * @param boxShadow Pre-audited CSS box-shadow attribute
+ * @returns String containing suggested changes
  */
 function helpAuditBoxShadow(boxShadow) {
   if (boxShadow.includes('px')) {
@@ -477,330 +481,180 @@ function helpAuditBoxShadow(boxShadow) {
 /**
  * @description Audits color related CSS properties based on the CSS preset colors
  * @param color CSS preset color
+ * @returns String containing suggested changes
  */
 function helpAuditColors(color) {
-  switch (color.toLowerCase()) {
-    case "aliceblue":
-      return "--ddd-theme-default-slateLight";
-    case "antiquewhite":
-      return "--ddd-theme-default-roarLight";
-    case "aqua":
-      return "--ddd-theme-default-skyBlue";
-    case "aquamarine":
-      return "--ddd-theme-default-creekTeal";
-    case "azure":
-      return "--ddd-theme-default-creekMaxLight";
-    case "beige":
-      return "--ddd-theme-default-alertUrgent";
-    case "bisque":
-      return "--ddd-theme-default-alertUrgent";
-    case "black":
-      return "--ddd-theme-default-coalyGray";
-    case "blanchedalmond":
-      return "--ddd-theme-default-alertUrgent";
-    case "blue":
-      return "--ddd-theme-default-beaverBlue";
-    case "blueviolet":
-      return "--ddd-theme-default-athertonViolet";
-    case "brown":
-      return "--ddd-theme-default-landgrantBrown";
-    case "burlywood":
-      return "--ddd-theme-default-shrineTan";
-    case "cadetblue":
-      return "--ddd-theme-default-creekTeal";
-    case "chartreuse":
-      return "--ddd-theme-default-futureLime";
-    case "chocolate":
-      return "--ddd-theme-default-warning";
-    case "coral":
-      return "--ddd-theme-default-discoveryCoral";
-    case "cornflowerblue":
-      return "--ddd-theme-default-accent";
-    case "cornsilk":
-      return "--ddd-theme-default-roarLight";
-    case "crimson":
-      return "--ddd-theme-default-original87Pink";
-    case "cyan":
-      return "--ddd-theme-default-skyBlue";
-    case "darkblue":
-      return "--ddd-theme-default-nittanyNavy";
-    case "darkcyan":
-      return "--ddd-theme-default-creekTeal";
-    case "darkgoldenrod":
-      return "--ddd-theme-default-roarGolden";
-    case "darkgray":
-      return "--ddd-theme-default-limestoneGray";
-    case "darkgrey":
-      return "--ddd-theme-default-limestoneGray";
-    case "darkgreen":
-      return "--ddd-theme-default-success";
-    case "darkkhaki":
-      return "--ddd-theme-default=alertAllClear";
-    case "darkmagenta":
-      return "--ddd-theme-default-wonderPurple";
-    case "darkolivegreen":
-      return "--ddd-theme-default-forestGreen";
-    case "darkorange":
-      return "--ddd-theme-default-inventOrange";
-    case "darkorchid":
-      return "--ddd-theme-default-athertonViolet";
-    case "darkred":
-      return "--ddd-theme-default-error";
-    case "darksalmon":
-      return "--ddd-theme-default-discoveryCoral";
-    case "darkseagreen":
-      return "--ddd-theme-default-alertAllClear";
-    case "darkslateblue":
-      return "--ddd-theme-default-beaverBlue";
-    case "darkslategray":
-      return "--ddd-theme-default-slateGray";
-    case "darkslategrey":
-      return "--ddd-theme-default-slateGray";
-    case "darkturquoise":
-      return "--ddd-theme-default-link";
-    case "darkviolet":
-      return "--ddd-theme-default-wonderPurple";
-    case "deeppink":
-      return "--ddd-theme-default-original87Pink";
-    case "deepskyblue":
-      return "--ddd-theme-default-skyBlue";
-    case "dimgray":
-      return "--ddd-theme-default-limestoneGray";
-    case "dimgrey":
-      return "--ddd-theme-default-limestoneGray";
-    case "dodgerblue":
-      return "--ddd-theme-default-link";
-    case "firebrick":
-      return "--ddd-theme-default-error";
-    case "floralwhite":
-      return "--ddd-theme-default-warningLight";
-    case "forestgreen":
-      return "--ddd-theme-default-forestGreen";
-    case "fuchsia":
-      return "--ddd-theme-default-athertonViolet";
-    case "gainsboro":
-      return "--ddd-theme-default-limestoneGray";
-    case "ghostwhite":
-      return "--ddd-theme-default-shrineLight";
-    case "gold":
-      return "--ddd-theme-default-keystoneYellow";
-    case "goldenrod":
-      return "--ddd-theme-default-roarGolden";
-    case "gray":
-      return "--ddd-theme-default-limestoneGray";
-    case "grey":
-      return "--ddd-theme-default-limestoneGray";
-    case "green":
-      return "--ddd-theme-default-forestGreen";
-    case "greenyellow":
-      return "--ddd-theme-default-futureLime";
-    case "honeydew":
-      return "--ddd-theme-default-infoLight";
-    case "hotpink":
-      return "--ddd-theme-default-discoveryCoral";
-    case "indianred":
-      return "--ddd-theme-default-original87Pink";
-    case "indigo":
-      return "--ddd-theme-default-wonderPurple";
-    case "ivory":
-      return "--ddd-theme-default-roarMaxLight";
-    case "khaki":
-      return "--ddd-theme-default-alertUrgent";
-    case "lavender":
-      return "--ddd-theme-default-alertNonEmergency";
-    case "lavenderblush":
-      return "--ddd-theme-default-alertImmediate";
-    case "lawngreen":
-      return "--ddd-theme-default-futureLime";
-    case "lemonchiffon":
-      return "--ddd-theme-default-alertUrgent";
-    case "lightblue":
-      return "--ddd-theme-default-accent";
-    case "lightcoral":
-      return "--ddd-theme-default-discoveryCoral";
-    case "lightcyan":
-      return "--ddd-theme-default-skyLight";
-    case "lightgoldenrodyellow":
-      return "--ddd-theme-default-alertUrgent";
-    case "lightgray":
-      return "--ddd-theme-default-limestoneGray";
-    case "lightgrey":
-      return "--ddd-theme-default-limestoneGray";
-    case "lightgreen":
-      return "--ddd-theme-default-opportunityGreen";
-    case "lightpink":
-      return "--ddd-theme-default-discoveryCoral";
-    case "lightsalmon":
-      return "--ddd-theme-default-discoveryCoral";
-    case "lightseagreen":
-      return "--ddd-theme-default-creekTeal";
-    case "lightskyblue":
-      return "--ddd-theme-default-skyLight";
-    case "lightslategray":
-      return "--ddd-theme-default-slateLight";
-    case "lightslategrey":
-      return "--ddd-theme-default-slateLight";
-    case "lightsteelblue":
-      return "--ddd-theme-default-alertNonEmergency";
-    case "lightyellow":
-      return "--ddd-theme-default-alertAllClear";
-    case "lime":
-      return "--ddd-theme-default-futureLime";
-    case "limegreen":
-      return "--ddd-theme-default-opportunityGreen";
-    case "linen":
-      return "--ddd-theme-default-warningLight";
-    case "magenta":
-      return "--ddd-theme-default-athertonViolet";
-    case "maroon":
-      return "--ddd-theme-default-error";
-    case "mediumaquamarine":
-      return "--ddd-theme-default-creekTeal";
-    case "mediumblue":
-      return "--ddd-theme-default-link80";
-    case "mediumorchid":
-      return "--ddd-theme-default-athertonViolet";
-    case "mediumpurple":
-      return "--ddd-theme-default-athertonViolet";
-    case "mediumseagreen":
-      return "--ddd-theme-default-forestGreen";
-    case "mediumslateblue":
-      return "--ddd-theme-default-beaverBlue";
-    case "mediumspringgreen":
-      return "-ddd-theme-default-futureLime";
-    case "mediumturquoise":
-      return "--ddd-theme-default-accent";
-    case "mediumvioletred":
-      return "--ddd-theme-default-original87Pink";
-    case "midnightblue":
-      return "--ddd-theme-default-potentialMidnight";
-    case "mintcream":
-      return "--ddd-theme-default-skyMaxLight";
-    case "mistyrose":
-      return "--ddd-theme-default-errorLight";
-    case "moccasin":
-      return "--ddd-theme-default-alertUrgent";
-    case "navajowhite":
-      return "--ddd-theme-default-alertUrgent";
-    case "navy":
-      return "--ddd-theme-default-nittanyNavy";
-    case "oldlace":
-      return "--ddd-theme-default-warningLight";
-    case "olive":
-      return "--ddd-theme-default-forestGreen";
-    case "olivedrab":
-      return "--ddd-theme-default-success";
-    case "orange":
-      return "--ddd-theme-default-inventOrange";
-    case "orangered":
-      return "--ddd-theme-default-inventOrange";
-    case "orchid":
-      return "--ddd-theme-default-athertonViolet";
-    case "palegoldenrod":
-      return "--ddd-theme-default-alertUrgent";
-    case "palegreen":
-      return "--ddd-theme-default-futureLime";
-    case "paleturquoise":
-      return "--ddd-theme-default-creekLight";
-    case "palevioletred":
-      return "--ddd-theme-default-alertImmediate";
-    case "papayawhip":
-      return "--ddd-theme-default-alertUrgent";
-    case "peachpuff":
-      return "--ddd-theme-default-alertUrgent";
-    case "peru":
-      return "--ddd-theme-default-roarGolden";
-    case "pink":
-      return "--ddd-theme-default-alertImmediate";
-    case "plum":
-      return "--ddd-theme-default-athertonViolet";
-    case "powderblue":
-      return "--ddd-theme-default-creekLight";
-    case "purple":
-      return "--ddd-theme-default-wonderPurple";
-    case "rebeccapurple":
-      return "--ddd-theme-default-athertonViolet";
-    case "red":
-      return "--ddd-theme-default-original87Pink";
-    case "rosybrown":
-      return "--ddd-theme-default-shrineTan";
-    case "royalblue":
-      return "--ddd-theme-default-skyBlue";
-    case "saddlebrown":
-      return "--ddd-theme-default-landgrantBrown";
-    case "salmon":
-      return "--ddd-theme-default-discoveryCoral";
-    case "sandybrown":
-      return "--ddd-theme-default-shrineTan";
-    case "seagreen":
-      return "--ddd-theme-default-forestGreen";
-    case "seashell":
-      return "--ddd-theme-default-roarLight";
-    case "sienna":
-      return "--ddd-theme-default-warning";
-    case "silver":
-      return "--ddd-theme-default-limestoneGray";
-    case "skyblue":
-      return "--ddd-theme-default-pughBlue";
-    case "slateblue":
-      return "--ddd-theme-default-athertonViolet";
-    case "slategray":
-      return "--ddd-theme-default-limestoneGray";
-    case "slategrey":
-      return "--ddd-theme-default-limestoneGray";
-    case "snow":
-      return "--ddd-theme-default-white";
-    case "springgreen":
-      return "--ddd-theme-default-futureLime";
-    case "steelblue":
-      return "--ddd-theme-default-link";
-    case "tan":
-      return "--ddd-theme-default-shrineTan";
-    case "teal":
-      return "--ddd-theme-default-creekTeal";
-    case "thistle":
-      return "--ddd-theme-default-athertonViolet";
-    case "tomato":
-      return "--ddd-theme-default-discoveryCoral";
-    case "transparent":
-      return "--ddd-theme-default-potential0";
-    case "turquoise":
-      return "--ddd-theme-default-skyBlue";
-    case "violet":
-      return "--ddd-theme-default-athertonViolet";
-    case "wheat":
-      return "--ddd-theme-default-alertUrgent";
-    case "white":
-      return "--ddd-theme-default-white";
-    case "whiteSmoke":
-      return "--ddd-theme-default-shrineLight";
-    case "yellow":
-      return "--ddd-theme-default-globalNeon";
-    case "yellowGreen":
-      return "--ddd-theme-default-forestGreen";
-    default:
-      return "No available suggestions. Check DDD documentation.";
+  const COLOR_OBJECT = {
+    "aliceblue":            "--ddd-theme-default-slateLight",
+    "antiquewhite":         "--ddd-theme-default-roarLight",
+    "aqua":                 "--ddd-theme-default-skyBlue",
+    "aquamarine":           "--ddd-theme-default-creekTeal",
+    "azure":                "--ddd-theme-default-creekMaxLight",
+    "beige":                "--ddd-theme-default-alertUrgent",
+    "bisque":               "--ddd-theme-default-alertUrgent",
+    "black":                "--ddd-theme-default-coalyGray",
+    "blanchedalmond":       "--ddd-theme-default-alertUrgent",
+    "blue":                 "--ddd-theme-default-beaverBlue",
+    "blueviolet":           "--ddd-theme-default-athertonViolet",
+    "brown":                "--ddd-theme-default-landgrantBrown",
+    "burlywood":            "--ddd-theme-default-shrineTan",
+    "cadetblue":            "--ddd-theme-default-creekTeal",
+    "chartreuse":           "--ddd-theme-default-futureLime",
+    "chocolate":            "--ddd-theme-default-warning",
+    "coral":                "--ddd-theme-default-discoveryCoral",
+    "cornflowerblue":       "--ddd-theme-default-accent",
+    "cornsilk":             "--ddd-theme-default-roarLight",
+    "crimson":              "--ddd-theme-default-original87Pink",
+    "cyan":                 "--ddd-theme-default-skyBlue",
+    "darkblue":             "--ddd-theme-default-nittanyNavy",
+    "darkcyan":             "--ddd-theme-default-creekTeal",
+    "darkgoldenrod":        "--ddd-theme-default-roarGolden",
+    "darkgray":             "--ddd-theme-default-limestoneGray",
+    "darkgrey":             "--ddd-theme-default-limestoneGray",
+    "darkgreen":            "--ddd-theme-default-success",
+    "darkkhaki":            "--ddd-theme-default=alertAllClear",
+    "darkmagenta":          "--ddd-theme-default-wonderPurple",
+    "darkolivegreen":       "--ddd-theme-default-forestGreen",
+    "darkorange":           "--ddd-theme-default-inventOrange",
+    "darkorchid":           "--ddd-theme-default-athertonViolet",
+    "darkred":              "--ddd-theme-default-error",
+    "darksalmon":           "--ddd-theme-default-discoveryCoral",
+    "darkseagreen":         "--ddd-theme-default-alertAllClear",
+    "darkslateblue":        "--ddd-theme-default-beaverBlue",
+    "darkslategray":        "--ddd-theme-default-slateGray",
+    "darkslategrey":        "--ddd-theme-default-slateGray",
+    "darkturquoise":        "--ddd-theme-default-link",
+    "darkviolet":           "--ddd-theme-default-wonderPurple",
+    "deeppink":             "--ddd-theme-default-original87Pink",
+    "deepskyblue":          "--ddd-theme-default-skyBlue",
+    "dimgray":              "--ddd-theme-default-limestoneGray",
+    "dimgrey":              "--ddd-theme-default-limestoneGray",
+    "dodgerblue":           "--ddd-theme-default-link",
+    "firebrick":            "--ddd-theme-default-error",
+    "floralwhite":          "--ddd-theme-default-warningLight",
+    "forestgreen":          "--ddd-theme-default-forestGreen",
+    "fuchsia":              "--ddd-theme-default-athertonViolet",
+    "gainsboro":            "--ddd-theme-default-limestoneGray",
+    "ghostwhite":           "--ddd-theme-default-shrineLight",
+    "gold":                 "--ddd-theme-default-keystoneYellow",
+    "goldenrod":            "--ddd-theme-default-roarGolden",
+    "gray":                 "--ddd-theme-default-limestoneGray",
+    "grey":                 "--ddd-theme-default-limestoneGray",
+    "green":                "--ddd-theme-default-forestGreen",
+    "greenyellow":          "--ddd-theme-default-futureLime",
+    "honeydew":             "--ddd-theme-default-infoLight",
+    "hotpink":              "--ddd-theme-default-discoveryCoral",
+    "indianred":            "--ddd-theme-default-original87Pink",
+    "indigo":               "--ddd-theme-default-wonderPurple",
+    "ivory":                "--ddd-theme-default-roarMaxLight",
+    "khaki":                "--ddd-theme-default-alertUrgent",
+    "lavender":             "--ddd-theme-default-alertNonEmergency",
+    "lavenderblush":        "--ddd-theme-default-alertImmediate",
+    "lawngreen":            "--ddd-theme-default-futureLime",
+    "lemonchiffon":         "--ddd-theme-default-alertUrgent",
+    "lightblue":            "--ddd-theme-default-accent",
+    "lightcoral":           "--ddd-theme-default-discoveryCoral",
+    "lightcyan":            "--ddd-theme-default-skyLight",
+    "lightgoldenrodyellow": "--ddd-theme-default-alertUrgent",
+    "lightgray":            "--ddd-theme-default-limestoneGray",
+    "lightgrey":            "--ddd-theme-default-limestoneGray",
+    "lightgreen":           "--ddd-theme-default-opportunityGreen",
+    "lightpink":            "--ddd-theme-default-discoveryCoral",
+    "lightsalmon":          "--ddd-theme-default-discoveryCoral",
+    "lightseagreen":        "--ddd-theme-default-creekTeal",
+    "lightskyblue":         "--ddd-theme-default-skyLight",
+    "lightslategray":       "--ddd-theme-default-slateLight",
+    "lightslategrey":       "--ddd-theme-default-slateLight",
+    "lightsteelblue":       "--ddd-theme-default-alertNonEmergency",
+    "lightyellow":          "--ddd-theme-default-alertAllClear",
+    "lime":                 "--ddd-theme-default-futureLime",
+    "limegreen":            "--ddd-theme-default-opportunityGreen",
+    "linen":                "--ddd-theme-default-warningLight",
+    "magenta":              "--ddd-theme-default-athertonViolet",
+    "maroon":               "--ddd-theme-default-error",
+    "mediumaquamarine":     "--ddd-theme-default-creekTeal",
+    "mediumblue":           "--ddd-theme-default-link80",
+    "mediumorchid":         "--ddd-theme-default-athertonViolet",
+    "mediumpurple":         "--ddd-theme-default-athertonViolet",
+    "mediumseagreen":       "--ddd-theme-default-forestGreen",
+    "mediumslateblue":      "--ddd-theme-default-beaverBlue",
+    "mediumspringgreen":    "-ddd-theme-default-futureLime",
+    "mediumturquoise":      "--ddd-theme-default-accent",
+    "mediumvioletred":      "--ddd-theme-default-original87Pink",
+    "midnightblue":         "--ddd-theme-default-potentialMidnight",
+    "mintcream":            "--ddd-theme-default-skyMaxLight",
+    "mistyrose":            "--ddd-theme-default-errorLight",
+    "moccasin":             "--ddd-theme-default-alertUrgent",
+    "navajowhite":          "--ddd-theme-default-alertUrgent",
+    "navy":                 "--ddd-theme-default-nittanyNavy",
+    "oldlace":              "--ddd-theme-default-warningLight",
+    "olive":                "--ddd-theme-default-forestGreen",
+    "olivedrab":            "--ddd-theme-default-success",
+    "orange":               "--ddd-theme-default-inventOrange",
+    "orangered":            "--ddd-theme-default-inventOrange",
+    "orchid":               "--ddd-theme-default-athertonViolet",
+    "palegoldenrod":        "--ddd-theme-default-alertUrgent",
+    "palegreen":            "--ddd-theme-default-futureLime",
+    "paleturquoise":        "--ddd-theme-default-creekLight",
+    "palevioletred":        "--ddd-theme-default-alertImmediate",
+    "papayawhip":           "--ddd-theme-default-alertUrgent",
+    "peachpuff":            "--ddd-theme-default-alertUrgent",
+    "peru":                 "--ddd-theme-default-roarGolden",
+    "pink":                 "--ddd-theme-default-alertImmediate",
+    "plum":                 "--ddd-theme-default-athertonViolet",
+    "powderblue":           "--ddd-theme-default-creekLight",
+    "purple":               "--ddd-theme-default-wonderPurple",
+    "rebeccapurple":        "--ddd-theme-default-athertonViolet",
+    "red":                  "--ddd-theme-default-original87Pink",
+    "rosybrown":            "--ddd-theme-default-shrineTan",
+    "royalblue":            "--ddd-theme-default-skyBlue",
+    "saddlebrown":          "--ddd-theme-default-landgrantBrown",
+    "salmon":               "--ddd-theme-default-discoveryCoral",
+    "sandybrown":           "--ddd-theme-default-shrineTan",
+    "seagreen":             "--ddd-theme-default-forestGreen",
+    "seashell":             "--ddd-theme-default-roarLight",
+    "sienna":               "--ddd-theme-default-warning",
+    "silver":               "--ddd-theme-default-limestoneGray",
+    "skyblue":              "--ddd-theme-default-pughBlue",
+    "slateblue":            "--ddd-theme-default-athertonViolet",
+    "slategray":            "--ddd-theme-default-limestoneGray",
+    "slategrey":            "--ddd-theme-default-limestoneGray",
+    "snow":                 "--ddd-theme-default-white",
+    "springgreen":          "--ddd-theme-default-futureLime",
+    "steelblue":            "--ddd-theme-default-link",
+    "tan":                  "--ddd-theme-default-shrineTan",
+    "teal":                 "--ddd-theme-default-creekTeal",
+    "thistle":              "--ddd-theme-default-athertonViolet",
+    "tomato":               "--ddd-theme-default-discoveryCoral",
+    "transparent":          "--ddd-theme-default-potential0",
+    "turquoise":            "--ddd-theme-default-skyBlue",
+    "violet":               "--ddd-theme-default-athertonViolet",
+    "wheat":                "--ddd-theme-default-alertUrgent",
+    "white":                "--ddd-theme-default-white",
+    "whiteSmoke":           "--ddd-theme-default-shrineLight",
+    "yellow":               "--ddd-theme-default-globalNeon",
+    "yellowGreen":          "--ddd-theme-default-forestGreen",
   }
+
+  return COLOR_OBJECT[color.toLowerCase()] ?? 'No available suggestions. Check DDD documentation.';
 }
 
 /**
  * @description Audits font-family CSS property
  * @param fontFamily Pre-audit CSS font-family value
+ * @returns String containing suggested changes
  */
 function helpAuditFontFamily(fontFamily) {
   fontFamily = fontFamily.toLowerCase();
 
-  if (fontFamily.includes('roboto') || 
-      fontFamily.includes('franklin gothic medium') ||
-      fontFamily.includes('tahoma') ||
-      fontFamily.includes('sans-serif')) {
-    return "--ddd-font-primary";
-  }
-  else if (fontFamily.includes('roboto slab') || fontFamily.includes('serif')) {
-    return "--ddd-font-secondary";
-  }
-  else if (fontFamily.includes('roboto condensed')) {
-    return "--ddd-font-navigation";
+  const FONT_FAMILIES = [
+    { type: "--ddd-font-primary",    fonts: ["roboto", "franklin gothic medium", "tahoma", "sans-serif"]},
+    { type: "--ddd-font-secondary",  fonts: ["roboto slab", "serif"] },
+    { type: "--ddd-font-navigation", fonts: ["roboto condensed"] }
+  ]
+
+  for (const object of FONT_FAMILIES) {
+    if (object.fonts.includes(fontFamily)) return object.type
   }
 
   return "--ddd-font-primary";
@@ -809,6 +663,7 @@ function helpAuditFontFamily(fontFamily) {
 /**
  * @description Audits font-size CSS property
  * @param fontSize Pre-audit CSS font-size value
+ * @returns String containing suggested changes
  */
 function helpAuditFontSize(fontSize) {
   if (fontSize.includes('px')) {
@@ -817,16 +672,16 @@ function helpAuditFontSize(fontSize) {
     if (fontSize <= 16) {
       return "--ddd-font-size-4xs"; // 16px
     }
-    else if (fontSize > 16 || fontSize <= 18) {
+    else if (fontSize > 16 && fontSize <= 18) {
       return "--ddd-font-size-3xs"; // 18px
     }
-    else if (fontSize > 18 || fontSize <= 20) {
+    else if (fontSize > 18 && fontSize <= 20) {
       return "--ddd-font-size-xxs"; // 20px
     }
-    else if (fontSize > 20 || fontSize <= 22) {
+    else if (fontSize > 20 && fontSize <= 22) {
       return "--ddd-font-size-xs"; // 22px
     }
-    else if (fontSize > 22 || fontSize <= 24) {
+    else if (fontSize > 22 && fontSize <= 24) {
       return "--ddd-font-size-s"; // 24px
     }
     else if (fontSize > 24 && fontSize <= 28) {
@@ -870,6 +725,7 @@ function helpAuditFontSize(fontSize) {
 /**
  * @description Audits font-weight CSS property
  * @param fontWeight Pre-audit CSS font-weight value
+ * @returns String containing suggested changes
  */
 function helpAuditFontWeight(fontWeight) {
   const REGEX = /\d+/;
@@ -912,6 +768,7 @@ function helpAuditFontWeight(fontWeight) {
 /**
  * @description Audits letter-spacing CSS property
  * @param letterSpacing Pre-audit CSS letter-spacing value
+ * @returns String containing suggested changes
  */
 function helpAuditLetterSpacing(letterSpacing) {
   if (letterSpacing.includes('px')) {
@@ -923,7 +780,7 @@ function helpAuditLetterSpacing(letterSpacing) {
     else if (letterSpacing > 0.08 && letterSpacing <= 0.09) {
       return "--ddd-ls-18-sm"; // 0.09px
     } 
-    else if (letterSpacing > 0.09 & letterSpacing <= 0.1) {
+    else if (letterSpacing > 0.09 && letterSpacing <= 0.1) {
       return "--ddd-ls-20-sm"; // 0.1px
     }
     else if (letterSpacing > 0.1 && letterSpacing <= 0.11) {
@@ -997,6 +854,7 @@ function helpAuditLetterSpacing(letterSpacing) {
 /**
  * @description Audits line-height CSS property
  * @param lineHeight Pre-audit CSS line-height value
+ * @returns String containing suggested changes
  */
 function helpAuditLineHeight(lineHeight) {
   if (lineHeight.includes('%')) {
@@ -1019,6 +877,7 @@ function helpAuditLineHeight(lineHeight) {
 /**
  * @description Audits radius related CSS properties based on px and % values
  * @param radius Pre-audit CSS radius value
+ * @returns String containing suggested changes
  */
 function helpAuditRadius(radius) {
   if (radius.includes("px")) {
@@ -1060,6 +919,7 @@ function helpAuditRadius(radius) {
 /**
  * @description Audits spacing related CSS properties based on px values
  * @param spacing Pre-audit CSS spacing value
+ * @returns String containing suggested changes
  */
 function helpAuditSpacing(spacing) {
   if (spacing.includes('px')) {
