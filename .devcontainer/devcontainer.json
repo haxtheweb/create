@@ -1,0 +1,41 @@
+// For format details, see https://aka.ms/devcontainer.json.
+{
+	"name": "haxtheweb/create Dev Container",
+	"image": "ghcr.io/haxtheweb/devcontainer-nodejs:latest",
+  // Compatibility with SELinux
+	"runArgs": ["--security-opt", "label=disable"],
+
+	// Configure tool-specific properties.
+	"customizations": {
+		"vscode": {
+			"settings": {},
+			"extensions": [
+				"runem.lit-plugin",
+        "bierner.lit-html",
+        "deque-systems.vscode-axe-linter",
+        "ecmel.vscode-html-css",
+        "oliversturm.fix-json",
+        "yzhang.markdown-all-in-one",
+        "zdodson.dddignore"
+			]
+		}
+	},
+
+	// Use 'portsAttributes' to set default properties for specific forwarded ports. 
+	// More info: https://containers.dev/implementors/json_reference/#port-attributes
+	"portsAttributes": {
+		"3000": {
+			"label": "Express Port",
+			"onAutoForward": "silent"
+		},
+    "8000": {
+        "label": "Web Component Port",
+        "onAutoForward": "silent"
+    }
+	},
+
+  "workspaceFolder": "/home/node/${localWorkspaceFolderBasename}",
+  "workspaceMount": "source=${localWorkspaceFolder},target=${containerWorkspaceFolder},type=bind,consistency=cached",
+
+	"postCreateCommand": "bash .devcontainer/setup.sh"
+}

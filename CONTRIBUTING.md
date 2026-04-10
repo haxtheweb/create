@@ -24,14 +24,43 @@ Reporting issues? Our unified issue queue is a good place for this: https://gith
 Need to discuss something via chat? Our [Discord can be joined here](https://bit.ly/hax-discord).
 
 ## Setting up a Development Environment
-HAX has a built-in module for onboarding `hax party`! It'll get you up and running with tooling, repositories, and the community.
+HAX provides several options to make onboarding accessible for new contributors.
+1. Use our [Dev Container](https://containers.dev/) for a ready-made environment powered by Docker
+2. Use the built-in `hax party` module to develop from your local device, leveraging your existing `haxtheweb/create` install
 
-### System dependencies
+Either way, we'll get you up and running with tooling, repositories, and the community.
+
+### Dev Container
+* Install Docker (or another container runtime)
+    * [Windows](https://docs.docker.com/desktop/setup/install/windows-install/)
+        * Ensure that you select the **WSL 2 Backend** option
+        * Restart after install
+        * Certain Windows editions are bundled with an old WSL 2 version. If Docker Desktop warns that WSL 2 is outdated, please update through the [Windows Store](https://aka.ms/wslstorepage) or run `wsl --update` in **PowerShell**.
+    * [macOS](https://docs.docker.com/desktop/setup/install/mac-install/)
+    * [Linux](https://docs.docker.com/desktop/setup/install/linux/)
+    * [Dev Containers](https://containers.dev/) are broadly supported across OCI-compliant runtimes like Docker, Podman, and OrbStack.
+
+After this step you're ready to go! 
+1. Clone the project with [Git](https://git-scm.com/install/) or [GitHub Desktop](https://desktop.github.com/download/)
+2. Select **Open in VS Code**
+3. Select **Install Recommended Extensions** 
+4. Select **Reopen in Container**!
+
+### Local
+#### System dependencies
 * [git](https://git-scm.com/)
 * [gh](https://cli.github.com/) (optional)
 * [yarn](https://yarnpkg.com/)
 
 `hax party` works great with just `git`, but contributors can get some extra convenience with GitHub's own `gh` utility. (You can fork repos directly from the CLI, rather than visiting the browser every time!)
+
+#### Node.js configuration
+For a local development environment, the official release of HAX may already be installed through `npm install -g @haxtheweb/create`. You'll need to give this project precedence over the global Node.js install.
+* Run `npm link` in the root of the repository
+
+This overrides the global install, so that every `hax` command references your changes to the project. The typical workflow includes two terminal windows:
+1. Run `npm run dev` in the first terminal to watch for changes, then rebuild
+2. Use the second terminal interactively with `hax`, inspecting and testing your work
 
 ## GitHub workflow
 
