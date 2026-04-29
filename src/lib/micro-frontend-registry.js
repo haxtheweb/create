@@ -599,6 +599,16 @@ const MicroFrontendKeys = [
           body: "FormData class w/ uploaded file encoded into it",
         },
       });
+      // wordpressPagesToSite
+      MicroFrontendRegistry.add({
+        endpoint: "/api/apps/haxcms/convert/wordpressPagesToSite",
+        name: "@haxcms/wordpressPagesToSite",
+        title: "WordPress Pages to Site",
+        description: "Convert WordPress pages (and menu structure where available) to Site schema",
+        params: {
+          repoUrl: "Location of the WordPress site",
+        },
+      });
       // insights
       MicroFrontendRegistry.add({
         endpoint: "/api/apps/haxcms/insights",
