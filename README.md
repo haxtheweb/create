@@ -66,6 +66,9 @@ Options:
                                       notionToSite
                                       gitbookToSite
                                       evolutionToSite
+                                      ploneToSite
+                                      wordpressPagesToSite
+                                      drupalBookToSite
                                       htmlToSite
                                       docxToSite
   --node-op <char>                    node operation to perform

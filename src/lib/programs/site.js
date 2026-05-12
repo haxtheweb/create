@@ -1653,6 +1653,21 @@ async function openApiBroker(scope, call, body) {
     };
   }
 }
+
+function applyImportedSiteMetadata(siteRequest, importedSiteData) {
+  if (!siteRequest || !siteRequest.site) {
+    return;
+  }
+  if (!importedSiteData || typeof importedSiteData !== 'object') {
+    return;
+  }
+  if (typeof importedSiteData.license === 'string') {
+    const license = importedSiteData.license.trim();
+    if (license !== '') {
+      siteRequest.site.license = license;
+    }
+  }
+}
 // process site creation
 export async function siteProcess(commandRun, project, port = '3000') {    // auto select operations to perform if requested
   var s = p.spinner();
@@ -1689,12 +1704,16 @@ export async function siteProcess(commandRun, project, port = '3000') {    // au
     // verify this is a valid way to do an import
     if (commandRun.options.importStructure && MicroFrontendRegistry.get(`@haxcms/${commandRun.options.importStructure}`)) {
       let resp = await openApiBroker('@haxcms', commandRun.options.importStructure, { repoUrl: commandRun.options.importSite});
-      if (resp.res.data && resp.res.data.data && resp.res.data.data.items) {
+      const importedData = resp && resp.res && resp.res.data && resp.res.data.data ? resp.res.data.data : null;
+      if (importedData && importedData.items) {
         siteRequest.build.structure = 'import';
-        siteRequest.build.items = resp.res.data.data.items;
+        siteRequest.build.items = importedData.items;
       }
-      if (resp.res.data && resp.res.data.data && resp.res.data.data.files) {
-        siteRequest.build.files = resp.res.data.data.files;
+      if (importedData && importedData.files) {
+        siteRequest.build.files = importedData.files;
+      }
+      if (importedData && importedData.site) {
+        applyImportedSiteMetadata(siteRequest, importedData.site);
       }
     }
     // hidden import methodologies

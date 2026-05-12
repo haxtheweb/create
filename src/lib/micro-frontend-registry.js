@@ -531,12 +531,12 @@ const MicroFrontendKeys = [
       });
       // htmlToSite
       MicroFrontendRegistry.add({
-        endpoint: "/api/apps/haxcms/convert/htmlToSite",
+        endpoint: "/api/apps/haxcms/htmlToSite",
         name: "@haxcms/htmlToSite",
         title: "HTML to Site",
-        description: "Convert HTML file location to Site schema",
+        description: "Convert uploaded HTML, repoUrl HTML, or raw HTML to Site schema",
         params: {
-          repoUrl: "Location of the repo",
+          body: "FormData upload or object payload with repoUrl/html plus method and parentId",
         },
       });
       // evolutionToSite
@@ -596,7 +596,17 @@ const MicroFrontendKeys = [
         title: "Pressbooks to Site",
         description: "Convert pressbooks HTML export to Site schema",
         params: {
-          body: "FormData class w/ uploaded file encoded into it",
+          repoUrl: "Location of the Pressbooks site",
+        },
+      });
+      // ploneToSite
+      MicroFrontendRegistry.add({
+        endpoint: "/api/apps/haxcms/convert/ploneToSite",
+        name: "@haxcms/ploneToSite",
+        title: "Plone to Site",
+        description: "Convert Plone REST API content to Site schema",
+        params: {
+          repoUrl: "Location of the Plone site",
         },
       });
       // wordpressPagesToSite
@@ -607,6 +617,18 @@ const MicroFrontendKeys = [
         description: "Convert WordPress pages (and menu structure where available) to Site schema",
         params: {
           repoUrl: "Location of the WordPress site",
+        },
+      });
+      // drupalBookToSite
+      MicroFrontendRegistry.add({
+        endpoint: "/api/apps/haxcms/convert/drupalBookToSite",
+        name: "@haxcms/drupalBookToSite",
+        title: "Drupal Book to Site",
+        description: "Convert Drupal book content to Site schema",
+        params: {
+          repoUrl: "Location of the Drupal site",
+          allowHtmlFallback:
+            "Optional: true to allow HTML fallback tree derivation when endpoint tree data is unavailable",
         },
       });
       // insights
