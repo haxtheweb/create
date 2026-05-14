@@ -27,6 +27,7 @@ hax start
 - `hax webcomponent my-element --y` - Make a new HAX capable, i18n wired, Design system (DDD) driven web component
   -  if in a monorepo root, will place in correct location / inherit settings
 - `hax site mysite --y` - create a new HAXsite (HAXcms, single site)
+- `hax site mysite --skeleton-machine-name clean-one --y` - create a new HAXsite from an installed skeleton template
 - `hax audit` - Audits web components for compliance with DDD (HAX design system)
 - `hax update` - HAX CLI self update
 - `hax party` - Display options to join the HAX community and get involved!
@@ -81,6 +82,15 @@ Options:
   --custom-theme-name <char>          custom theme name
   --custom-theme-template <char>      custom theme template; (options: base,
                                       polaris-flex, polaris-sidebar)
+  --skeleton-file <char>              path to skeleton JSON file
+  --skeleton-machine-name <char>      skeleton machine name (installed template)
+                                      to create a site from
+  --source <char>                     rsync source directory or remote path
+  --destination <char>                rsync destination directory or remote path
+  --exclude <char>                    comma-separated patterns to exclude from
+                                      rsync
+  --dry-run                           perform rsync dry run
+  --delete                            delete extraneous files from destination
   --repos <char...>                   repositories to clone
   -V, --version                       output the version number
   --title <char>                      Title
@@ -160,6 +170,8 @@ Build a HAX site that can be published and transported anywhere. Your users migh
 - Templated files that work just like any HAX site
 - End points baked in to do CLI commands for common endpoint operations like adding pages, deleting and editing.
 - Ability to import via URL just like the front-end
+- Ability to export a site as a skeleton JSON template and install skeletons for reuse
+- Ability to create a new site from a local skeleton file or installed skeleton machine name
 - Theme development starting point to be able to build themes locally
 - Primed to publish to gh-pages, vercel and more
 

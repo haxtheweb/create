@@ -529,6 +529,16 @@ const MicroFrontendKeys = [
           body: "FormData class w/ uploaded file encoded into it",
         },
       });
+      // xlsxToSite
+      MicroFrontendRegistry.add({
+        endpoint: "/api/apps/haxcms/xlsxToSite",
+        name: "@haxcms/xlsxToSite",
+        title: "Excel to Site",
+        description: "Convert .xlsx/.xls file to Site schema",
+        params: {
+          body: "FormData class w/ uploaded file encoded into it",
+        },
+      });
       // htmlToSite
       MicroFrontendRegistry.add({
         endpoint: "/api/apps/haxcms/htmlToSite",

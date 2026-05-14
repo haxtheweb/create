@@ -72,6 +72,12 @@ Actions to perform on site include:
 .B site:schema
 \- Full site as HAXElementSchema
 .br
+.B site:skeleton\-export
+\- Export site as skeleton template
+.br
+.B site:skeleton\-install
+\- Install skeleton template
+.br
 .B site:sync
 \- Sync git repo
 .br
@@ -253,6 +259,12 @@ custom theme name
 \--custom\-theme\-template <char>
 custom theme template; (options: base, polaris\-flex, polaris\-sidebar)
 .TP
+\--skeleton\-file <char>
+path to skeleton JSON file
+.TP
+\--skeleton\-machine\-name <char>
+skeleton machine name (installed template) to create a site from
+.TP
 \--source <char>
 rsync source directory or remote path
 .TP
@@ -315,6 +327,12 @@ Create a new HAXsite (HAXcms, single site) with automatic yes to all questions
 .B hax site mysite \--path /var/www \--author "John Doe"
 Create a new HAXsite in a specific path with custom author
 .TP
+.B hax site mysite --skeleton-machine-name clean-one --y
+Create a new HAXsite from an installed skeleton template
+.TP
+.B hax site mysite --skeleton-file ./my-site-template.json --y
+Create a new HAXsite from a local skeleton JSON file
+.TP
 .B hax webcomponent my\-element \--y
 Make a new HAX capable, i18n wired, design system (DDD) driven web component
 .TP
@@ -326,6 +344,12 @@ Launch HAXsite in development mode (http://localhost)
 .TP
 .B hax site site:theme \--theme polaris\-flex
 Change the theme of an existing site
+.TP
+.B hax site site:skeleton-export --to-file ./my-site-template.json
+Export current site as a reusable skeleton template JSON file
+.TP
+.B hax site site:skeleton-install --skeleton-file ./my-site-template.json
+Install a skeleton template from a local JSON file
 .TP
 .B hax site node:add \--title "New Page" \--content "Page content"
 Add a new page to an existing site

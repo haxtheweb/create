@@ -58,6 +58,14 @@ Create a new site called `zombocom`, set theme to `polaris-flex-theme` and open 
 ```bash
 hax site zombocom --theme "polaris-flex-theme" --y
 ```
+Create a new site called `zombocom` from an installed skeleton template
+```bash
+hax site zombocom --skeleton-machine-name clean-one --y
+```
+Create a new site called `zombocom` from a local skeleton JSON file
+```bash
+hax site zombocom --skeleton-file ./my-site-template.json --y
+```
 Create a new site called `zombocom`, that has a custom theme called `custom-zombocom-theme` using the `base` template to get started
 ```bash
 hax site zombocom --theme "custom-theme" --custom-theme-name "custom-zombocom-theme" --custom-theme-template "base" --y
@@ -137,6 +145,22 @@ hax site site:md --to-file output.md
 Output the entire site as HAXSchema (vdom) with `h1` for title, redirected to file `schema.json`
 ```bash
 hax site site:schema --to-file schema.json
+```
+Export current site as a reusable skeleton template JSON file
+```bash
+hax site site:skeleton-export --to-file ./my-site-template.json
+```
+Install current site as a local skeleton template
+```bash
+hax site site:skeleton-install
+```
+Install a skeleton template from a local JSON file
+```bash
+hax site site:skeleton-install --skeleton-file ./my-site-template.json
+```
+Install a skeleton template from a local JSON file and rename machine name on install
+```bash
+hax site site:skeleton-install --skeleton-file ./my-site-template.json --skeleton-machine-name course-template
 ```
 Sync git repo for the site, if hooked up to a remote
 ```bash

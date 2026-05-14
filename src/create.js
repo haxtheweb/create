@@ -12,7 +12,7 @@ import { log, consoleTransport, logger } from "./lib/logging.js";
 import { auditCommandDetected } from './lib/programs/audit.js';
 import { partyCommandDetected } from './lib/programs/party.js';
 import { webcomponentProcess, webcomponentCommandDetected, webcomponentActions } from "./lib/programs/webcomponent.js";
-import { siteActions, siteNodeOperations, siteProcess, siteCommandDetected, siteThemeList } from "./lib/programs/site.js";
+import { siteActions, siteNodeOperations, siteProcess, siteCommandDetected, siteThemeList, siteSkeletonList } from "./lib/programs/site.js";
 import { camelToDash, exec, interactiveExec, writeConfigFile, readConfigFile, getTimeDifference } from "./lib/utils.js";
 import * as haxcmsLib from "@haxtheweb/haxcms-nodejs/dist/lib/HAXCMS.js";
 const HAXCMS = haxcmsLib.HAXCMS;
@@ -86,6 +86,8 @@ async function main() {
   .option('--recipe <char>', 'path to recipe file')
   .option('--custom-theme-name <char>', 'custom theme name')
   .option('--custom-theme-template <char>', 'custom theme template; (options: base, polaris-flex, polaris-sidebar)')
+  .option('--skeleton-file <char>', 'path to skeleton JSON file')
+  .option('--skeleton-machine-name <char>', 'skeleton machine name (installed template) to create a site from')
 
   // options for rsync
   .option('--source <char>', 'rsync source directory or remote path')
@@ -182,6 +184,8 @@ async function main() {
   .option('--recipe <char>', 'path to recipe file')
   .option('--custom-theme-name <char>', 'custom theme name')
   .option('--custom-theme-template <char>', 'custom theme template (options: base, polaris-flex, polaris-sidebar)')
+  .option('--skeleton-file <char>', 'path to skeleton JSON file')
+  .option('--skeleton-machine-name <char>', 'skeleton machine name (installed template) to create a site from')
   .option('--source <char>', 'rsync source directory or remote path')
   .option('--destination <char>', 'rsync destination directory or remote path')
   .option('--exclude <char>', 'comma-separated patterns to exclude from rsync')
@@ -504,6 +508,11 @@ async function main() {
       if (['site', 'webcomponent'].includes(project.type)) {
         // global spot for core themes list
         let coreThemes = await siteThemeList(true);
+        const cleanOneTheme = coreThemes.find(
+          (themeOption) => themeOption.value === 'clean-one'
+        )
+        const defaultCoreTheme = cleanOneTheme ? cleanOneTheme : coreThemes[0]
+        let availableSkeletons = await siteSkeletonList(true);
 
         project = await p.group(
           {
@@ -665,22 +674,114 @@ async function main() {
                 });
               }
             },
+            siteCreationMode: async ({ results }) => {
+              if (results.type === "site") {
+                const hasSkeletonFile = Boolean(commandRun.options.skeletonFile);
+                const hasSkeletonMachineName = Boolean(commandRun.options.skeletonMachineName);
+                if (hasSkeletonFile && hasSkeletonMachineName) {
+                  program.error(color.red('You can only use one skeleton source when creating a site (--skeleton-file or --skeleton-machine-name).'));
+                  process.exit(1);
+                }
+                if ((hasSkeletonFile || hasSkeletonMachineName) && commandRun.options.theme) {
+                  program.error(color.red('Skeleton template creation and --theme are mutually exclusive. Use Start from Scratch when selecting a theme.'));
+                  process.exit(1);
+                }
+                if ((hasSkeletonFile || hasSkeletonMachineName) && commandRun.options.importSite) {
+                  program.error(color.red('Skeleton template creation and --import-site are mutually exclusive.'));
+                  process.exit(1);
+                }
+                if (hasSkeletonFile || hasSkeletonMachineName) {
+                  return 'template';
+                }
+                if (commandRun.options.theme) {
+                  return 'scratch';
+                }
+                if (!commandRun.options.i || commandRun.options.auto || commandRun.options.skip) {
+                  return 'scratch';
+                }
+                return p.select({
+                  message: 'How should this site start?',
+                  required: true,
+                  options: [
+                    { value: 'scratch', label: 'Start from Scratch (pick a theme)' },
+                    { value: 'template', label: 'Start from Template (pick a skeleton)' },
+                  ],
+                  initialValue: 'scratch'
+                });
+              }
+            },
+            skeletonMachineName: async ({ results }) => {
+              if (results.type === "site" && results.siteCreationMode === 'template') {
+                if (commandRun.options.skeletonMachineName) {
+                  return commandRun.options.skeletonMachineName;
+                }
+                if (commandRun.options.skeletonFile) {
+                  return null;
+                }
+                if (!commandRun.options.i) {
+                  program.error(color.red('Template mode requires --skeleton-file or --skeleton-machine-name when running non-interactively.'));
+                  process.exit(1);
+                }
+                if (availableSkeletons.length === 0) {
+                  return null;
+                }
+                let skeletonOptions = [...availableSkeletons];
+                skeletonOptions.push({ value: '__from_file__', label: 'Use skeleton JSON file' });
+                const selectedSkeleton = await p.select({
+                  message: 'Template:',
+                  required: true,
+                  options: skeletonOptions,
+                  initialValue: skeletonOptions[0].value,
+                });
+                if (selectedSkeleton === '__from_file__') {
+                  return null;
+                }
+                commandRun.options.skeletonMachineName = selectedSkeleton;
+                return selectedSkeleton;
+              }
+            },
+            skeletonFile: ({ results }) => {
+              if (
+                results.type === "site" &&
+                results.siteCreationMode === 'template' &&
+                !commandRun.options.skeletonMachineName &&
+                !results.skeletonMachineName &&
+                !commandRun.options.skeletonFile
+              ) {
+                return p.text({
+                  message: 'Template JSON file path:',
+                  placeholder: `${process.cwd()}/template.json`,
+                  required: true,
+                  validate: (value) => {
+                    if (!value) {
+                      return 'Template JSON file path is required';
+                    }
+                    if (!fs.existsSync(value)) {
+                      return `${value} does not exist. Select a valid file`;
+                    }
+                    if (!value.endsWith('.json')) {
+                      return 'Template file must be a JSON file';
+                    }
+                  },
+                });
+              }
+            },
             theme: async({ results }) => {
-              if (results.type === "site" && !commandRun.options.theme) {
+              if (results.type === "site" && results.siteCreationMode !== 'template' && !commandRun.options.theme) {
                 // support having no theme but autoselecting
                 if (commandRun.options.auto && commandRun.options.skip) {
-                  commandRun.options.theme = coreThemes[0].value;
+                  commandRun.options.theme = defaultCoreTheme.value;
                 }
                 else {
                   return p.select({
                     message: "Theme:",
                     required: false,
                     options: coreThemes,
-                    initialValue: coreThemes[0]
+                    initialValue: defaultCoreTheme.value
                   })  
                 }
               }
-              else if (results.type === "site" && commandRun.options.theme) {
+              else if (results.type === "site" && results.siteCreationMode !== 'template' && commandRun.options.theme) {
                 if (coreThemes.filter((item => item.value === commandRun.options.theme)).length === 0) {
                   program.error(color.red('Theme is not in the list of valid themes'));
                   process.exit(1);

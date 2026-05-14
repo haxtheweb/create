@@ -25,6 +25,9 @@ MicroFrontendRegistry.enableServices(['core', 'haxcms', 'experimental']);
 import * as haxcmsLib from "@haxtheweb/haxcms-nodejs/dist/lib/HAXCMS.js";
 import createSiteRoute from "@haxtheweb/haxcms-nodejs/dist/routes/createSite.js";
 import listFilesRoute from "@haxtheweb/haxcms-nodejs/dist/routes/listFiles.js";
+import skeletonsListRoute from "@haxtheweb/haxcms-nodejs/dist/routes/skeletonsList.js";
+import downloadSiteSkeletonRoute from "@haxtheweb/haxcms-nodejs/dist/routes/downloadSiteSkeleton.js";
+import saveSiteAsTemplateRoute from "@haxtheweb/haxcms-nodejs/dist/routes/saveSiteAsTemplate.js";
 import * as josfile from "@haxtheweb/haxcms-nodejs/dist/lib/JSONOutlineSchema.js";
 const JSONOutlineSchema = josfile.default;
 const HAXCMS = haxcmsLib.HAXCMS;
@@ -157,6 +160,8 @@ export function siteActions() {
     { value: 'site:html', label: "Full site as HTML"},
     { value: 'site:md', label: "Full site as Markdown"},
     { value: 'site:schema', label: "Full site as HAXElementSchema"},
+    { value: 'site:skeleton-export', label: "Export site as skeleton template"},
+    { value: 'site:skeleton-install', label: "Install skeleton template"},
     { value: 'site:sync', label: "Sync git repo"},
     { value: 'site:rsync', label: "Rsync site to remote/local directory"},
     { value: 'site:surge', label: "Publish site to Surge.sh"},
@@ -804,6 +809,115 @@ export async function siteCommandDetected(commandRun) {
           }
           catch(e) {
             log(e.stderr);
+          }
+        break;
+        case "site:skeleton-export":
+          try {
+            let skeletonResponse = await invokeRoute(
+              downloadSiteSkeletonRoute,
+              {
+                site: {
+                  name: activeHaxsite.name,
+                },
+              },
+              {
+                user_token: 'fakeToken',
+              }
+            )
+            if (
+              !skeletonResponse ||
+              !skeletonResponse.data ||
+              skeletonResponse.data.status !== 200 ||
+              !skeletonResponse.data.data ||
+              !skeletonResponse.data.data.skeleton
+            ) {
+              throw new Error('Failed to export skeleton for this site')
+            }
+            const skeletonData = skeletonResponse.data.data.skeleton
+            const fileName = skeletonResponse.data.data.filename
+              ? skeletonResponse.data.data.filename
+              : `${normalizeSkeletonMachineName(activeHaxsite.name)}.json`
+            let targetFilePath = commandRun.options.toFile
+              ? commandRun.options.toFile
+              : fileName
+            targetFilePath = resolveAbsolutePath(targetFilePath)
+            fs.writeFileSync(
+              targetFilePath,
+              `${JSON.stringify(skeletonData, null, 2)}\n`
+            )
+            recipe.log(siteLoggingName, commandString(commandRun))
+            if (!commandRun.options.quiet) {
+              p.outro(
+                `${color.green('✓')} Skeleton exported to ${targetFilePath}`
+              )
+            } else if (commandRun.options.format === 'yaml') {
+              log(dump({ file: targetFilePath }))
+            } else {
+              log({ file: targetFilePath })
+            }
+          }
+          catch(e) {
+            log(`Skeleton export failed: ${e.message}`, 'error')
+            if (!commandRun.options.quiet) {
+              p.outro(`${color.red('✗')} ${e.message}`)
+            }
+          }
+        break;
+        case "site:skeleton-install":
+          try {
+            if (commandRun.options.skeletonFile) {
+              const installData = installSkeletonFile(
+                commandRun.options.skeletonFile,
+                commandRun.options.skeletonMachineName
+              )
+              recipe.log(siteLoggingName, commandString(commandRun))
+              if (!commandRun.options.quiet) {
+                p.outro(
+                  `${color.green('✓')} Template installed as ${installData.machineName} (${installData.installPath})`
+                )
+              } else if (commandRun.options.format === 'yaml') {
+                log(dump(installData))
+              } else {
+                log(installData)
+              }
+            } else {
+              let saveResponse = await invokeRoute(
+                saveSiteAsTemplateRoute,
+                {
+                  site: {
+                    name: activeHaxsite.name,
+                  },
+                },
+                {
+                  user_token: 'fakeToken',
+                }
+              )
+              if (
+                !saveResponse ||
+                !saveResponse.data ||
+                saveResponse.data.status !== 200 ||
+                !saveResponse.data.data
+              ) {
+                throw new Error('Failed to save current site as skeleton template')
+              }
+              const installData = saveResponse.data.data
+              recipe.log(siteLoggingName, commandString(commandRun))
+              if (!commandRun.options.quiet) {
+                p.outro(
+                  `${color.green('✓')} Template installed as ${installData.name}`
+                )
+              } else if (commandRun.options.format === 'yaml') {
+                log(dump(installData))
+              } else {
+                log(installData)
+              }
+            }
+          }
+          catch(e) {
+            log(`Skeleton install failed: ${e.message}`, 'error')
+            if (!commandRun.options.quiet) {
+              p.outro(`${color.red('✗')} ${e.message}`)
+            }
           }
         break;
         case "site:sync":
@@ -1668,6 +1782,127 @@ function applyImportedSiteMetadata(siteRequest, importedSiteData) {
     }
   }
 }
+
+function isObjectLike(value) {
+  return !!value && typeof value === 'object' && !Array.isArray(value);
+}
+
+function normalizeSkeletonMachineName(value) {
+  if (typeof value !== 'string') {
+    return '';
+  }
+  return HAXCMS.generateMachineName(value)
+    .replace(/\.json$/i, '')
+    .trim()
+    .toLowerCase();
+}
+
+function resolveAbsolutePath(pathValue) {
+  if (!pathValue || typeof pathValue !== 'string') {
+    return '';
+  }
+  if (path.isAbsolute(pathValue)) {
+    return pathValue;
+  }
+  return path.join(process.cwd(), pathValue);
+}
+
+function extractSkeletonPayload(rawData) {
+  let skeleton = rawData;
+  if (
+    isObjectLike(rawData) &&
+    isObjectLike(rawData.data) &&
+    isObjectLike(rawData.data.skeleton)
+  ) {
+    skeleton = rawData.data.skeleton;
+  }
+  if (!isObjectLike(skeleton)) {
+    throw new Error('Invalid skeleton JSON structure');
+  }
+  if (!isObjectLike(skeleton.meta)) {
+    skeleton.meta = {};
+  }
+  if (!isObjectLike(skeleton.site)) {
+    skeleton.site = {};
+  }
+  if (!isObjectLike(skeleton.build)) {
+    skeleton.build = {};
+  }
+  if (!Array.isArray(skeleton.build.items)) {
+    skeleton.build.items = [];
+  }
+  if (
+    typeof skeleton.build.files === 'undefined' ||
+    skeleton.build.files === null
+  ) {
+    skeleton.build.files = [];
+  }
+  if (!skeleton.build.structure) {
+    skeleton.build.structure = 'from-skeleton';
+  }
+  if (!skeleton.build.type) {
+    skeleton.build.type = 'skeleton';
+  }
+  const machineName = normalizeSkeletonMachineName(
+    skeleton.meta.machineName
+      ? skeleton.meta.machineName
+      : skeleton.meta.name
+        ? skeleton.meta.name
+        : 'site-template'
+  );
+  skeleton.meta.machineName = machineName;
+  skeleton.meta.name = machineName;
+  return {
+    skeleton,
+    machineName,
+  };
+}
+
+function loadSkeletonFileData(skeletonFilePath) {
+  const absolutePath = resolveAbsolutePath(skeletonFilePath);
+  if (!absolutePath) {
+    throw new Error('Skeleton file path is required');
+  }
+  if (!fs.existsSync(absolutePath)) {
+    throw new Error(`Skeleton file does not exist: ${absolutePath}`);
+  }
+  if (!fs.lstatSync(absolutePath).isFile()) {
+    throw new Error(`Skeleton file path is not a file: ${absolutePath}`);
+  }
+  const rawContents = fs.readFileSync(absolutePath, 'utf8');
+  const parsed = JSON.parse(rawContents);
+  const normalized = extractSkeletonPayload(parsed);
+  return {
+    ...normalized,
+    absolutePath,
+  };
+}
+
+function installSkeletonFile(skeletonFilePath, machineNameOverride = null) {
+  const loadedSkeleton = loadSkeletonFileData(skeletonFilePath);
+  const skeleton = loadedSkeleton.skeleton;
+  const overrideName = normalizeSkeletonMachineName(machineNameOverride);
+  const machineName = overrideName || loadedSkeleton.machineName;
+  if (!machineName) {
+    throw new Error('Skeleton machine name could not be resolved');
+  }
+  skeleton.meta.machineName = machineName;
+  skeleton.meta.name = machineName;
+  const skeletonTargetDirectory = path.join(
+    HAXCMS.configDirectory,
+    'user',
+    'skeletons'
+  );
+  if (!fs.existsSync(skeletonTargetDirectory)) {
+    fs.mkdirSync(skeletonTargetDirectory, { recursive: true });
+  }
+  const installPath = path.join(skeletonTargetDirectory, `${machineName}.json`);
+  fs.writeFileSync(installPath, `${JSON.stringify(skeleton, null, 2)}\n`);
+  return {
+    machineName,
+    installPath,
+  };
+}
 // process site creation
 export async function siteProcess(commandRun, project, port = '3000') {    // auto select operations to perform if requested
   var s = p.spinner();
@@ -1695,6 +1930,58 @@ export async function siteProcess(commandRun, project, port = '3000') {    // au
           "icon": "av:library-add"
       },
   };
+  let skeletonFilePath = commandRun.options.skeletonFile
+    ? commandRun.options.skeletonFile
+    : project.skeletonFile
+      ? project.skeletonFile
+      : null;
+  let skeletonMachineName = commandRun.options.skeletonMachineName
+    ? commandRun.options.skeletonMachineName
+    : project.skeletonMachineName
+      ? project.skeletonMachineName
+      : null;
+  if (skeletonFilePath && skeletonMachineName) {
+    throw new Error('You can only pass one skeleton source when creating a site (--skeleton-file or --skeleton-machine-name)');
+  }
+  if ((skeletonFilePath || skeletonMachineName) && commandRun.options.importSite) {
+    throw new Error('Skeleton template creation cannot be combined with --import-site');
+  }
+  if (skeletonFilePath || skeletonMachineName) {
+    siteRequest.build.structure = 'from-skeleton';
+    siteRequest.build.type = 'skeleton';
+    siteRequest.build.items = [];
+    siteRequest.build.files = [];
+    if (skeletonMachineName) {
+      const normalizedMachineName = normalizeSkeletonMachineName(skeletonMachineName);
+      if (!normalizedMachineName) {
+        throw new Error('Invalid skeleton machine name supplied');
+      }
+      siteRequest.build.skeletonMachineName = normalizedMachineName;
+    }
+    else if (skeletonFilePath) {
+      const skeletonFileData = loadSkeletonFileData(skeletonFilePath);
+      const skeleton = skeletonFileData.skeleton;
+      siteRequest.build.structure = skeleton.build.structure;
+      siteRequest.build.type = skeleton.build.type;
+      siteRequest.build.items = skeleton.build.items;
+      siteRequest.build.files = skeleton.build.files;
+      if (
+        isObjectLike(skeleton.site) &&
+        typeof skeleton.site.theme === 'string' &&
+        skeleton.site.theme !== ''
+      ) {
+        siteRequest.site.theme = skeleton.site.theme;
+      }
+      if (
+        isObjectLike(skeleton.site) &&
+        typeof skeleton.site.description === 'string' &&
+        skeleton.site.description !== ''
+      ) {
+        siteRequest.site.description = skeleton.site.description;
+      }
+      applyImportedSiteMetadata(siteRequest, skeleton.site);
+    }
+  }
   // allow for importSite option
   if (commandRun.options.importSite) {
     if (!commandRun.options.importStructure) {
@@ -1928,43 +2215,141 @@ export async function siteItemsOptionsList(activeHaxsite, skipId = null) {
   return optionItems;
 }
 
+export async function siteSkeletonList(asOptions = false) {
+  let skeletonListResponse = await invokeRoute(
+    skeletonsListRoute,
+    {},
+    {
+      user_token: 'fakeToken',
+    }
+  )
+  let skeletons = []
+  if (
+    skeletonListResponse &&
+    skeletonListResponse.data &&
+    Array.isArray(skeletonListResponse.data.data)
+  ) {
+    skeletons = skeletonListResponse.data.data
+  }
+  skeletons.sort((a, b) => {
+    const aPriority = Number(a.priority)
+    const bPriority = Number(b.priority)
+    const normalizedAPriority = Number.isFinite(aPriority) ? aPriority : 0
+    const normalizedBPriority = Number.isFinite(bPriority) ? bPriority : 0
+    if (normalizedAPriority !== normalizedBPriority) {
+      return normalizedAPriority - normalizedBPriority
+    }
+    const aTitle = typeof a.title === 'string' ? a.title : ''
+    const bTitle = typeof b.title === 'string' ? b.title : ''
+    return aTitle.localeCompare(bTitle)
+  })
+  if (!asOptions) {
+    return skeletons
+  }
+  let options = []
+  for (var i in skeletons) {
+    const skeleton = skeletons[i]
+    const machineName = skeleton.machineName
+      ? skeleton.machineName
+      : skeleton['machine-name']
+        ? skeleton['machine-name']
+        : null
+    if (!machineName) {
+      continue
+    }
+    const title = skeleton.title ? skeleton.title : machineName
+    const scope = skeleton.scope ? `(${skeleton.scope})` : ''
+    options.push({
+      value: machineName,
+      label: `${title} ${scope}`.trim(),
+    })
+  }
+  return options
+}
+
 export async function siteThemeList(coreOnly = true, directory = null) {
-  let items = [];
-  if(coreOnly){
-    items = [
-      { value: 'clean-one', label: 'Clean One' },
-      { value: 'clean-two', label: 'Clean Two' },
-      { value: 'clean-portfolio-theme', label: 'Clean Portfolio' },
-      { value: 'journey-theme', label: 'Journey' },
-      { value: 'polaris-flex-theme', label: 'Flex' },
-      { value: 'polaris-flex-sidebar', label: 'Flex Sidebar' },
-      { value: 'custom-theme', label: 'Create Custom Theme' }
-    ];
-    if(fs.existsSync(`${directory}/custom/custom-elements.json`)){
-      let customThemeArray = JSON.parse(fs.readFileSync(`${directory
-        }/custom/custom-elements.json`, 'utf8')).modules;
-      
-      for (var i in customThemeArray){
-        if(customThemeArray[i].declarations[0].superclass.name === "PolarisFlexTheme" ||
-          customThemeArray[i].declarations[0].superclass.name === "HAXCMSLitElementTheme") {
-            items.push({
-              value: customThemeArray[i].declarations[0].tagName,
-              label: customThemeArray[i].declarations[0].name
-            })
+  const isTruthyValue = (value) =>
+    value === true || value === 'true' || value === 1 || value === '1'
+  const isCommonTheme = (themeKey, themeData) => {
+    const hidden = isTruthyValue(themeData.hidden)
+    const terrible =
+      isTruthyValue(themeData.terrible) || themeKey.indexOf('terrible') === 0
+    const legacy =
+      isTruthyValue(themeData.legacy) ||
+      isTruthyValue(themeData.deprecated) ||
+      isTruthyValue(themeData.isLegacy)
+    return !(hidden || terrible || legacy)
+  }
+  const themes = (await HAXCMS.getThemes()) || {}
+  let items = []
+  let themedItems = []
+  for (var themeKey in themes) {
+    const theme = themes[themeKey]
+    if (!theme) {
+      continue
+    }
+    if (coreOnly && !isCommonTheme(themeKey, theme)) {
+      continue
+    }
+    const priority = Number(theme.priority)
+    themedItems.push({
+      value: themeKey,
+      label: theme.name ? theme.name : themeKey,
+      priority: Number.isFinite(priority) ? priority : 0
+    })
+  }
+  themedItems.sort((a, b) => {
+    if (a.priority !== b.priority) {
+      return a.priority - b.priority
+    }
+    return a.label.localeCompare(b.label)
+  })
+  for (var i in themedItems) {
+    items.push({
+      value: themedItems[i].value,
+      label: themedItems[i].label
+    })
+  }
+  if (coreOnly) {
+    items.push({
+      value: 'custom-theme',
+      label: 'Create Custom Theme'
+    })
+    if (directory && fs.existsSync(`${directory}/custom/custom-elements.json`)) {
+      try {
+        const customThemeModules = JSON.parse(
+          fs.readFileSync(`${directory}/custom/custom-elements.json`, 'utf8')
+        ).modules
+        if (Array.isArray(customThemeModules)) {
+          for (var j in customThemeModules) {
+            const module = customThemeModules[j]
+            if (
+              module &&
+              module.declarations &&
+              module.declarations[0] &&
+              module.declarations[0].superclass &&
+              module.declarations[0].superclass.name &&
+              (module.declarations[0].superclass.name === 'PolarisFlexTheme' ||
+                module.declarations[0].superclass.name ===
+                  'HAXCMSLitElementTheme') &&
+              module.declarations[0].tagName &&
+              !items.some((themeItem) => themeItem.value === module.declarations[0].tagName)
+            ) {
+              items.push({
+                value: module.declarations[0].tagName,
+                label: module.declarations[0].name
+                  ? module.declarations[0].name
+                  : module.declarations[0].tagName
+              })
+            }
+          }
         }
       }
-    }
-  } else {
-    let themes = await HAXCMS.getThemes();
-    for (var i in themes) {
-      items.push({
-        value: i,
-        label: themes[i].name
-      })
+      catch (e) {
+      }
     }
   }
-  
-  return items;
+  return items
 }
 
 async function customSiteTheme(commandRun, project) {
