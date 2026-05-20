@@ -25,6 +25,7 @@ MicroFrontendRegistry.enableServices(['core', 'haxcms', 'experimental']);
 import * as haxcmsLib from "@haxtheweb/haxcms-nodejs/dist/lib/HAXCMS.js";
 import createSiteRoute from "@haxtheweb/haxcms-nodejs/dist/routes/createSite.js";
 import listFilesRoute from "@haxtheweb/haxcms-nodejs/dist/routes/listFiles.js";
+import siteSearchRoute from "@haxtheweb/haxcms-nodejs/dist/routes/siteSearch.js";
 import skeletonsListRoute from "@haxtheweb/haxcms-nodejs/dist/routes/skeletonsList.js";
 import downloadSiteSkeletonRoute from "@haxtheweb/haxcms-nodejs/dist/routes/downloadSiteSkeleton.js";
 import saveSiteAsTemplateRoute from "@haxtheweb/haxcms-nodejs/dist/routes/saveSiteAsTemplate.js";
@@ -141,6 +142,19 @@ async function invokeRoute(routeHandler, body = {}, query = {}) {
   );
   return res;
 }
+function formatStructuredOutput(commandRun, value) {
+  if (commandRun.options.format === 'yaml') {
+    return dump(value);
+  }
+  if (typeof value === 'string') {
+    return value;
+  }
+  return JSON.stringify(value, null, 2);
+}
+
+function logStructuredOutput(commandRun, value, level = 'info') {
+  log(formatStructuredOutput(commandRun, value), level);
+}
 
 
 export function siteActions() {
@@ -155,6 +169,7 @@ export function siteActions() {
     { value: 'site:items', label: "Site items" },
     { value: 'site:items-import', label: "Import items (JOS / site.json)" },
     { value: 'site:list-files', label: "List site files" },
+    { value: 'site:search', label: "Search site content" },
     { value: 'site:theme', label: "Change theme"},
     { value: 'site:element', label: "Add new Lit component to custom/src"},
     { value: 'site:html', label: "Full site as HTML"},
@@ -289,11 +304,8 @@ export async function siteCommandDetected(commandRun) {
             p.intro(`${color.bgBlue(color.white(` Last updated: ${siteStats.lastUpdated} `))}`);
             p.intro(`${color.bgBlue(color.white(` Tags used: ${JSON.stringify(siteStats.tagUsage, null, 2)} `))}`);
           }
-          else if (commandRun.options.format === 'yaml') {
-            log(dump(siteStats));
-          }
           else {
-            log(siteStats);
+            logStructuredOutput(commandRun, siteStats);
           }
           // simple redirecting to file
           if (commandRun.options.toFile) {
@@ -330,12 +342,7 @@ export async function siteCommandDetected(commandRun) {
             
           }
           else {
-            if (commandRun.options.format === 'yaml') {
-              log(dump(siteitems));
-            }
-            else {
-              log(siteitems);
-            }
+            logStructuredOutput(commandRun, siteitems);
           }
         break;
         case "site:items-import":
@@ -472,12 +479,7 @@ export async function siteCommandDetected(commandRun) {
               if (commandRun.options.nodeOp && siteNodeStatsOperations(commandRun.options.nodeOp)) {
                 switch(commandRun.options.nodeOp) {
                   case 'details':
-                    if (commandRun.options.format === 'yaml') {
-                      log(dump(page));
-                    }
-                    else {
-                      log(page);
-                    }
+                    logStructuredOutput(commandRun, page);
                     // simple redirecting to file
                     if (commandRun.options.toFile) {
                       if (commandRun.options.format === 'yaml') {
@@ -519,12 +521,7 @@ export async function siteCommandDetected(commandRun) {
                       }
                     }
                     else {
-                      if (commandRun.options.format === 'yaml') {
-                        log(dump(els));
-                      }
-                      else {
-                        log(els);
-                      }
+                      logStructuredOutput(commandRun, els);
                     }
                   break;
                   case 'md':
@@ -850,10 +847,8 @@ export async function siteCommandDetected(commandRun) {
               p.outro(
                 `${color.green('✓')} Skeleton exported to ${targetFilePath}`
               )
-            } else if (commandRun.options.format === 'yaml') {
-              log(dump({ file: targetFilePath }))
             } else {
-              log({ file: targetFilePath })
+              logStructuredOutput(commandRun, { file: targetFilePath })
             }
           }
           catch(e) {
@@ -875,10 +870,8 @@ export async function siteCommandDetected(commandRun) {
                 p.outro(
                   `${color.green('✓')} Template installed as ${installData.machineName} (${installData.installPath})`
                 )
-              } else if (commandRun.options.format === 'yaml') {
-                log(dump(installData))
               } else {
-                log(installData)
+                logStructuredOutput(commandRun, installData)
               }
             } else {
               let saveResponse = await invokeRoute(
@@ -906,10 +899,8 @@ export async function siteCommandDetected(commandRun) {
                 p.outro(
                   `${color.green('✓')} Template installed as ${installData.name}`
                 )
-              } else if (commandRun.options.format === 'yaml') {
-                log(dump(installData))
               } else {
-                log(installData)
+                logStructuredOutput(commandRun, installData)
               }
             }
           }
@@ -1485,6 +1476,7 @@ export async function siteCommandDetected(commandRun) {
           }
         break;
         case "site:file-list":
+        case "site:list-files":
           let res = await invokeRoute(
             listFilesRoute,
             {},
@@ -1495,11 +1487,59 @@ export async function siteCommandDetected(commandRun) {
               site_token: "fakeToken"
             }
           );
-          if (commandRun.options.format === 'yaml') {
-            log(dump(res.data));
+          logStructuredOutput(commandRun, res.data);
+          break;
+        case "site:search":
+          try {
+            if (!commandRun.options.search) {
+              commandRun.options.search = await p.text({
+                message: 'Search query',
+                placeholder: 'video-player[src]',
+                validate: (value) => {
+                  if (!value) {
+                    return 'Search query is required';
+                  }
+                  if (value.length > 256) {
+                    return 'Search query is too long (max 256 characters)';
+                  }
+                }
+              });
+            }
+            let searchRouteParams = {
+              siteName: activeHaxsite.name,
+              search: commandRun.options.search,
+              user_token: "fakeToken",
+              site_token: "fakeToken"
+            };
+            if (commandRun.options.searchField) {
+              searchRouteParams.searchField = commandRun.options.searchField;
+            }
+            if (commandRun.options.searchCaseSensitive) {
+              searchRouteParams.searchCaseSensitive = true;
+            }
+            if (commandRun.options.searchLimit) {
+              searchRouteParams.searchLimit = commandRun.options.searchLimit;
+            }
+            if (commandRun.options.searchSelector) {
+              searchRouteParams.searchSelector = true;
+            }
+            if (commandRun.options.searchMode) {
+              searchRouteParams.searchMode = commandRun.options.searchMode;
+            }
+            let searchRes = await invokeRoute(
+              siteSearchRoute,
+              {},
+              searchRouteParams
+            );
+            logStructuredOutput(commandRun, searchRes.data);
           }
-          else {
-            log(res.data);
+          catch(e) {
+            if (e && e.stderr) {
+              log(e.stderr);
+            }
+            else {
+              log(e);
+            }
           }
           break;
         case "site:html":
@@ -1544,12 +1584,7 @@ export async function siteCommandDetected(commandRun) {
               }
             }
             else {
-              if (commandRun.options.format === 'yaml') {
-                log(dump(els));
-              }
-              else {
-                log(els);
-              }
+              logStructuredOutput(commandRun, els);
             }
           }
           else {
@@ -2120,12 +2155,7 @@ export async function siteProcess(commandRun, project, port = '3000') {    // au
   commandRun.options.theme = project.theme;
   recipe.log(siteLoggingName, commandString(commandRun));
   if (commandRun.options.v) {
-    if (commandRun.options.format === 'yaml') {
-      log(dump(res.data), 'silly');
-    }
-    else {
-      log(res.data, 'silly');
-    }
+    logStructuredOutput(commandRun, res.data, 'silly');
   }
   if (!commandRun.options.quiet) {
     s.stop(merlinSays(`${project.name} created successfully!`));

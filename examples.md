@@ -126,6 +126,14 @@ List files uploaded to the site
 ```bash
 hax site site:list-files
 ```
+Search site text content across default fields (title, slug, description, tags, content)
+```bash
+hax site site:search --search "lesson"
+```
+Search site content with selector mode for HTML queries
+```bash
+hax site site:search --search "video-player[src]" --search-selector
+```
 Change theme, interactively
 ```bash
 hax site site:theme

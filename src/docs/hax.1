@@ -57,6 +57,9 @@ Actions to perform on site include:
 .B site:list\-files
 \- List site files
 .br
+.B site:search
+\- Search site content
+.br
 .B site:theme
 \- Change theme
 .br
@@ -265,6 +268,24 @@ path to skeleton JSON file
 \--skeleton\-machine\-name <char>
 skeleton machine name (installed template) to create a site from
 .TP
+\--search <char>
+search query text or simple selector (for site:search)
+.TP
+\--search\-field <char>
+comma\-separated fields for text search (title,slug,description,tags,content,all)
+.TP
+\--search\-case\-sensitive
+case\-sensitive text search
+.TP
+\--search\-limit <char>
+max number of site search matches to return
+.TP
+\--search\-selector
+treat \--search as a selector query (tag, tag[attr], tag[attr="value"], [attr])
+.TP
+\--search\-mode <char>
+search mode override (text or selector)
+.TP
 \--source <char>
 rsync source directory or remote path
 .TP
@@ -350,6 +371,12 @@ Export current site as a reusable skeleton template JSON file
 .TP
 .B hax site site:skeleton-install --skeleton-file ./my-site-template.json
 Install a skeleton template from a local JSON file
+.TP
+.B hax site site:search --search "lesson"
+Search site text content and metadata fields
+.TP
+.B hax site site:search --search "video-player[src]" --search-selector
+Search site HTML content using selector mode
 .TP
 .B hax site node:add \--title "New Page" \--content "Page content"
 Add a new page to an existing site
