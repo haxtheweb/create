@@ -158,10 +158,11 @@ export async function partyCommandDetected(commandRun) {
             commandRun.options.root = await p.text({
               message: 'What folder will your HAX projects live in?',
               placeholder: process.cwd(),
+              initialValue: process.cwd(),
               required: true,
               validate: (value) => {
                 if (!value) {
-                  return "Path is required (tab writes default)";
+                  return "Path is required (Enter accepts default)";
                 }
                 if (!fs.existsSync(value)) {
                   return `${value} does not exist. Select a valid folder`;

@@ -494,13 +494,14 @@ export async function webcomponentCommandDetected(commandRun, packageData = {}, 
           const reservedNames = ["annotation-xml", "color-profile", "font-face", "font-face-src", "font-face-uri", "font-face-format", "font-face-name", "missing-glyph"];
 
           if(!commandRun.options.name){
-            commandRun.options.name = await p.text({
+              commandRun.options.name = await p.text({
               message: 'Component name:',
               placeholder: 'my-component',
+              initialValue: 'my-component',
               required: true,
               validate: (value) => {
                 if (!value) {
-                  return "Name is required (tab writes default)";
+                  return "Name is required (Enter accepts default)";
                 }
                 if(reservedNames.includes(value)) {
                   return `Reserved name ${color.bold(value)} cannot be used`
@@ -537,7 +538,7 @@ export async function webcomponentCommandDetected(commandRun, packageData = {}, 
           } else {
               let value = commandRun.options.name;
               if (!value) {
-                console.error(color.red("Name is required (tab writes default)"));
+                console.error(color.red("Name is required (Enter accepts default)"));
                 process.exit(1);
               }
               if(reservedNames.includes(value)) {

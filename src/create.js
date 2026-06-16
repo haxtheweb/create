@@ -539,10 +539,11 @@ async function main() {
                 return p.text({
                   message: `What folder will your ${(commandRun.command === "webcomponent" || results.type === "webcomponent") ? "project" : "site"} live in?`,
                   placeholder: initialPath,
+                  initialValue: initialPath,
                   required: true,
                   validate: (value) => {
                     if (!value) {
-                      return "Path is required (tab writes default)";
+                      return "Path is required (Enter accepts default)";
                     }
                     if (!fs.existsSync(value)) {
                       return `${value} does not exist. Select a valid folder`;
@@ -567,10 +568,11 @@ async function main() {
                 return p.text({
                   message: message,
                   placeholder: placeholder,
+                  initialValue: placeholder,
                   required: true,
                   validate: (value) => {
                     if (!value) {
-                      return "Name is required (tab writes default)";
+                      return "Name is required (Enter accepts default)";
                     }
                     if(reservedNames.includes(value)) {
                       return `Reserved name ${color.bold(value)} cannot be used`
@@ -615,7 +617,7 @@ async function main() {
               if (commandRun.arguments.action || commandRun.options.name) {
                 let value = commandRun.arguments.action || commandRun.options.name;
                 if (!value) {
-                  program.error(color.red("Name is required (tab writes default)"));
+                  program.error(color.red("Name is required (Enter accepts default)."));
                   process.exit(1);
                 }
                 if(reservedNames.includes(value)) {
@@ -668,6 +670,7 @@ async function main() {
                 return p.text({
                   message: 'Organization:',
                   placeholder: initialOrg,
+                  initialValue: initialOrg,
                   required: false,
                   validate: (value) => {
                     if (value && !value.startsWith('@')) {
@@ -763,6 +766,7 @@ async function main() {
                 return p.text({
                   message: 'Template JSON file path:',
                   placeholder: `${process.cwd()}/template.json`,
+                  initialValue: `${process.cwd()}/template.json`,
                   required: true,
                   validate: (value) => {
                     if (!value) {
@@ -805,10 +809,11 @@ async function main() {
                 let tmpCustomName = await p.text({
                   message: 'Theme Name:',
                   placeholder: `custom-${commandRun.arguments.action ? commandRun.arguments.action : (results.name ? results.name : commandRun.options.name)}-theme`,
+                  initialValue: `custom-${commandRun.arguments.action ? commandRun.arguments.action : (results.name ? results.name : commandRun.options.name)}-theme`,
                   required: false,
                   validate: (value) => {
                     if (!value) {
-                      return "Theme name is required (tab writes default)";
+                      return "Theme name is required (Enter accepts default)";
                     }
                     if(coreThemes.some(theme => theme.value === value)) {
                       return "Theme name is already in use";
@@ -830,7 +835,7 @@ async function main() {
                 // need to validate theme from CLI arguments
                 let value = `${commandRun.options.customThemeName ? commandRun.options.customThemeName : (results.name ? results.name : (commandRun.arguments.action ? commandRun.arguments.action : commandRun.options.name))}`;
                 if (!value) {
-                  program.error(color.red("Theme name is required (tab writes default)"));
+                  program.error(color.red("Theme name is required (Enter accepts default)"));
                 }
                 if(coreThemes.some(theme => theme.value === value)) {
                   program.error(color.red("Theme name is already in use"));

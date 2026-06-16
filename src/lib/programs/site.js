@@ -454,7 +454,7 @@ export async function siteCommandDetected(commandRun) {
               p.intro(`Starting server.. `);
               p.note(`🚀 Server running at: ${color.underline(color.cyan(`http://localhost:3000`))}
 ⌨️  To stop server, press: ${color.bold(color.black(color.bgRed(` CTRL + C or CTRL + BREAK `)))}`);            }
-            await exec(`cd ${activeHaxsite.directory} && npx @haxtheweb/haxcms-nodejs`);
+            await exec(`cd ${activeHaxsite.directory} && HAXCMS_DISABLE_JWT_CHECKS=true npx @haxtheweb/haxcms-nodejs`);
           }
           catch(e) {
             log(formatErrorForLogging(e), 'error');
@@ -468,7 +468,7 @@ export async function siteCommandDetected(commandRun) {
 💻 Site will live reload on changes to ${color.bold('custom/src')}
 ⌨️  To stop server, press: ${color.bold(color.black(color.bgRed(` CTRL + C or CTRL + BREAK `)))}`);
             }
-            await exec(`cd ${activeHaxsite.directory} && NODE_ENV=development npx @haxtheweb/haxcms-nodejs`);
+            await exec(`cd ${activeHaxsite.directory} && HAXCMS_DISABLE_JWT_CHECKS=true NODE_ENV=development npx @haxtheweb/haxcms-nodejs`);
           }
           catch(e) {
             log(formatErrorForLogging(e), 'error');
@@ -567,10 +567,11 @@ export async function siteCommandDetected(commandRun) {
               commandRun.options.title = await p.text({
                 message: `Title for this page`,
                 placeholder: "New page",
+                initialValue: "New page",
                 required: true,
                 validate: (value) => {
                   if (!value) {
-                    return "Title must be set (tab writes default)";
+                    return "Title must be set (Enter accepts default)";
                   }
                 }
               });
@@ -1099,10 +1100,11 @@ export async function siteCommandDetected(commandRun) {
                 commandRun.options.customThemeName = await p.text({
                   message: 'Theme Name:',
                   placeholder: `custom-${activeHaxsite.name}-theme`,
+                  initialValue: `custom-${activeHaxsite.name}-theme`,
                   required: false,
                   validate: (value) => {
                     if (!value) {
-                      return "Theme name is required (tab writes default)";
+                      return "Theme name is required (Enter accepts default)";
                     }
                     if(list.some(theme => theme.value === value)) {
                       return "Theme name is already in use";
@@ -1175,10 +1177,11 @@ export async function siteCommandDetected(commandRun) {
               commandRun.options.name = await p.text({
                 message: 'Component name:',
                 placeholder: 'my-component',
+                initialValue: 'my-component',
                 required: true,
                 validate: (value) => {
                   if (!value) {
-                    return "Name is required (tab writes default)";
+                    return "Name is required (Enter accepts default)";
                   }
                   if(reservedNames.includes(value)) {
                     return `Reserved name ${color.bold(value)} cannot be used`
@@ -1215,7 +1218,7 @@ export async function siteCommandDetected(commandRun) {
             } else {
                 let value = commandRun.options.name;
                 if (!value) {
-                  console.error(color.red("Name is required (tab writes default)"));
+                  console.error(color.red("Name is required (Enter accepts default)"));
                   process.exit(1);
                 }
                 if(reservedNames.includes(value)) {
@@ -2206,7 +2209,7 @@ export async function siteProcess(commandRun, project, port = '3000') {    // au
   // can't launch if we didn't install first so launch implies installation
   if (project.extras && project.extras.includes && project.extras.includes('launch')) {
     let optionPath = `${project.path}/${project.name}`;
-    let command = `npx @haxtheweb/haxcms-nodejs`;
+    let command = `HAXCMS_DISABLE_JWT_CHECKS=true npx @haxtheweb/haxcms-nodejs`;
     if (!commandRun.options.quiet) {
     p.note(`${merlinSays(`I have summoned a sub-process daemon 👹`)}
 
