@@ -156,6 +156,30 @@ function logStructuredOutput(commandRun, value, level = 'info') {
   log(formatStructuredOutput(commandRun, value), level);
 }
 
+function formatErrorForLogging(error) {
+  if (error && typeof error.stderr === 'string' && error.stderr.trim().length > 0) {
+    return error.stderr.trim();
+  }
+  if (error && typeof error.stdout === 'string' && error.stdout.trim().length > 0) {
+    return error.stdout.trim();
+  }
+  if (error && typeof error.message === 'string' && error.message.trim().length > 0) {
+    return error.message.trim();
+  }
+  if (typeof error === 'string' && error.trim().length > 0) {
+    return error.trim();
+  }
+  try {
+    const serializedError = JSON.stringify(error);
+    if (serializedError && serializedError !== '{}') {
+      return serializedError;
+    }
+  }
+  catch (e) {
+  }
+  return 'Unknown error';
+}
+
 
 export function siteActions() {
   return [
@@ -438,7 +462,7 @@ export async function siteCommandDetected(commandRun) {
             await exec(`cd ${activeHaxsite.directory} && npx @haxtheweb/haxcms-nodejs`);
           }
           catch(e) {
-            log(e.stderr);
+            log(formatErrorForLogging(e), 'error');
           }
         break;
         case "serve":
@@ -452,7 +476,7 @@ export async function siteCommandDetected(commandRun) {
             await exec(`cd ${activeHaxsite.directory} && NODE_ENV=development npx @haxtheweb/haxcms-nodejs`);
           }
           catch(e) {
-            log(e.stderr);
+            log(formatErrorForLogging(e), 'error');
           }
         break;
         case "node:status": // easy mistype
@@ -539,8 +563,7 @@ export async function siteCommandDetected(commandRun) {
             }
           }
           catch(e) {
-            log(e.stderr);
-            log(e);
+            log(formatErrorForLogging(e), 'error');
           }
         break;
         case "node:add":
@@ -619,7 +642,7 @@ export async function siteCommandDetected(commandRun) {
             }
           }
           catch(e) {
-            log(e.stderr);
+            log(formatErrorForLogging(e), 'error');
           }
         break;
         case "node:edit":
@@ -764,7 +787,7 @@ export async function siteCommandDetected(commandRun) {
             }
           }
           catch(e) {
-            log(e.stderr);
+            log(formatErrorForLogging(e), 'error');
           }
         break;
         case "node:delete":
@@ -805,7 +828,7 @@ export async function siteCommandDetected(commandRun) {
             }
           }
           catch(e) {
-            log(e.stderr);
+            log(formatErrorForLogging(e), 'error');
           }
         break;
         case "site:skeleton-export":
@@ -917,7 +940,7 @@ export async function siteCommandDetected(commandRun) {
             await exec(`cd ${activeHaxsite.directory} && git pull && git push`);
           }
           catch(e) {
-            log(e.stderr);
+            log(formatErrorForLogging(e), 'error');
           }
         break;
         case "site:rsync":
@@ -1145,7 +1168,7 @@ export async function siteCommandDetected(commandRun) {
             }
           }
           catch(e) {
-            log(e.stderr);
+            log(formatErrorForLogging(e), 'error');
           }
         break;
         case "site:element":
@@ -1317,8 +1340,7 @@ export async function siteCommandDetected(commandRun) {
             }
           }
           catch(e) {
-            console.log("?");
-            log(e.stderr);
+            log(formatErrorForLogging(e), 'error');
           }
         break;
         case "site:netlify":
@@ -1357,8 +1379,7 @@ export async function siteCommandDetected(commandRun) {
             }
           }
           catch(e) {
-            console.log("?");
-            log(e.stderr);
+            log(formatErrorForLogging(e), 'error');
           }
         break;
         case "site:vercel":
@@ -1397,8 +1418,7 @@ export async function siteCommandDetected(commandRun) {
             }
           }
           catch(e) {
-            console.log("?");
-            log(e.stderr);
+            log(formatErrorForLogging(e), 'error');
           }
         break;
         case "setup:github-actions":
@@ -1437,8 +1457,7 @@ export async function siteCommandDetected(commandRun) {
             }
           }
           catch(e) {
-            console.log("?");
-            log(e.stderr);
+            log(formatErrorForLogging(e), 'error');
           }
         break;
         case "setup:gitlab-ci":
@@ -1471,8 +1490,7 @@ export async function siteCommandDetected(commandRun) {
             }
           }
           catch(e) {
-            console.log("?");
-            log(e.stderr);
+            log(formatErrorForLogging(e), 'error');
           }
         break;
         case "site:file-list":
@@ -1534,12 +1552,7 @@ export async function siteCommandDetected(commandRun) {
             logStructuredOutput(commandRun, searchRes.data);
           }
           catch(e) {
-            if (e && e.stderr) {
-              log(e.stderr);
-            }
-            else {
-              log(e);
-            }
+            log(formatErrorForLogging(e), 'error');
           }
           break;
         case "site:html":

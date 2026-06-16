@@ -63,7 +63,11 @@ export function readConfigFile(filename) {
 export async function interactiveExec(command, args = [], options = {}) {
   return new Promise((resolve, reject) => {
     process.env.NODE_NO_WARNINGS = 1;
-    const child = spawn(command, args, { stdio: 'inherit', ...options });
+    const spawnOptions = { stdio: 'inherit', ...options };
+    if (process.platform === 'win32' && typeof spawnOptions.shell === 'undefined') {
+      spawnOptions.shell = true;
+    }
+    const child = spawn(command, args, spawnOptions);
     child.on('exit', (code) => {
       if (code === 0) {
         resolve();
