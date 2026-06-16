@@ -23,12 +23,7 @@ import { MicroFrontendRegistry } from "../micro-frontend-registry.js";
 // emable HAXcms routes so we have name => path just like on frontend!
 MicroFrontendRegistry.enableServices(['core', 'haxcms', 'experimental']);
 import * as haxcmsLib from "@haxtheweb/haxcms-nodejs/dist/lib/HAXCMS.js";
-import createSiteRoute from "@haxtheweb/haxcms-nodejs/dist/routes/createSite.js";
-import listFilesRoute from "@haxtheweb/haxcms-nodejs/dist/routes/listFiles.js";
-import siteSearchRoute from "@haxtheweb/haxcms-nodejs/dist/routes/siteSearch.js";
-import skeletonsListRoute from "@haxtheweb/haxcms-nodejs/dist/routes/skeletonsList.js";
-import downloadSiteSkeletonRoute from "@haxtheweb/haxcms-nodejs/dist/routes/downloadSiteSkeleton.js";
-import saveSiteAsTemplateRoute from "@haxtheweb/haxcms-nodejs/dist/routes/saveSiteAsTemplate.js";
+import * as allRoutesLib from "@haxtheweb/haxcms-nodejs/dist/lib/allRoutes.js";
 import * as josfile from "@haxtheweb/haxcms-nodejs/dist/lib/JSONOutlineSchema.js";
 const JSONOutlineSchema = josfile.default;
 const HAXCMS = haxcmsLib.HAXCMS;
@@ -833,17 +828,17 @@ export async function siteCommandDetected(commandRun) {
         break;
         case "site:skeleton-export":
           try {
-            let skeletonResponse = await invokeRoute(
-              downloadSiteSkeletonRoute,
-              {
-                site: {
-                  name: activeHaxsite.name,
-                },
+          let skeletonResponse = await invokeRoute(
+            allRoutesLib.allRoutes.system.map.post['sites/:siteName/download-skeleton'],
+            {
+              site: {
+                name: activeHaxsite.name,
               },
-              {
-                user_token: 'fakeToken',
-              }
-            )
+            },
+            {
+              user_token: 'fakeToken',
+            }
+          )
             if (
               !skeletonResponse ||
               !skeletonResponse.data ||
@@ -898,7 +893,7 @@ export async function siteCommandDetected(commandRun) {
               }
             } else {
               let saveResponse = await invokeRoute(
-                saveSiteAsTemplateRoute,
+                allRoutesLib.allRoutes.system.map.post['sites/:siteName/save-as-template'],
                 {
                   site: {
                     name: activeHaxsite.name,
@@ -1495,16 +1490,16 @@ export async function siteCommandDetected(commandRun) {
         break;
         case "site:file-list":
         case "site:list-files":
-          let res = await invokeRoute(
-            listFilesRoute,
-            {},
-            {
-              siteName: activeHaxsite.name,
-              filename: commandRun.options.filename,
-              user_token: "fakeToken",
-              site_token: "fakeToken"
-            }
-          );
+        let res = await invokeRoute(
+          allRoutesLib.allRoutes.site.map.get['v1/files'],
+          {},
+          {
+            siteName: activeHaxsite.name,
+            filename: commandRun.options.filename,
+            user_token: "fakeToken",
+            site_token: "fakeToken"
+          }
+        );
           logStructuredOutput(commandRun, res.data);
           break;
         case "site:search":
@@ -1545,7 +1540,7 @@ export async function siteCommandDetected(commandRun) {
               searchRouteParams.searchMode = commandRun.options.searchMode;
             }
             let searchRes = await invokeRoute(
-              siteSearchRoute,
+              allRoutesLib.allRoutes.site.map.get['v1/search'],
               {},
               searchRouteParams
             );
@@ -2130,14 +2125,14 @@ export async function siteProcess(commandRun, project, port = '3000') {    // au
   }
   HAXCMS.cliWritePath = `${project.path}`;
   ensureTwigConstantFunction();
-  let res = await invokeRoute(
-    createSiteRoute,
-    siteRequest,
-    {
-      user_token: "fakeToken",
-      site_token: "fakeToken"
-    }
-  );
+    let res = await invokeRoute(
+      allRoutesLib.allRoutes.system.map.post['sites'],
+      siteRequest,
+      {
+        user_token: "fakeToken",
+        site_token: "fakeToken"
+      }
+    );
   // so we run it and then clear the screen
   // this is a bit of a hack but it works to give the user the feedback that the site was
   // created successfully, but only if not in quiet mode (default)
@@ -2260,7 +2255,7 @@ export async function siteItemsOptionsList(activeHaxsite, skipId = null) {
 
 export async function siteSkeletonList(asOptions = false) {
   let skeletonListResponse = await invokeRoute(
-    skeletonsListRoute,
+    allRoutesLib.allRoutes.system.map.get['skeletons'],
     {},
     {
       user_token: 'fakeToken',
