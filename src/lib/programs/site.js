@@ -338,6 +338,80 @@ yarn-error.log*
   return false;
 }
 
+function prepareSiteForStaticPublish(siteDirectory) {
+  let prepared = false;
+  try {
+    if (!fs.existsSync(siteDirectory)) {
+      return false;
+    }
+    const indexPath = path.join(siteDirectory, 'index.html');
+    const ghpagesPath = path.join(siteDirectory, 'ghpages.html');
+    const backupPath = path.join(siteDirectory, 'index.html.bak');
+    // Only prepare if ghpages.html exists and is different from index.html
+    if (fs.existsSync(ghpagesPath)) {
+      // Backup current index.html if it exists
+      if (fs.existsSync(indexPath)) {
+        fs.copyFileSync(indexPath, backupPath);
+      }
+      // Copy ghpages.html to index.html so the host serves it as the entry point
+      fs.copyFileSync(ghpagesPath, indexPath);
+      prepared = true;
+    }
+    // Remove local build artifacts that won't exist on a static host
+    const buildDir = path.join(siteDirectory, 'build');
+    const wcRegistryPath = path.join(siteDirectory, 'wc-registry.json');
+    if (fs.existsSync(buildDir)) {
+      try {
+        fs.rmSync(buildDir, { recursive: true, force: true });
+      } catch (e) {
+        // best-effort removal
+      }
+    }
+    if (fs.existsSync(wcRegistryPath)) {
+      try {
+        fs.unlinkSync(wcRegistryPath);
+      } catch (e) {
+        // best-effort removal
+      }
+    }
+    // Remove babel* files in assets directory
+    try {
+      const assetsDir = path.join(siteDirectory, 'assets');
+      if (fs.existsSync(assetsDir)) {
+        const items = fs.readdirSync(assetsDir);
+        for (const item of items) {
+          if (item.startsWith('babel')) {
+            fs.unlinkSync(path.join(assetsDir, item));
+          }
+        }
+      }
+    } catch (e) {
+      // best-effort removal
+    }
+  } catch (e) {
+    // Silent failure; prep is best-effort
+  }
+  return prepared;
+}
+
+function restoreSiteAfterStaticPublish(siteDirectory) {
+  try {
+    if (!fs.existsSync(siteDirectory)) {
+      return false;
+    }
+    const indexPath = path.join(siteDirectory, 'index.html');
+    const backupPath = path.join(siteDirectory, 'index.html.bak');
+    if (fs.existsSync(backupPath)) {
+      fs.copyFileSync(backupPath, indexPath);
+      fs.unlinkSync(backupPath);
+      return true;
+    }
+  } catch (e) {
+    // Silent failure; restore is best-effort
+  }
+  return false;
+}
+
 export function siteActions() {
   return [
     { value: 'start', label: "Launch site in browser (http://localhost)"},
@@ -1479,6 +1553,7 @@ export async function siteCommandDetected(commandRun) {
           }  
         break;
         case "site:surge":
+          let surgePrepared = false;
           try {
             // Clean up broken symlinks and fix legacy ignore files before publishing
             let cleaned = cleanupSiteForPublish(activeHaxsite.directory);
@@ -1488,6 +1563,11 @@ export async function siteCommandDetected(commandRun) {
             }
             if (fixedIgnore && !commandRun.options.quiet) {
               log(`Updated legacy .surgeignore to exclude node_modules/`, 'info');
+            }
+            // Prepare for static publish: swap ghpages.html in as index.html and clean local artifacts
+            surgePrepared = prepareSiteForStaticPublish(activeHaxsite.directory);
+            if (surgePrepared && !commandRun.options.quiet) {
+              log(`Prepared site for static publish (ghpages.html → index.html, build removed)`, 'info');
             }
             // attempt to install; implies they asked to publish with surge but
             // system test did not see it globally
@@ -1514,14 +1594,27 @@ export async function siteCommandDetected(commandRun) {
                 surgeArgs.push(commandRun.options.domain);
               }
               execOutput = await interactiveExec('surge', surgeArgs, {cwd: activeHaxsite.directory});
-              log(merlinSays(`Site published: https://${commandRun.options.domain}`));
+              if (commandRun.options.domain) {
+                log(merlinSays(`Site published: https://${commandRun.options.domain}`));
+              } else {
+                log(merlinSays('Site published'));
+              }
             }
           }
           catch(e) {
             log(formatErrorForLogging(e), 'error');
           }
+          finally {
+            if (surgePrepared) {
+              let restored = restoreSiteAfterStaticPublish(activeHaxsite.directory);
+              if (restored && !commandRun.options.quiet) {
+                log(`Restored original index.html after publish`, 'info');
+              }
+            }
+          }
         break;
         case "site:netlify":
+          let netlifyPrepared = false;
           try {
             // Clean up broken symlinks and fix legacy ignore files before publishing
             let cleaned = cleanupSiteForPublish(activeHaxsite.directory);
@@ -1531,6 +1624,11 @@ export async function siteCommandDetected(commandRun) {
             }
             if (fixedIgnore && !commandRun.options.quiet) {
               log(`Updated legacy .netlifyignore to exclude node_modules/`, 'info');
+            }
+            // Prepare for static publish: swap ghpages.html in as index.html and clean local artifacts
+            netlifyPrepared = prepareSiteForStaticPublish(activeHaxsite.directory);
+            if (netlifyPrepared && !commandRun.options.quiet) {
+              log(`Prepared site for static publish (ghpages.html → index.html, build removed)`, 'info');
             }
             // attempt to install; implies they asked to publish with netlify but
             // system test did not see it globally
@@ -1568,8 +1666,17 @@ export async function siteCommandDetected(commandRun) {
           catch(e) {
             log(formatErrorForLogging(e), 'error');
           }
+          finally {
+            if (netlifyPrepared) {
+              let restored = restoreSiteAfterStaticPublish(activeHaxsite.directory);
+              if (restored && !commandRun.options.quiet) {
+                log(`Restored original index.html after publish`, 'info');
+              }
+            }
+          }
         break;
         case "site:vercel":
+          let vercelPrepared = false;
           try {
             // Clean up broken symlinks and fix legacy ignore files before publishing
             let cleaned = cleanupSiteForPublish(activeHaxsite.directory);
@@ -1579,6 +1686,11 @@ export async function siteCommandDetected(commandRun) {
             }
             if (fixedIgnore && !commandRun.options.quiet) {
               log(`Updated legacy .vercelignore to exclude node_modules/`, 'info');
+            }
+            // Prepare for static publish: swap ghpages.html in as index.html and clean local artifacts
+            vercelPrepared = prepareSiteForStaticPublish(activeHaxsite.directory);
+            if (vercelPrepared && !commandRun.options.quiet) {
+              log(`Prepared site for static publish (ghpages.html → index.html, build removed)`, 'info');
             }
             // attempt to install; implies they asked to publish with vercel but
             // system test did not see it globally
@@ -1615,6 +1727,14 @@ export async function siteCommandDetected(commandRun) {
           }
           catch(e) {
             log(formatErrorForLogging(e), 'error');
+          }
+          finally {
+            if (vercelPrepared) {
+              let restored = restoreSiteAfterStaticPublish(activeHaxsite.directory);
+              if (restored && !commandRun.options.quiet) {
+                log(`Restored original index.html after publish`, 'info');
+              }
+            }
           }
         break;
         case "setup:github-actions":
