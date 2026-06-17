@@ -1,3 +1,9 @@
+node_modules
+dist
+!custom/build
+!build/es6/node_modules
+!build/es6/node_modules/**
+
 # Local files
 .DS_Store
 Thumbs.db
@@ -5,9 +11,6 @@ Thumbs.db
 # Logs
 logs
 *.log
-
-# Dependencies (usually handled by build process)
-!node_modules/
 
 # Development files
 .env.local
@@ -19,6 +22,9 @@ logs
 .vscode/
 .idea/
 
-# Build artifacts (if not using for deployment)
-# dist/
-# build/
+# Version control
+.git/
+
+# HAX development artifacts
+.cache/
+.tmp/

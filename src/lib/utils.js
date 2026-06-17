@@ -3,6 +3,7 @@ import * as os from 'node:os';
 import * as path from "node:path"
 import * as child_process from "child_process";
 import * as util from "node:util";
+import { createServer } from 'node:net';
 export const exec = util.promisify(child_process.exec);
 export const spawn = (child_process.spawn);
 
@@ -79,6 +80,30 @@ export async function interactiveExec(command, args = [], options = {}) {
       reject(err);
     });
   });
+}
+
+export function findAvailablePort(startPort = 3000, maxPort = 65535) {
+  return new Promise((resolve, reject) => {
+    function tryPort(port) {
+      if (port > maxPort) {
+        reject(new Error('No available ports found'))
+        return
+      }
+      const server = createServer()
+      server.once('error', (err) => {
+        if (err.code === 'EADDRINUSE') {
+          tryPort(port + 1)
+        } else {
+          reject(err)
+        }
+      })
+      server.once('listening', () => {
+        server.close(() => resolve(port))
+      })
+      server.listen(port)
+    }
+    tryPort(startPort)
+  })
 }
 
 export const SITE_FILE_NAME = "site.json";

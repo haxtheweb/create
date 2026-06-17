@@ -12,7 +12,7 @@ import Twig from 'twig';
 
 import { parse } from 'node-html-parser';
 import { merlinSays, communityStatement } from "../statements.js";
-import { dashToCamel, interactiveExec, exec } from "../utils.js";
+import { dashToCamel, interactiveExec, exec, findAvailablePort } from "../utils.js";
 import { log, commandString } from "../logging.js";
 
 // trick MFR into giving local paths
@@ -175,6 +175,168 @@ function formatErrorForLogging(error) {
   return 'Unknown error';
 }
 
+
+function cleanupSiteForPublish(siteDirectory) {
+  const brokenSymlinks = [];
+  try {
+    if (!fs.existsSync(siteDirectory)) {
+      return brokenSymlinks;
+    }
+    // Scan recursively for broken symlinks
+    function scanDir(dir) {
+      let items = [];
+      try {
+        items = fs.readdirSync(dir);
+      } catch (e) {
+        return;
+      }
+      for (const item of items) {
+        const itemPath = path.join(dir, item);
+        let lstat;
+        try {
+          lstat = fs.lstatSync(itemPath);
+        } catch (e) {
+          continue;
+        }
+        if (lstat.isSymbolicLink()) {
+          try {
+            fs.statSync(itemPath);
+          } catch (e) {
+            // Broken symlink: statSync fails but lstatSync succeeded
+            brokenSymlinks.push(itemPath);
+            try {
+              fs.unlinkSync(itemPath);
+            } catch (e2) {
+              // Ignore unlink errors
+            }
+          }
+        } else if (lstat.isDirectory() && item !== 'node_modules' && item !== '.git') {
+          scanDir(itemPath);
+        }
+      }
+    }
+    scanDir(siteDirectory);
+  } catch (e) {
+    // Silent failure; cleanup is best-effort
+  }
+  return brokenSymlinks;
+}
+
+function fixLegacyIgnoreFile(siteDirectory, ignoreFileName) {
+  const ignoreFilePath = path.join(siteDirectory, ignoreFileName);
+  if (!fs.existsSync(ignoreFilePath)) {
+    return false;
+  }
+  try {
+    let contents = fs.readFileSync(ignoreFilePath, 'utf8');
+    // Legacy templates had !node_modules/ which is the wrong syntax for
+    // excluding directories. If we find that exact line, replace the whole file.
+    if (contents.includes('!node_modules/')) {
+      let newContents = '';
+      if (ignoreFileName === '.surgeignore') {
+        newContents = `node_modules
+dist
+!custom/build
+!build/es6/node_modules
+!build/es6/node_modules/**
+
+# Version control
+.git/
+
+# IDE files
+.vscode/
+.idea/
+
+# Local files
+.DS_Store
+Thumbs.db
+
+# Logs
+logs
+*.log
+
+# HAX development artifacts
+.cache/
+.tmp/
+`;
+      } else if (ignoreFileName === '.netlifyignore') {
+        newContents = `node_modules
+dist
+!custom/build
+!build/es6/node_modules
+!build/es6/node_modules/**
+
+# Local files
+.DS_Store
+Thumbs.db
+
+# Logs
+logs
+*.log
+
+# Development files
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# IDE files
+.vscode/
+.idea/
+
+# Version control
+.git/
+
+# HAX development artifacts
+.cache/
+.tmp/
+`;
+      } else if (ignoreFileName === '.vercelignore') {
+        newContents = `node_modules
+dist
+!custom/build
+!build/es6/node_modules
+!build/es6/node_modules/**
+
+# Local files
+.DS_Store
+Thumbs.db
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Development files
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# IDE files
+.vscode/
+.idea/
+
+# Version control
+.git/
+
+# Cache directories
+.cache/
+.tmp/
+`;
+      }
+      if (newContents) {
+        fs.writeFileSync(ignoreFilePath, newContents);
+        return true;
+      }
+    }
+  } catch (e) {
+    // Silent failure; fix is best-effort
+  }
+  return false;
+}
 
 export function siteActions() {
   return [
@@ -450,11 +612,16 @@ export async function siteCommandDetected(commandRun) {
         break;
         case "start":
           try {
+            const port = await findAvailablePort();
             if (!commandRun.options.quiet) {
               p.intro(`Starting server.. `);
-              p.note(`🚀 Server running at: ${color.underline(color.cyan(`http://localhost:3000`))}
-⌨️  To stop server, press: ${color.bold(color.black(color.bgRed(` CTRL + C or CTRL + BREAK `)))}`);            }
-            await exec(`cd ${activeHaxsite.directory} && HAXCMS_DISABLE_JWT_CHECKS=true npx @haxtheweb/haxcms-nodejs`);
+              p.note(`🚀 Server running at: ${color.underline(color.cyan(`http://localhost:${port}`))}
+⌨️  To stop server, press: ${color.bold(color.black(color.bgRed(` CTRL + C or CTRL + BREAK `)))}`);
+            }
+            await exec(`npx @haxtheweb/haxcms-nodejs`, {
+              cwd: activeHaxsite.directory,
+              env: { ...process.env, PORT: `${port}`, HAXCMS_DISABLE_JWT_CHECKS: 'true' }
+            });
           }
           catch(e) {
             log(formatErrorForLogging(e), 'error');
@@ -462,13 +629,17 @@ export async function siteCommandDetected(commandRun) {
         break;
         case "serve":
           try {
+            const port = await findAvailablePort();
             if (!commandRun.options.quiet) {
               p.intro(`Starting server in development mode.. `);
-              p.note(`🚀 Server running at: ${color.underline(color.cyan(`http://localhost:3000`))}
+              p.note(`🚀 Server running at: ${color.underline(color.cyan(`http://localhost:${port}`))}
 💻 Site will live reload on changes to ${color.bold('custom/src')}
 ⌨️  To stop server, press: ${color.bold(color.black(color.bgRed(` CTRL + C or CTRL + BREAK `)))}`);
             }
-            await exec(`cd ${activeHaxsite.directory} && HAXCMS_DISABLE_JWT_CHECKS=true NODE_ENV=development npx @haxtheweb/haxcms-nodejs`);
+            await exec(`npx @haxtheweb/haxcms-nodejs`, {
+              cwd: activeHaxsite.directory,
+              env: { ...process.env, PORT: `${port}`, HAXCMS_DISABLE_JWT_CHECKS: 'true', NODE_ENV: 'development' }
+            });
           }
           catch(e) {
             log(formatErrorForLogging(e), 'error');
@@ -1309,6 +1480,15 @@ export async function siteCommandDetected(commandRun) {
         break;
         case "site:surge":
           try {
+            // Clean up broken symlinks and fix legacy ignore files before publishing
+            let cleaned = cleanupSiteForPublish(activeHaxsite.directory);
+            let fixedIgnore = fixLegacyIgnoreFile(activeHaxsite.directory, '.surgeignore');
+            if (cleaned.length > 0 && !commandRun.options.quiet) {
+              log(`Removed ${cleaned.length} broken symlinks: ${cleaned.join(', ')}`, 'info');
+            }
+            if (fixedIgnore && !commandRun.options.quiet) {
+              log(`Updated legacy .surgeignore to exclude node_modules/`, 'info');
+            }
             // attempt to install; implies they asked to publish with surge but
             // system test did not see it globally
             if (!sysSurge) {
@@ -1343,6 +1523,15 @@ export async function siteCommandDetected(commandRun) {
         break;
         case "site:netlify":
           try {
+            // Clean up broken symlinks and fix legacy ignore files before publishing
+            let cleaned = cleanupSiteForPublish(activeHaxsite.directory);
+            let fixedIgnore = fixLegacyIgnoreFile(activeHaxsite.directory, '.netlifyignore');
+            if (cleaned.length > 0 && !commandRun.options.quiet) {
+              log(`Removed ${cleaned.length} broken symlinks: ${cleaned.join(', ')}`, 'info');
+            }
+            if (fixedIgnore && !commandRun.options.quiet) {
+              log(`Updated legacy .netlifyignore to exclude node_modules/`, 'info');
+            }
             // attempt to install; implies they asked to publish with netlify but
             // system test did not see it globally
             if (!sysNetlify) {
@@ -1382,6 +1571,15 @@ export async function siteCommandDetected(commandRun) {
         break;
         case "site:vercel":
           try {
+            // Clean up broken symlinks and fix legacy ignore files before publishing
+            let cleaned = cleanupSiteForPublish(activeHaxsite.directory);
+            let fixedIgnore = fixLegacyIgnoreFile(activeHaxsite.directory, '.vercelignore');
+            if (cleaned.length > 0 && !commandRun.options.quiet) {
+              log(`Removed ${cleaned.length} broken symlinks: ${cleaned.join(', ')}`, 'info');
+            }
+            if (fixedIgnore && !commandRun.options.quiet) {
+              log(`Updated legacy .vercelignore to exclude node_modules/`, 'info');
+            }
             // attempt to install; implies they asked to publish with vercel but
             // system test did not see it globally
             if (!sysVercel) {
