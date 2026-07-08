@@ -2363,6 +2363,9 @@ export async function siteProcess(commandRun, project, port = '3000') {    // au
       if (importedData && importedData.files) {
         siteRequest.build.files = importedData.files;
       }
+      if (importedData && importedData.siteFiles) {
+        siteRequest.build.siteFiles = importedData.siteFiles;
+      }
       if (importedData && importedData.site) {
         applyImportedSiteMetadata(siteRequest, importedData.site);
       }
