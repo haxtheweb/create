@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, user-scalable=yes">
+    <title><%= className %>: <%= name %> Demo</title>
+    <script src="../../../node_modules/@haxtheweb/deduping-fix/deduping-fix.js"></script>
+    <script type="module">
+      import '../<%= name %>.js';
+    </script>
+  </head>
+  <body>
+    <div class="vertical-section-container centered">
+      <h3>Basic <%= name %> demo</h3>
+      <<%= name %>></<%= name %>>
+    </div>
+  </body>
+</html>

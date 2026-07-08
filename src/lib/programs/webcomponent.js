@@ -10,7 +10,7 @@ import color from 'picocolors';
 import { merlinSays } from "../statements.js";
 import { log } from "../logging.js";
 
-import { dashToCamel, readAllFiles, exec } from '../utils.js';
+import { dashToCamel, readAllFiles, exec, validateWebcomponentName } from '../utils.js';
 import * as haxcmsLib from "@haxtheweb/haxcms-nodejs/dist/lib/HAXCMS.js";
 const HAXCMS = haxcmsLib.HAXCMS;
 
@@ -192,34 +192,36 @@ export async function webcomponentProcess(commandRun, project, port = "8000") {
   let s = p.spinner();
   s.start(merlinSays('Copying project files'));
   // leverage this little helper from HAXcms
+  let templateDir = project.template || 'compliant';
   await HAXCMS.recurseCopy(
-    `${process.mainModule.path}/templates/${project.type}/hax/`,
+    `${process.mainModule.path}/templates/${project.type}/${templateDir}/`,
     `${project.path}/${project.name}`
   );
   // rename gitignore to improve copy cross platform compat
-  await fs.renameSync(`${project.path}/${project.name}/_github`, `${project.path}/${project.name}/.github`);
-  await fs.renameSync(`${project.path}/${project.name}/_vscode`, `${project.path}/${project.name}/.vscode`);
-  await fs.renameSync(`${project.path}/${project.name}/_dddignore`, `${project.path}/${project.name}/.dddignore`);
-  await fs.renameSync(`${project.path}/${project.name}/_editorconfig`, `${project.path}/${project.name}/.editorconfig`);
-  await fs.renameSync(`${project.path}/${project.name}/_gitignore`, `${project.path}/${project.name}/.gitignore`);
-  await fs.renameSync(`${project.path}/${project.name}/_nojekyll`, `${project.path}/${project.name}/.nojekyll`);
-  await fs.renameSync(`${project.path}/${project.name}/_npmignore`, `${project.path}/${project.name}/.npmignore`);
-  await fs.renameSync(`${project.path}/${project.name}/_surgeignore`, `${project.path}/${project.name}/.surgeignore`);
-  await fs.renameSync(`${project.path}/${project.name}/_travis.yml`, `${project.path}/${project.name}/.travis.yml`);
-  // rename paths that are of the element name in question
-  await fs.renameSync(`${project.path}/${project.name}/lib/webcomponent.haxProperties.json`, `${project.path}/${project.name}/lib/${project.name}.haxProperties.json`);
-  // loop through and rename all the localization files
-  fs.readdir(`${project.path}/${project.name}/locales/`, function (err, files) {
-    if (err) {
-      console.error("Could not list the directory.", err);
-      process.exit(1);
+  const renameIfExists = (src, dest) => {
+    if (fs.existsSync(src)) {
+      fs.renameSync(src, dest);
     }
-    files.forEach(async function (file, index) {
-      await fs.renameSync(`${project.path}/${project.name}/locales/${file}`, `${project.path}/${project.name}/locales/${file.replace('webcomponent', project.name)}`);
+  };
+  renameIfExists(`${project.path}/${project.name}/_github`, `${project.path}/${project.name}/.github`);
+  renameIfExists(`${project.path}/${project.name}/_vscode`, `${project.path}/${project.name}/.vscode`);
+  renameIfExists(`${project.path}/${project.name}/_dddignore`, `${project.path}/${project.name}/.dddignore`);
+  renameIfExists(`${project.path}/${project.name}/_editorconfig`, `${project.path}/${project.name}/.editorconfig`);
+  renameIfExists(`${project.path}/${project.name}/_gitignore`, `${project.path}/${project.name}/.gitignore`);
+  renameIfExists(`${project.path}/${project.name}/_nojekyll`, `${project.path}/${project.name}/.nojekyll`);
+  renameIfExists(`${project.path}/${project.name}/_npmignore`, `${project.path}/${project.name}/.npmignore`);
+  renameIfExists(`${project.path}/${project.name}/_surgeignore`, `${project.path}/${project.name}/.surgeignore`);
+  renameIfExists(`${project.path}/${project.name}/_travis.yml`, `${project.path}/${project.name}/.travis.yml`);
+  // rename paths that are of the element name in question
+  renameIfExists(`${project.path}/${project.name}/lib/webcomponent.haxProperties.json`, `${project.path}/${project.name}/lib/${project.name}.haxProperties.json`);
+  // loop through and rename all the localization files
+  if (fs.existsSync(`${project.path}/${project.name}/locales/`)) {
+    fs.readdirSync(`${project.path}/${project.name}/locales/`).forEach(async function (file, index) {
+      fs.renameSync(`${project.path}/${project.name}/locales/${file}`, `${project.path}/${project.name}/locales/${file.replace('webcomponent', project.name)}`);
     });
-  });
-  await fs.renameSync(`${project.path}/${project.name}/webcomponent.js`, `${project.path}/${project.name}/${project.name}.js`);
-  await fs.renameSync(`${project.path}/${project.name}/test/webcomponent.test.js`, `${project.path}/${project.name}/test/${project.name}.test.js`);
+  }
+  renameIfExists(`${project.path}/${project.name}/webcomponent.js`, `${project.path}/${project.name}/${project.name}.js`);
+  renameIfExists(`${project.path}/${project.name}/test/webcomponent.test.js`, `${project.path}/${project.name}/test/${project.name}.test.js`);
   s.stop(merlinSays('Files copied'));
   await setTimeout(500);
   s.start(merlinSays('Making files awesome'));
@@ -299,6 +301,7 @@ export function webcomponentActions(){
     { value: 'wc:stats', label: "Check status of web component"},
     { value: 'wc:element', label: "Add new Lit component to existing project"},
     { value: 'wc:haxproperties', label: "Write haxProperties schema"},
+    { value: 'wc:rename', label: "Rename this web component"},
   ];
 }
 
@@ -623,6 +626,15 @@ export async function webcomponentCommandDetected(commandRun, packageData = {}, 
           log(e.stderr)
         }
       break;
+      case "rename":
+      case "wc:rename":
+      case "webcomponent:rename":
+        try {
+          await webcomponentRename(commandRun, packageData);
+        } catch(e) {
+          log(e.stderr)
+        }
+      break;
       case "quit":
         // quit
         process.exit(0);
@@ -732,4 +744,170 @@ function getInputMethodFromType(type) {
       return "boolean";
   }
   return false;
+}
+
+export async function webcomponentRename(commandRun, packageData) {
+  const oldCwd = process.cwd();
+  const oldDirName = path.basename(oldCwd);
+  const parentDir = path.dirname(oldCwd);
+
+  // monorepo guard: prevent renaming from the monorepo root
+  if (packageData && packageData.workspaces) {
+    console.error(color.red('Cannot rename a webcomponent from the monorepo root. Run this command inside the element directory.'));
+    process.exit(1);
+  }
+
+  // derive old name and scope from package.json or directory name
+  let oldName = oldDirName;
+  let scope = '';
+  if (packageData && packageData.name) {
+    const parts = packageData.name.split('/');
+    if (parts.length > 1) {
+      scope = parts[0] + '/';
+      oldName = parts[1];
+    } else {
+      oldName = parts[0];
+    }
+  }
+
+  // load wc-registry for collision checking
+  let wcReg = {};
+  try {
+    const regPath = path.join(__dirname, '../../lib/wc-registry.json');
+    if (fs.existsSync(regPath)) {
+      wcReg = JSON.parse(fs.readFileSync(regPath, 'utf8'));
+    }
+  } catch(e) {
+    // ignore missing registry
+  }
+
+  let newName;
+  if (!commandRun.options.name) {
+    if (commandRun.options.i === false || commandRun.options.y || commandRun.options.auto) {
+      console.error(color.red("Name is required when running non-interactively. Pass --name <value>."));
+      process.exit(1);
+    }
+    newName = await p.text({
+      message: 'New component name:',
+      placeholder: 'my-new-element',
+      required: true,
+      validate: (value) => {
+        return validateWebcomponentName(value, {
+          wcReg,
+          force: commandRun.options.force,
+          joint: parentDir,
+          checkExists: true
+        });
+      }
+    });
+  } else {
+    newName = commandRun.options.name;
+    const error = validateWebcomponentName(newName, {
+      wcReg,
+      force: commandRun.options.force,
+      joint: parentDir,
+      checkExists: true
+    });
+    if (error) {
+      console.error(color.red(error));
+      process.exit(1);
+    }
+  }
+
+  const oldClassName = dashToCamel(oldName);
+  const newClassName = dashToCamel(newName);
+  const newScopedName = scope + newName;
+  const newDir = path.join(parentDir, newName);
+
+  let s = p.spinner();
+  s.start(merlinSays(`Renaming ${oldName} to ${newName}`));
+
+  // rewrite file contents
+  for (const filePath of readAllFiles(oldCwd)) {
+    // skip binary and generated directories
+    if (filePath.includes('/node_modules/') || filePath.includes('/dist/') || filePath.includes('/public/')) {
+      continue;
+    }
+    if (filePath.endsWith('.jpg') || filePath.endsWith('.png')) {
+      continue;
+    }
+    try {
+      let content = fs.readFileSync(filePath, 'utf8');
+      // replace class name first, then tag name
+      content = content.replaceAll(oldClassName, newClassName);
+      content = content.replaceAll(oldName, newName);
+      fs.writeFileSync(filePath, content);
+    } catch (err) {
+      console.warn(color.yellow(`Could not rewrite ${filePath}: ${err.message}`));
+    }
+  }
+
+  // rename files that contain the old name in their basename
+  const filesToRename = [];
+  for (const filePath of readAllFiles(oldCwd)) {
+    if (filePath.includes('/node_modules/') || filePath.includes('/dist/') || filePath.includes('/public/')) {
+      continue;
+    }
+    const basename = path.basename(filePath);
+    if (basename.includes(oldName)) {
+      const newBasename = basename.replaceAll(oldName, newName);
+      const newFilePath = path.join(path.dirname(filePath), newBasename);
+      filesToRename.push({ old: filePath, new: newFilePath });
+    }
+  }
+  // rename deeper files first to avoid parent rename blocking children
+  filesToRename.sort((a, b) => b.old.length - a.old.length);
+  for (const { old: oldPath, new: newPath } of filesToRename) {
+    if (fs.existsSync(oldPath)) {
+      fs.renameSync(oldPath, newPath);
+    }
+  }
+
+  // explicitly rewrite package.json to ensure scope and fields are correct
+  const packageJsonPath = path.join(oldCwd, 'package.json');
+  if (fs.existsSync(packageJsonPath)) {
+    const pkg = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
+    pkg.name = newScopedName;
+    if (pkg.main) {
+      pkg.main = pkg.main.replaceAll(oldName, newName);
+    }
+    if (pkg.module) {
+      pkg.module = pkg.module.replaceAll(oldName, newName);
+    }
+    if (pkg.repository && pkg.repository.url) {
+      pkg.repository.url = pkg.repository.url.replaceAll(oldName, newName);
+    }
+    fs.writeFileSync(packageJsonPath, JSON.stringify(pkg, null, 2) + '\n');
+  }
+
+  // delete stale custom-elements.json
+  const ceJsonPath = path.join(oldCwd, 'custom-elements.json');
+  if (fs.existsSync(ceJsonPath)) {
+    fs.unlinkSync(ceJsonPath);
+  }
+
+  // delete stale package-lock.json to avoid confusion
+  const lockPath = path.join(oldCwd, 'package-lock.json');
+  if (fs.existsSync(lockPath)) {
+    fs.unlinkSync(lockPath);
+  }
+
+  s.stop(merlinSays(`Files rewritten`));
+
+  // rename parent directory
+  fs.renameSync(oldCwd, newDir);
+
+  if (!commandRun.options.quiet) {
+    p.note(`${color.bold(oldName)} renamed to ${color.bold(newName)}\n\n🏠  New folder: ${color.bold(color.yellow(color.bgBlack(newDir)))}\n📘  Package name: ${color.bold(color.yellow(color.bgBlack(newScopedName)))}`);
+  }
+
+  // regenerate custom-elements.json
+  try {
+    let s2 = p.spinner();
+    s2.start(merlinSays('Regenerating custom-elements.json'));
+    await exec(`cd ${newDir} && ${commandRun.options.npmClient || 'npm'} run analyze`);
+    s2.stop(merlinSays('custom-elements.json regenerated'));
+  } catch (e) {
+    console.warn(color.yellow('Could not regenerate custom-elements.json. Run `npm run analyze` manually.'));
+  }
 }

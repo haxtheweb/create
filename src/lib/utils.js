@@ -152,3 +152,50 @@ export function* readAllFiles(dir)  {
     }
   }
 }
+
+const reservedNames = ["annotation-xml", "color-profile", "font-face", "font-face-src", "font-face-uri", "font-face-format", "font-face-name", "missing-glyph"];
+
+/**
+ * Validate a web component name. Returns an error string if invalid, or null if valid.
+ * @param {string} value - the proposed name
+ * @param {object} options
+ * @param {object} [options.wcReg] - wc-registry object to check for collisions
+ * @param {boolean} [options.force] - skip wc-registry collision check
+ * @param {string} [options.joint] - base directory to check for existing folder
+ * @param {boolean} [options.checkExists] - whether to check if directory already exists
+ * @returns {string|null} error message or null
+ */
+export function validateWebcomponentName(value, options = {}) {
+  const { wcReg, force, joint, checkExists = true } = options;
+  if (!value) {
+    return "Name is required (Enter accepts default)";
+  }
+  if (reservedNames.includes(value)) {
+    return `Reserved name ${value} cannot be used`;
+  }
+  if (value.toLocaleLowerCase() !== value) {
+    return "Name must be lowercase";
+  }
+  if (/^\d/.test(value)) {
+    return "Name cannot start with a number";
+  }
+  if (/[`~!@#$%^&*()_=+\[\]{}|;:\'",<.>\/?\\]/.test(value)) {
+    return "No special characters allowed in name";
+  }
+  if (value.indexOf(' ') !== -1) {
+    return "No spaces allowed in name";
+  }
+  if (value.indexOf('-') === -1 || value.replace('--', '') !== value || value[0] === '-' || value[value.length - 1] === '-') {
+    return "Name must include at least one `-` and must not start or end name.";
+  }
+  if (!/^[a-z][a-z0-9.\-]*\-[a-z0-9.\-]*$/.test(value)) {
+    return `Name must follow the syntax my-component`;
+  }
+  if (wcReg && wcReg[value] && !force) {
+    return "Name is already a web component in the wc-registry published for HAX.";
+  }
+  if (checkExists && joint && fs.existsSync(path.join(joint, value))) {
+    return `${path.join(joint, value)} exists, rename this project`;
+  }
+  return null;
+}

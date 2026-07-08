@@ -1,0 +1,38 @@
+{
+  "name": "<%= org %><%= name %>",
+  "version": "0.0.0",
+  "description": "Webcomponent <%= name %> following open-wc recommendations",
+  "license": "Apache-2.0",
+  "author": {
+    "name": "<%= author %>"
+  },
+  "keywords": [
+    "webcomponents",
+    "lit"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "<%= githubLink %>"
+  },
+  "type": "module",
+  "main": "<%= name %>.js",
+  "module": "<%= name %>.js",
+  "scripts": {
+    "start": "web-dev-server",
+    "build": "cem analyze --litelement",
+    "test": "web-test-runner test/**/*.test.js --node-resolve"
+  },
+  "dependencies": {
+    "lit": "3.3.3"
+  },
+  "devDependencies": {
+    "@custom-elements-manifest/analyzer": "0.10.4",
+    "@web/dev-server": "0.4.6",
+    "@web/test-runner": "0.19.0"
+  },
+  "private": false,
+  "publishConfig": {
+    "access": "public"
+  },
+  "customElements": "custom-elements.json"
+}

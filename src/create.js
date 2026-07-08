@@ -71,6 +71,7 @@ async function main() {
   // options for webcomponent
   .option('--org <char>', 'organization for package.json')
   .option('--author <char>', 'author for site / package.json')
+  .option('--template <char>', 'template type to use (compliant, minimal, training, monorepo)')
   .option('--writeHaxProperties', 'Write haxProperties for the element')
   .option('--force', 'force creation even if name exists in registry')
 
@@ -237,6 +238,7 @@ async function main() {
   .option('--author <char>', 'author for site / package.json')
   .option('--name <char>', 'name of the web component')
   .option('--writeHaxProperties', 'Write haxProperties for the element')
+  .option('--template <char>', 'template type to use (compliant, minimal, training, monorepo)')
   .option('--to-file <char>', 'redirect command output to a file')
   .option('--no-extras', 'skip all extra / automatic command processing')
   .option('--no-i', 'prevent interactions / sub-process, good for scripting')
@@ -367,6 +369,7 @@ async function main() {
           }
           commandRun.options.isMonorepo = true;
           commandRun.options.auto = true;
+          commandRun.options.template = 'monorepo';
           // assumed if monorepo
           if (commandRun.command === "audit") {
             auditCommandDetected(commandRun);
@@ -614,8 +617,16 @@ async function main() {
                   }
                 });  
               }
-              if (commandRun.arguments.action || commandRun.options.name) {
-                let value = commandRun.arguments.action || commandRun.options.name;
+            if (commandRun.arguments.action || commandRun.options.name) {
+                let knownActions = [];
+                if (results.type === "webcomponent") {
+                  knownActions = webcomponentActions().map(action => action.value);
+                } else if (results.type === "site") {
+                  knownActions = siteActions().map(action => action.value);
+                }
+                let value = knownActions.includes(commandRun.arguments.action) 
+                  ? commandRun.options.name 
+                  : (commandRun.arguments.action || commandRun.options.name);
                 if (!value) {
                   program.error(color.red("Name is required (Enter accepts default)."));
                   process.exit(1);
@@ -686,6 +697,20 @@ async function main() {
                   message: 'Author:',
                   required: false,
                   initialValue: author,
+                });
+              }
+            },
+            template: ({ results }) => {
+              if (results.type === 'webcomponent' && !commandRun.options.isMonorepo && !commandRun.options.template && !commandRun.options.auto && !commandRun.options.skip && commandRun.options.i) {
+                return p.select({
+                  message: 'Template:',
+                  required: false,
+                  options: [
+                    { value: 'compliant', label: 'Standard — DDD, i18n, HAX, full build (recommended)' },
+                    { value: 'minimal', label: 'Minimal — Lit only, no docs, no build pipeline' },
+                    { value: 'training', label: 'Training — Heavily documented tutorial example' },
+                  ],
+                  initialValue: 'compliant',
                 });
               }
             },
@@ -928,6 +953,9 @@ async function main() {
         project.version = packageJson.version;
         if (!project.name && commandRun.arguments.action) {
           project.name = commandRun.arguments.action;
+        }
+        if (project.type === 'webcomponent' && !project.template) {
+          project.template = 'compliant';
         }
 
         // resolve site vs multi-site
