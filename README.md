@@ -223,7 +223,7 @@ rollup.config.js
 ```
 
 # Get Help / Issues / Support
-- Discord Channel - https://bit.ly/hax-discord
+- Discord Channel - https://discord.gg/EKYJAjqGhf
 - Unified issue queue - https://github.com/haxtheweb/issues/issues
 - DDD Documentation - https://haxtheweb.org/documentation/ddd
 - Using Merlin directly in any HAX spaces and type "Issue" to jump start a report!
