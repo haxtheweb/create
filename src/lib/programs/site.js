@@ -827,6 +827,21 @@ export async function siteCommandDetected(commandRun) {
                 title: commandRun.options.title
               }
             };
+            if (commandRun.options.parent && commandRun.options.parent !== '') {
+              createNodeBody.parent = commandRun.options.parent;
+            }
+            if (commandRun.options.order && !Number.isNaN(parseInt(commandRun.options.order))) {
+              createNodeBody.order = parseInt(commandRun.options.order);
+            }
+            if (commandRun.options.slug && commandRun.options.slug !== '') {
+              createNodeBody.node.location = commandRun.options.slug;
+            }
+            if (commandRun.options.description && commandRun.options.description !== '') {
+              createNodeBody.description = commandRun.options.description;
+            }
+            if (commandRun.options.tags && commandRun.options.tags !== '') {
+              createNodeBody.metadata = { tags: commandRun.options.tags };
+            }
             // this would be odd but could be direct with no format specified
             if (commandRun.options.content && !commandRun.options.format) {
               // only API where it's called contents and already out there {facepalm}
@@ -873,7 +888,7 @@ export async function siteCommandDetected(commandRun) {
               createNodeBody.node.contents = locationContent;
             }
             const cliBridge = await getHaxcmsNodejsCli();
-            let resp = await cliBridge.cliBridge('createNode', createNodeBody);
+            let resp = await cliBridge.cliBridge('v1/items', createNodeBody, 'post');
             recipe.log(siteLoggingName, commandString(commandRun));
             if (commandRun.options.v) {
               log(resp.res.data, 'silly');
@@ -1054,7 +1069,7 @@ export async function siteCommandDetected(commandRun) {
               // extra confirmation given destructive operation
               if (del) {
                 const cliBridge = await getHaxcmsNodejsCli();
-                let resp = await cliBridge.cliBridge('deleteNode', { site: activeHaxsite, node: { id: commandRun.options.itemId }});
+                let resp = await cliBridge.cliBridge('v1/items/' + commandRun.options.itemId, { site: activeHaxsite, node: { id: commandRun.options.itemId } }, 'delete');
                 if (resp.res.data === 500) {
                   console.warn(`node:delete failed "${commandRun.options.itemId} not found`);
                 }
