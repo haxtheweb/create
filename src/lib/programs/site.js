@@ -2,6 +2,7 @@
 import { setTimeout } from 'node:timers/promises';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import * as os from 'node:os';
 import open from 'open';
 import * as p from '@clack/prompts';
 import * as ejs from "ejs";
@@ -132,6 +133,10 @@ async function invokeRoute(routeHandler, body = {}, query = {}) {
     {
       body: body,
       query: query,
+      headers: {
+        'x-haxcms-user-token': query.user_token || 'fakeToken',
+        'x-haxcms-site-token': query.site_token || 'fakeToken',
+      },
     },
     res
   );
@@ -425,6 +430,11 @@ export function siteActions() {
     { value: 'site:items-import', label: "Import items (JOS / site.json)" },
     { value: 'site:list-files', label: "List site files" },
     { value: 'site:search', label: "Search site content" },
+    { value: 'site:tags', label: "List site tags" },
+    { value: 'site:blocks', label: "List site block usage" },
+    { value: 'site:analytics', label: "Site analytics metadata" },
+    { value: 'site:revisions', label: "List or restore item revisions" },
+    { value: 'site:export', label: "Export site in a format" },
     { value: 'site:theme', label: "Change theme"},
     { value: 'site:element', label: "Add new Lit component to custom/src"},
     { value: 'site:html', label: "Full site as HTML"},
@@ -1881,6 +1891,331 @@ export async function siteCommandDetected(commandRun) {
               searchRouteParams
             );
             logStructuredOutput(commandRun, searchRes.data);
+          }
+          catch(e) {
+            log(formatErrorForLogging(e), 'error');
+          }
+          break;
+        case "site:tags":
+          try {
+            let res = await invokeRoute(
+              allRoutesLib.allRoutes.site.map.get['v1/tags'],
+              {},
+              {
+                siteName: activeHaxsite.name,
+                user_token: "fakeToken",
+                site_token: "fakeToken"
+              }
+            );
+            logStructuredOutput(commandRun, res.data);
+          }
+          catch(e) {
+            log(formatErrorForLogging(e), 'error');
+          }
+          break;
+        case "site:blocks":
+          try {
+            let res = await invokeRoute(
+              allRoutesLib.allRoutes.site.map.get['v1/blocks'],
+              {},
+              {
+                siteName: activeHaxsite.name,
+                user_token: "fakeToken",
+                site_token: "fakeToken"
+              }
+            );
+            logStructuredOutput(commandRun, res.data);
+          }
+          catch(e) {
+            log(formatErrorForLogging(e), 'error');
+          }
+          break;
+        case "site:analytics":
+          try {
+            let res = await invokeRoute(
+              allRoutesLib.allRoutes.site.map.get['v1/analytics'],
+              {},
+              {
+                siteName: activeHaxsite.name,
+                user_token: "fakeToken",
+                site_token: "fakeToken"
+              }
+            );
+            logStructuredOutput(commandRun, res.data);
+          }
+          catch(e) {
+            log(formatErrorForLogging(e), 'error');
+          }
+          break;
+        case "site:revisions":
+          try {
+            if (!commandRun.options.itemId) {
+              commandRun.options.itemId = await p.select({
+                message: `Select an item to view revisions`,
+                required: true,
+                options: [ {value: null, label: "-- exit --" }, ...await siteItemsOptionsList(activeHaxsite)],
+              });
+            }
+            if (commandRun.options.itemId) {
+              const cliBridge = await getHaxcmsNodejsCli();
+              if (commandRun.options.restore) {
+                let revisionId = commandRun.options.revisionId;
+                if (!revisionId && !commandRun.options.y) {
+                  revisionId = await p.text({
+                    message: 'Revision ID to restore',
+                    placeholder: 'abc1234',
+                    validate: (value) => {
+                      if (!value) return 'Revision ID is required';
+                    }
+                  });
+                }
+                if (revisionId) {
+                  let del = true;
+                  if (!commandRun.options.y) {
+                    del = await p.confirm({
+                      message: `Are you sure you want to restore revision ${revisionId} for item ${commandRun.options.itemId}?`,
+                      initialValue: true,
+                    });
+                  }
+                  if (del) {
+                    let resp = await cliBridge.cliBridge(`v1/items/${commandRun.options.itemId}/revisions/${revisionId}/restore`, {
+                      site: { name: activeHaxsite.name }
+                    }, 'post');
+                    logStructuredOutput(commandRun, resp.res.data);
+                    recipe.log(siteLoggingName, commandString(commandRun));
+                  }
+                } else {
+                  log('Revision ID is required for restore', 'error');
+                }
+              } else {
+                let resp = await cliBridge.cliBridge(`v1/items/${commandRun.options.itemId}/revisions`, {
+                  site: { name: activeHaxsite.name }
+                }, 'get');
+                logStructuredOutput(commandRun, resp.res.data);
+              }
+            }
+          }
+          catch(e) {
+            log(formatErrorForLogging(e), 'error');
+          }
+          break;
+        case "site:export":
+          try {
+            let exportFormat = commandRun.options.exportFormat || commandRun.options.format;
+            const validExportFormats = ['pdf', 'docx', 'epub', 'zip', 'markdown', 'skeleton'];
+            if (!exportFormat || !validExportFormats.includes(exportFormat)) {
+              if (!commandRun.options.y) {
+                exportFormat = await p.select({
+                  message: 'Export format',
+                  options: [
+                    { value: 'pdf', label: 'PDF' },
+                    { value: 'docx', label: 'DOCX' },
+                    { value: 'epub', label: 'EPUB' },
+                    { value: 'zip', label: 'ZIP' },
+                    { value: 'markdown', label: 'Markdown' },
+                    { value: 'skeleton', label: 'Skeleton' },
+                  ],
+                });
+              } else {
+                log('Export format is required (pdf, docx, epub, zip, markdown, skeleton)', 'error');
+                break;
+              }
+            }
+            if (exportFormat) {
+              const cliBridge = await getHaxcmsNodejsCli();
+              let resp = await cliBridge.cliBridge(`v1/site/export/${exportFormat}`, {
+                site: { name: activeHaxsite.name }
+              }, 'get');
+              if (resp.res.statusCode >= 400) {
+                log(`Export failed: ${typeof resp.res.data === 'string' ? resp.res.data : JSON.stringify(resp.res.data)}`, 'error');
+                break;
+              }
+              const binaryFormats = ['pdf', 'docx', 'epub'];
+              if (binaryFormats.includes(exportFormat) && resp.res.data) {
+                let targetFile = commandRun.options.toFile;
+                if (!targetFile) {
+                  targetFile = `${activeHaxsite.name}.${exportFormat}`;
+                }
+                targetFile = path.resolve(targetFile);
+                fs.writeFileSync(targetFile, resp.res.data);
+                if (!commandRun.options.quiet) {
+                  p.outro(`${color.green('✓')} Exported to ${targetFile}`);
+                }
+                recipe.log(siteLoggingName, commandString(commandRun));
+              } else {
+                logStructuredOutput(commandRun, resp.res.data);
+                if (commandRun.options.toFile) {
+                  fs.writeFileSync(commandRun.options.toFile, formatStructuredOutput(commandRun, resp.res.data));
+                }
+              }
+            }
+          }
+          catch(e) {
+            log(formatErrorForLogging(e), 'error');
+          }
+          break;
+        case "site:files-upload":
+          try {
+            if (!commandRun.options.source) {
+              commandRun.options.source = await p.text({
+                message: 'Source file or directory to upload',
+                placeholder: './assets/image.png',
+                validate: (value) => {
+                  if (!value) return 'Source path is required';
+                  if (!fs.existsSync(value)) return 'Source path does not exist';
+                }
+              });
+            }
+            if (commandRun.options.source && fs.existsSync(commandRun.options.source)) {
+              const stats = fs.statSync(commandRun.options.source);
+              const cliBridge = await getHaxcmsNodejsCli();
+              if (stats.isDirectory()) {
+                let files = fs.readdirSync(commandRun.options.source);
+                let uploaded = 0;
+                for (let file of files) {
+                  let filePath = path.join(commandRun.options.source, file);
+                  let fileStats = fs.statSync(filePath);
+                  if (fileStats.isFile()) {
+                    let tmpFile = path.join(os.tmpdir(), `hax-cli-upload-${Date.now()}-${Math.floor(Math.random() * 1000000)}-${file}`);
+                    fs.copyFileSync(filePath, tmpFile);
+                    let fileObj = {
+                      path: tmpFile,
+                      originalname: file,
+                      name: file,
+                      size: fileStats.size
+                    };
+                    let resp = await cliBridge.cliBridge('v1/files', {
+                      site: { name: activeHaxsite.name }
+                    }, 'post', fileObj);
+                    try { fs.unlinkSync(tmpFile); } catch (e) {}
+                    if (resp.res.data && resp.res.data.status === 200) {
+                      uploaded++;
+                    }
+                  }
+                }
+                if (!commandRun.options.quiet) {
+                  p.outro(`${color.green('✓')} Uploaded ${uploaded} files`);
+                }
+                recipe.log(siteLoggingName, commandString(commandRun));
+              } else {
+                let tmpFile = path.join(os.tmpdir(), `hax-cli-upload-${Date.now()}-${Math.floor(Math.random() * 1000000)}-${path.basename(commandRun.options.source)}`);
+                fs.copyFileSync(commandRun.options.source, tmpFile);
+                let fileObj = {
+                  path: tmpFile,
+                  originalname: path.basename(commandRun.options.source),
+                  name: path.basename(commandRun.options.source),
+                  size: stats.size
+                };
+                let resp = await cliBridge.cliBridge('v1/files', {
+                  site: { name: activeHaxsite.name }
+                }, 'post', fileObj);
+                try { fs.unlinkSync(tmpFile); } catch (e) {}
+                logStructuredOutput(commandRun, resp.res.data);
+                recipe.log(siteLoggingName, commandString(commandRun));
+              }
+            }
+          }
+          catch(e) {
+            log(formatErrorForLogging(e), 'error');
+          }
+          break;
+        case "site:files-delete":
+          try {
+            let fileUuid = commandRun.options.fileUuid;
+            if (!fileUuid) {
+              if (!commandRun.options.y) {
+                fileUuid = await p.text({
+                  message: 'File UUID to delete',
+                  placeholder: 'abc12345-...',
+                  validate: (value) => {
+                    if (!value) return 'File UUID is required';
+                  }
+                });
+              } else {
+                log('File UUID is required for files-delete', 'error');
+                break;
+              }
+            }
+            if (fileUuid) {
+              let del = true;
+              if (!commandRun.options.y) {
+                del = await p.confirm({
+                  message: `Are you sure you want to delete file ${fileUuid}? (This cannot be undone)`,
+                  initialValue: true,
+                });
+              }
+              if (del) {
+                const cliBridge = await getHaxcmsNodejsCli();
+                let resp = await cliBridge.cliBridge(`v1/files/${fileUuid}`, {
+                  site: { name: activeHaxsite.name }
+                }, 'delete');
+                logStructuredOutput(commandRun, resp.res.data);
+                recipe.log(siteLoggingName, commandString(commandRun));
+              }
+            }
+          }
+          catch(e) {
+            log(formatErrorForLogging(e), 'error');
+          }
+          break;
+        case "site:search-replace":
+          try {
+            if (!commandRun.options.search) {
+              commandRun.options.search = await p.text({
+                message: 'Search text to replace',
+                placeholder: 'old text',
+                validate: (value) => {
+                  if (!value) return 'Search text is required';
+                  if (value.length <= 1) return 'Search text must be more than 1 character';
+                }
+              });
+            }
+            if (!commandRun.options.replace && commandRun.options.replace !== '') {
+              commandRun.options.replace = await p.text({
+                message: 'Replacement text',
+                placeholder: 'new text',
+                initialValue: '',
+              });
+            }
+            let replaceBody = {
+              site: { name: activeHaxsite.name },
+              operation: 'replace',
+              search: commandRun.options.search,
+              replace: commandRun.options.replace,
+              searchCaseSensitive: !!commandRun.options.searchCaseSensitive,
+            };
+            if (commandRun.options.replace === '') {
+              if (commandRun.options.y || commandRun.options.destroyConfirm) {
+                replaceBody.replaceDestroyConfirm = true;
+              } else {
+                let destroyConfirm = await p.confirm({
+                  message: 'You are about to remove matched text. Confirm?',
+                  initialValue: false,
+                });
+                if (!destroyConfirm) {
+                  log('Operation cancelled');
+                  break;
+                }
+                replaceBody.replaceDestroyConfirm = true;
+              }
+            }
+            if (commandRun.options.y || commandRun.options.confirm) {
+              replaceBody.replaceConfirm = true;
+            } else {
+              let confirm = await p.confirm({
+                message: `Replace all occurrences of "${commandRun.options.search}" with "${commandRun.options.replace}"?`,
+                initialValue: true,
+              });
+              if (!confirm) {
+                log('Operation cancelled');
+                break;
+              }
+              replaceBody.replaceConfirm = true;
+            }
+            const cliBridge = await getHaxcmsNodejsCli();
+            let resp = await cliBridge.cliBridge('v1/content', replaceBody, 'patch');
+            logStructuredOutput(commandRun, resp.res.data);
+            recipe.log(siteLoggingName, commandString(commandRun));
           }
           catch(e) {
             log(formatErrorForLogging(e), 'error');

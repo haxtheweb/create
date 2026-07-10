@@ -106,6 +106,17 @@ async function main() {
   // options for party
   .option('--repos <char...>', 'repositories to clone') 
 
+  // options for new site commands
+  .option('--export-format <char>', 'export format for site:export (pdf, docx, epub, zip, markdown, skeleton)')
+  .option('--revision-id <char>', 'revision ID for site:revisions')
+  .option('--restore', 'restore a revision (used with site:revisions)')
+  .option('--target-path <char>', 'target subdirectory for files-upload')
+  .option('--file-uuid <char>', 'file UUID for files-delete')
+  .option('--file-path <char>', 'file path (alternative to UUID) for files-delete')
+  .option('--replace <char>', 'replacement text for search-replace')
+  .option('--confirm', 'confirm destructive search-replace operation')
+  .option('--destroy-confirm', 'confirm removing matched text in search-replace')
+
   .version(packageJson.version)
   .helpCommand(true);
 
@@ -204,6 +215,15 @@ async function main() {
   .option('--exclude <char>', 'comma-separated patterns to exclude from rsync')
   .option('--dry-run', 'perform rsync dry run')
   .option('--delete', 'delete extraneous files from destination')
+  .option('--export-format <char>', 'export format for site:export (pdf, docx, epub, zip, markdown, skeleton)')
+  .option('--revision-id <char>', 'revision ID for site:revisions')
+  .option('--restore', 'restore a revision (used with site:revisions)')
+  .option('--target-path <char>', 'target subdirectory for files-upload')
+  .option('--file-uuid <char>', 'file UUID for files-delete')
+  .option('--file-path <char>', 'file path (alternative to UUID) for files-delete')
+  .option('--replace <char>', 'replacement text for search-replace')
+  .option('--confirm', 'confirm destructive search-replace operation')
+  .option('--destroy-confirm', 'confirm removing matched text in search-replace')
   .version(packageJson.version);
   let siteNodeOps = siteNodeOperations();
   for (var i in siteNodeOps) {
