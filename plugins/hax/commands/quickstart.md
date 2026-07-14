@@ -26,11 +26,10 @@ Run these steps in order:
    `hax site <name> --y --no-i`
    This creates a HAXsite with sensible defaults.
 
-4. **Serve it.** `cd` into the new site folder and start the dev server in the
-   **background** (it is long-running and will not return):
+4. **Serve it.** `cd` into the new site folder and start the dev server (it is long-running and will not return):
    `cd <name> && hax serve`
    Read the startup output for the local URL (usually http://localhost, sometimes
-   a different port).
+   a different port). Keep this process running while you browse the site.
 
 5. **Hand it off.** Tell the user, briefly and warmly:
    - the URL their site is now running at,

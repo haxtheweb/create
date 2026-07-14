@@ -10,6 +10,5 @@ User input: `$ARGUMENTS`
 
 Guidance:
 - Run from the root of a HAXsite. If the input names a site folder, `cd` into it first.
-- `hax serve` is **long-running** — start it in the background so the session stays
-  responsive, then report the local URL to the user.
+- `hax serve` is **long-running** and will not return; keep it running while you browse the site, then report the local URL to the user.
 - If the current directory is not a HAXsite, say so and offer to create one with `/hax:site`.

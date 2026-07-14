@@ -8,9 +8,9 @@
 #
 # Opt out of auto-install:  export HAX_PLUGIN_NO_AUTOINSTALL=1
 #
-# This hook never blocks the session: it always exits 0. Anything it prints on
-# stdout is surfaced to Claude as session context so the assistant knows whether
-# the CLI is ready.
+# This hook is best-effort and always exits 0. Anything it prints on stdout is surfaced
+# to Claude as session context so the assistant knows whether the CLI is ready.
+# Note: the host may still wait while this runs, and execution is bounded by the hook timeout.
 
 set -uo pipefail
 
