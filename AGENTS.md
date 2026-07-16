@@ -94,6 +94,14 @@ Before starting any work, check the unified issue queue:
   ```bash
   hax update
   ```
+- **Install bundled agent skills**:
+  ```bash
+  hax skills install --all
+  ```
+  - Installs interface skills (`hax-site-building`, `hax-claudehax`, `hax-webcomponent-dev`, `hax-ecosystem-onboarding`) into `~/.agents/skills/`.
+  - These skills are version-locked to the CLI and ship in `dist/skills/`.
+  - List available skills with `hax skills list`.
+  - Workflow/knowledge skills live in the PRAW repository (`~/Documents/git/haxtheweb/praw/.agents/skills/`).
 - **Alternative usage** (one-time execution without global install):
   ```bash
   npx @haxtheweb/create

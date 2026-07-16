@@ -13,6 +13,7 @@ import { auditCommandDetected } from './lib/programs/audit.js';
 import { partyCommandDetected } from './lib/programs/party.js';
 import { webcomponentProcess, webcomponentCommandDetected, webcomponentActions } from "./lib/programs/webcomponent.js";
 import { siteActions, siteNodeOperations, siteProcess, siteCommandDetected, siteThemeList, siteSkeletonList } from "./lib/programs/site.js";
+import { skillsCommandDetected, skillsActions } from "./lib/programs/skills.js";
 import { camelToDash, exec, interactiveExec, writeConfigFile, readConfigFile, getTimeDifference } from "./lib/utils.js";
 import * as haxcmsLib from "@haxtheweb/haxcms-nodejs/dist/lib/HAXCMS.js";
 const HAXCMS = haxcmsLib.HAXCMS;
@@ -301,6 +302,35 @@ async function main() {
   .option('--repos <char...>', 'repositories to clone')
   .version(packageJson.version);
 
+  // skills program
+  let strSkillsActions = '';
+  skillsActions().forEach(action => {
+    strSkillsActions += `${action.value} - ${action.label}` + "\n\r";
+  });
+  program
+  .command('skills')
+  .description('List and install bundled agent skills for HAX ecosystem agents')
+  .argument('[action]', 'Actions to perform:' + "\n\r" + strSkillsActions)
+  .action((action) => {
+    commandRun = {
+      command: 'skills',
+      arguments: {},
+      options: {}
+    };
+    if (action) {
+      commandRun.arguments.action = action;
+      commandRun.options.skip = true;
+    }
+  })
+  .option('--skill-name <char>', 'name of the skill to install (or "all")')
+  .option('--path <char>', 'target directory for skill installation (default: ~/.agents/skills/)')
+  .option('--y', 'yes to all questions')
+  .option('--auto', 'yes to all questions, alias of y')
+  .option('--no-i', 'prevent interactions / sub-process, good for scripting')
+  .option('--format <char>', 'Output format; json (default), yaml')
+  .option('--quiet', 'remove console logging')
+  .version(packageJson.version);
+
   // process program arguments
   program.parse();
   commandRun.options = {...commandRun.options, ...program.opts()};
@@ -427,6 +457,9 @@ async function main() {
   else if (commandRun.command === 'party') {
     commandRun.options.author = author;
     await partyCommandDetected(commandRun);
+  }
+  else if (commandRun.command === 'skills') {
+    await skillsCommandDetected(commandRun);
   }
   // CLI works within context of the site if one is detected, otherwise we can do other things
   else if (await systemStructureContext()) {

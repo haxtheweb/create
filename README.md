@@ -31,6 +31,28 @@ hax start
 - `hax audit` - Audits web components for compliance with DDD (HAX design system)
 - `hax update` - HAX CLI self update
 - `hax party` - Display options to join the HAX community and get involved!
+- `hax skills list` - List bundled agent skills shipped with the CLI
+- `hax skills install --all` - Install all bundled skills into `~/.agents/skills/` for any agent to use
+- `hax skills install <name>` - Install a specific bundled skill
+
+## Bundled Agent Skills
+
+This CLI ships interface skills in `src/skills/` (compiled to `dist/skills/`) that teach agents how to use the `hax` CLI. These are version-locked to the CLI — when a command or flag ships, the matching skill updates in the same release.
+
+**Bundled skills**:
+- `hax-site-building` — HAXcms site creation, JOS, site.json, page management
+- `hax-claudehax` — ClaudeHAX plugin, `/hax` slash command, CLI operation
+- `hax-webcomponent-dev` — `hax webcomponent`, HAXSchema, component scaffolding
+- `hax-ecosystem-onboarding` — environment setup, first scaffold, repo cloning
+
+Install them for your agents:
+```bash
+hax skills install --all          # all interface skills → ~/.agents/skills/
+hax skills install hax-site-building  # specific skill
+hax skills install --all --path ./test-site/.agents/skills  # custom target
+```
+
+Workflow and knowledge skills (media ingestion, OpenStax conversion, DDD design system, issue analysis, rule management, Bloom's taxonomy) live in the [PRAW repository](https://github.com/haxtheweb/praw) and are not bundled with the CLI.
 
 ## --help
 Run `hax help` or `hax webcomponent --help` or `hax site --help` for up-to-date listing
