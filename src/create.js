@@ -371,7 +371,9 @@ async function main() {
       git config --global user.name "namehere"\n
       git config --global user.email "email@here`, 'debug');
   }
-  if (!commandRun.options.path && commandRun.options.skip) {
+  // skills install manages its own default (~/.agents/skills/) in skills.js,
+  // so don't let the action-triggered cwd default override it
+  if (!commandRun.options.path && commandRun.options.skip && commandRun.command !== 'skills') {
     commandRun.options.path = process.cwd();
   }
   // if we skip stuff then set org/author automatically
