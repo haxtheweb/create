@@ -108,7 +108,7 @@ async function main() {
   .option('--repos <char...>', 'repositories to clone') 
 
   // options for new site commands
-  .option('--export-format <char>', 'export format for site:export (pdf, docx, epub, zip, markdown, skeleton)')
+  .option('--export-format <char>', 'export format for site:export (pdf, docx, epub, html, zip, markdown, skeleton)')
   .option('--revision-id <char>', 'revision ID for site:revisions')
   .option('--restore', 'restore a revision (used with site:revisions)')
   .option('--target-path <char>', 'target subdirectory for files-upload')
@@ -216,7 +216,7 @@ async function main() {
   .option('--exclude <char>', 'comma-separated patterns to exclude from rsync')
   .option('--dry-run', 'perform rsync dry run')
   .option('--delete', 'delete extraneous files from destination')
-  .option('--export-format <char>', 'export format for site:export (pdf, docx, epub, zip, markdown, skeleton)')
+  .option('--export-format <char>', 'export format for site:export (pdf, docx, epub, html, zip, markdown, skeleton)')
   .option('--revision-id <char>', 'revision ID for site:revisions')
   .option('--restore', 'restore a revision (used with site:revisions)')
   .option('--target-path <char>', 'target subdirectory for files-upload')

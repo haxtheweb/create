@@ -1868,8 +1868,8 @@ export async function siteCommandDetected(commandRun) {
           try {
             if (!commandRun.options.search) {
               commandRun.options.search = await p.text({
-                message: 'Search query',
-                placeholder: 'video-player[src]',
+                message: 'Search query (text search across site fields)',
+                placeholder: 'lesson',
                 validate: (value) => {
                   if (!value) {
                     return 'Search query is required';
@@ -1880,26 +1880,25 @@ export async function siteCommandDetected(commandRun) {
                 }
               });
             }
+            // v1 search contract (GET /v1/search) requires `q` and supports
+            // `fields` (CSV of: title,slug,description,tags,content,id,location),
+            // `sort`, and `page.limit`/`page.offset` pagination. The legacy v0
+            // params (searchCaseSensitive, searchSelector, searchMode) have no
+            // v1 equivalent: v1 search is always case-insensitive and only does
+            // text matching across fields (no selector/DOM-query mode). The
+            // --search-selector / --search-mode CLI flags are kept to avoid a
+            // breaking interface change but are intentionally not forwarded.
             let searchRouteParams = {
               siteName: activeHaxsite.name,
-              search: commandRun.options.search,
+              q: commandRun.options.search,
               user_token: "fakeToken",
               site_token: "fakeToken"
             };
             if (commandRun.options.searchField) {
-              searchRouteParams.searchField = commandRun.options.searchField;
-            }
-            if (commandRun.options.searchCaseSensitive) {
-              searchRouteParams.searchCaseSensitive = true;
+              searchRouteParams.fields = commandRun.options.searchField;
             }
             if (commandRun.options.searchLimit) {
-              searchRouteParams.searchLimit = commandRun.options.searchLimit;
-            }
-            if (commandRun.options.searchSelector) {
-              searchRouteParams.searchSelector = true;
-            }
-            if (commandRun.options.searchMode) {
-              searchRouteParams.searchMode = commandRun.options.searchMode;
+              searchRouteParams['page.limit'] = commandRun.options.searchLimit;
             }
             let searchRes = await invokeRoute(
               allRoutesLib.allRoutes.site.map.get['v1/search'],
@@ -2018,7 +2017,7 @@ export async function siteCommandDetected(commandRun) {
         case "site:export":
           try {
             let exportFormat = commandRun.options.exportFormat || commandRun.options.format;
-            const validExportFormats = ['pdf', 'docx', 'epub', 'zip', 'markdown', 'skeleton'];
+            const validExportFormats = ['pdf', 'docx', 'epub', 'html', 'zip', 'markdown', 'skeleton'];
             if (!exportFormat || !validExportFormats.includes(exportFormat)) {
               if (!commandRun.options.y) {
                 exportFormat = await p.select({
@@ -2027,13 +2026,14 @@ export async function siteCommandDetected(commandRun) {
                     { value: 'pdf', label: 'PDF' },
                     { value: 'docx', label: 'DOCX' },
                     { value: 'epub', label: 'EPUB' },
+                    { value: 'html', label: 'HTML' },
                     { value: 'zip', label: 'ZIP' },
                     { value: 'markdown', label: 'Markdown' },
                     { value: 'skeleton', label: 'Skeleton' },
                   ],
                 });
               } else {
-                log('Export format is required (pdf, docx, epub, zip, markdown, skeleton)', 'error');
+                log('Export format is required (pdf, docx, epub, html, zip, markdown, skeleton)', 'error');
                 break;
               }
             }
@@ -2046,8 +2046,14 @@ export async function siteCommandDetected(commandRun) {
                 log(`Export failed: ${typeof resp.res.data === 'string' ? resp.res.data : JSON.stringify(resp.res.data)}`, 'error');
                 break;
               }
-              const binaryFormats = ['pdf', 'docx', 'epub'];
-              if (binaryFormats.includes(exportFormat) && resp.res.data) {
+              // pdf/docx/epub return a binary buffer; html returns the full
+              // HTML document as a string. Both are file downloads the CLI
+              // writes directly to disk. zip/markdown/skeleton return a JSON
+              // export descriptor (data.export.href points at the real
+              // download) rather than the archive/markdown itself — printed
+              // below so the caller can follow the href.
+              const downloadFormats = ['pdf', 'docx', 'epub', 'html'];
+              if (downloadFormats.includes(exportFormat) && resp.res.data) {
                 let targetFile = commandRun.options.toFile;
                 if (!targetFile) {
                   targetFile = `${activeHaxsite.name}.${exportFormat}`;
@@ -2059,6 +2065,12 @@ export async function siteCommandDetected(commandRun) {
                 }
                 recipe.log(siteLoggingName, commandString(commandRun));
               } else {
+                // zip/markdown/skeleton: the v1 backend returns a JSON export
+                // descriptor (follow data.export.href for the actual file),
+                // not the archive/markdown itself.
+                if (!commandRun.options.quiet) {
+                  log(`${exportFormat} export returned a JSON descriptor (follow data.export.href for the actual file):`);
+                }
                 logStructuredOutput(commandRun, resp.res.data);
                 if (commandRun.options.toFile) {
                   fs.writeFileSync(commandRun.options.toFile, formatStructuredOutput(commandRun, resp.res.data));
