@@ -129,6 +129,19 @@ class Res {
 
 async function invokeRoute(routeHandler, body = {}, query = {}) {
   let res = new Res();
+  // Site-scoped reads (site:search, site:tags, site:blocks, site:analytics,
+  // site:list-files) pass query.siteName; set the auth context so
+  // isAnonymousSiteApiRequest sees the CLI as authenticated and hidden/
+  // unpublished items are included for the CLI owner. System-route calls
+  // (site creation, skeletons, download-skeleton, save-as-template) pass no
+  // siteName and never read haxcmsSiteApiAuth, so they are unaffected.
+  const siteAuthContext = query.siteName
+    ? {
+        siteName: query.siteName,
+        authenticated: true,
+        securityLevel: 'authenticated-site',
+      }
+    : undefined;
   await routeHandler(
     {
       body: body,
@@ -137,6 +150,7 @@ async function invokeRoute(routeHandler, body = {}, query = {}) {
         'x-haxcms-user-token': query.user_token || 'fakeToken',
         'x-haxcms-site-token': query.site_token || 'fakeToken',
       },
+      haxcmsSiteApiAuth: siteAuthContext,
     },
     res
   );
@@ -1080,7 +1094,9 @@ export async function siteCommandDetected(commandRun) {
               if (del) {
                 const cliBridge = await getHaxcmsNodejsCli();
                 let resp = await cliBridge.cliBridge('v1/items/' + commandRun.options.itemId, { site: activeHaxsite, node: { id: commandRun.options.itemId } }, 'delete');
-                if (resp.res.data === 500) {
+                // D1 error envelope: failures are {status:4xx/5xx,data:{message}}
+                // objects, never the bare number 500. Match the site:export pattern.
+                if (resp.res.data && resp.res.data.status >= 400) {
                   console.warn(`node:delete failed "${commandRun.options.itemId} not found`);
                 }
                 else {
