@@ -375,8 +375,8 @@ Install a skeleton template from a local JSON file
 .B hax site site:search --search "lesson"
 Search site text content and metadata fields
 .TP
-.B hax site site:search --search "video-player[src]" --search-selector
-Search site HTML content using selector mode
+.B hax site site:search --search "lesson" --search-field title,tags --search-limit 10
+Search site title and tags fields, limited to 10 matches
 .TP
 .B hax site node:add \--title "New Page" \--content "Page content"
 Add a new page to an existing site
