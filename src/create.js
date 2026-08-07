@@ -14,7 +14,7 @@ import { partyCommandDetected } from './lib/programs/party.js';
 import { webcomponentProcess, webcomponentCommandDetected, webcomponentActions } from "./lib/programs/webcomponent.js";
 import { siteActions, siteNodeOperations, siteProcess, siteCommandDetected, siteThemeList, siteSkeletonList } from "./lib/programs/site.js";
 import { skillsCommandDetected, skillsActions } from "./lib/programs/skills.js";
-import { camelToDash, exec, interactiveExec, writeConfigFile, readConfigFile, getTimeDifference } from "./lib/utils.js";
+import { camelToDash, exec, interactiveExec, writeConfigFile, readConfigFile, getTimeDifference, validateNpmClient, rejectShellMetacharacters, validateDomain } from "./lib/utils.js";
 import * as haxcmsLib from "@haxtheweb/haxcms-nodejs/dist/lib/HAXCMS.js";
 const HAXCMS = haxcmsLib.HAXCMS;
 const systemStructureContext = haxcmsLib.systemStructureContext;
@@ -340,6 +340,32 @@ async function main() {
   if (commandRun.options.extras === true) {
     delete commandRun.options.extras;
   }
+  // Security (M-2): validate the CLI-provided --npm-client early, before the
+  // packageData loop below can overwrite it. The loop unconditionally resets
+  // npmClient from the local package.json (or 'npm'), so a malicious CLI
+  // value would be clobbered before the post-loop check — validate it here
+  // while it still reflects the user's --npm-client argument.
+  if (commandRun.options.npmClient) {
+    try {
+      commandRun.options.npmClient = validateNpmClient(commandRun.options.npmClient);
+    } catch (e) {
+      program.error(color.red(e.message));
+    }
+  }
+  // Security (M-1/L-5): validate --root before chdir so a missing/invalid
+  // root fails with a clear message instead of a process.chdir exception.
+  // --root is not shell-interpolated (recipe replay now uses spawn args), but
+  // the metacharacter check is kept as defense-in-depth.
+  if (commandRun.options.root) {
+    try {
+      rejectShellMetacharacters(commandRun.options.root, 'root');
+      if (!fs.existsSync(commandRun.options.root) || !fs.statSync(commandRun.options.root).isDirectory()) {
+        program.error(color.red(`Invalid --root: ${commandRun.options.root} is not an existing directory.`));
+      }
+    } catch (e) {
+      program.error(color.red(e.message));
+    }
+  }
   // allow execution of the command from a different location
   if (commandRun.options.root) {
     process.chdir(commandRun.options.root);
@@ -443,6 +469,45 @@ async function main() {
   }
   if (commandRun.options.debug) {
     log(packageData, 'debug');
+  }
+  // Security (M-2): validate --npm-client against a strict allowlist before it
+  // can be interpolated into any exec() shell string downstream. This runs
+  // after the packageData merge so a monorepo's npmClient is also covered.
+  if (commandRun.options.npmClient) {
+    try {
+      commandRun.options.npmClient = validateNpmClient(commandRun.options.npmClient);
+    } catch (e) {
+      program.error(color.red(e.message));
+    }
+  }
+  // Security (M-1): reject shell metacharacters in options that are
+  // interpolated into exec() shell strings across site.js/webcomponent.js/
+  // party.js (publish targets, git remote, rsync source/dest, excludes).
+  // --domain additionally gets a strict hostname charset. --path must be an
+  // existing directory (--root was validated earlier, before chdir). Validates
+  // at the boundary so the existing exec(...${opt}...) call sites are no longer
+  // exploitable, without a full exec()->spawn() migration.
+  try {
+    if (commandRun.options.domain) {
+      commandRun.options.domain = validateDomain(commandRun.options.domain);
+    }
+    rejectShellMetacharacters(commandRun.options.author, 'author');
+    rejectShellMetacharacters(commandRun.options.gitRepo, 'git-repo');
+    rejectShellMetacharacters(commandRun.options.source, 'source');
+    rejectShellMetacharacters(commandRun.options.destination, 'destination');
+    if (commandRun.options.exclude) {
+      String(commandRun.options.exclude).split(',').forEach((pat) =>
+        rejectShellMetacharacters(pat.trim(), 'exclude'),
+      );
+    }
+    if (commandRun.options.path) {
+      rejectShellMetacharacters(commandRun.options.path, 'path');
+      if (!fs.existsSync(commandRun.options.path) || !fs.statSync(commandRun.options.path).isDirectory()) {
+        program.error(color.red(`Invalid --path: ${commandRun.options.path} is not an existing directory.`));
+      }
+    }
+  } catch (e) {
+    program.error(color.red(e.message));
   }
   // test for updating to latest or just run the command
   if (commandRun.command === "update") {

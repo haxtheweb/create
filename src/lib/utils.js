@@ -4,6 +4,7 @@ import * as path from "node:path"
 import * as child_process from "child_process";
 import * as util from "node:util";
 import { createServer } from 'node:net';
+import { randomUUID } from 'node:crypto';
 export const exec = util.promisify(child_process.exec);
 export const spawn = (child_process.spawn);
 
@@ -120,9 +121,9 @@ export function dashToCamel(str) {
 export function capitalizeFirstLetter(string) {
   return string.charAt(0).toUpperCase() + string.slice(1);
 }
-// generate unique-enough id
+// generate a cryptographically-secure unique id (L-3: was Math.random-based).
 export function generateUUID() {
-  return "ss-s-s-s-sss".replace(/s/g, _uuidPart);
+  return randomUUID();
 }
 
 /**
@@ -135,12 +136,6 @@ export function camelToDash(str) {
     .toLowerCase();
 }
 
-function _uuidPart() {
-  return Math.floor((1 + Math.random()) * 0x10000)
-  .toString(16)
-  .substring(1);
-}
-
 // read in all files recursively for rewriting
 export function* readAllFiles(dir)  {
   const files = fs.readdirSync(dir, { withFileTypes: true });
@@ -151,6 +146,73 @@ export function* readAllFiles(dir)  {
       yield path.join(dir, file.name);
     }
   }
+}
+
+// Allowed npm clients that get interpolated into shell commands (M-2).
+// Keep this allowlist in sync with the --npm-client option help text.
+const ALLOWED_NPM_CLIENTS = new Set(["npm", "yarn", "pnpm"]);
+
+/**
+ * Validate --npm-client against a strict allowlist.
+ * Security (M-2): npmClient is interpolated into many exec() shell strings;
+ * an unvalidated value like "npm; rm -rf ~" would be command injection.
+ * Returns the client if allowed, otherwise throws.
+ * @param {string} client
+ * @returns {string}
+ */
+export function validateNpmClient(client) {
+  if (typeof client !== "string" || !ALLOWED_NPM_CLIENTS.has(client)) {
+    throw new Error(
+      `Invalid --npm-client "${client}". Allowed values: ${Array.from(ALLOWED_NPM_CLIENTS).join(", ")}`,
+    );
+  }
+  return client;
+}
+
+// Security (M-1): characters that are dangerous when a value is interpolated
+// into an exec() shell string. Rejecting these at the option boundary closes
+// the command-injection vector at every exec(...${opt}...) call site without
+// requiring a full exec()->spawn() migration of the publish/clone flows.
+const SHELL_METACHARACTER_RE = /[;&|`$<>!(){}#\n\r\\]/;
+
+/**
+ * Reject shell metacharacters in a value that will be interpolated into a
+ * shell string. Returns the value if safe, otherwise throws naming the option.
+ * @param {string} value
+ * @param {string} optionName
+ * @returns {string}
+ */
+export function rejectShellMetacharacters(value, optionName) {
+  if (value === undefined || value === null || value === '') {
+    return value;
+  }
+  if (typeof value !== 'string' || SHELL_METACHARACTER_RE.test(value)) {
+    throw new Error(
+      `Invalid --${optionName} value: shell metacharacters are not allowed.`,
+    );
+  }
+  return value;
+}
+
+// Security (M-1): allowlist for --domain / --site (surge/netlify/vercel deploy
+// targets). Hostnames, ports, and dotted domain labels only.
+const DOMAIN_RE = /^[A-Za-z0-9.\-:]+$/;
+
+/**
+ * Validate a publish --domain value against a strict hostname/domain charset.
+ * @param {string} value
+ * @returns {string}
+ */
+export function validateDomain(value) {
+  if (value === undefined || value === null || value === '') {
+    return value;
+  }
+  if (typeof value !== 'string' || !DOMAIN_RE.test(value)) {
+    throw new Error(
+      `Invalid --domain value: only letters, digits, dots, hyphens, and colons are allowed.`,
+    );
+  }
+  return value;
 }
 
 const reservedNames = ["annotation-xml", "color-profile", "font-face", "font-face-src", "font-face-uri", "font-face-format", "font-face-name", "missing-glyph"];

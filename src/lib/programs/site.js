@@ -13,7 +13,7 @@ import Twig from 'twig';
 
 import { parse } from 'node-html-parser';
 import { merlinSays, communityStatement } from "../statements.js";
-import { dashToCamel, interactiveExec, exec, findAvailablePort } from "../utils.js";
+import { dashToCamel, interactiveExec, exec, findAvailablePort, validateNpmClient, spawn } from "../utils.js";
 import { log, commandString } from "../logging.js";
 
 // trick MFR into giving local paths
@@ -27,6 +27,17 @@ import * as haxcmsLib from "@haxtheweb/haxcms-nodejs/dist/lib/HAXCMS.js";
 import * as allRoutesLib from "@haxtheweb/haxcms-nodejs/dist/lib/allRoutes.js";
 import * as josfile from "@haxtheweb/haxcms-nodejs/dist/lib/JSONOutlineSchema.js";
 const JSONOutlineSchema = josfile.default;
+// Security (H-1/H-2/H-3): reuse haxcms-nodejs' SSRF-guarded fetch wrapper so
+// import/content/image fetches reject private/loopback/link-local/metadata
+// IPs, cap redirects, and enforce timeouts — matching the server posture.
+import * as safeFetchLib from "@haxtheweb/haxcms-nodejs/dist/lib/safeFetch.js";
+const safeFetch = safeFetchLib.safeFetch;
+const assertUrlNotSSRF = safeFetchLib.assertUrlNotSSRF;
+// Security (H-5): reuse haxcms-nodejs' DOMPurify-based sanitizer so remote
+// scraped/imported HTML is stripped of <script>/on*/javascript: URLs before
+// being written into page content, matching the server storage policy.
+import * as sanitizeContentLib from "@haxtheweb/haxcms-nodejs/dist/lib/sanitizeContent.js";
+const sanitizeHTMLForStorage = sanitizeContentLib.sanitizeHTMLForStorage;
 const HAXCMS = haxcmsLib.HAXCMS;
 const systemStructureContext = haxcmsLib.systemStructureContext;
 
@@ -73,15 +84,19 @@ function ensureTwigConstantFunction() {
   twigConstantFunctionRegistered = true;
   try {
     if (Twig && typeof Twig.extendFunction === 'function') {
+      // Security (M-3): previously this read process.env[name] and
+      // globalThis[name], which exposed arbitrary secrets/globals to any Twig
+      // template rendered in this process. The only template usage is the
+      // service-worker.js template's constant('JSON_PRETTY_PRINT'), a PHP
+      // constant ported from the PHP HAXcms. Resolve that handful from a
+      // static allowlist and return null for anything else — no env/global
+      // access.
       Twig.extendFunction('constant', function constantLookup(name) {
         if (typeof name !== 'string') {
           return null;
         }
-        if (Object.prototype.hasOwnProperty.call(process.env, name)) {
-          return process.env[name];
-        }
-        if (typeof globalThis[name] !== 'undefined') {
-          return globalThis[name];
+        if (Object.prototype.hasOwnProperty.call(TWIG_PHP_CONSTANTS, name)) {
+          return TWIG_PHP_CONSTANTS[name];
         }
         return null;
       });
@@ -89,6 +104,20 @@ function ensureTwigConstantFunction() {
   } catch (e) {
   }
 }
+
+// Static allowlist of PHP constants the Twig templates reference (ported from
+// PHP HAXcms). Values match the standard PHP bitmask values.
+const TWIG_PHP_CONSTANTS = {
+  JSON_PRETTY_PRINT: 128,
+  JSON_HEX_TAG: 1,
+  JSON_HEX_AMP: 2,
+  JSON_HEX_APOS: 4,
+  JSON_HEX_QUOT: 8,
+  JSON_FORCE_OBJECT: 16,
+  JSON_NUMERIC_CHECK: 32,
+  JSON_UNESCAPED_SLASHES: 64,
+  JSON_UNESCAPED_UNICODE: 256,
+};
 
 async function getHaxcmsNodejsCli() {
   if (!haxcmsNodejsCli) {
@@ -192,6 +221,78 @@ function formatErrorForLogging(error) {
   catch (e) {
   }
   return 'Unknown error';
+}
+
+// Security (H-4): recipe files can contain arbitrary text that used to be
+// passed straight to exec() as a shell string. Replaying a recipe now invokes
+// the CLI via spawn() with an argument array (no shell) so recipe contents
+// cannot inject shell commands. Tokens are also guarded so malformed recipes
+// fail loudly instead of producing surprising argv.
+const RECIPE_TOKEN_DENY = /[;&|$`<>(){}!\n\r]/;
+function guardRecipeTokens(tokens) {
+  for (const t of tokens) {
+    if (typeof t !== 'string' || RECIPE_TOKEN_DENY.test(t)) {
+      throw new Error(`Recipe token rejected (contains shell metacharacters): ${t}`);
+    }
+  }
+  return tokens;
+}
+
+// Run the CLI against itself with an argument array and NO shell. Captures
+// stdout/stderr to mirror the previous exec() behavior while removing the
+// shell-injection vector. Resolves on exit 0, rejects otherwise.
+function runCliNoShell(tokens) {
+  return new Promise((resolve, reject) => {
+    const createJsPath = process.mainModule.filename;
+    const child = spawn(process.execPath, [createJsPath, ...tokens], {
+      shell: false,
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+    let stdout = '';
+    let stderr = '';
+    if (child.stdout) {
+      child.stdout.on('data', (d) => { stdout += d; });
+    }
+    if (child.stderr) {
+      child.stderr.on('data', (d) => { stderr += d; });
+    }
+    child.on('exit', (code) => {
+      if (code === 0) {
+        resolve({ stdout, stderr });
+      } else {
+        const err = new Error(`Recipe command failed with code ${code}`);
+        err.stdout = stdout;
+        err.stderr = stderr;
+        reject(err);
+      }
+    });
+    child.on('error', (err) => reject(err));
+  });
+}
+
+// Security (H-1/H-2/H-3): true when an error thrown by safeFetch/
+// assertUrlNotSSRF is an SSRF rejection (stable .code prefix) rather than a
+// generic network error, so callers can surface a clear message.
+function isSSRFError(e) {
+  return Boolean(e && typeof e.code === 'string' && e.code.startsWith('SSRF_'));
+}
+
+// Security (H-5): sanitize remote-derived HTML before it is written into page
+// content. Non-string values (e.g. parsed JSON/YAML objects from --format) and
+// empty strings pass through unchanged so non-HTML import formats are unaffected.
+function sanitizeIfString(html) {
+  return typeof html === 'string' && html.length > 0 ? sanitizeHTMLForStorage(html) : html;
+}
+
+// Security (L-1): canonicalize a local filesystem path and reject null bytes
+// (a classic fs-path-injection vector). No fixed base is enforced because these
+// options legitimately point anywhere on the user's filesystem; path.resolve is
+// a harmless normalization that does not change which file is read.
+function resolveLocalPath(p) {
+  if (typeof p !== 'string' || p.indexOf('\0') !== -1) {
+    throw new Error('Invalid local path: null bytes are not allowed.');
+  }
+  return path.resolve(p);
 }
 
 
@@ -638,7 +739,20 @@ export async function siteCommandDetected(commandRun) {
               else if (!location.endsWith('/')) {
                 location = location + '/';
               }
-              let f = await fetch(`${location}site.json`).then(d => d.ok ? d.json() : null);
+              // Security (H-1): fetch the remote site.json through safeFetch so
+              // loopback/private/metadata IPs are rejected before the request.
+              let f;
+              try {
+                const resp = await safeFetch(`${location}site.json`);
+                f = resp.ok ? await resp.json() : null;
+              } catch (e) {
+                if (isSSRFError(e)) {
+                  log(`Import URL rejected as SSRF target: ${location}site.json (${e.message})`, 'error');
+                } else {
+                  log(formatErrorForLogging(e), 'error');
+                }
+                f = null;
+              }
               if (f && f.items) {
                 josImport.items = f.items;
               }
@@ -649,7 +763,9 @@ export async function siteCommandDetected(commandRun) {
             }
             // look on prem
             else if(fs.existsSync(location)) {
-              let fileContents = await fs.readFileSync(location);
+              // Security (L-1): canonicalize + reject null bytes for local paths.
+              const localPath = resolveLocalPath(location);
+              let fileContents = await fs.readFileSync(localPath);
               if (location.endsWith('.json')) {
                 josImport.items = JSON.parse(fileContents);
 
@@ -667,7 +783,22 @@ export async function siteCommandDetected(commandRun) {
             }
             for (let i in josImport.items) {
               if (josImport.items[i].location && !josImport.items[i].content) {
-                josImport.items[i].content = await fetch(`${location}${josImport.items[i].location}`).then(d => d.ok ? d.text() : '');
+                // Security (H-1): resolve each remote-controlled item location
+                // against the import base via new URL() (so an absolute/
+                // protocol-relative location can't bypass validation) and fetch
+                // through safeFetch to block SSRF targets.
+                try {
+                  const itemUrl = new URL(josImport.items[i].location, location).toString();
+                  const resp = await safeFetch(itemUrl);
+                  josImport.items[i].content = resp.ok ? await resp.text() : '';
+                } catch (e) {
+                  if (isSSRFError(e)) {
+                    log(`Import item URL rejected as SSRF target: ${josImport.items[i].location} (${e.message})`, 'error');
+                  } else {
+                    log(formatErrorForLogging(e), 'error');
+                  }
+                  josImport.items[i].content = '';
+                }
               }
             }
             let itemIdMap = {};
@@ -692,7 +823,8 @@ export async function siteCommandDetected(commandRun) {
                 josImport.items[i].slug,
                 null,
                 josImport.items[i].indent,
-                josImport.items[i].content,
+                // Security (H-5): sanitize remote item content before storing.
+                sanitizeIfString(josImport.items[i].content),
                 josImport.items[i].order,
                 josImport.items[i].metadata
               );
@@ -716,9 +848,14 @@ export async function siteCommandDetected(commandRun) {
               p.note(`🚀 Server running at: ${color.underline(color.cyan(`http://localhost:${port}`))}
 ⌨️  To stop server, press: ${color.bold(color.black(color.bgRed(` CTRL + C or CTRL + BREAK `)))}`);
             }
+            // Security (M-4): HAXCMS_DISABLE_JWT_CHECKS is scoped to local
+            // dev only. HOST=127.0.0.1 is a forward-compatible hint so the
+            // server binds loopback once haxcms-nodejs honors it (today it
+            // calls server.listen(port) with no host, binding all interfaces;
+            // loopback enforcement requires a server-side change).
             await exec(`npx @haxtheweb/haxcms-nodejs`, {
               cwd: activeHaxsite.directory,
-              env: { ...process.env, PORT: `${port}`, HAXCMS_DISABLE_JWT_CHECKS: 'true' }
+              env: { ...process.env, PORT: `${port}`, HOST: '127.0.0.1', HAXCMS_DISABLE_JWT_CHECKS: 'true' }
             });
           }
           catch(e) {
@@ -734,9 +871,10 @@ export async function siteCommandDetected(commandRun) {
 💻 Site will live reload on changes to ${color.bold('custom/src')}
 ⌨️  To stop server, press: ${color.bold(color.black(color.bgRed(` CTRL + C or CTRL + BREAK `)))}`);
             }
+            // Security (M-4): same HOST=127.0.0.1 hint + scoped JWT-disable as start.
             await exec(`npx @haxtheweb/haxcms-nodejs`, {
               cwd: activeHaxsite.directory,
-              env: { ...process.env, PORT: `${port}`, HAXCMS_DISABLE_JWT_CHECKS: 'true', NODE_ENV: 'development' }
+              env: { ...process.env, PORT: `${port}`, HOST: '127.0.0.1', HAXCMS_DISABLE_JWT_CHECKS: 'true', NODE_ENV: 'development' }
             });
           }
           catch(e) {
@@ -877,12 +1015,16 @@ export async function siteCommandDetected(commandRun) {
               // if we have format set, then  we need to interpret content as a url
               let location = commandRun.options.content;
               // support for address, as in import from some place else
-              if (location.startsWith('https://') || location.startsWith('http://')) {                  
-                locationContent = await fetch(location).then(d => d.ok ? d.text() : '');
+              if (location.startsWith('https://') || location.startsWith('http://')) {
+                // Security (H-2): route through safeFetch to block SSRF targets
+                // (private/loopback/link-local/metadata IPs) and cap redirects.
+                const resp = await safeFetch(location);
+                locationContent = resp.ok ? await resp.text() : '';
               }
               // look on prem
               else if(fs.existsSync(location)) {
-                locationContent = await fs.readFileSync(location);
+                // Security (L-1): canonicalize + reject null bytes for local paths.
+                locationContent = await fs.readFileSync(resolveLocalPath(location));
               }
               // format dictates additional processing; html is default
               switch (commandRun.options.format) {
@@ -909,7 +1051,9 @@ export async function siteCommandDetected(commandRun) {
                 let dom = parse(`${locationContent}`);
                 locationContent = dom.querySelector(`${commandRun.options.contentScrape}`).innerHTML;
               }
-              createNodeBody.node.contents = locationContent;
+              // Security (H-5): sanitize remote/scraped HTML before storing.
+              // Objects (json/yaml format) pass through sanitizeIfString unchanged.
+              createNodeBody.node.contents = sanitizeIfString(locationContent);
             }
             const cliBridge = await getHaxcmsNodejsCli();
             let resp = await cliBridge.cliBridge('v1/items', createNodeBody, 'post');
@@ -1007,12 +1151,16 @@ export async function siteCommandDetected(commandRun) {
                     // if we have format set, then  we need to interpret content as a url
                     let location = commandRun.options.content;
                     // support for address, as in import from some place else
-                    if (location.startsWith('https://') || location.startsWith('http://')) {                  
-                      locationContent = await fetch(location).then(d => d.ok ? d.text() : '');
+                    if (location.startsWith('https://') || location.startsWith('http://')) {
+                      // Security (H-2): route through safeFetch to block SSRF targets
+                      // (private/loopback/link-local/metadata IPs) and cap redirects.
+                      const resp = await safeFetch(location);
+                      locationContent = resp.ok ? await resp.text() : '';
                     }
                     // look on prem
                     else if(fs.existsSync(location)) {
-                      locationContent = await fs.readFileSync(location);
+                      // Security (L-1): canonicalize + reject null bytes for local paths.
+                      locationContent = await fs.readFileSync(resolveLocalPath(location));
                     }
                     // format dictates additional processing; html is default
                     switch (commandRun.options.format) {
@@ -1035,8 +1183,11 @@ export async function siteCommandDetected(commandRun) {
                       locationContent = dom.querySelector(`${commandRun.options.contentScrape}`).innerHTML;
                     }
                   }
+                  // Security (H-5): sanitize remote/scraped HTML before writing.
+                  // Objects (json/yaml format) pass through sanitizeIfString unchanged.
+                  const safeContent = sanitizeIfString(locationContent);
                   // if we have content (meaning it's not blank) then try to write the page location                    
-                  if (locationContent && await page.writeLocation(locationContent)) {
+                  if (safeContent && await page.writeLocation(safeContent)) {
                     recipe.log(siteLoggingName, commandString(commandRun));
                     if (!commandRun.options.quiet) {
                       log(`node:edit success updated page content: "${page.id}`);
@@ -2349,10 +2500,12 @@ export async function siteCommandDetected(commandRun) {
             });
           }
           if (fs.existsSync(commandRun.options.recipe)) {
-            let recContents = await fs.readFileSync(commandRun.options.recipe,'utf8');
+            // Security (L-1): canonicalize + reject null bytes for the recipe path.
+            let recContents = await fs.readFileSync(resolveLocalPath(commandRun.options.recipe),'utf8');
             // split into commands
             let commandList = recContents.replaceAll('cli: ', '').split("\n");
-            let rootDir = '';
+            // Security (H-4): rootDir is now an argv array (was a shell string).
+            let rootDirTokens = [];
             // confirm each command or allow --y so that it auto applies
             for (var i in commandList) {
               // verify every command starts this way for safety
@@ -2369,20 +2522,26 @@ export async function siteCommandDetected(commandRun) {
                 }
                 // confirmed; let's run!
                 if (confirmation) {
-                  let commandMatch = siteActions().filter((action) => action.value === commandList[i].split(' ')[2]);
+                  // Security (H-4): tokenize and invoke via spawn() (no shell)
+                  // so recipe contents cannot inject shell commands. Drop the
+                  // leading "hax" token; the rest is argv to the CLI.
+                  let tokens = commandList[i].split(' ').filter((t) => t.length > 0).slice(1);
+                  let commandMatch = siteActions().filter((action) => action.value === tokens[1]);
                   // if we found a command that means it is a valid command to run against the site
                   if (commandMatch.length > 0) {
-                    await exec(`${commandList[i]} --y --no-i --auto --quiet${rootDir}`);
+                    guardRecipeTokens([...tokens, ...rootDirTokens]);
+                    await runCliNoShell([...tokens, '--y', '--no-i', '--auto', '--quiet', ...rootDirTokens]);
                   }
                   // 1st command won't match as the argument creates a new site
                   // but ensure we don't have a site context prior to running this
                   // or we'll get a site in a site with the same name which is not
                   // the desired result
                   else if (!await systemStructureContext()) {
-                    await exec(`${commandList[i]} --y --no-i --auto --quiet --no-extras`);
+                    guardRecipeTokens(tokens);
+                    await runCliNoShell([...tokens, '--y', '--no-i', '--auto', '--quiet', '--no-extras']);
                     // site will have been created, obtain the site name and set root so
                     // the other commands get piped into it correctly
-                    rootDir = ` --root ${commandList[i].split(' ')[2]}`;
+                    rootDirTokens = ['--root', tokens[1]];
                   }
                   else {
                     log('Did not run because we already have a site', 'warn');
@@ -2494,7 +2653,15 @@ async function openApiBroker(scope, call, body) {
   if (mfItem) {
     // dynamic import... this might upset some stuff later bc it's not a direct reference
     // but it's working locally at least.
-    const handler = await import(`${mfItem.endpoint.replace('/api/', '/dist/')}.js`);
+    // Security (L-4): the MicroFrontendRegistry is populated from the built-in
+    // @haxtheweb/open-apis package. Guard the dynamic import() so a registry
+    // entry ever populated from config/remote data can't load an arbitrary
+    // absolute, URL, or parent-traversal module path.
+    const modulePath = `${mfItem.endpoint.replace('/api/', '/dist/')}.js`;
+    if (/^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//.test(modulePath) || modulePath.startsWith('/') || modulePath.includes('..')) {
+      throw new Error(`Refusing to dynamic-import non-package module path: ${modulePath}`);
+    }
+    const handler = await import(modulePath);
     let res = new Res();
     let req = {
       body: JSON.stringify(body),
@@ -2647,6 +2814,12 @@ function installSkeletonFile(skeletonFilePath, machineNameOverride = null) {
 }
 // process site creation
 export async function siteProcess(commandRun, project, port = '3000') {    // auto select operations to perform if requested
+  // Security (M-2): defense-in-depth re-check of --npm-client at the point it
+  // is interpolated into exec() shell strings. create.js validates earlier,
+  // but the site/webcomponent subcommand option paths can bypass that check.
+  if (commandRun.options.npmClient) {
+    commandRun.options.npmClient = validateNpmClient(commandRun.options.npmClient);
+  }
   var s = p.spinner();
   // if we have no extras, or they are empty then set for launch
   if (!project.extras) {
@@ -2751,7 +2924,19 @@ export async function siteProcess(commandRun, project, port = '3000') {    // au
     // hidden import methodologies
     else if (commandRun.options.importStructure) {
       if (commandRun.options.importStructure === 'drupal7-book-print-html') {
-        let siteContent = await fetch(commandRun.options.importSite).then(d => d.ok ? d.text() : '');
+        // Security (H-2): fetch the import source through safeFetch so SSRF
+        // targets (loopback/private/metadata) are rejected before the request.
+        let siteContent = '';
+        try {
+          const resp = await safeFetch(commandRun.options.importSite);
+          siteContent = resp.ok ? await resp.text() : '';
+        } catch (e) {
+          if (isSSRFError(e)) {
+            log(`Import URL rejected as SSRF target: ${commandRun.options.importSite} (${e.message})`, 'error');
+          } else {
+            log(formatErrorForLogging(e), 'error');
+          }
+        }
         if (siteContent) {
           // @todo refactor to support 9 levels of hierarchy as this is technically what Drupal supports
           let dom = parse(siteContent);
@@ -2770,7 +2955,8 @@ export async function siteProcess(commandRun, project, port = '3000') {    // au
               indent: depth,
               title: branch1.querySelector('h1').innerText,
               slug: itemID.replace('-','/'),
-              contents: branch1.querySelector(`.field.field-name-body .field-item`).innerHTML,
+              // Security (H-5): sanitize scraped Drupal7 body HTML before storing.
+              contents: sanitizeIfString(branch1.querySelector(`.field.field-name-body .field-item`).innerHTML),
               parent: parent,
             };
             items.push(item);
@@ -2786,7 +2972,8 @@ export async function siteProcess(commandRun, project, port = '3000') {    // au
                 indent: depth,
                 title: branch2.querySelector('h1').innerText,
                 slug: itemID.replace('-','/'),
-                contents: branch2.querySelector(`.field.field-name-body .field-item`).innerHTML,
+                // Security (H-5): sanitize scraped Drupal7 body HTML before storing.
+                contents: sanitizeIfString(branch2.querySelector(`.field.field-name-body .field-item`).innerHTML),
                 parent: parent2,
               };
               items.push(item);
@@ -2802,7 +2989,8 @@ export async function siteProcess(commandRun, project, port = '3000') {    // au
                   indent: depth,
                   title: branch3.querySelector('h1').innerText,
                   slug: itemID.replace('-','/'),
-                  contents: branch3.querySelector(`.field.field-name-body .field-item`).innerHTML,
+                  // Security (H-5): sanitize scraped Drupal7 body HTML before storing.
+                  contents: sanitizeIfString(branch3.querySelector(`.field.field-name-body .field-item`).innerHTML),
                   parent: parent3,
                 };
                 items.push(item);
@@ -2813,8 +3001,19 @@ export async function siteProcess(commandRun, project, port = '3000') {    // au
             let location = new URL(commandRun.options.importSite).origin;
             var files = {};
             for (let image of dom.querySelectorAll("img[src^='/']")) {
-              if (!image.getAttribute('src').startsWith('//')) {
-                files[image.getAttribute('src')] = `${location}${image.getAttribute('src')}`;
+              const imgSrc = image.getAttribute('src');
+              if (imgSrc && !imgSrc.startsWith('//')) {
+                // Security (H-3): validate each remote-controlled image URL
+                // before recording it for download; reject SSRF targets.
+                const imgUrl = `${location}${imgSrc}`;
+                try {
+                  await assertUrlNotSSRF(imgUrl);
+                  files[imgSrc] = imgUrl;
+                } catch (e) {
+                  if (!commandRun.options.quiet) {
+                    log(`Skipping image URL (SSRF-guarded): ${imgUrl}`, 'warn');
+                  }
+                }
               }
             }
             siteRequest.build.files = files;
@@ -2908,7 +3107,8 @@ export async function siteProcess(commandRun, project, port = '3000') {    // au
   // can't launch if we didn't install first so launch implies installation
   if (project.extras && project.extras.includes && project.extras.includes('launch')) {
     let optionPath = `${project.path}/${project.name}`;
-    let command = `HAXCMS_DISABLE_JWT_CHECKS=true npx @haxtheweb/haxcms-nodejs`;
+    // Security (M-4): HOST=127.0.0.1 hint + scoped JWT-disable for local launch.
+    let command = `HOST=127.0.0.1 HAXCMS_DISABLE_JWT_CHECKS=true npx @haxtheweb/haxcms-nodejs`;
     if (!commandRun.options.quiet) {
     p.note(`${merlinSays(`I have summoned a sub-process daemon 👹`)}
 

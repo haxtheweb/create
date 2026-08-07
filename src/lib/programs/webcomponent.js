@@ -10,7 +10,7 @@ import color from 'picocolors';
 import { merlinSays } from "../statements.js";
 import { log } from "../logging.js";
 
-import { dashToCamel, readAllFiles, exec, validateWebcomponentName } from '../utils.js';
+import { dashToCamel, readAllFiles, exec, validateWebcomponentName, validateNpmClient } from '../utils.js';
 import * as haxcmsLib from "@haxtheweb/haxcms-nodejs/dist/lib/HAXCMS.js";
 const HAXCMS = haxcmsLib.HAXCMS;
 
@@ -142,6 +142,12 @@ class HAXWiring {
 
 // processing an element
 export async function webcomponentProcess(commandRun, project, port = "8000") {
+  // Security (M-2): defense-in-depth re-check of --npm-client at the point it
+  // is interpolated into exec() shell strings. create.js validates earlier,
+  // but the site/webcomponent subcommand option paths can bypass that check.
+  if (commandRun.options.npmClient) {
+    commandRun.options.npmClient = validateNpmClient(commandRun.options.npmClient);
+  }
   // auto select operations to perform if requested
   if (!project.extras) {
     console.log(commandRun.options.extras);
