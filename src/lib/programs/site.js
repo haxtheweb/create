@@ -16,13 +16,10 @@ import { merlinSays, communityStatement } from "../statements.js";
 import { dashToCamel, interactiveExec, exec, findAvailablePort, validateNpmClient, spawn } from "../utils.js";
 import { log, commandString } from "../logging.js";
 
-// trick MFR into giving local paths
-globalThis.MicroFrontendRegistryConfig = {
-  base: `@haxtheweb/open-apis`
-};
-import { MicroFrontendRegistry } from "../micro-frontend-registry.js";
-// emable HAXcms routes so we have name => path just like on frontend!
-MicroFrontendRegistry.enableServices(['core', 'haxcms', 'experimental']);
+// Security (Stream-A): the deprecated @haxtheweb/open-apis npm dependency was
+// removed; converter calls now route in-process through haxcms-nodejs handlers
+// via invokeRoute() (same pattern as download-skeleton below), so no cloud
+// (open-apis.hax.cloud) URLs are referenced and the xlsx advisory is gone.
 import * as haxcmsLib from "@haxtheweb/haxcms-nodejs/dist/lib/HAXCMS.js";
 import * as allRoutesLib from "@haxtheweb/haxcms-nodejs/dist/lib/allRoutes.js";
 import * as josfile from "@haxtheweb/haxcms-nodejs/dist/lib/JSONOutlineSchema.js";
@@ -156,7 +153,10 @@ class Res {
   }
 }
 
-async function invokeRoute(routeHandler, body = {}, query = {}) {
+// Security (Stream-A): params added so the site/import/:platform dispatcher
+// (replacing the open-apis broker) can receive the platform name in-process.
+// Backward-compatible: existing callers omit params, defaulting to {}.
+async function invokeRoute(routeHandler, body = {}, query = {}, params = {}) {
   let res = new Res();
   // Site-scoped reads (site:search, site:tags, site:blocks, site:analytics,
   // site:list-files) pass query.siteName; set the auth context so
@@ -175,6 +175,7 @@ async function invokeRoute(routeHandler, body = {}, query = {}) {
     {
       body: body,
       query: query,
+      params: params,
       headers: {
         'x-haxcms-user-token': query.user_token || 'fakeToken',
         'x-haxcms-site-token': query.site_token || 'fakeToken',
@@ -185,6 +186,24 @@ async function invokeRoute(routeHandler, body = {}, query = {}) {
   );
   return res;
 }
+// Security (Stream-A): map --import-structure names to on-prem haxcms-nodejs
+// route handlers (replaces the deprecated @haxtheweb/open-apis broker). Platform
+// converters go through the site/import/:platform dispatcher; docx/xlsx use their
+// own actions routes. evolutionToSite (custom zip upload) is intentionally absent
+// and falls through to the hidden-methodologies branch below.
+const IMPORT_STRUCTURE_MAP = {
+  haxcmsToSite: { platform: 'haxcms' },
+  pressbooksToSite: { platform: 'pressbooks' },
+  gitbookToSite: { platform: 'gitbook' },
+  notionToSite: { platform: 'notion' },
+  elmslnToSite: { platform: 'elmsln' },
+  ploneToSite: { platform: 'plone' },
+  wordpressPagesToSite: { platform: 'wordpress' },
+  drupalBookToSite: { platform: 'drupal-book' },
+  htmlToSite: { platform: 'html' },
+  docxToSite: { routeKey: 'actions/import-docx' },
+  xlsxToSite: { routeKey: 'actions/import-xlsx' },
+};
 function formatStructuredOutput(commandRun, value) {
   if (commandRun.options.format === 'yaml') {
     return dump(value);
@@ -951,13 +970,17 @@ export async function siteCommandDetected(commandRun) {
                     }
                   break;
                   case 'md':
-                  let resp = await openApiBroker('@core', 'htmlToMd', { html: await activeHaxsite.getPageContent(page)})
+                  // Security (Stream-A): on-prem haxcms-nodejs handler in-process
+                  // (replaces @haxtheweb/open-apis broker); result string now at
+                  // .data.data.contents (haxcms-nodejs response envelope).
+                  let resp = await invokeRoute(allRoutesLib.allRoutes.system.map.post['actions/html-to-md'], { html: await activeHaxsite.getPageContent(page) });
+                  let mdContent = resp && resp.data && resp.data.data ? resp.data.data.contents : '';
                   // simple redirecting to file
                   if (commandRun.options.toFile) {
-                    fs.writeFileSync(commandRun.options.toFile, resp.res.data.data);
+                    fs.writeFileSync(commandRun.options.toFile, mdContent);
                   }
                   else {
-                    log(resp.res.data.data);
+                    log(mdContent);
                   }
                   break;
                 }
@@ -1035,9 +1058,12 @@ export async function siteCommandDetected(commandRun) {
                   locationContent = await load(locationContent);
                 break;
                 case 'md':
-                  let resp = await openApiBroker('@core', 'mdToHtml', { md: locationContent, raw: true});
-                  if (resp.res.data) {
-                    locationContent = resp.res.data;
+                  // Security (Stream-A): on-prem haxcms-nodejs handler in-process
+                  // (replaces @haxtheweb/open-apis broker); raw mode dropped —
+                  // haxcms-nodejs returns HTML at .data.data.contents.
+                  let resp = await invokeRoute(allRoutesLib.allRoutes.system.map.post['actions/md-to-html'], { md: locationContent });
+                  if (resp.data && resp.data.data && resp.data.data.contents) {
+                    locationContent = resp.data.data.contents;
                   }
                 break;
               }
@@ -1171,9 +1197,12 @@ export async function siteCommandDetected(commandRun) {
                         locationContent = await load(locationContent);
                       break;
                       case 'md':
-                        let resp = await openApiBroker('@core', 'mdToHtml', { md: locationContent, raw: true});
-                        if (resp.res.data) {
-                          locationContent = resp.res.data;
+                        // Security (Stream-A): on-prem haxcms-nodejs handler in-process
+                        // (replaces @haxtheweb/open-apis broker); raw mode dropped —
+                        // haxcms-nodejs returns HTML at .data.data.contents.
+                        let resp = await invokeRoute(allRoutesLib.allRoutes.system.map.post['actions/md-to-html'], { md: locationContent });
+                        if (resp.data && resp.data.data && resp.data.data.contents) {
+                          locationContent = resp.data.data.contents;
                         }
                       break;
                     }
@@ -2452,15 +2481,18 @@ export async function siteCommandDetected(commandRun) {
               siteContent += `<div data-jos-item-id="${items[i].id}">\n\r${await activeHaxsite.getPageContent(page)}\n\r</div>\n\r`;
             }
             if (operation.action === 'site:md') {
-              let resp = await openApiBroker('@core', 'htmlToMd', { html: siteContent});
+              // Security (Stream-A): on-prem haxcms-nodejs handler in-process
+              // (replaces @haxtheweb/open-apis broker); result at .data.data.contents.
+              let resp = await invokeRoute(allRoutesLib.allRoutes.system.map.post['actions/html-to-md'], { html: siteContent });
+              let mdContent = resp && resp.data && resp.data.data ? resp.data.data.contents : '';
               if (commandRun.options.toFile) {
-                fs.writeFileSync(commandRun.options.toFile, resp.res.data.data);
+                fs.writeFileSync(commandRun.options.toFile, mdContent);
                 if (!commandRun.options.quiet) {
                   log(`${commandRun.options.toFile} written`);
                 }
               }
               else {
-                log(resp.res.data.data);
+                log(mdContent);
               }
             }
             else {
@@ -2644,38 +2676,11 @@ export function siteNodeOperations(search = null){
   return obj;
 }
 
-// broker a call to the open-api repo which is an express based wrapper for vercel (originally)
-// this ensures the calls are identical and yet are converted to something the CLI can leverage
-async function openApiBroker(scope, call, body) {
-  let mfItem = MicroFrontendRegistry.get(`${scope}/${call}`);
-  // ensure we have a MFR record to do the connection
-  // fun thing is this is local file access directly via import()
-  if (mfItem) {
-    // dynamic import... this might upset some stuff later bc it's not a direct reference
-    // but it's working locally at least.
-    // Security (L-4): the MicroFrontendRegistry is populated from the built-in
-    // @haxtheweb/open-apis package. Guard the dynamic import() so a registry
-    // entry ever populated from config/remote data can't load an arbitrary
-    // absolute, URL, or parent-traversal module path.
-    const modulePath = `${mfItem.endpoint.replace('/api/', '/dist/')}.js`;
-    if (/^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//.test(modulePath) || modulePath.startsWith('/') || modulePath.includes('..')) {
-      throw new Error(`Refusing to dynamic-import non-package module path: ${modulePath}`);
-    }
-    const handler = await import(modulePath);
-    let res = new Res();
-    let req = {
-      body: JSON.stringify(body),
-      method: "post"
-    };
-    // js pass by ref for the win; these will both update bc of how we structured the calls
-    await handler.default(req, res);
-    // they'll need unpacked but that's a small price!
-    return {
-      req: req,
-      res: res
-    };
-  }
-}
+// Security (Stream-A): openApiBroker() removed — the deprecated
+// @haxtheweb/open-apis broker (dynamic-importing handlers from that package's
+// dist/) was replaced by in-process invokeRoute() calls against haxcms-nodejs
+// route handlers (see IMPORT_STRUCTURE_MAP above and the string-converter
+// migrations). No cloud (open-apis.hax.cloud) URLs are referenced.
 
 function applyImportedSiteMetadata(siteRequest, importedSiteData) {
   if (!siteRequest || !siteRequest.site) {
@@ -2903,10 +2908,28 @@ export async function siteProcess(commandRun, project, port = '3000') {    // au
       // assume hax to hax if it's not defined
       commandRun.options.importStructure = 'haxcmsToSite';
     }
-    // verify this is a valid way to do an import
-    if (commandRun.options.importStructure && MicroFrontendRegistry.get(`@haxcms/${commandRun.options.importStructure}`)) {
-      let resp = await openApiBroker('@haxcms', commandRun.options.importStructure, { repoUrl: commandRun.options.importSite});
-      const importedData = resp && resp.res && resp.res.data && resp.res.data.data ? resp.res.data.data : null;
+    // Security (Stream-A): verify this is a valid import structure and route
+    // it in-process to the on-prem haxcms-nodejs handler (replaces the
+    // @haxtheweb/open-apis broker + MicroFrontendRegistry lookup). Platform
+    // converters go through the site/import/:platform dispatcher; docx/xlsx
+    // use their own actions routes.
+    const importConfig = IMPORT_STRUCTURE_MAP[commandRun.options.importStructure];
+    if (commandRun.options.importStructure && importConfig) {
+      let resp;
+      if (importConfig.platform) {
+        resp = await invokeRoute(
+          allRoutesLib.allRoutes.system.map.post['site/import/:platform'],
+          { repoUrl: commandRun.options.importSite },
+          {},
+          { platform: importConfig.platform }
+        );
+      } else {
+        resp = await invokeRoute(
+          allRoutesLib.allRoutes.system.map.post[importConfig.routeKey],
+          { repoUrl: commandRun.options.importSite }
+        );
+      }
+      const importedData = resp && resp.data && resp.data.data ? resp.data.data : null;
       if (importedData && importedData.items) {
         siteRequest.build.structure = 'import';
         siteRequest.build.items = importedData.items;

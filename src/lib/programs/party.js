@@ -179,7 +179,6 @@ export async function partyCommandDetected(commandRun) {
             { value: "webcomponents", label: "Webcomponents Monorepo - haxtheweb/webcomponents" }, 
             { value: "create", label: "Create CLI - haxtheweb/create" }, 
             { value: "hax-the-club", label: "HAX The Club - haxtheweb/hax-the-club" },
-            { value: "open-apis", label: "Open APIs - haxtheweb/open-apis" }, 
             { value: "haxcms-nodejs", label: "HAXcms Node.js - haxtheweb/haxcms-nodejs" }, 
             { value: "haxcms-php", label: "HAXcms PHP - haxtheweb/haxcms-php" }, 
             { value: "desktop", label: "HAX The Desktop - haxtheweb/desktop" }, 
@@ -347,7 +346,6 @@ Select the ${color.cyan(`Generate a new SSH key`)} and ${color.cyan(`Login with 
       break;
       case "create":
       case "hax-the-club":
-      case "open-apis":
       case "haxcms-nodejs":
       case "desktop":
         await exec(`cd ${process.cwd()}/${item} && ${commandRun.options.npmClient} install`)
