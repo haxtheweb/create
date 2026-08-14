@@ -1,6 +1,6 @@
 {
   "name": "@haxtheweb/create",
-  "version": "26.0.0",
+  "version": "26.8.0",
   "publishConfig": {
     "access": "public"
   },
@@ -56,7 +56,8 @@
     "open": "11.0.0",
     "picocolors": "1.1.1",
     "twig": "3.0.0",
-    "winston": "3.19.0"
+    "winston": "3.19.0",
+    "@haxtheweb/haxcms-nodejs": "^26.8.0"
   },
   "overrides": {
     "js-yaml": "4.3.1",
