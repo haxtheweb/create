@@ -396,7 +396,8 @@ function returnCode() {
 export function helpAuditBorderShorthands(borderPreset) {
   if (borderPreset.includes('px')) {
     borderPreset = borderPreset.trim();
-    borderPreset = Number(borderPreset.charAt(0));
+    // Parse the full leading integer (not just charAt(0)) so 10px isn't read as 1px.
+    borderPreset = parseInt(borderPreset, 10);
 
     if (borderPreset <= 1) {
       return "--ddd-border-xs"; // 1px solid greyish
@@ -512,7 +513,7 @@ export function helpAuditColors(color) {
     "darkgray":             "--ddd-theme-default-limestoneGray",
     "darkgrey":             "--ddd-theme-default-limestoneGray",
     "darkgreen":            "--ddd-theme-default-success",
-    "darkkhaki":            "--ddd-theme-default=alertAllClear",
+"darkkhaki":            "--ddd-theme-default-alertAllClear",
     "darkmagenta":          "--ddd-theme-default-wonderPurple",
     "darkolivegreen":       "--ddd-theme-default-forestGreen",
     "darkorange":           "--ddd-theme-default-inventOrange",
@@ -578,7 +579,7 @@ export function helpAuditColors(color) {
     "mediumpurple":         "--ddd-theme-default-athertonViolet",
     "mediumseagreen":       "--ddd-theme-default-forestGreen",
     "mediumslateblue":      "--ddd-theme-default-beaverBlue",
-    "mediumspringgreen":    "-ddd-theme-default-futureLime",
+"mediumspringgreen":    "--ddd-theme-default-futureLime",
     "mediumturquoise":      "--ddd-theme-default-accent",
     "mediumvioletred":      "--ddd-theme-default-original87Pink",
     "midnightblue":         "--ddd-theme-default-potentialMidnight",
@@ -688,7 +689,7 @@ export function helpAuditFontSize(fontSize) {
       return "--ddd-font-size-ms"; // 28px
     }
     else if (fontSize > 28 && fontSize <= 32) {
-      return "--ddd=font-size-m"; // 32px
+      return "--ddd-font-size-m"; // 32px
     }
     else if (fontSize > 32 && fontSize <= 36) {
       return "--ddd-font-size-ml"; // 36px
@@ -744,10 +745,10 @@ export function helpAuditFontWeight(fontWeight) {
       return "--ddd-font-weight-medium"; // 500
     }
     else if (fontWeight > 500 && fontWeight <= 700) {
-      return "--ddd-font-size-bold"; // 700
+      return "--ddd-font-weight-bold"; // 700
     }
     else if (fontWeight > 700) {
-      return "--ddd-font-size-black"; // 900
+      return "--ddd-font-weight-black"; // 900
     }
   }
 

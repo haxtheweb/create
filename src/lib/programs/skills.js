@@ -28,7 +28,7 @@ function getBundledSkillsPath() {
  * @description Lists all bundled skills by reading SKILL.md frontmatter from dist/skills/
  * @returns Array of skill objects with name, description, version
  */
-function listBundledSkills() {
+export function listBundledSkills() {
   const skillsPath = getBundledSkillsPath();
   let skills = [];
   if (fs.existsSync(skillsPath)) {
@@ -64,7 +64,7 @@ function listBundledSkills() {
  * @param src source skill directory
  * @param dest destination skill directory
  */
-function copySkillDir(src, dest) {
+export function copySkillDir(src, dest) {
   if (!fs.existsSync(dest)) {
     fs.mkdirSync(dest, { recursive: true });
   }
@@ -86,7 +86,7 @@ function copySkillDir(src, dest) {
  * @param skillName name of skill to install, or 'all' for all
  * @param targetPath target directory (default ~/.agents/skills/)
  */
-function installSkills(skills, skillName, targetPath) {
+export function installSkills(skills, skillName, targetPath) {
   const bundledPath = getBundledSkillsPath();
   if (!targetPath) {
     targetPath = path.join(process.env.HOME || process.env.USERPROFILE, '.agents', 'skills');

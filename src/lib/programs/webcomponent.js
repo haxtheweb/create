@@ -500,8 +500,6 @@ export async function webcomponentCommandDetected(commandRun, packageData = {}, 
       case "wc:element":
       case "webcomponent:element":
         try {
-          const reservedNames = ["annotation-xml", "color-profile", "font-face", "font-face-src", "font-face-uri", "font-face-format", "font-face-name", "missing-glyph"];
-
           if(!commandRun.options.name){
               commandRun.options.name = await p.text({
               message: 'Component name:',
@@ -509,83 +507,30 @@ export async function webcomponentCommandDetected(commandRun, packageData = {}, 
               initialValue: 'my-component',
               required: true,
               validate: (value) => {
-                if (!value) {
-                  return "Name is required (Enter accepts default)";
-                }
-                if(reservedNames.includes(value)) {
-                  return `Reserved name ${color.bold(value)} cannot be used`
-                }
-                if (value.toLocaleLowerCase() !== value) {
-                  return "Name must be lowercase";
-                }
-                if (/^\d/.test(value)) {
-                  return "Name cannot start with a number";
-                }
-                if (/[`~!@#$%^&*()_=+\[\]{}|;:\'",<.>\/?\\]/.test(value)) {
-                  return "No special characters allowed in name";
-                }
-                if (value.indexOf(' ') !== -1) {
-                  return "No spaces allowed in name";
-                }
-                if ((value.indexOf('-') === -1 || value.replace('--', '') !== value || value[0] === '-' || value[value.length-1] === '-')) {
-                  return "Name must include at least one `-` and must not start or end name.";
-                }
-                // Check for any other syntax errors
-                if(!/^[a-z][a-z0-9.\-]*\-[a-z0-9.\-]*$/.test(value)){
-                  return `Name must follow the syntax ${color.bold("my-component")}`;
-                }
-                // assumes auto was selected in CLI
                 let joint = process.cwd();
                 if (commandRun.options.path) {
                   joint = commandRun.options.path;
                 }
-                if (fs.existsSync(path.join(joint, value))) {
-                  return `${path.join(joint, value)} exists, rename this project`;
-                }
+                return validateWebcomponentName(value, {
+                  force: commandRun.options.force,
+                  joint: joint,
+                  checkExists: true
+                });
               }
             });
           } else {
               let value = commandRun.options.name;
-              if (!value) {
-                console.error(color.red("Name is required (Enter accepts default)"));
-                process.exit(1);
-              }
-              if(reservedNames.includes(value)) {
-                console.error(color.red(`Reserved name ${color.bold(value)} cannot be used`));
-                process.exit(1);
-              }
-              if (value.toLocaleLowerCase() !== value) {
-                console.error(color.red("Name must be lowercase"));
-                process.exit(1);
-              }
-              if (/^\d/.test(value)) {
-                console.error(color.red("Name cannot start with a number"));
-                process.exit(1);
-              }
-              if (/[`~!@#$%^&*()_=+\[\]{}|;:\'",<.>\/?\\]/.test(value)) {
-                console.error(color.red("No special characters allowed in name"));
-                process.exit(1);
-              }
-              if (value.indexOf(' ') !== -1) {
-                console.error(color.red("No spaces allowed in name"));
-                process.exit(1);
-              }
-              if ((value.indexOf('-') === -1 || value.replace('--', '') !== value || value[0] === '-' || value[value.length-1] === '-')) {
-                console.error(color.red("Name must include at least one `-` and must not start or end name."));
-                process.exit(1);
-              }
-              // Check for any other syntax errors
-              if(!/^[a-z][a-z0-9.\-]*\-[a-z0-9.\-]*$/.test(value)){
-                console.error(color.red(`Name must follow the syntax ${color.bold("my-component")}`));
-                process.exit(1);
-              }
-              // assumes auto was selected in CLI
               let joint = process.cwd();
               if (commandRun.options.path) {
                 joint = commandRun.options.path;
               }
-              if (fs.existsSync(path.join(joint, value))) {
-                console.error(color.red(`${path.join(joint, value)} exists, rename this project`));
+              const error = validateWebcomponentName(value, {
+                force: commandRun.options.force,
+                joint: joint,
+                checkExists: true
+              });
+              if (error) {
+                console.error(color.red(error));
                 process.exit(1);
               }
           }

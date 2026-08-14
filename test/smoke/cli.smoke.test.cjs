@@ -100,3 +100,35 @@ test('CLI audit exits 0 on a clean fixture directory (compliant)', smokeOpts, ()
     fs.rmSync(fixtureRoot, { recursive: true, force: true })
   }
 })
+
+test('CLI audit exits 1 on a non-compliant fixture (flags color: blue)', smokeOpts, () => {
+  // A CSS file with a non-DDD color triggers a suggestion -> checksPassed=false -> exit 1.
+  // auditFile only checks lines that end with ';', so the property must be on
+  // its own line (not `:host { color: blue; }` which ends with '}').
+  const fixtureRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'hax-audit-smoke-bad-'))
+  try {
+    fs.writeFileSync(path.join(fixtureRoot, 'styles.css'), ':host {\n  color: blue;\n}')
+    const res = spawnSync(process.execPath, [CLI, 'audit'], {
+      encoding: 'utf8',
+      env: ISOLATED_ENV,
+      cwd: fixtureRoot,
+      timeout: 15000,
+    })
+    assert.equal(res.status, 1, `expected exit 1 for non-compliant CSS, got ${res.status}`)
+  } finally {
+    fs.rmSync(fixtureRoot, { recursive: true, force: true })
+  }
+})
+
+test('CLI skills list --format json exits 0 and prints a valid JSON array', smokeOpts, () => {
+  const res = spawnSync(process.execPath, [CLI, 'skills', 'list', '--format', 'json'], {
+    encoding: 'utf8',
+    env: ISOLATED_ENV,
+    timeout: 15000,
+  })
+  assert.equal(res.status, 0, `stderr: ${res.stderr}`)
+  // stdout must be parseable as a JSON array
+  let parsed
+  assert.doesNotThrow(() => { parsed = JSON.parse(res.stdout) }, 'stdout is valid JSON')
+  assert.ok(Array.isArray(parsed), 'skills list JSON is an array')
+})

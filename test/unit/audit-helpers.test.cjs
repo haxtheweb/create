@@ -20,9 +20,9 @@ const {
   helpAuditSpacing,
 } = require('../../src/lib/programs/audit.js')
 
-// These are characterization tests: they pin CURRENT behavior. A few cases
-// below assert known-buggy output (marked) so the bugs are visible and locked;
-// when someone fixes them, update the expectation here.
+// These are spec tests for the 11 pure helpAudit* CSS mapper functions.
+// Expected values come from the DDD token spec (known-good literals), so a
+// regression in any mapper makes the corresponding test go red.
 
 test('helpAuditBorderShorthands maps px presets to ddd border tokens', () => {
   assert.equal(helpAuditBorderShorthands('1px solid grey'), '--ddd-border-xs')
@@ -31,9 +31,9 @@ test('helpAuditBorderShorthands maps px presets to ddd border tokens', () => {
   assert.equal(helpAuditBorderShorthands('4px solid grey'), '--ddd-border-lg')
 })
 
-test('helpAuditBorderShorthands only reads the first character (known bug, pinned)', () => {
-  // charAt(0) means 10px is parsed as 1px -> xs. Fix the parser, then fix this.
-  assert.equal(helpAuditBorderShorthands('10px solid grey'), '--ddd-border-xs')
+test('helpAuditBorderShorthands parses multi-digit px values correctly', () => {
+  // 10px is > 3, so it must map to --ddd-border-lg (not xs via charAt(0)).
+  assert.equal(helpAuditBorderShorthands('10px solid grey'), '--ddd-border-lg')
 })
 
 test('helpAuditBorderShorthands returns no-suggestions without px', () => {
@@ -88,12 +88,10 @@ test('helpAuditColors returns no-suggestions for unknown colors', () => {
   )
 })
 
-test('helpAuditColors has two broken token values in its table (known typos, pinned)', () => {
-  // darkkhaki -> "--ddd-theme-default=alertAllClear" (typo: '=' instead of '-')
-  // mediumspringgreen -> "-ddd-theme-default-futureLime" (missing leading '-')
-  // These CSS vars won't resolve. Fix the table, then fix these expectations.
-  assert.equal(helpAuditColors('darkkhaki'), '--ddd-theme-default=alertAllClear')
-  assert.equal(helpAuditColors('mediumspringgreen'), '-ddd-theme-default-futureLime')
+test('helpAuditColors maps darkkhaki and mediumspringgreen to valid ddd tokens', () => {
+  // Both must be valid --ddd-theme-default-* vars (no '=' typo, no missing leading '-').
+  assert.equal(helpAuditColors('darkkhaki'), '--ddd-theme-default-alertAllClear')
+  assert.equal(helpAuditColors('mediumspringgreen'), '--ddd-theme-default-futureLime')
 })
 
 test('helpAuditFontFamily maps known families, defaulting to primary', () => {
@@ -112,9 +110,9 @@ test('helpAuditFontSize maps px sizes to ddd font-size tokens', () => {
   assert.equal(helpAuditFontSize('200px'), '--ddd-font-size-type1-l')
 })
 
-test('helpAuditFontSize has a typo for the 32px tier (known bug, pinned)', () => {
-  // 32px -> "--ddd=font-size-m" (typo: '=' instead of '-'). Fix, then fix this.
-  assert.equal(helpAuditFontSize('32px'), '--ddd=font-size-m')
+test('helpAuditFontSize maps the 32px tier to a valid ddd token', () => {
+  // must be --ddd-font-size-m (no '=' typo)
+  assert.equal(helpAuditFontSize('32px'), '--ddd-font-size-m')
 })
 
 test('helpAuditFontSize returns no-suggestions without px', () => {
@@ -130,10 +128,10 @@ test('helpAuditFontWeight maps numeric weights', () => {
   assert.equal(helpAuditFontWeight('500'), '--ddd-font-weight-medium')
 })
 
-test('helpAuditFontWeight numeric branch returns font-SIZE tokens (known bug, pinned)', () => {
-  // 700/900 say --ddd-font-size-bold/black (copy-paste from font-size). Fix, then fix this.
-  assert.equal(helpAuditFontWeight('700'), '--ddd-font-size-bold')
-  assert.equal(helpAuditFontWeight('900'), '--ddd-font-size-black')
+test('helpAuditFontWeight numeric branch returns font-WEIGHT tokens', () => {
+  // 700/900 must return --ddd-font-weight-bold/black (not font-size)
+  assert.equal(helpAuditFontWeight('700'), '--ddd-font-weight-bold')
+  assert.equal(helpAuditFontWeight('900'), '--ddd-font-weight-black')
 })
 
 test('helpAuditFontWeight maps named weights', () => {
