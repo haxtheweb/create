@@ -63,3 +63,40 @@ test('CLI --help prints usage and exits 0', smokeOpts, () => {
   assert.equal(res.status, 0, `stderr: ${res.stderr}`)
   assert.match(res.stdout, /Usage:/i)
 })
+
+test('CLI site --help prints the site subcommand usage and exits 0', smokeOpts, () => {
+  const res = spawnSync(process.execPath, [CLI, 'site', '--help'], {
+    encoding: 'utf8',
+    env: ISOLATED_ENV,
+    timeout: 15000,
+  })
+  assert.equal(res.status, 0, `stderr: ${res.stderr}`)
+  assert.match(res.stdout, /Usage:/i)
+})
+
+test('CLI webcomponent --help prints the wc subcommand usage and exits 0', smokeOpts, () => {
+  const res = spawnSync(process.execPath, [CLI, 'webcomponent', '--help'], {
+    encoding: 'utf8',
+    env: ISOLATED_ENV,
+    timeout: 15000,
+  })
+  assert.equal(res.status, 0, `stderr: ${res.stderr}`)
+  assert.match(res.stdout, /Usage:/i)
+})
+
+test('CLI audit exits 0 on a clean fixture directory (compliant)', smokeOpts, () => {
+  // audit uses process.cwd() as the project root; run it with cwd = an empty
+  // temp dir so there are no CSS files to flag and it exits 0 (compliant).
+  const fixtureRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'hax-audit-smoke-'))
+  try {
+    const res = spawnSync(process.execPath, [CLI, 'audit'], {
+      encoding: 'utf8',
+      env: ISOLATED_ENV,
+      cwd: fixtureRoot,
+      timeout: 15000,
+    })
+    assert.equal(res.status, 0, `stderr: ${res.stderr}`)
+  } finally {
+    fs.rmSync(fixtureRoot, { recursive: true, force: true })
+  }
+})

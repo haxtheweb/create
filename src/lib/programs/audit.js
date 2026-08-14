@@ -35,7 +35,7 @@ export function auditCommandDetected(commandRun, path = null) {
  * @param root The root of the project directory (should be where the command is run from)
  * @returns Array of objects detailing what directories, files, and file extensions to ignore
  */
-function dddignoreInterpreter(root) {
+export function dddignoreInterpreter(root) {
   let list = [];
 
   readdirSync(root).forEach(item => {
@@ -393,7 +393,7 @@ function returnCode() {
  * @param border Pre-audit CSS border value
  * @returns String containing suggested changes
  */
-function helpAuditBorderShorthands(borderPreset) {
+export function helpAuditBorderShorthands(borderPreset) {
   if (borderPreset.includes('px')) {
     borderPreset = borderPreset.trim();
     borderPreset = Number(borderPreset.charAt(0));
@@ -420,7 +420,7 @@ function helpAuditBorderShorthands(borderPreset) {
  * @param borderThickness Pre-audited CSS border thickness
  * @returns String containing suggested changes
  */
-function helpAuditBorderThickness(borderThickness) {
+export function helpAuditBorderThickness(borderThickness) {
   if (borderThickness.includes("px")) {
     borderThickness = Number(borderThickness.replace("px", ""));
 
@@ -446,7 +446,7 @@ function helpAuditBorderThickness(borderThickness) {
  * @param boxShadow Pre-audited CSS box-shadow attribute
  * @returns String containing suggested changes
  */
-function helpAuditBoxShadow(boxShadow) {
+export function helpAuditBoxShadow(boxShadow) {
   if (boxShadow.includes('px')) {
     const SMALL = [ " 1px", " 2px", " 3px", " 4px" ];
     const MEDIUM = [ " 5px", " 6px", " 7px", " 8px", ];
@@ -483,7 +483,7 @@ function helpAuditBoxShadow(boxShadow) {
  * @param color CSS preset color
  * @returns String containing suggested changes
  */
-function helpAuditColors(color) {
+export function helpAuditColors(color) {
   const COLOR_OBJECT = {
     "aliceblue":            "--ddd-theme-default-slateLight",
     "antiquewhite":         "--ddd-theme-default-roarLight",
@@ -644,7 +644,7 @@ function helpAuditColors(color) {
  * @param fontFamily Pre-audit CSS font-family value
  * @returns String containing suggested changes
  */
-function helpAuditFontFamily(fontFamily) {
+export function helpAuditFontFamily(fontFamily) {
   fontFamily = fontFamily.toLowerCase();
 
   const FONT_FAMILIES = [
@@ -665,7 +665,7 @@ function helpAuditFontFamily(fontFamily) {
  * @param fontSize Pre-audit CSS font-size value
  * @returns String containing suggested changes
  */
-function helpAuditFontSize(fontSize) {
+export function helpAuditFontSize(fontSize) {
   if (fontSize.includes('px')) {
     fontSize = Number(fontSize.replace('px', ''))
 
@@ -727,7 +727,7 @@ function helpAuditFontSize(fontSize) {
  * @param fontWeight Pre-audit CSS font-weight value
  * @returns String containing suggested changes
  */
-function helpAuditFontWeight(fontWeight) {
+export function helpAuditFontWeight(fontWeight) {
   const REGEX = /\d+/;
   const IS_NUM = fontWeight.match(REGEX); 
 
@@ -770,7 +770,7 @@ function helpAuditFontWeight(fontWeight) {
  * @param letterSpacing Pre-audit CSS letter-spacing value
  * @returns String containing suggested changes
  */
-function helpAuditLetterSpacing(letterSpacing) {
+export function helpAuditLetterSpacing(letterSpacing) {
   if (letterSpacing.includes('px')) {
     letterSpacing = letterSpacing.replace('px', '');
 
@@ -856,7 +856,7 @@ function helpAuditLetterSpacing(letterSpacing) {
  * @param lineHeight Pre-audit CSS line-height value
  * @returns String containing suggested changes
  */
-function helpAuditLineHeight(lineHeight) {
+export function helpAuditLineHeight(lineHeight) {
   if (lineHeight.includes('%')) {
     lineHeight = lineHeight.replace('%', '');
 
@@ -879,7 +879,7 @@ function helpAuditLineHeight(lineHeight) {
  * @param radius Pre-audit CSS radius value
  * @returns String containing suggested changes
  */
-function helpAuditRadius(radius) {
+export function helpAuditRadius(radius) {
   if (radius.includes("px")) {
     radius = Number(radius.replace("px", ""));
 
@@ -921,7 +921,7 @@ function helpAuditRadius(radius) {
  * @param spacing Pre-audit CSS spacing value
  * @returns String containing suggested changes
  */
-function helpAuditSpacing(spacing) {
+export function helpAuditSpacing(spacing) {
   if (spacing.includes('px')) {
     spacing = Number(spacing.replace('px', ''));
     

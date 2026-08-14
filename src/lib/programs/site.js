@@ -15,6 +15,7 @@ import { parse } from 'node-html-parser';
 import { merlinSays, communityStatement } from "../statements.js";
 import { dashToCamel, interactiveExec, exec, findAvailablePort, validateNpmClient, spawn } from "../utils.js";
 import { log, commandString } from "../logging.js";
+import { guardRecipeTokens, isSSRFError, resolveLocalPath, sanitizeIfString } from '../site-security.js';
 
 // Security (Stream-A): the deprecated @haxtheweb/open-apis npm dependency was
 // removed; converter calls now route in-process through haxcms-nodejs handlers
@@ -242,21 +243,6 @@ function formatErrorForLogging(error) {
   return 'Unknown error';
 }
 
-// Security (H-4): recipe files can contain arbitrary text that used to be
-// passed straight to exec() as a shell string. Replaying a recipe now invokes
-// the CLI via spawn() with an argument array (no shell) so recipe contents
-// cannot inject shell commands. Tokens are also guarded so malformed recipes
-// fail loudly instead of producing surprising argv.
-const RECIPE_TOKEN_DENY = /[;&|$`<>(){}!\n\r]/;
-function guardRecipeTokens(tokens) {
-  for (const t of tokens) {
-    if (typeof t !== 'string' || RECIPE_TOKEN_DENY.test(t)) {
-      throw new Error(`Recipe token rejected (contains shell metacharacters): ${t}`);
-    }
-  }
-  return tokens;
-}
-
 // Run the CLI against itself with an argument array and NO shell. Captures
 // stdout/stderr to mirror the previous exec() behavior while removing the
 // shell-injection vector. Resolves on exit 0, rejects otherwise.
@@ -289,33 +275,7 @@ function runCliNoShell(tokens) {
   });
 }
 
-// Security (H-1/H-2/H-3): true when an error thrown by safeFetch/
-// assertUrlNotSSRF is an SSRF rejection (stable .code prefix) rather than a
-// generic network error, so callers can surface a clear message.
-function isSSRFError(e) {
-  return Boolean(e && typeof e.code === 'string' && e.code.startsWith('SSRF_'));
-}
-
-// Security (H-5): sanitize remote-derived HTML before it is written into page
-// content. Non-string values (e.g. parsed JSON/YAML objects from --format) and
-// empty strings pass through unchanged so non-HTML import formats are unaffected.
-function sanitizeIfString(html) {
-  return typeof html === 'string' && html.length > 0 ? sanitizeHTMLForStorage(html) : html;
-}
-
-// Security (L-1): canonicalize a local filesystem path and reject null bytes
-// (a classic fs-path-injection vector). No fixed base is enforced because these
-// options legitimately point anywhere on the user's filesystem; path.resolve is
-// a harmless normalization that does not change which file is read.
-function resolveLocalPath(p) {
-  if (typeof p !== 'string' || p.indexOf('\0') !== -1) {
-    throw new Error('Invalid local path: null bytes are not allowed.');
-  }
-  return path.resolve(p);
-}
-
-
-function cleanupSiteForPublish(siteDirectory) {
+export function cleanupSiteForPublish(siteDirectory) {
   const brokenSymlinks = [];
   try {
     if (!fs.existsSync(siteDirectory)) {
@@ -361,7 +321,7 @@ function cleanupSiteForPublish(siteDirectory) {
   return brokenSymlinks;
 }
 
-function fixLegacyIgnoreFile(siteDirectory, ignoreFileName) {
+export function fixLegacyIgnoreFile(siteDirectory, ignoreFileName) {
   const ignoreFilePath = path.join(siteDirectory, ignoreFileName);
   if (!fs.existsSync(ignoreFilePath)) {
     return false;
@@ -477,7 +437,7 @@ yarn-error.log*
   return false;
 }
 
-function prepareSiteForStaticPublish(siteDirectory) {
+export function prepareSiteForStaticPublish(siteDirectory) {
   let prepared = false;
   try {
     if (!fs.existsSync(siteDirectory)) {
@@ -533,7 +493,7 @@ function prepareSiteForStaticPublish(siteDirectory) {
   return prepared;
 }
 
-function restoreSiteAfterStaticPublish(siteDirectory) {
+export function restoreSiteAfterStaticPublish(siteDirectory) {
   try {
     if (!fs.existsSync(siteDirectory)) {
       return false;
@@ -2697,11 +2657,11 @@ function applyImportedSiteMetadata(siteRequest, importedSiteData) {
   }
 }
 
-function isObjectLike(value) {
+export function isObjectLike(value) {
   return !!value && typeof value === 'object' && !Array.isArray(value);
 }
 
-function normalizeSkeletonMachineName(value) {
+export function normalizeSkeletonMachineName(value) {
   if (typeof value !== 'string') {
     return '';
   }
@@ -2711,7 +2671,7 @@ function normalizeSkeletonMachineName(value) {
     .toLowerCase();
 }
 
-function resolveAbsolutePath(pathValue) {
+export function resolveAbsolutePath(pathValue) {
   if (!pathValue || typeof pathValue !== 'string') {
     return '';
   }
@@ -2721,7 +2681,7 @@ function resolveAbsolutePath(pathValue) {
   return path.join(process.cwd(), pathValue);
 }
 
-function extractSkeletonPayload(rawData) {
+export function extractSkeletonPayload(rawData) {
   let skeleton = rawData;
   if (
     isObjectLike(rawData) &&
@@ -2772,7 +2732,7 @@ function extractSkeletonPayload(rawData) {
   };
 }
 
-function loadSkeletonFileData(skeletonFilePath) {
+export function loadSkeletonFileData(skeletonFilePath) {
   const absolutePath = resolveAbsolutePath(skeletonFilePath);
   if (!absolutePath) {
     throw new Error('Skeleton file path is required');
@@ -2792,7 +2752,7 @@ function loadSkeletonFileData(skeletonFilePath) {
   };
 }
 
-function installSkeletonFile(skeletonFilePath, machineNameOverride = null) {
+export function installSkeletonFile(skeletonFilePath, machineNameOverride = null) {
   const loadedSkeleton = loadSkeletonFileData(skeletonFilePath);
   const skeleton = loadedSkeleton.skeleton;
   const overrideName = normalizeSkeletonMachineName(machineNameOverride);

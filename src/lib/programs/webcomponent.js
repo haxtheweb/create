@@ -21,7 +21,7 @@ exec('which git', error => {
   }
 });
 
-class HAXWiring {
+export class HAXWiring {
   /**
    * Return a haxProperties prototype / example structure
    */
@@ -740,7 +740,7 @@ export async function webcomponentGenerateHAXSchema(commandRun, packageData) {
   }
 }
 
-function getInputMethodFromType(type) {
+export function getInputMethodFromType(type) {
   switch (type) {
     case "string":
       return "textfield";
