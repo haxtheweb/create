@@ -25,7 +25,10 @@
     "hax": "hax",
     "dev": "nodemon --watch src",
     "haxcms-nodejs": "haxcms-nodejs",
-    "local": "npm run build && npm link"
+    "local": "npm run build && npm link",
+    "test": "node --test test/unit/**/*.test.cjs test/smoke/**/*.test.cjs",
+    "test:unit": "node --test test/unit/**/*.test.cjs",
+    "test:smoke": "node --test test/smoke/**/*.test.cjs"
   },
   "man": [
     "./dist/docs/hax.1"
@@ -53,6 +56,7 @@
     "node-html-parser": "7.1.0",
     "open": "11.0.0",
     "picocolors": "1.1.1",
+    "twig": "3.0.0",
     "winston": "3.19.0"
   },
   "overrides": {
