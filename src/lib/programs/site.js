@@ -31,11 +31,6 @@ const JSONOutlineSchema = josfile.default;
 import * as safeFetchLib from "@haxtheweb/haxcms-nodejs/dist/lib/safeFetch.js";
 const safeFetch = safeFetchLib.safeFetch;
 const assertUrlNotSSRF = safeFetchLib.assertUrlNotSSRF;
-// Security (H-5): reuse haxcms-nodejs' DOMPurify-based sanitizer so remote
-// scraped/imported HTML is stripped of <script>/on*/javascript: URLs before
-// being written into page content, matching the server storage policy.
-import * as sanitizeContentLib from "@haxtheweb/haxcms-nodejs/dist/lib/sanitizeContent.js";
-const sanitizeHTMLForStorage = sanitizeContentLib.sanitizeHTMLForStorage;
 const HAXCMS = haxcmsLib.HAXCMS;
 const systemStructureContext = haxcmsLib.systemStructureContext;
 
