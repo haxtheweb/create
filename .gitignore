@@ -1,7 +1,7 @@
 # defaults from testing
 mysite
 my-element
-security_best_practices_report.md
+security_best_practices_report*
 # Logs
 logs
 *.log
