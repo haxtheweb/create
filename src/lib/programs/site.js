@@ -200,7 +200,7 @@ const IMPORT_STRUCTURE_MAP = {
   docxToSite: { routeKey: 'actions/import-docx' },
   xlsxToSite: { routeKey: 'actions/import-xlsx' },
 };
-function formatStructuredOutput(commandRun, value) {
+export function formatStructuredOutput(commandRun, value) {
   if (commandRun.options.format === 'yaml') {
     return dump(value);
   }
@@ -214,7 +214,10 @@ function logStructuredOutput(commandRun, value, level = 'info') {
   log(formatStructuredOutput(commandRun, value), level);
 }
 
-function formatErrorForLogging(error) {
+export function formatErrorForLogging(error) {
+  if (error === null || error === undefined) {
+    return 'Unknown error';
+  }
   if (error && typeof error.stderr === 'string' && error.stderr.trim().length > 0) {
     return error.stderr.trim();
   }
@@ -2637,7 +2640,7 @@ export function siteNodeOperations(search = null){
 // route handlers (see IMPORT_STRUCTURE_MAP above and the string-converter
 // migrations). No cloud (open-apis.hax.cloud) URLs are referenced.
 
-function applyImportedSiteMetadata(siteRequest, importedSiteData) {
+export function applyImportedSiteMetadata(siteRequest, importedSiteData) {
   if (!siteRequest || !siteRequest.site) {
     return;
   }

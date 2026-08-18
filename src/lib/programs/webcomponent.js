@@ -853,12 +853,16 @@ export async function webcomponentRename(commandRun, packageData) {
   }
 
   // regenerate custom-elements.json
+  let s2 = p.spinner();
+  s2.start(merlinSays('Regenerating custom-elements.json'));
   try {
-    let s2 = p.spinner();
-    s2.start(merlinSays('Regenerating custom-elements.json'));
     await exec(`cd ${newDir} && ${commandRun.options.npmClient || 'npm'} run analyze`);
     s2.stop(merlinSays('custom-elements.json regenerated'));
   } catch (e) {
-    console.warn(color.yellow('Could not regenerate custom-elements.json. Run `npm run analyze` manually.'));
+    // Stopping the spinner is required even on failure: an un-stopped
+    // @clack/prompts spinner keeps stdin/stdout handles open, which hangs
+    // the process indefinitely instead of exiting normally.
+    s2.stop(color.yellow('Could not regenerate custom-elements.json.'));
+    console.warn(color.yellow('Run `npm run analyze` manually.'));
   }
 }

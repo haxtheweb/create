@@ -36,6 +36,45 @@ export function partyActions(){
     ];
   }
 
+// Pure predicate: does this exec() error represent "the target directory
+// already exists and is not empty" (i.e. the repo was already cloned),
+// as opposed to a fork-not-found / auth failure? Extracted so the branch
+// logic in cloneHAXRepositories can be unit tested without shelling out.
+export function isRepoAlreadyExistsError(error) {
+  return !!(
+    error &&
+    typeof error.stderr === 'string' &&
+    error.stderr.includes('already exists and is not an empty directory')
+  );
+}
+
+// Pure mapping from a HAX repo name to the shell commands needed to install
+// its dependencies, given the npm client and the base directory repos were
+// cloned into. Extracted from the inline switch in cloneHAXRepositories so
+// the per-repo dependency logic can be unit tested without exec()/network.
+export function resolveInstallCommands(repoName, npmClient, baseDir) {
+  switch (repoName) {
+    case "webcomponents":
+      return [
+        `yarn global add lerna web-component-analyzer`,
+        `cd ${baseDir}/${repoName} && yarn install`,
+      ];
+    case "create":
+    case "hax-the-club":
+    case "haxcms-nodejs":
+    case "desktop":
+      return [`cd ${baseDir}/${repoName} && ${npmClient} install`];
+    case "haxcms-php":
+      // ddev setup
+      return [];
+    case "HAXiam":
+      // curl setup?
+      return [];
+    default:
+      return [];
+  }
+}
+
 export async function partyCommandDetected(commandRun) {
   if (!commandRun.options.quiet) {
     p.intro(`${color.bgBlack(color.white(` HAXTheWeb : Party detected `))}`);
@@ -270,7 +309,7 @@ Select the ${color.cyan(`Generate a new SSH key`)} and ${color.cyan(`Login with 
         s.stop(`${color.green("Successfully")} cloned ${color.bold(item)} to ${color.bold(process.cwd())}`);
       } catch (e) {
         // skip the loop if the repo already exists
-        if(e.stderr.includes("already exists and is not an empty directory")){
+        if(isRepoAlreadyExistsError(e)){
           s.stop(`${color.yellow(`${color.bold(`${item}`)} already exists in ${color.bold(process.cwd())}`)}`);
           break;
         }
@@ -305,7 +344,7 @@ Select the ${color.cyan(`Generate a new SSH key`)} and ${color.cyan(`Login with 
           isForked = true;
         } catch (e) {
           // skip the loop if the repo already exists
-          if(e.stderr.includes("already exists and is not an empty directory")){
+          if(isRepoAlreadyExistsError(e)){
             s.stop(`${color.yellow(`${color.bold(`${item}`)} already exists in ${color.bold(process.cwd())}`)}`);
             break;
           }
@@ -339,23 +378,9 @@ Select the ${color.cyan(`Generate a new SSH key`)} and ${color.cyan(`Login with 
     }
 
     s.start(`Installing dependencies for ${item}`);
-    switch (item) {
-      case "webcomponents":
-        await exec(`yarn global add lerna web-component-analyzer`);
-        await exec(`cd ${process.cwd()}/${item} && yarn install`);
-      break;
-      case "create":
-      case "hax-the-club":
-      case "haxcms-nodejs":
-      case "desktop":
-        await exec(`cd ${process.cwd()}/${item} && ${commandRun.options.npmClient} install`)
-      break;
-      case "haxcms-php":
-        // ddev setup
-      break;
-      case "HAXiam":
-        // curl setup?
-      break;
+    const installCommands = resolveInstallCommands(item, commandRun.options.npmClient, process.cwd());
+    for (const installCommand of installCommands) {
+      await exec(installCommand);
     }
     s.stop(`Dependencies installed for ${item}`);
   };

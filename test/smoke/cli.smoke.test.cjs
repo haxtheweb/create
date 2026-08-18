@@ -132,3 +132,78 @@ test('CLI skills list --format json exits 0 and prints a valid JSON array', smok
   assert.doesNotThrow(() => { parsed = JSON.parse(res.stdout) }, 'stdout is valid JSON')
   assert.ok(Array.isArray(parsed), 'skills list JSON is an array')
 })
+
+test('CLI webcomponent creates a new element non-interactively (--y --no-i --no-extras)', smokeOpts, () => {
+  // Run from an empty temp dir so there's no local package.json to confuse
+  // monorepo/context detection, and --no-extras skips launch/install/git so
+  // the test stays fast and side-effect-free.
+  const parentDir = fs.mkdtempSync(path.join(os.tmpdir(), 'hax-wc-smoke-'))
+  const elementName = 'my-smoke-element'
+  try {
+    const res = spawnSync(process.execPath, [
+      CLI, 'webcomponent',
+      '--name', elementName,
+      '--path', parentDir,
+      '--y', '--no-i', '--no-extras',
+    ], {
+      encoding: 'utf8',
+      env: ISOLATED_ENV,
+      cwd: parentDir,
+      timeout: 15000,
+    })
+    assert.equal(res.status, 0, `stderr: ${res.stderr}\nstdout: ${res.stdout}`)
+    const projectDir = path.join(parentDir, elementName)
+    assert.ok(fs.existsSync(projectDir), `expected project dir at ${projectDir}`)
+    // main element file renamed from webcomponent.js -> <name>.js
+    const elementFile = path.join(projectDir, `${elementName}.js`)
+    assert.ok(fs.existsSync(elementFile), `expected element file at ${elementFile}`)
+    const elementSource = fs.readFileSync(elementFile, 'utf8')
+    assert.match(elementSource, new RegExp(`customElements\\.define\\(\\w+\\.tag`))
+    assert.match(elementSource, new RegExp(elementName))
+    // package.json reflects the element name
+    const pkgPath = path.join(projectDir, 'package.json')
+    assert.ok(fs.existsSync(pkgPath), `expected package.json at ${pkgPath}`)
+    const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'))
+    assert.equal(pkg.name, elementName)
+    assert.equal(pkg.main, `${elementName}.js`)
+    // test file renamed alongside the element
+    assert.ok(
+      fs.existsSync(path.join(projectDir, 'test', `${elementName}.test.js`)),
+      'expected renamed test file',
+    )
+  } finally {
+    fs.rmSync(parentDir, { recursive: true, force: true })
+  }
+})
+
+test('CLI site creates a new site non-interactively (--y --no-i --no-extras)', smokeOpts, () => {
+  // Run from an empty temp dir (no site.json) so systemStructureContext()
+  // treats this as site *creation*, not administration of an existing site.
+  const parentDir = fs.mkdtempSync(path.join(os.tmpdir(), 'hax-site-smoke-'))
+  const siteName = 'my-smoke-site'
+  try {
+    const res = spawnSync(process.execPath, [
+      CLI, 'site',
+      '--name', siteName,
+      '--path', parentDir,
+      '--theme', 'clean-one',
+      '--y', '--no-i', '--no-extras',
+    ], {
+      encoding: 'utf8',
+      env: ISOLATED_ENV,
+      cwd: parentDir,
+      timeout: 15000,
+    })
+    assert.equal(res.status, 0, `stderr: ${res.stderr}\nstdout: ${res.stdout}`)
+    const siteJsonPath = path.join(parentDir, siteName, 'site.json')
+    assert.ok(fs.existsSync(siteJsonPath), `expected site.json at ${siteJsonPath}`)
+    const manifest = JSON.parse(fs.readFileSync(siteJsonPath, 'utf8'))
+    assert.ok(typeof manifest.id === 'string' && manifest.id !== '', 'manifest has an id')
+    assert.ok(typeof manifest.title === 'string' && manifest.title !== '', 'manifest has a title')
+    assert.ok(Array.isArray(manifest.items), 'manifest.items is an array')
+    // metadata.site.name must align with the folder the site is named after
+    assert.equal(manifest.metadata.site.name, siteName)
+  } finally {
+    fs.rmSync(parentDir, { recursive: true, force: true })
+  }
+})
