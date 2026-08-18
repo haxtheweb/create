@@ -1,0 +1,24 @@
+{
+  "name": "haxtheweb",
+  "description": "Official Claude Code plugins for the HAX ecosystem — install and drive the HAX CLI for building web components and HAXsites.",
+  "owner": {
+    "name": "HAXTheWeb core team",
+    "url": "https://hax.psu.edu/"
+  },
+  "plugins": [
+    {
+      "name": "hax",
+      "source": "./plugins/hax",
+      "description": "Install and drive the HAX CLI (@haxtheweb/create): scaffold HAX-capable web components and HAXsites, audit DDD compliance, serve locally, and publish.",
+      "version": "1.0.0",
+      "author": {
+        "name": "HAXTheWeb core team",
+        "url": "https://hax.psu.edu/"
+      },
+      "homepage": "https://haxtheweb.org/",
+      "repository": "https://github.com/haxtheweb/create",
+      "license": "Apache-2.0",
+      "keywords": ["hax", "haxcms", "webcomponents", "lit", "ddd", "cli"]
+    }
+  ]
+}

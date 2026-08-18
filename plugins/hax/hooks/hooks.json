@@ -1,0 +1,17 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/scripts/ensure-hax.sh\"",
+            "timeout": 120,
+            "statusMessage": "Checking HAX CLI…"
+          }
+        ]
+      }
+    ]
+  }
+}
