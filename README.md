@@ -9,9 +9,14 @@
 [![Published on npm](https://img.shields.io/npm/v/@haxtheweb/create?style=flat)](https://www.npmjs.com/package/@haxtheweb/create)
 [![build](https://github.com/haxtheweb/create/workflows/build/badge.svg)](https://github.com/haxtheweb/create/actions)
 [![X](https://img.shields.io/twitter/follow/haxtheweb.svg?style=social&label=Follow)](https://twitter.com/intent/follow?screen_name=haxtheweb)
+[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/haxtheweb/create)
 
 # HAX The CLI
 Rapidly build web components for the Web that work with HAX. HAX The Web's CLI tools empower you to rapidly..
+
+## Onboarding
+
+New to the HAX ecosystem? **[Start here](https://github.com/haxtheweb/issues/blob/master/CONTRIBUTING.md)** — the single onboarding guide covers prerequisites, cloning the core repos, installing, and running each project locally.
 
 ```bash
 # this allows you to then use hax command
