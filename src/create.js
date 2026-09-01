@@ -557,14 +557,22 @@ async function main() {
     }
     // it's been 7 days since last check, do the check and offer command to resolve if needed
     if (timeSince.days > 7) {
-      // check for updates
-      let execOut = await exec(`npm view @haxtheweb/create version`);
-      let updateCheck = execOut.stdout.trim();
-      if (updateCheck !== packageJson.version && !commandRun.options.quiet) {
-        p.intro(`${color.bgBlack(color.white(` HAX cli updates available! `))}`);
-        p.intro(`Current version: ${packageJson.version}`);
-        p.intro(`Latest version: ${updateCheck}`);  
-        p.intro(`Run ${color.bold(color.black(color.bgGreen('hax update')))} to update to the latest version`);
+      // check for updates. Issue #2993: offline/slow networks must not hang
+      // or crash the CLI here, so this is bounded by a timeout and any
+      // failure (network unreachable, timeout, non-zero exit) is swallowed
+      // and simply skips the "updates available" notice.
+      try {
+        let execOut = await exec(`npm view @haxtheweb/create version`, { timeout: 3000 });
+        let updateCheck = execOut.stdout.trim();
+        if (updateCheck !== packageJson.version && !commandRun.options.quiet) {
+          p.intro(`${color.bgBlack(color.white(` HAX cli updates available! `))}`);
+          p.intro(`Current version: ${packageJson.version}`);
+          p.intro(`Latest version: ${updateCheck}`);  
+          p.intro(`Run ${color.bold(color.black(color.bgGreen('hax update')))} to update to the latest version`);
+        }
+      }
+      catch (e) {
+        // offline or registry unreachable; silently skip the update notice
       }
     }
     let activeProject = null;
@@ -1107,7 +1115,21 @@ async function main() {
 
 // check for updates
 async function testForUpdates(commandRun) {
-  let execOut = await exec(`npm view @haxtheweb/create version`);
+  // Issue #2993: this is reachable both from the explicit `hax update`
+  // command and the interactive "Check for hax cli updates" menu item, so a
+  // hung/unreachable registry must not throw unhandled here. Bound the call
+  // with a timeout and report a friendly message instead of crashing.
+  let execOut;
+  try {
+    execOut = await exec(`npm view @haxtheweb/create version`, { timeout: 3000 });
+  }
+  catch (e) {
+    if (!commandRun.options.quiet) {
+      p.intro(`${color.bgBlack(color.white(` Unable to check for updates `))}`);
+      p.intro(`Could not reach the npm registry (offline or unreachable). Try again once you have a network connection.`);
+    }
+    return;
+  }
   let latest = execOut.stdout.trim();
   if (latest !== packageJson.version) {
     if (!commandRun.options.quiet) {

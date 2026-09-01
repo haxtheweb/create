@@ -273,6 +273,65 @@ function runCliNoShell(tokens) {
   });
 }
 
+// Offline fix (issue #2993): `npx @haxtheweb/haxcms-nodejs` has to touch the
+// npm registry to resolve/verify the package, which hangs or fails outright
+// when there is no network connection (e.g. airplane mode). haxcms-nodejs is
+// already a direct dependency of this CLI (see package.json), so resolve and
+// spawn its bin entry directly out of create's own node_modules instead of
+// shelling out through npx. Falls back to the original npx invocation if
+// local resolution or the direct spawn fails, so unusual install layouts
+// keep working exactly as before.
+function resolveHaxcmsNodejsBin() {
+  try {
+    return require.resolve('@haxtheweb/haxcms-nodejs/dist/local.js');
+  }
+  catch (e) {
+    return null;
+  }
+}
+
+function execNpxHaxcmsNodejsFallback(cwd, env) {
+  return exec(`npx @haxtheweb/haxcms-nodejs`, { cwd, env });
+}
+
+// Launches the local HAXcms server for site:start/site:serve/site creation's
+// launch-on-create flow. Prefers spawning the already-installed dependency
+// in-process (no network required); only falls back to `npx` if that isn't
+// possible.
+function spawnHaxcmsNodejs(cwd, env) {
+  const resolvedBin = resolveHaxcmsNodejsBin();
+  if (!resolvedBin) {
+    return execNpxHaxcmsNodejsFallback(cwd, env);
+  }
+  return new Promise((resolve, reject) => {
+    let settled = false;
+    const child = spawn(process.execPath, [resolvedBin], { cwd, env, stdio: 'inherit' });
+    child.on('error', (err) => {
+      if (settled) {
+        return;
+      }
+      settled = true;
+      // local resolution succeeded but spawning node directly failed for some
+      // reason (permissions, corrupted install, etc); fall back to npx.
+      execNpxHaxcmsNodejsFallback(cwd, env).then(resolve, reject);
+    });
+    child.on('exit', (code, signal) => {
+      if (settled) {
+        return;
+      }
+      settled = true;
+      // normal server shutdown (Ctrl+C) exits via signal with a null code;
+      // treat that the same as a clean exit rather than an error.
+      if (code === 0 || code === null) {
+        resolve();
+      }
+      else {
+        reject(new Error(`haxcms-nodejs exited with code ${code}`));
+      }
+    });
+  });
+}
+
 export function cleanupSiteForPublish(siteDirectory) {
   const brokenSymlinks = [];
   try {
@@ -830,9 +889,11 @@ export async function siteCommandDetected(commandRun) {
             // server binds loopback once haxcms-nodejs honors it (today it
             // calls server.listen(port) with no host, binding all interfaces;
             // loopback enforcement requires a server-side change).
-            await exec(`npx @haxtheweb/haxcms-nodejs`, {
-              cwd: activeHaxsite.directory,
-              env: { ...process.env, PORT: `${port}`, HOST: '127.0.0.1', HAXCMS_DISABLE_JWT_CHECKS: 'true' }
+            // Issue #2993: spawn the locally-resolved haxcms-nodejs bin
+            // directly (no npx/network round-trip); falls back to npx only
+            // if local resolution fails.
+            await spawnHaxcmsNodejs(activeHaxsite.directory, {
+              ...process.env, PORT: `${port}`, HOST: '127.0.0.1', HAXCMS_DISABLE_JWT_CHECKS: 'true'
             });
           }
           catch(e) {
@@ -849,9 +910,9 @@ export async function siteCommandDetected(commandRun) {
 ⌨️  To stop server, press: ${color.bold(color.black(color.bgRed(` CTRL + C or CTRL + BREAK `)))}`);
             }
             // Security (M-4): same HOST=127.0.0.1 hint + scoped JWT-disable as start.
-            await exec(`npx @haxtheweb/haxcms-nodejs`, {
-              cwd: activeHaxsite.directory,
-              env: { ...process.env, PORT: `${port}`, HOST: '127.0.0.1', HAXCMS_DISABLE_JWT_CHECKS: 'true', NODE_ENV: 'development' }
+            // Issue #2993: same in-process spawn (with npx fallback) as start.
+            await spawnHaxcmsNodejs(activeHaxsite.directory, {
+              ...process.env, PORT: `${port}`, HOST: '127.0.0.1', HAXCMS_DISABLE_JWT_CHECKS: 'true', NODE_ENV: 'development'
             });
           }
           catch(e) {
@@ -3089,6 +3150,8 @@ export async function siteProcess(commandRun, project, port = '3000') {    // au
   if (project.extras && project.extras.includes && project.extras.includes('launch')) {
     let optionPath = `${project.path}/${project.name}`;
     // Security (M-4): HOST=127.0.0.1 hint + scoped JWT-disable for local launch.
+    // 'command' is still shown to the user as the "launch later" instructions,
+    // even though we no longer shell out through npx ourselves (issue #2993).
     let command = `HOST=127.0.0.1 HAXCMS_DISABLE_JWT_CHECKS=true npx @haxtheweb/haxcms-nodejs`;
     if (!commandRun.options.quiet) {
     p.note(`${merlinSays(`I have summoned a sub-process daemon 👹`)}
@@ -3108,7 +3171,12 @@ ${color.underline(color.cyan(`http://localhost:${port}`))}
       // at least a second to see the message print at all
       await setTimeout(1000);
       try {
-      await exec(`cd ${optionPath} && ${command}`);
+      // Issue #2993: spawn the locally-resolved haxcms-nodejs bin directly
+      // (no npx/network round-trip); falls back to npx only if local
+      // resolution fails.
+      await spawnHaxcmsNodejs(optionPath, {
+        ...process.env, HOST: '127.0.0.1', HAXCMS_DISABLE_JWT_CHECKS: 'true'
+      });
       }
       catch(e) {
       // don't log bc output is weird
