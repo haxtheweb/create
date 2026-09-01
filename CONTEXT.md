@@ -14,7 +14,7 @@ src/
 ├── create.js                      — CLI entrypoint; commander wiring, option validation, command dispatch
 ├── lib/
 │   ├── utils.js                   — pure helpers + security validators (validateNpmClient, rejectShellMetacharacters, validateDomain, validateWebcomponentName, dashToCamel, camelToDash, generateUUID, getTimeDifference, findAvailablePort, readAllFiles, writeConfigFile, readConfigFile, interactiveExec)
-│   ├── site-security.js           — extracted security helpers (guardRecipeTokens, isSSRFError, sanitizeIfString, resolveLocalPath); importable without loading full site.js
+│   ├── site-security.js           — extracted security helpers (isSSRFError, sanitizeIfString, resolveLocalPath); importable without loading full site.js
 │   ├── logging.js                 — winston-based logger (log, commandString)
 │   ├── statements.js              — @clack visual statements (haxIntro, communityStatement, merlinSays)
 │   ├── art.js                     — ASCII art characters for intro animation
@@ -76,4 +76,3 @@ Tests verify behavior through public interfaces, not internals. Seams are pre-ag
 - **wc-registry.json** — built registry of every valid HAX web component on the CDN; used by `validateWebcomponentName` for collision checking.
 - **skeleton** — a reusable HAXsite template (JSON with `meta`, `site`, `build.items`, `build.files`); installed via `site:skeleton-install` or loaded via `--skeleton-file`.
 - **npmClient** — the package manager (`npm`, `yarn`, `pnpm`); validated against an allowlist before interpolation into `exec()` shell strings (security: command injection prevention).
-- **recipe** — a CLI replay file (`create-cli.recipe`); tokens are guarded by `guardRecipeTokens` before being passed to `spawn()` (no shell).

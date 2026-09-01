@@ -105,7 +105,6 @@ Options:
   --title-scrape <char>               CSS Selector for `title` in resource
   --content-scrape <char>             CSS Selector for `body` in resource
   --items-import <char>               import items from a file / site
-  --recipe <char>                     path to recipe file
   --custom-theme-name <char>          custom theme name
   --custom-theme-template <char>      custom theme template; (options: base,
                                       polaris-flex, polaris-sidebar)

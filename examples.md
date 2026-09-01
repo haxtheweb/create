@@ -222,22 +222,6 @@ Setup GitLab CI deployment pipeline, overwrite existing file
 ```bash
 hax site setup:gitlab-ci --y
 ```
-Print out the recipe used in building the current site
-```bash
-hax site recipe:read
-```
-Play a site recipe against the current site, interactively
-```bash
-hax site recipe:play
-```
-Play a site recipe against the current site named `create-cli.recipe`, interactive selection per command
-```bash
-hax site recipe:play --recipe create-cli.recipe 
-```
-Play a site recipe against the current site named `create-cli.recipe`, scripted
-```bash
-hax site recipe:play --recipe create-cli.recipe --y
-```
 # audit
 Audit HAX web component
 ```bash

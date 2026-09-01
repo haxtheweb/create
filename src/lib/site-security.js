@@ -2,29 +2,10 @@
 // without loading the full site.js (which top-level imports haxcms-nodejs dist
 // modules that may not yet ship in the published package). site.js imports these
 // back. Only touches node:path and the PRESENT sanitizeContent.js dist module.
-//
-// NOTE: the RECIPE_TOKEN_DENY char class is built with new RegExp + String.fromCharCode
-// (not a /\n\r/ literal) so the file has no backslash escapes and the LF/CR members
-// are unambiguous. The matched set is identical to the original site.js regex.
 
 import * as path from 'node:path';
 import * as sanitizeContentLib from "@haxtheweb/haxcms-nodejs/dist/lib/sanitizeContent.js";
 const sanitizeHTMLForStorage = sanitizeContentLib.sanitizeHTMLForStorage;
-
-// Security (H-4): recipe files can contain arbitrary text that used to be
-// passed straight to exec() as a shell string. Replaying a recipe now invokes
-// the CLI via spawn() with an argument array (no shell) so recipe contents
-// cannot inject shell commands. Tokens are also guarded so malformed recipes
-// fail loudly instead of producing surprising argv.
-const RECIPE_TOKEN_DENY = new RegExp('[;&|`$<>(){}!' + String.fromCharCode(10) + String.fromCharCode(13) + ']');
-export function guardRecipeTokens(tokens) {
-  for (const t of tokens) {
-    if (typeof t !== 'string' || RECIPE_TOKEN_DENY.test(t)) {
-      throw new Error(`Recipe token rejected (contains shell metacharacters): ${t}`);
-    }
-  }
-  return tokens;
-}
 
 // Security (H-1/H-2/H-3): true when an error thrown by safeFetch/
 // assertUrlNotSSRF is an SSRF rejection (stable .code prefix) rather than a

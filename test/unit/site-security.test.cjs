@@ -16,7 +16,6 @@ const { probeModule } = require('../_helpers/module-canary.cjs')
 const { available, skipReason, module: secModule } = probeModule('src/lib/site-security.js')
 
 const {
-  guardRecipeTokens,
   isSSRFError,
   sanitizeIfString,
   resolveLocalPath,
@@ -26,34 +25,6 @@ const opts = { skip: skipReason, timeout: 15000 }
 
 // Control chars are built with String.fromCharCode (not '\n'/'\0' literals) so
 // the test exercises the REAL newline/CR/null-byte rejection, not a backslash.
-
-test('guardRecipeTokens passes clean tokens through unchanged', opts, () => {
-  const tokens = ['site', 'create', '--y']
-  assert.equal(guardRecipeTokens(tokens), tokens)
-})
-
-test('guardRecipeTokens rejects every shell metacharacter, including real newline/CR', opts, () => {
-  const LF = String.fromCharCode(10)
-  const CR = String.fromCharCode(13)
-  const bad = [
-    'a;b', 'a&b', 'a|b', 'a`b', 'a$b', 'a(b', 'a{b', 'a!b',
-    'a' + LF + 'b',
-    'a' + CR + 'b',
-  ]
-  for (const t of bad) {
-    assert.throws(
-      () => guardRecipeTokens([t]),
-      /Recipe token rejected/,
-      `expected rejection for: ${JSON.stringify(t)}`,
-    )
-  }
-})
-
-test('guardRecipeTokens rejects non-string tokens', opts, () => {
-  assert.throws(() => guardRecipeTokens([123]), /Recipe token rejected/)
-  assert.throws(() => guardRecipeTokens([null]), /Recipe token rejected/)
-  assert.throws(() => guardRecipeTokens([undefined]), /Recipe token rejected/)
-})
 
 test('isSSRFError is true only for errors with an SSRF_ code prefix', opts, () => {
   assert.equal(isSSRFError({ code: 'SSRF_BLOCKED' }), true)

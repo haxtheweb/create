@@ -85,7 +85,6 @@ async function main() {
   .option('--title-scrape <char>', 'CSS Selector for `title` in resource')
   .option('--content-scrape <char>', 'CSS Selector for `body` in resource')
   .option('--items-import <char>', 'import items from a file / site')
-  .option('--recipe <char>', 'path to recipe file')
   .option('--custom-theme-name <char>', 'custom theme name')
   .option('--custom-theme-template <char>', 'custom theme template; (options: base, polaris-flex, polaris-sidebar)')
   .option('--skeleton-file <char>', 'path to skeleton JSON file')
@@ -200,7 +199,6 @@ async function main() {
   .option('--title-scrape <char>', 'CSS Selector for `title` in resource')
   .option('--content-scrape <char>', 'CSS Selector for `body` in resource')
   .option('--items-import <char>', 'import items from a file / site')
-  .option('--recipe <char>', 'path to recipe file')
   .option('--custom-theme-name <char>', 'custom theme name')
   .option('--custom-theme-template <char>', 'custom theme template (options: base, polaris-flex, polaris-sidebar)')
   .option('--skeleton-file <char>', 'path to skeleton JSON file')
@@ -354,8 +352,8 @@ async function main() {
   }
   // Security (M-1/L-5): validate --root before chdir so a missing/invalid
   // root fails with a clear message instead of a process.chdir exception.
-  // --root is not shell-interpolated (recipe replay now uses spawn args), but
-  // the metacharacter check is kept as defense-in-depth.
+  // --root is not shell-interpolated, but the metacharacter check is kept
+  // as defense-in-depth.
   if (commandRun.options.root) {
     try {
       rejectShellMetacharacters(commandRun.options.root, 'root');

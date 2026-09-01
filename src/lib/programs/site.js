@@ -8,14 +8,13 @@ import * as p from '@clack/prompts';
 import * as ejs from "ejs";
 import color from 'picocolors';
 import { dump, load } from 'js-yaml';
-import * as winston from 'winston';
 import Twig from 'twig';
 
 import { parse } from 'node-html-parser';
 import { merlinSays, communityStatement } from "../statements.js";
 import { dashToCamel, interactiveExec, exec, findAvailablePort, validateNpmClient, spawn } from "../utils.js";
-import { log, commandString } from "../logging.js";
-import { guardRecipeTokens, isSSRFError, resolveLocalPath, sanitizeIfString } from '../site-security.js';
+import { log } from "../logging.js";
+import { isSSRFError, resolveLocalPath, sanitizeIfString } from '../site-security.js';
 
 // Security (Stream-A): the deprecated @haxtheweb/open-apis npm dependency was
 // removed; converter calls now route in-process through haxcms-nodejs handlers
@@ -63,10 +62,6 @@ exec('rsync --version', error => {
   }
 });
 
-const siteRecipeFile = 'create-cli.recipe';
-const siteLoggingName = 'cli';
-const logLevels = {};
-logLevels[siteLoggingName] = 0;
 let twigConstantFunctionRegistered = false;
 let haxcmsNodejsCli = null;
 
@@ -239,38 +234,6 @@ export function formatErrorForLogging(error) {
   catch (e) {
   }
   return 'Unknown error';
-}
-
-// Run the CLI against itself with an argument array and NO shell. Captures
-// stdout/stderr to mirror the previous exec() behavior while removing the
-// shell-injection vector. Resolves on exit 0, rejects otherwise.
-function runCliNoShell(tokens) {
-  return new Promise((resolve, reject) => {
-    const createJsPath = process.mainModule.filename;
-    const child = spawn(process.execPath, [createJsPath, ...tokens], {
-      shell: false,
-      stdio: ['ignore', 'pipe', 'pipe'],
-    });
-    let stdout = '';
-    let stderr = '';
-    if (child.stdout) {
-      child.stdout.on('data', (d) => { stdout += d; });
-    }
-    if (child.stderr) {
-      child.stderr.on('data', (d) => { stderr += d; });
-    }
-    child.on('exit', (code) => {
-      if (code === 0) {
-        resolve({ stdout, stderr });
-      } else {
-        const err = new Error(`Recipe command failed with code ${code}`);
-        err.stdout = stdout;
-        err.stderr = stderr;
-        reject(err);
-      }
-    });
-    child.on('error', (err) => reject(err));
-  });
 }
 
 // Offline fix (issue #2993): `npx @haxtheweb/haxcms-nodejs` has to touch the
@@ -600,8 +563,6 @@ export function siteActions() {
     { value: 'site:vercel', label: "Publish site to Vercel"},
     { value: 'setup:github-actions', label: "Setup GitHub Actions deployment"},
     { value: 'setup:gitlab-ci', label: "Setup GitLab CI deployment"},
-    { value: 'recipe:read', label: "Read recipe file" },
-    { value: 'recipe:play', label: "Play recipe file" },
     { value: 'issue:general', label: "Issue: Submit an issue or suggestion"},
     { value: 'issue:theme', label: "Issue: Suggest custom theme"},
   ];
@@ -609,18 +570,6 @@ export function siteActions() {
 
 export async function siteCommandDetected(commandRun) {
     var activeHaxsite = await systemStructureContext();
-    const recipeFileName = path.join(process.cwd(), siteRecipeFile);
-    const recipeLogTransport = new winston.transports.File({
-      filename: recipeFileName
-    });
-    const recipe = winston.createLogger({
-      levels: logLevels,
-      level: siteLoggingName,
-      transports: [
-        recipeLogTransport
-      ],
-      format: winston.format.simple(),
-    });
     let actionAssigned = false;
     // default to status unless already set so we don't issue a create in a create
     if (!commandRun.arguments.action) {
@@ -870,7 +819,6 @@ export async function siteCommandDetected(commandRun) {
             if (!commandRun.options.quiet) {
               log(`${josImport.items.length} nodes imported`);
             }
-            recipe.log(siteLoggingName, commandString(commandRun));
           }
           else if (!commandRun.options.quiet) {
             log('Must specify --items-import as path to valid item export file or URL', 'error');
@@ -1102,7 +1050,6 @@ export async function siteCommandDetected(commandRun) {
             }
             const cliBridge = await getHaxcmsNodejsCli();
             let resp = await cliBridge.cliBridge('v1/items', createNodeBody, 'post');
-            recipe.log(siteLoggingName, commandString(commandRun));
             if (commandRun.options.v) {
               log(resp.res.data, 'silly');
             }
@@ -1236,7 +1183,6 @@ export async function siteCommandDetected(commandRun) {
                   const safeContent = sanitizeIfString(locationContent);
                   // if we have content (meaning it's not blank) then try to write the page location                    
                   if (safeContent && await page.writeLocation(safeContent)) {
-                    recipe.log(siteLoggingName, commandString(commandRun));
                     if (!commandRun.options.quiet) {
                       log(`node:edit success updated page content: "${page.id}`);
                     }
@@ -1257,7 +1203,6 @@ export async function siteCommandDetected(commandRun) {
                     page[commandRun.options.nodeOp] = commandRun.options[commandRun.options.nodeOp];
                   }
                   let resp = await activeHaxsite.updateNode(page);
-                  recipe.log(siteLoggingName, commandString(commandRun));
                   if (commandRun.options.v) {
                     log(resp, 'silly');
                   }
@@ -1299,7 +1244,6 @@ export async function siteCommandDetected(commandRun) {
                   console.warn(`node:delete failed "${commandRun.options.itemId} not found`);
                 }
                 else {
-                  recipe.log(siteLoggingName, commandString(commandRun));
                   log(`"${commandRun.options.itemId}" deleted`);
                 }    
               }
@@ -1346,7 +1290,6 @@ export async function siteCommandDetected(commandRun) {
               targetFilePath,
               `${JSON.stringify(skeletonData, null, 2)}\n`
             )
-            recipe.log(siteLoggingName, commandString(commandRun))
             if (!commandRun.options.quiet) {
               p.outro(
                 `${color.green('✓')} Skeleton exported to ${targetFilePath}`
@@ -1369,7 +1312,6 @@ export async function siteCommandDetected(commandRun) {
                 commandRun.options.skeletonFile,
                 commandRun.options.skeletonMachineName
               )
-              recipe.log(siteLoggingName, commandString(commandRun))
               if (!commandRun.options.quiet) {
                 p.outro(
                   `${color.green('✓')} Template installed as ${installData.machineName} (${installData.installPath})`
@@ -1398,7 +1340,6 @@ export async function siteCommandDetected(commandRun) {
                 throw new Error('Failed to save current site as skeleton template')
               }
               const installData = saveResponse.data.data
-              recipe.log(siteLoggingName, commandString(commandRun))
               if (!commandRun.options.quiet) {
                 p.outro(
                   `${color.green('✓')} Template installed as ${installData.name}`
@@ -1550,8 +1491,6 @@ export async function siteCommandDetected(commandRun) {
                 console.error(result.stderr);
               }
             }
-            
-            recipe.log(siteLoggingName, commandString(commandRun));
             if (!commandRun.options.quiet) {
               p.outro(`${color.green('✓')} ${dryRun ? 'Dry run completed' : 'Rsync completed successfully'}`);
             }
@@ -1629,7 +1568,6 @@ export async function siteCommandDetected(commandRun) {
               if (themes[commandRun.options.theme]){
                 activeHaxsite.manifest.metadata.theme = themes[commandRun.options.theme];
                 activeHaxsite.manifest.save(false);
-                recipe.log(siteLoggingName, commandString(commandRun));
               } else if (commandRun.options.theme === "custom-theme") {
                 commandRun.options.name = activeHaxsite.name;
                 commandRun.options.directory = activeHaxsite.directory;
@@ -2196,7 +2134,6 @@ export async function siteCommandDetected(commandRun) {
                       site: { name: activeHaxsite.name }
                     }, 'post');
                     logStructuredOutput(commandRun, resp.res.data);
-                    recipe.log(siteLoggingName, commandString(commandRun));
                   }
                 } else {
                   log('Revision ID is required for restore', 'error');
@@ -2262,7 +2199,6 @@ export async function siteCommandDetected(commandRun) {
                 if (!commandRun.options.quiet) {
                   p.outro(`${color.green('✓')} Exported to ${targetFile}`);
                 }
-                recipe.log(siteLoggingName, commandString(commandRun));
               } else {
                 // zip/markdown/skeleton: the v1 backend returns a JSON export
                 // descriptor (follow data.export.href for the actual file),
@@ -2323,7 +2259,6 @@ export async function siteCommandDetected(commandRun) {
                 if (!commandRun.options.quiet) {
                   p.outro(`${color.green('✓')} Uploaded ${uploaded} files`);
                 }
-                recipe.log(siteLoggingName, commandString(commandRun));
               } else {
                 let tmpFile = path.join(os.tmpdir(), `hax-cli-upload-${Date.now()}-${Math.floor(Math.random() * 1000000)}-${path.basename(commandRun.options.source)}`);
                 fs.copyFileSync(commandRun.options.source, tmpFile);
@@ -2338,7 +2273,6 @@ export async function siteCommandDetected(commandRun) {
                 }, 'post', fileObj);
                 try { fs.unlinkSync(tmpFile); } catch (e) {}
                 logStructuredOutput(commandRun, resp.res.data);
-                recipe.log(siteLoggingName, commandString(commandRun));
               }
             }
           }
@@ -2377,7 +2311,6 @@ export async function siteCommandDetected(commandRun) {
                   site: { name: activeHaxsite.name }
                 }, 'delete');
                 logStructuredOutput(commandRun, resp.res.data);
-                recipe.log(siteLoggingName, commandString(commandRun));
               }
             }
           }
@@ -2442,7 +2375,6 @@ export async function siteCommandDetected(commandRun) {
             const cliBridge = await getHaxcmsNodejsCli();
             let resp = await cliBridge.cliBridge('v1/content', replaceBody, 'patch');
             logStructuredOutput(commandRun, resp.res.data);
-            recipe.log(siteLoggingName, commandString(commandRun));
           }
           catch(e) {
             log(formatErrorForLogging(e), 'error');
@@ -2523,81 +2455,6 @@ export async function siteCommandDetected(commandRun) {
               }
               else {
                 log(siteContent);
-              }
-            }
-          }
-        break;
-        // @todo need to make these work..
-        case "recipe:read":
-          // just print the recipe out
-          if (fs.existsSync(path.join(process.cwd(), `${siteRecipeFile}`))) {
-            let recContents = await fs.readFileSync(path.join(process.cwd(), `${siteRecipeFile}`),'utf8');
-            console.log(recContents);
-          }
-        break;
-        case "recipe:play":
-          // step through and run each recipe once fed a file location
-          // this allows for storing commands from a site and then replaying them with ease
-          if (!commandRun.options.recipe) {
-            commandRun.options.recipe = await p.text({
-              message: `Select recipe:`,
-              defaultValue: process.cwd(),
-              initialValue: process.cwd(),
-              validate: (val) => {
-                if (!val.endsWith('.recipe')) {
-                  return 'HAX Recipe files must end in .recipe';
-                }
-              }
-            });
-          }
-          if (fs.existsSync(commandRun.options.recipe)) {
-            // Security (L-1): canonicalize + reject null bytes for the recipe path.
-            let recContents = await fs.readFileSync(resolveLocalPath(commandRun.options.recipe),'utf8');
-            // split into commands
-            let commandList = recContents.replaceAll('cli: ', '').split("\n");
-            // Security (H-4): rootDir is now an argv array (was a shell string).
-            let rootDirTokens = [];
-            // confirm each command or allow --y so that it auto applies
-            for (var i in commandList) {
-              // verify every command starts this way for safety
-              if (commandList[i].startsWith('hax site')) {
-                let confirmation;
-                if (commandRun.options.y) {
-                  confirmation = true;
-                }
-                else {
-                  confirmation = await p.confirm({
-                    message: `Do you want to run ${commandList[i]}? (This cannot be undone)`,
-                    initialValue: true,
-                  });
-                }
-                // confirmed; let's run!
-                if (confirmation) {
-                  // Security (H-4): tokenize and invoke via spawn() (no shell)
-                  // so recipe contents cannot inject shell commands. Drop the
-                  // leading "hax" token; the rest is argv to the CLI.
-                  let tokens = commandList[i].split(' ').filter((t) => t.length > 0).slice(1);
-                  let commandMatch = siteActions().filter((action) => action.value === tokens[1]);
-                  // if we found a command that means it is a valid command to run against the site
-                  if (commandMatch.length > 0) {
-                    guardRecipeTokens([...tokens, ...rootDirTokens]);
-                    await runCliNoShell([...tokens, '--y', '--no-i', '--auto', '--quiet', ...rootDirTokens]);
-                  }
-                  // 1st command won't match as the argument creates a new site
-                  // but ensure we don't have a site context prior to running this
-                  // or we'll get a site in a site with the same name which is not
-                  // the desired result
-                  else if (!await systemStructureContext()) {
-                    guardRecipeTokens(tokens);
-                    await runCliNoShell([...tokens, '--y', '--no-i', '--auto', '--quiet', '--no-extras']);
-                    // site will have been created, obtain the site name and set root so
-                    // the other commands get piped into it correctly
-                    rootDirTokens = ['--root', tokens[1]];
-                  }
-                  else {
-                    log('Did not run because we already have a site', 'warn');
-                  }
-                }
               }
             }
           }
@@ -3084,27 +2941,12 @@ export async function siteProcess(commandRun, project, port = '3000') {    // au
     s.start(merlinSays(`Creating new site: ${project.name}`));
     await setTimeout(1000);
   }
-  // path different for this one as it's on the fly produced
-  const recipeFileName = path.join(project.path, '/', project.name, `${siteRecipeFile}`);
-  const recipeLogTransport = new winston.transports.File({
-    filename: recipeFileName
-  });
-
-  const recipe = winston.createLogger({
-    levels: logLevels,
-    level: siteLoggingName,
-    transports: [
-      recipeLogTransport
-    ],
-    format: winston.format.simple(),
-  });
   // matching the common object elsewhere tho different reference in this command since it creates from nothing
   // capture this if use input on the fly
   if(!commandRun.arguments.action){
     commandRun.arguments.action = project.name;
   }
   commandRun.options.theme = project.theme;
-  recipe.log(siteLoggingName, commandString(commandRun));
   if (commandRun.options.v) {
     logStructuredOutput(commandRun, res.data, 'silly');
   }
