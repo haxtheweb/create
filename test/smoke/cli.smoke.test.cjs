@@ -84,6 +84,66 @@ test('CLI webcomponent --help prints the wc subcommand usage and exits 0', smoke
   assert.match(res.stdout, /Usage:/i)
 })
 
+test('CLI party --help prints the party subcommand usage and exits 0', smokeOpts, () => {
+  const res = spawnSync(process.execPath, [CLI, 'party', '--help'], {
+    encoding: 'utf8',
+    env: ISOLATED_ENV,
+    timeout: 15000,
+  })
+  assert.equal(res.status, 0, `stderr: ${res.stderr}`)
+  assert.match(res.stdout, /Usage:/i)
+})
+
+test('CLI audit --help prints the audit subcommand usage and exits 0', smokeOpts, () => {
+  const res = spawnSync(process.execPath, [CLI, 'audit', '--help'], {
+    encoding: 'utf8',
+    env: ISOLATED_ENV,
+    timeout: 15000,
+  })
+  assert.equal(res.status, 0, `stderr: ${res.stderr}`)
+  assert.match(res.stdout, /Usage:/i)
+})
+
+test('CLI skills --help prints the skills subcommand usage and exits 0', smokeOpts, () => {
+  const res = spawnSync(process.execPath, [CLI, 'skills', '--help'], {
+    encoding: 'utf8',
+    env: ISOLATED_ENV,
+    timeout: 15000,
+  })
+  assert.equal(res.status, 0, `stderr: ${res.stderr}`)
+  assert.match(res.stdout, /Usage:/i)
+})
+
+test('CLI update --help prints the update subcommand usage and exits 0', smokeOpts, () => {
+  const res = spawnSync(process.execPath, [CLI, 'update', '--help'], {
+    encoding: 'utf8',
+    env: ISOLATED_ENV,
+    timeout: 15000,
+  })
+  assert.equal(res.status, 0, `stderr: ${res.stderr}`)
+  assert.match(res.stdout, /Usage:/i)
+})
+
+test('CLI serve --help prints the serve subcommand usage and exits 0', smokeOpts, () => {
+  const res = spawnSync(process.execPath, [CLI, 'serve', '--help'], {
+    encoding: 'utf8',
+    env: ISOLATED_ENV,
+    timeout: 15000,
+  })
+  assert.equal(res.status, 0, `stderr: ${res.stderr}`)
+  assert.match(res.stdout, /Usage:/i)
+})
+
+test('CLI start --help prints the start subcommand usage and exits 0', smokeOpts, () => {
+  const res = spawnSync(process.execPath, [CLI, 'start', '--help'], {
+    encoding: 'utf8',
+    env: ISOLATED_ENV,
+    timeout: 15000,
+  })
+  assert.equal(res.status, 0, `stderr: ${res.stderr}`)
+  assert.match(res.stdout, /Usage:/i)
+})
+
 test('CLI audit exits 0 on a clean fixture directory (compliant)', smokeOpts, () => {
   // audit uses process.cwd() as the project root; run it with cwd = an empty
   // temp dir so there are no CSS files to flag and it exits 0 (compliant).
