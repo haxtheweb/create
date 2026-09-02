@@ -19,7 +19,7 @@ Operate HAX sites from Claude Code using the ClaudeHAX plugin, HAX CLI, and HAX 
 
 ## When to Use
 
-- The user has the ClaudeHAX plugin installed (`/plugin install hax@claudehax`)
+- The user has the ClaudeHAX plugin installed (`/plugin install hax-site-ops@haxtheweb`)
 - Adding pages, courses, or lessons to a HAX site
 - Updating page content, videos, or media
 - Adding assessments, quizzes, flash cards, or interactive content
@@ -45,21 +45,21 @@ Inside Claude Code:
 
 1. Add the marketplace:
    ```
-   /plugin marketplace add haxtheweb/claudehax
+   /plugin marketplace add haxtheweb/praw
    ```
 2. Install the plugin:
    ```
-   /plugin install hax@claudehax
+   /plugin install hax-site-ops@haxtheweb
    ```
 3. Verify:
    ```
    /plugin list
    ```
-   Should show `hax` in the list.
+   Should show `hax-site-ops` in the list.
 
 To update the plugin when a new version is released:
 ```
-/plugin update hax
+/plugin update hax-site-ops
 ```
 
 ## Common /hax Commands
@@ -160,7 +160,7 @@ If the user is starting from an OpenStax book, use the `hax-openstax2hax` skill 
 
 ## References
 
-- ClaudeHAX repository: `https://github.com/haxtheweb/claudehax`
+- ClaudeHAX plugin marketplace (PRAW): `https://github.com/haxtheweb/praw`
 - HAX CLI package: `https://www.npmjs.com/package/@haxtheweb/create`
 - HAX Documentation: `https://haxtheweb.org/`
 - HAX web components: `https://github.com/haxtheweb/webcomponents/tree/master/elements`
