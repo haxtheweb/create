@@ -51,6 +51,30 @@ HAX is built on a foundation of community pillars that guide all development dec
 - **Modularity**: Components work independently and compose together seamlessly
 - **Ubiquitous Web**: The web needs a file format - content should "just work" regardless of how it was built
 
+## Quickstart for new users
+
+Get from zero to a running HAX site in three steps:
+
+```bash
+# 1. Ensure the HAX CLI is installed
+npm install --global @haxtheweb/create
+
+# 2. Scaffold a new HAXsite (no prompts, scriptable)
+hax site my-hax-site --y --no-i
+
+# 3. Serve it locally
+cd my-hax-site && hax serve
+# open http://localhost in your browser
+```
+
+> **Codex users**: AGENTS.md is read natively by Codex, so the steps above are your onboarding path — no extra plugin required.
+>
+> **Claude Code users**: you can also install the HAX onboarding plugin for golden-path slash commands:
+> ```
+> /plugin marketplace add haxtheweb/praw
+> /plugin install hax-onboarding@haxtheweb
+> ```
+
 ## Development Environment Setup
 
 ### Issue Management

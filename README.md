@@ -59,6 +59,33 @@ hax skills install --all --path ./test-site/.agents/skills  # custom target
 
 Workflow and knowledge skills (media ingestion, OpenStax conversion, DDD design system, issue analysis, rule management, Bloom's taxonomy) live in the [PRAW repository](https://github.com/haxtheweb/praw) and are not bundled with the CLI.
 
+## AI integration
+
+HAX works with any AI coding agent. There are two install paths depending on your tool:
+
+```bash
+# Warp / Oz / any agent — install the bundled interface skills
+hax skills install --all
+
+# Claude Code — add the PRAW marketplace and install the onboarding plugin
+/plugin marketplace add haxtheweb/praw
+/plugin install hax-onboarding@haxtheweb
+```
+
+The PRAW marketplace ships three Claude Code plugins:
+- **`hax-onboarding`** — golden-path slash commands plus an auto-install hook that ensures the `hax` CLI is present
+- **`hax-site-ops`** — the site-operations skill and reference docs (the renamed ClaudeHAX plugin, which resolves the old name collision)
+- **`openstax2hax`** — OpenStax-to-HAX conversion, folded in unchanged
+
+Golden path from zero to a running site:
+```bash
+hax site my-hax-site --y --no-i
+cd my-hax-site && hax serve
+# open the local URL printed by hax serve (http://localhost)
+```
+
+See the AI integration page on the [HAX documentation site](https://haxtheweb.org/) for the full guide.
+
 ## --help
 Run `hax help` or `hax webcomponent --help` or `hax site --help` for up-to-date listing
 ```
