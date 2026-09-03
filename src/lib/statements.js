@@ -54,7 +54,13 @@ export function communityStatement() {
     `);
   }
   
-  // standardize merlin statements visually
+  // standardize merlin statements visually.
+  // Canonical shared source: @haxtheweb/haxcms-nodejs/src/lib/cliTheme.js
+  // merlinSays(). Keep this byte-for-byte in sync with that copy so the whole
+  // HAX CLI speaks with one Merlin voice. (Not imported from there directly
+  // because party.js / audit.js load this module in unit tests without the
+  // haxcms-nodejs dist present; importing it here would newly gate those tests
+  // on haxcms-nodejs dist in CI.)
   export function merlinSays(text) {
     return `${color.yellow(color.bgBlack(` 🧙 Merlin: `))} ${color.bgBlack(color.green(` ${text} `))}`;
   }
