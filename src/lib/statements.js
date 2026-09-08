@@ -48,7 +48,7 @@ export function communityStatement() {
       
       🧵  Tweet on X: ${color.underline(color.white('https://bit.ly/hax-the-x'))}
       
-      💬  Join Community: ${color.underline(color.cyan('https://discord.gg/EKYJAjqGhf'))}
+      💬  Join Community: ${color.underline(color.cyan('https://discord.gg/aCGxmRHEJP'))}
       
       💡  ${color.bold(color.white(`Never. Stop. Innovating.`))}
     `);

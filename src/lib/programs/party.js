@@ -178,8 +178,8 @@ export async function partyCommandDetected(commandRun) {
         // open the discord
         p.intro(`${color.bgBlue(color.white(` HAX Discord `))}`);
         p.intro(`${color.bgBlue(color.white(` Opening in browser `))}`);
-        await open("https://discord.gg/EKYJAjqGhf");
-        p.outro(`${color.bgBlue(color.white(` https://discord.gg/EKYJAjqGhf `))}`);
+        await open("https://discord.gg/aCGxmRHEJP");
+        p.outro(`${color.bgBlue(color.white(` https://discord.gg/aCGxmRHEJP `))}`);
       break;
       case "club":
         // open the club
