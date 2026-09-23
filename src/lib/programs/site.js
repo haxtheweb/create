@@ -195,6 +195,44 @@ const IMPORT_STRUCTURE_MAP = {
   docxToSite: { routeKey: 'actions/import-docx' },
   xlsxToSite: { routeKey: 'actions/import-xlsx' },
 };
+// Build the build.files map for a scraped Drupal7 book-print-html page: each
+// <img src="/..."> (absolute-path, not protocol-relative //) is recorded as
+// files[relativeSrc] = absoluteImgUrl so the backend's bulk-import path can
+// download it. The leading slash is stripped from the key because both
+// backends' normalizeBulkImportName() reject keys that start with '/' (the
+// file is saved relative to files/ anyway). Each image URL is SSRF-validated
+// before being recorded. Returns { files, skipped } where skipped lists the
+// SSRF-rejected URLs for caller logging. Exported for unit testing.
+export async function buildDrupalImageFilesMap(html, origin, { assertUrlNotSSRF } = {}) {
+  const files = {};
+  const skipped = [];
+  if (typeof html !== 'string' || html === '') {
+    return { files, skipped };
+  }
+  const dom = parse(html);
+  for (const image of dom.querySelectorAll("img[src^='/']")) {
+    const imgSrc = image.getAttribute('src');
+    if (!imgSrc || imgSrc.startsWith('//')) {
+      continue;
+    }
+    const imgUrl = `${origin}${imgSrc}`;
+    if (typeof assertUrlNotSSRF === 'function') {
+      try {
+        await assertUrlNotSSRF(imgUrl);
+      } catch (e) {
+        skipped.push(imgUrl);
+        continue;
+      }
+    }
+    // strip leading slashes so the key is files/-relative, not absolute;
+    // both backends reject leading-slash keys via normalizeBulkImportName.
+    const relativeSrc = imgSrc.replace(/^\/+/, '');
+    if (relativeSrc) {
+      files[relativeSrc] = imgUrl;
+    }
+  }
+  return { files, skipped };
+}
 export function formatStructuredOutput(commandRun, value) {
   if (commandRun.options.format === 'yaml') {
     return dump(value);
@@ -2896,27 +2934,24 @@ export async function siteProcess(commandRun, project, port = '3000') {    // au
                 order3++;
               }
             }
-            // obtain all images on the system to bring along with additional spider request
-            let location = new URL(commandRun.options.importSite).origin;
-            var files = {};
-            for (let image of dom.querySelectorAll("img[src^='/']")) {
-              const imgSrc = image.getAttribute('src');
-              if (imgSrc && !imgSrc.startsWith('//')) {
-                // Security (H-3): validate each remote-controlled image URL
-                // before recording it for download; reject SSRF targets.
-                const imgUrl = `${location}${imgSrc}`;
-                try {
-                  await assertUrlNotSSRF(imgUrl);
-                  files[imgSrc] = imgUrl;
-                } catch (e) {
-                  if (!commandRun.options.quiet) {
-                    log(`Skipping image URL (SSRF-guarded): ${imgUrl}`, 'warn');
-                  }
-                }
-              }
-            }
-            siteRequest.build.files = files;
           }
+          // Obtain all images to bring along with the spider request; strip
+          // leading slashes from the keys so both backends' bulk-import
+          // normalizeBulkImportName() accepts them (it rejects leading '/').
+          // Security (H-3): each image URL is SSRF-validated inside the helper
+          // before being recorded.
+          const importOrigin = new URL(commandRun.options.importSite).origin;
+          const { files: drupalFiles, skipped: drupalSkipped } = await buildDrupalImageFilesMap(
+            siteContent,
+            importOrigin,
+            { assertUrlNotSSRF }
+          );
+          for (const skippedUrl of drupalSkipped) {
+            if (!commandRun.options.quiet) {
+              log(`Skipping image URL (SSRF-guarded): ${skippedUrl}`, 'warn');
+            }
+          }
+          siteRequest.build.files = drupalFiles;
           siteRequest.build.structure = 'import';
           siteRequest.build.items = items;
         }
