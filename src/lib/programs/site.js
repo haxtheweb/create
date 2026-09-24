@@ -182,7 +182,7 @@ async function invokeRoute(routeHandler, body = {}, query = {}, params = {}) {
 // converters go through the site/import/:platform dispatcher; docx/xlsx use their
 // own actions routes. evolutionToSite (custom zip upload) is intentionally absent
 // and falls through to the hidden-methodologies branch below.
-const IMPORT_STRUCTURE_MAP = {
+export const IMPORT_STRUCTURE_MAP = {
   haxcmsToSite: { platform: 'haxcms' },
   pressbooksToSite: { platform: 'pressbooks' },
   gitbookToSite: { platform: 'gitbook' },
@@ -191,6 +191,7 @@ const IMPORT_STRUCTURE_MAP = {
   ploneToSite: { platform: 'plone' },
   wordpressPagesToSite: { platform: 'wordpress' },
   drupalBookToSite: { platform: 'drupal-book' },
+  openstaxToSite: { platform: 'openstax' },
   htmlToSite: { platform: 'html' },
   docxToSite: { routeKey: 'actions/import-docx' },
   xlsxToSite: { routeKey: 'actions/import-xlsx' },
