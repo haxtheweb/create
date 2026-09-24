@@ -78,7 +78,7 @@ async function main() {
 
   // options for site
   .option('--import-site <char>', 'URL of site to import')
-  .option('--import-structure <char>', `import method to use:\n\rpressbooksToSite\n\relmslnToSite\n\rhaxcmsToSite\n\rnotionToSite\n\rgitbookToSite\n\revolutionToSite\n\rploneToSite\n\rwordpressPagesToSite\n\rdrupalBookToSite\n\rhtmlToSite\n\rdocxToSite`)
+  .option('--import-structure <char>', `import method to use:\n\rpressbooksToSite\n\relmslnToSite\n\rhaxcmsToSite\n\rnotionToSite\n\rgitbookToSite\n\revolutionToSite\n\rploneToSite\n\rwordpressPagesToSite\n\rdrupalBookToSite\n\ropenstaxToSite\n\rhtmlToSite\n\rdocxToSite\n\rxlsxToSite`)
   .option('--node-op <char>', 'node operation to perform')
   .option('--item-id <char>', 'node ID to operate on')
   .option('--domain <char>', 'published domain name')
@@ -192,7 +192,7 @@ async function main() {
   .option('--root <char>', 'root location to execute the command from')
 
   .option('--import-site <char>', 'URL of site to import')
-  .option('--import-structure <char>', `import method to use:\n\rpressbooksToSite\n\relmslnToSite\n\rhaxcmsToSite\n\rnotionToSite\n\rgitbookToSite\n\revolutionToSite\n\rploneToSite\n\rwordpressPagesToSite\n\rdrupalBookToSite\n\rhtmlToSite\n\rdocxToSite`)
+  .option('--import-structure <char>', `import method to use:\n\rpressbooksToSite\n\relmslnToSite\n\rhaxcmsToSite\n\rnotionToSite\n\rgitbookToSite\n\revolutionToSite\n\rploneToSite\n\rwordpressPagesToSite\n\rdrupalBookToSite\n\ropenstaxToSite\n\rhtmlToSite\n\rdocxToSite\n\rxlsxToSite`)
   .option('--name <char>', 'name of the site (when creating a new one)')
   .option('--domain <char>', 'published domain name')
   .option('--node-op <char>', 'node operation to perform')
