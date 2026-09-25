@@ -42,12 +42,17 @@ test('every platform importer maps to its dispatcher platform', opts, () => {
     wordpressPagesToSite: 'wordpress',
     drupalBookToSite: 'drupal-book',
     openstaxToSite: 'openstax',
+    vitepressToSite: 'vitepress',
     htmlToSite: 'html',
   })
 })
 
 test('openstaxToSite reaches the openstax dispatcher case', opts, () => {
   assert.deepEqual(IMPORT_STRUCTURE_MAP.openstaxToSite, { platform: 'openstax' })
+})
+
+test('vitepressToSite reaches the vitepress dispatcher case', opts, () => {
+  assert.deepEqual(IMPORT_STRUCTURE_MAP.vitepressToSite, { platform: 'vitepress' })
 })
 
 test('docx and xlsx keep their own action routes', opts, () => {
@@ -59,8 +64,15 @@ test('the --import-structure help and man page list every mapped importer', opts
   const root = path.join(__dirname, '..', '..')
   const help = fs.readFileSync(path.join(root, 'src', 'create.js'), 'utf8')
   const manPage = fs.readFileSync(path.join(root, 'src', 'docs', 'hax.1'), 'utf8')
+  // `hax site` and `hax site:create` each declare their own --import-structure
+  // help string, so every mapped name has to appear in both: a name listed in
+  // one of them is still missing from the other command.
+  const helpLists = Array.from(help.matchAll(/--import-structure <char>', `([^`]*)`/g)).map((match) => match[1])
+  assert.equal(helpLists.length, 2, 'both commands declare an --import-structure help string')
   Object.keys(IMPORT_STRUCTURE_MAP).forEach((name) => {
-    assert.ok(help.includes(name), name + ' is offered by --import-structure')
+    helpLists.forEach((list, index) => {
+      assert.ok(list.includes(name), name + ' is offered by --import-structure (help string ' + (index + 1) + ')')
+    })
     assert.ok(manPage.includes(name), name + ' is documented in the man page')
   })
 })
