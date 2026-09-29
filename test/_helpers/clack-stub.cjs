@@ -19,6 +19,15 @@
 // MUST be installed BEFORE requiring any src module that imports
 // @clack/prompts, so the module under test binds to the stub.
 
+// Deterministic, color-free recorded output. picocolors (pulled in by
+// @clack/prompts and every src module) only disables colors when stdout is
+// NOT a TTY, so these tests would record inline ANSI codes (e.g.
+// `hax wc <esc>[1mquit<esc>[22m`) when run from an interactive terminal and
+// break content assertions. NO_COLOR forces colors off regardless of
+// TTY/FORCE_COLOR/CI, and must be set before picocolors is first required
+// because it decides at module load time.
+process.env.NO_COLOR = '1'
+
 const Module = require('node:module')
 const path = require('node:path')
 
