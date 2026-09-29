@@ -192,6 +192,7 @@ export const IMPORT_STRUCTURE_MAP = {
   wordpressPagesToSite: { platform: 'wordpress' },
   drupalBookToSite: { platform: 'drupal-book' },
   openstaxToSite: { platform: 'openstax' },
+  vitepressToSite: { platform: 'vitepress' },
   htmlToSite: { platform: 'html' },
   docxToSite: { routeKey: 'actions/import-docx' },
   xlsxToSite: { routeKey: 'actions/import-xlsx' },
