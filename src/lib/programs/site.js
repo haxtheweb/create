@@ -65,7 +65,7 @@ exec('rsync --version', error => {
 let twigConstantFunctionRegistered = false;
 let haxcmsNodejsCli = null;
 
-function ensureTwigConstantFunction() {
+export function ensureTwigConstantFunction() {
   if (twigConstantFunctionRegistered) {
     return;
   }
@@ -283,7 +283,7 @@ export function formatErrorForLogging(error) {
 // shelling out through npx. Falls back to the original npx invocation if
 // local resolution or the direct spawn fails, so unusual install layouts
 // keep working exactly as before.
-function resolveHaxcmsNodejsBin() {
+export function resolveHaxcmsNodejsBin() {
   try {
     return require.resolve('@haxtheweb/haxcms-nodejs/dist/local.js');
   }
@@ -292,7 +292,7 @@ function resolveHaxcmsNodejsBin() {
   }
 }
 
-function execNpxHaxcmsNodejsFallback(cwd, env) {
+export function execNpxHaxcmsNodejsFallback(cwd, env) {
   return exec(`npx @haxtheweb/haxcms-nodejs`, { cwd, env });
 }
 
@@ -300,7 +300,7 @@ function execNpxHaxcmsNodejsFallback(cwd, env) {
 // launch-on-create flow. Prefers spawning the already-installed dependency
 // in-process (no network required); only falls back to `npx` if that isn't
 // possible.
-function spawnHaxcmsNodejs(cwd, env) {
+export function spawnHaxcmsNodejs(cwd, env) {
   const resolvedBin = resolveHaxcmsNodejsBin();
   if (!resolvedBin) {
     return execNpxHaxcmsNodejsFallback(cwd, env);
@@ -3314,7 +3314,7 @@ async function customSiteTheme(commandRun, project) {
 }
 
 // @fork of the hax core util for this so that we avoid api difference between real dom and parse nodejs dom
-async function nodeToHaxElement(node, eventName = "insert-element") {
+export async function nodeToHaxElement(node, eventName = "insert-element") {
   if (!node) {
     return null;
   }

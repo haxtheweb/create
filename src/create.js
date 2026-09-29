@@ -1112,7 +1112,7 @@ async function main() {
 }
 
 // check for updates
-async function testForUpdates(commandRun) {
+export async function testForUpdates(commandRun) {
   // Issue #2993: this is reachable both from the explicit `hax update`
   // command and the interactive "Check for hax cli updates" menu item, so a
   // hung/unreachable registry must not throw unhandled here. Bound the call
