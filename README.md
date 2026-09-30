@@ -25,6 +25,13 @@ npm install @haxtheweb/create --global
 hax start
 ```
 
+## Who the hax CLI is for
+
+- **Web component developers** — scaffold HAX-capable, i18n-wired, DDD-driven components in one command.
+- **Site builders and course designers** — create, serve, and publish HAXsites from the terminal, or hand the same work to an AI agent via the bundled skills.
+- **AI coding agents and their users** — bundled interface skills and the PRAW plugin marketplace teach any agent the full CLI surface.
+- **Campus IT and instructional designers** — import existing content (Pressbooks, Notion, GitBook, Word, HTML, and more) into portable HAX sites.
+
 # Commands
 
 ## Default / global / new context
