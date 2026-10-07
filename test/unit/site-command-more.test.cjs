@@ -461,6 +461,85 @@ for (const publisher of ['surge', 'netlify', 'vercel']) {
   })
 }
 
+// --- surge 0.40+ grammar: scripted / interactive publish targeting ---
+// surge 0.40 stopped publishing on a bare `surge .` (it only prints project
+// info now), so the publish flow must always resolve a target: --domain,
+// then the domain surge remembered in the project's CNAME, then (with --y)
+// the deterministic haxcli-<name>.surge.sh default for scripted first publishes
+
+test('site:surge --y without --domain or CNAME publishes to the haxcli- default domain', opts, async () => {
+  resetMocks()
+  const exitCode = await runSite({
+    command: 'site',
+    arguments: { action: 'site:surge' },
+    options: { quiet: true, i: true, y: true },
+  })
+  assert.equal(exitCode, 0)
+  const publish = execCalls.find((c) => c.cmd.includes('surge .'))
+  assert.ok(publish, 'surge publish executed')
+  assert.ok(
+    publish.cmd.endsWith('surge . haxcli-fakesite.surge.sh'),
+    'deterministic haxcli-<name>.surge.sh default used for the scripted first publish',
+  )
+})
+
+test('site:surge --y republishes to the domain remembered in the project CNAME', opts, async () => {
+  resetMocks()
+  fs.writeFileSync(path.join(SITE_DIR, 'CNAME'), 'previous-domain.surge.sh\n')
+  try {
+    const exitCode = await runSite({
+      command: 'site',
+      arguments: { action: 'site:surge' },
+      options: { quiet: true, i: true, y: true },
+    })
+    assert.equal(exitCode, 0)
+    const publish = execCalls.find((c) => c.cmd.includes('surge .'))
+    assert.ok(publish, 'surge publish executed')
+    assert.ok(
+      publish.cmd.endsWith('surge . previous-domain.surge.sh'),
+      'CNAME-remembered domain wins over the haxcli- default',
+    )
+  } finally {
+    fs.rmSync(path.join(SITE_DIR, 'CNAME'), { force: true })
+  }
+})
+
+test('site:surge interactive first publish uses the surge 0.40 publish verb, not a bare surge .', opts, async () => {
+  resetMocks()
+  const exitCode = await runSite({
+    command: 'site',
+    arguments: { action: 'site:surge' },
+    options: { quiet: true, i: true },
+  })
+  assert.equal(exitCode, 0)
+  // the interactiveExec mock records `${cmd} ${args.join(' ')}`; on
+  // surge >= 0.40 a bare `surge .` only prints project info instead of
+  // publishing, so the first interactive publish needs the publish verb
+  assert.ok(
+    execCalls.some((c) => c.cmd === 'surge . publish'),
+    'surge . publish invoked for the interactive no-domain publish',
+  )
+})
+
+test('site:surge interactive republish passes the CNAME domain through without prompting', opts, async () => {
+  resetMocks()
+  fs.writeFileSync(path.join(SITE_DIR, 'CNAME'), 'previous-domain.surge.sh')
+  try {
+    const exitCode = await runSite({
+      command: 'site',
+      arguments: { action: 'site:surge' },
+      options: { quiet: true, i: true },
+    })
+    assert.equal(exitCode, 0)
+    assert.ok(
+      execCalls.some((c) => c.cmd === 'surge . previous-domain.surge.sh'),
+      'CNAME domain passed as the publish target (path + domain publishes unprompted)',
+    )
+  } finally {
+    fs.rmSync(path.join(SITE_DIR, 'CNAME'), { force: true })
+  }
+})
+
 // --- setup scaffolds ---
 
 test('setup:github-actions copies the workflow into the site', opts, async () => {

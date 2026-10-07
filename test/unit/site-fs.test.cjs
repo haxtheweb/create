@@ -19,6 +19,8 @@ const {
   fixLegacyIgnoreFile,
   prepareSiteForStaticPublish,
   restoreSiteAfterStaticPublish,
+  readSurgeCnameDomain,
+  surgeUsesNewGrammar,
 } = available ? siteModule : {}
 
 const opts = { skip: skipReason, timeout: 15000 }
@@ -187,4 +189,55 @@ test('restoreSiteAfterStaticPublish returns false when there is no backup', opts
   } finally {
     fs.rmSync(root, { recursive: true, force: true })
   }
+})
+
+// --- readSurgeCnameDomain: surge's remembered publish target ---
+
+test('readSurgeCnameDomain returns null when there is no CNAME', opts, () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'hax-cname-missing-'))
+  try {
+    assert.equal(readSurgeCnameDomain(root), null)
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true })
+  }
+})
+
+test('readSurgeCnameDomain reads and trims the remembered domain', opts, () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'hax-cname-read-'))
+  try {
+    fs.writeFileSync(path.join(root, 'CNAME'), '  my-site.surge.sh\n')
+    assert.equal(readSurgeCnameDomain(root), 'my-site.surge.sh')
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true })
+  }
+})
+
+test('readSurgeCnameDomain returns null for a blank CNAME', opts, () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'hax-cname-blank-'))
+  try {
+    fs.writeFileSync(path.join(root, 'CNAME'), '\n')
+    assert.equal(readSurgeCnameDomain(root), null)
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true })
+  }
+})
+
+// --- surgeUsesNewGrammar: the surge 0.40 CLI grammar gate ---
+
+test('surgeUsesNewGrammar gates the publish verb on the 0.40 CLI reorganization', opts, () => {
+  // legacy CLI: a bare `surge .` still prompted for a domain and published
+  assert.equal(surgeUsesNewGrammar('0.23.1'), false)
+  assert.equal(surgeUsesNewGrammar('0.39.9'), false)
+  // 0.40 reorganized the grammar: a bare `surge .` only prints project info
+  assert.equal(surgeUsesNewGrammar('0.40.0'), true)
+  assert.equal(surgeUsesNewGrammar('0.44.3'), true)
+  assert.equal(surgeUsesNewGrammar('1.0.0'), true)
+  // unknown version (probe skipped/mocked, fresh global install): assume the
+  // modern grammar, which is what `npm install --global surge` ships today
+  assert.equal(surgeUsesNewGrammar(null), true)
+  assert.equal(surgeUsesNewGrammar(undefined), true)
+  assert.equal(surgeUsesNewGrammar('not-a-version'), true)
+  // no argument reads the version captured by the module-load probe (null in
+  // this suite because utils.exec is mocked before site.js is required)
+  assert.equal(surgeUsesNewGrammar(), true)
 })

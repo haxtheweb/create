@@ -182,6 +182,10 @@ Publish site to surge.sh, setting the domain to be `my-cool-blog.surge.sh`
 ```bash
 hax site site:surge --domain my-cool-blog.surge.sh
 ```
+Publish site to surge.sh, automated deployment (republishes to the domain remembered in the site's CNAME file, otherwise `haxcli-<site-name>.surge.sh`)
+```bash
+hax site site:surge --y --no-i
+```
 Publish site to Netlify, interactively
 ```bash
 hax site site:netlify

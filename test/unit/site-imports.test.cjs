@@ -40,7 +40,7 @@ test('every platform importer maps to its dispatcher platform', opts, () => {
     elmslnToSite: 'elmsln',
     ploneToSite: 'plone',
     wordpressPagesToSite: 'wordpress',
-    drupalBookToSite: 'drupal-book',
+    drupalToSite: 'drupal',
     openstaxToSite: 'openstax',
     vitepressToSite: 'vitepress',
     htmlToSite: 'html',

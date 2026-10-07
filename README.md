@@ -130,7 +130,7 @@ Options:
                                       evolutionToSite
                                       ploneToSite
                                       wordpressPagesToSite
-                                      drupalBookToSite
+                                      drupalToSite
                                       htmlToSite
                                       docxToSite
   --node-op <char>                    node operation to perform

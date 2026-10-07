@@ -12,7 +12,7 @@ import Twig from 'twig';
 
 import { parse } from 'node-html-parser';
 import { merlinSays, communityStatement } from "../statements.js";
-import { dashToCamel, interactiveExec, exec, findAvailablePort, validateNpmClient, spawn } from "../utils.js";
+import { dashToCamel, interactiveExec, exec, findAvailablePort, validateNpmClient, spawn, validateDomain } from "../utils.js";
 import { log } from "../logging.js";
 import { isSSRFError, resolveLocalPath, sanitizeIfString } from '../site-security.js';
 
@@ -35,9 +35,19 @@ const systemStructureContext = haxcmsLib.systemStructureContext;
 
 
 var sysSurge = true;
-exec('surge --version', error => {
+// surge 0.40 reorganized the CLI: a bare `surge .` no longer publishes (it
+// only prints project info); publishing is `surge . <domain>` or
+// `surge . publish` (domain remembered in the project's CNAME file). Capture
+// the installed version so the publish flow can fall back to the legacy
+// `surge .` form on pre-0.40 installs.
+var sysSurgeVersion = null;
+exec('surge --version', (error, stdout) => {
   if (error) {
     sysSurge = false;
+  }
+  else {
+    const versionMatch = String(stdout).match(/\d+\.\d+\.\d+/);
+    sysSurgeVersion = versionMatch ? versionMatch[0] : null;
   }
 });
 
@@ -190,7 +200,7 @@ export const IMPORT_STRUCTURE_MAP = {
   elmslnToSite: { platform: 'elmsln' },
   ploneToSite: { platform: 'plone' },
   wordpressPagesToSite: { platform: 'wordpress' },
-  drupalBookToSite: { platform: 'drupal-book' },
+  drupalToSite: { platform: 'drupal' },
   openstaxToSite: { platform: 'openstax' },
   vitepressToSite: { platform: 'vitepress' },
   htmlToSite: { platform: 'html' },
@@ -333,6 +343,41 @@ export function spawnHaxcmsNodejs(cwd, env) {
       }
     });
   });
+}
+
+// Issue #3116 + surge 0.40 CLI reorganization: `surge .` alone no longer
+// publishes, so every publish invocation needs either a domain or the
+// `publish` verb. Unknown version (probe skipped/mocked, or a fresh global
+// install) assumes the modern grammar, which is what npm ships today.
+export function surgeUsesNewGrammar(version = sysSurgeVersion) {
+  if (typeof version !== 'string' || !/^\d+\.\d+/.test(version)) {
+    return true;
+  }
+  const [major, minor] = version.split('.').map((part) => parseInt(part, 10));
+  if (!Number.isFinite(major) || !Number.isFinite(minor)) {
+    return true;
+  }
+  return major > 0 || (major === 0 && minor >= 40);
+}
+
+// surge remembers a project's domain in a CNAME file at the root of the
+// published directory (a convention shared with GitHub Pages) and never
+// overwrites it, so repeat publishes can resolve the same target without
+// being told the domain again.
+export function readSurgeCnameDomain(siteDirectory) {
+  try {
+    const cnamePath = path.join(siteDirectory, 'CNAME');
+    if (fs.existsSync(cnamePath)) {
+      const domain = fs.readFileSync(cnamePath, 'utf8').trim();
+      if (domain) {
+        return domain;
+      }
+    }
+  }
+  catch (e) {
+    // best-effort read; publish without a remembered domain
+  }
+  return null;
 }
 
 export function cleanupSiteForPublish(siteDirectory) {
@@ -628,9 +673,6 @@ export async function siteCommandDetected(commandRun) {
     };
     if (!commandRun.options.title) {
       commandRun.options.title = "New Page";
-    }
-    if (!commandRun.options.domain && commandRun.options.y) {
-      commandRun.options.domain = `haxcli-${activeHaxsite.name}.surge.sh`;
     }
     // infinite loop until quitting the cli
     while (operation.action !== 'quit') {
@@ -1796,24 +1838,64 @@ export async function siteCommandDetected(commandRun) {
               s.stop(merlinSays('surge.sh installed globally'));
               log(execOutput.stdout.trim());
               sysSurge = true;
+              // a fresh global install ships the modern CLI (>= 0.40)
+              sysSurgeVersion = null;
+            }
+            // surge 0.40+ publishes with `surge . <domain>` or `surge . publish`;
+            // a bare `surge .` only prints project info and never publishes, so
+            // always resolve a target. Priority: explicit --domain, then the
+            // domain surge remembered in the project's CNAME from a previous
+            // publish, then (with --y, so scripts/agents get a deterministic
+            // first-publish target) haxcli-<name>.surge.sh
+            let surgeDomain = commandRun.options.domain;
+            const rememberedDomain = readSurgeCnameDomain(activeHaxsite.directory);
+            if (!surgeDomain && rememberedDomain) {
+              // Security (M-1): the CNAME file is read from disk and interpolated
+              // into an exec() shell string, so it gets the same strict hostname
+              // charset validation --domain receives at the option boundary.
+              try {
+                surgeDomain = validateDomain(rememberedDomain);
+                if (!commandRun.options.quiet) {
+                  log(`Publishing to the domain remembered in CNAME: https://${surgeDomain}`, 'info');
+                }
+              }
+              catch (e) {
+                if (!commandRun.options.quiet) {
+                  log(`Ignoring invalid domain in CNAME (${rememberedDomain}); pass --domain to publish somewhere specific.`, 'warn');
+                }
+              }
+            }
+            if (!surgeDomain && commandRun.options.y) {
+              surgeDomain = `haxcli-${activeHaxsite.name}.surge.sh`;
             }
             let execOutput;
-            if (commandRun.options.domain && commandRun.options.y) {
+            if (commandRun.options.y) {
+              // scripted / automated publish (issue #3116 agent path): --y
+              // always resolves a domain above, and `surge . <domain>` publishes
+              // with no prompts on every surge version
               let s = p.spinner();
               s.start(merlinSays('Sending site to Surge.sh ..'));
-              execOutput = await exec(`cd ${activeHaxsite.directory} && surge . ${commandRun.options.domain}`);
+              execOutput = await exec(`cd ${activeHaxsite.directory} && surge . ${surgeDomain}`);
               log(execOutput.stdout.trim());
-              s.stop(merlinSays(`Site published: https://${commandRun.options.domain}`));
+              s.stop(merlinSays(`Site published: https://${surgeDomain}`));
             }
             else {
               let surgeArgs = ['.'];
-              // could get here bc of being interactive, yet passed in a domain...
-              if (commandRun.options.domain) {
-                surgeArgs.push(commandRun.options.domain);
+              if (surgeDomain) {
+                // explicit --domain or CNAME-remembered domain: path + domain
+                // publishes on every surge version without prompting
+                surgeArgs.push(surgeDomain);
+              }
+              else if (surgeUsesNewGrammar()) {
+                // first publish on surge >= 0.40: the publish verb asks for a
+                // domain (suggesting one based on the directory) and remembers
+                // it in CNAME; pre-0.40 surge still prompts + publishes on a
+                // bare `surge .`
+                surgeArgs.push('publish');
               }
               execOutput = await interactiveExec('surge', surgeArgs, {cwd: activeHaxsite.directory});
-              if (commandRun.options.domain) {
-                log(merlinSays(`Site published: https://${commandRun.options.domain}`));
+              if (surgeDomain) {
+                log(merlinSays(`Site published: https://${surgeDomain}`));
               } else {
                 log(merlinSays('Site published'));
               }
