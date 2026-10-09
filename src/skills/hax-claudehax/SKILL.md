@@ -97,7 +97,7 @@ When operating outside the `/hax` slash command, use the HAX CLI directly:
 - `hax start` — Interactive CLI with ASCII art
 - `hax serve` — Development server at http://localhost
 - `hax webcomponent <name> --y` — Scaffold a new component
-- `hax site <name> --y` — Create a new HAXsite
+- `hax site <name> --y --no-i` — Create a new HAXsite
 - `hax audit` — DDD compliance audit
 - `hax skills list` — List bundled agent skills
 - `hax skills install <name|--all>` — Install bundled skills into `.agents/skills/`

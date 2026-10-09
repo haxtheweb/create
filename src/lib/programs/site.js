@@ -653,6 +653,59 @@ export function siteActions() {
   ];
 }
 
+// haxtheweb/issues#3116: one command (`hax site`) tells a cold agent what it is
+// standing in, which files it owns, and the scriptable verbs to use.
+export function siteAgentOrientation(siteDirectory) {
+  const keyFiles = [
+    'site.json',
+    'pages/',
+    'files/',
+    'theme/',
+    'AGENTS.md',
+    'llms.txt',
+    '.well-known/agent-skills/index.json',
+  ];
+  let files = {};
+  keyFiles.forEach((file) => {
+    files[file] = !!siteDirectory && fs.existsSync(path.join(siteDirectory, file));
+  });
+  return {
+    readFirst: ['AGENTS.md', 'llms.txt', '.well-known/agent-skills/index.json'].filter((file) => files[file]),
+    files: files,
+    authored: 'site.json holds structure (change it only through the hax CLI); pages/<id>/index.html holds page content',
+    managed: 'Generated files (llms.txt, sitemap.xml, rss.xml, manifest.json, lunrSearchIndex.json, ...) are rebuilt by tooling; do not hand-edit them',
+    commands: [
+      'hax site site:items --format json --y --no-i',
+      'hax site node:add --title "Page" --slug page --y --no-i',
+      'hax site site:items-import --items-import ./items.json --y --no-i',
+      'hax site site:export --y --no-i',
+      'hax serve',
+    ],
+    tips: [
+      'Always pass --y --no-i in scripts; without a TTY the CLI now implies --no-i',
+      'Use the global `hax` command, not `npx hax` (a different npm package)',
+    ],
+  };
+}
+
+export function formatAgentOrientation(agent) {
+  let lines = [];
+  if (agent.readFirst.length > 0) {
+    lines.push(`Read first: ${agent.readFirst.join(', ')}`);
+  }
+  lines.push(`Files: ${Object.keys(agent.files).map((file) => `${file} ${agent.files[file] ? '✓' : '✗'}`).join('  ')}`);
+  lines.push(`Authored: ${agent.authored}`);
+  lines.push(`Managed: ${agent.managed}`);
+  lines.push('Scriptable commands:');
+  agent.commands.forEach((command) => {
+    lines.push(`  ${command}`);
+  });
+  agent.tips.forEach((tip) => {
+    lines.push(`Tip: ${tip}`);
+  });
+  return lines.join("\n");
+}
+
 export async function siteCommandDetected(commandRun) {
     var activeHaxsite = await systemStructureContext();
     let actionAssigned = false;
@@ -741,15 +794,17 @@ export async function siteCommandDetected(commandRun) {
             themeElement: activeHaxsite.manifest.metadata.theme.element,
             pageCount: activeHaxsite.manifest.items.length,
             lastUpdated: date.toLocaleDateString("en-US"),
-            tagUsage: els
+            tagUsage: els,
+            agent: siteAgentOrientation(activeHaxsite.directory)
           }
           if (!commandRun.options.format && !commandRun.options.quiet) {
             p.intro(`${color.bgBlue(color.white(` Title: ${siteStats.title} `))}`);
             p.intro(`${color.bgBlue(color.white(` Description: ${siteStats.description} `))}`);
             p.intro(`${color.bgBlue(color.white(` Theme: ${siteStats.themeName} (${siteStats.themeElement})`))}`);
-            p.intro(`${color.bgBlue(color.white(` Pages: ${siteStats.pageCount} `))}`);  
+            p.intro(`${color.bgBlue(color.white(` Pages: ${siteStats.pageCount} `))}`);
             p.intro(`${color.bgBlue(color.white(` Last updated: ${siteStats.lastUpdated} `))}`);
             p.intro(`${color.bgBlue(color.white(` Tags used: ${JSON.stringify(siteStats.tagUsage, null, 2)} `))}`);
+            p.note(formatAgentOrientation(siteStats.agent), 'For AI agents and scripts');
           }
           else {
             logStructuredOutput(commandRun, siteStats);

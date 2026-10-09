@@ -58,6 +58,10 @@ Create a new site called `zombocom`, set theme to `polaris-flex-theme` and open 
 ```bash
 hax site zombocom --theme "polaris-flex-theme" --y
 ```
+Same, but for scripts, CI and AI agents: no prompts and no dev server launch (`--no-i` is implied automatically when there is no TTY)
+```bash
+hax site zombocom --theme "polaris-flex-theme" --y --no-i
+```
 Create a new site called `zombocom` from an installed skeleton template
 ```bash
 hax site zombocom --skeleton-machine-name clean-one --y

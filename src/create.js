@@ -338,6 +338,19 @@ async function main() {
   if (commandRun.options.extras === true) {
     delete commandRun.options.extras;
   }
+  // haxtheweb/issues#3116: agents, CI and piped shells have no TTY to answer
+  // prompts or to host a launched dev server, so behave exactly as if --no-i
+  // was passed. Without this, `hax site mysite --y` never returns in those
+  // contexts. Explicit `--no-i` is unchanged; `hax serve` still serves.
+  const ciEnv = process.env.CI;
+  const isCI = !!ciEnv && ciEnv !== 'false' && ciEnv !== '0';
+  if (commandRun.options.i !== false && (!process.stdout.isTTY || isCI)) {
+    commandRun.options.i = false;
+    if (!commandRun.options.quiet) {
+      // stderr so --format json/yaml output on stdout stays parseable
+      process.stderr.write(`hax: no interactive terminal${isCI ? ' (CI)' : ''} detected, running as if --no-i was passed\n`);
+    }
+  }
   // Security (M-2): validate the CLI-provided --npm-client early, before the
   // packageData loop below can overwrite it. The loop unconditionally resets
   // npmClient from the local package.json (or 'npm'), so a malicious CLI
