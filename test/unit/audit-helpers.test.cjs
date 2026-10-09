@@ -18,6 +18,9 @@ const {
   helpAuditLineHeight,
   helpAuditRadius,
   helpAuditSpacing,
+  hasColorLiteral,
+  auditColorAttributes,
+  auditJavaScriptLine,
 } = require('../../src/lib/programs/audit.js')
 
 // These are spec tests for the 11 pure helpAudit* CSS mapper functions.
@@ -208,4 +211,40 @@ test('helpAuditSpacing treats unitless "0" as 0px via loose equality', () => {
     helpAuditSpacing('5'),
     'No available suggestions. Check DDD documentation.',
   )
+})
+
+// --- haxtheweb/issues#3119: rules that catch what broke dark mode ---
+
+test('hasColorLiteral finds hard-coded colors but not tokens, keywords or references', () => {
+  assert.equal(hasColorLiteral('#fff'), true)
+  assert.equal(hasColorLiteral('rgba(0, 0, 0, 0.5)'), true)
+  assert.equal(hasColorLiteral('1px solid red'), true)
+  assert.equal(hasColorLiteral('var(--x, red)'), true)
+  assert.equal(hasColorLiteral('none'), false)
+  assert.equal(hasColorLiteral('currentColor'), false)
+  assert.equal(hasColorLiteral('transparent'), false)
+  assert.equal(hasColorLiteral('url(#gradient)'), false)
+  assert.equal(hasColorLiteral('url(images/blue-bg.png) no-repeat'), false)
+  assert.equal(hasColorLiteral('var(--my-red-thing)'), false)
+})
+
+test('auditColorAttributes flags hard-coded SVG paint attributes only', () => {
+  assert.deepEqual(auditColorAttributes('<path fill="#333" stroke="currentColor" d="M0">'), [
+    { rule: 'fill attribute', value: '#333' },
+  ])
+  assert.deepEqual(auditColorAttributes('<svg fill="currentColor">'), [])
+  assert.deepEqual(auditColorAttributes('<svg fill="var(--ddd-theme-primary)">'), [])
+})
+
+test('auditJavaScriptLine flags ?., ??, window and DDD(LitElement)', () => {
+  const rules = (line) => auditJavaScriptLine(line).map((f) => f.rule)
+  assert.deepEqual(rules('let x = item?.trim();'), ['JS: optional chaining (?.)'])
+  assert.deepEqual(rules('const v = a ?? b;'), ['JS: nullish coalescing (??)'])
+  assert.deepEqual(rules('window.addEventListener("x", f);'), ['JS: window reference'])
+  assert.deepEqual(rules('class A extends DDD(LitElement) {}'), ['JS: DDD(LitElement)'])
+  // allowed
+  assert.deepEqual(rules('const v = a ? b : c;'), [])
+  assert.deepEqual(rules('globalThis.window = 1;'), [])
+  assert.deepEqual(rules('class A extends DDDSuper(I18NMixin(LitElement)) {}'), [])
+  assert.deepEqual(rules('// a comment mentioning ?. and window.x'), [])
 })

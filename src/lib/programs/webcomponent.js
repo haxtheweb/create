@@ -10,7 +10,7 @@ import color from 'picocolors';
 import { merlinSays } from "../statements.js";
 import { log } from "../logging.js";
 
-import { dashToCamel, readAllFiles, exec, validateWebcomponentName, validateNpmClient } from '../utils.js';
+import { dashToCamel, readAllFiles, exec, validateWebcomponentName, validateNpmClient, gitIdentityFallbackArgs } from '../utils.js';
 import * as haxcmsLib from "@haxtheweb/haxcms-nodejs/dist/lib/HAXCMS.js";
 const HAXCMS = haxcmsLib.HAXCMS;
 
@@ -150,7 +150,6 @@ export async function webcomponentProcess(commandRun, project, port = "8000") {
   }
   // auto select operations to perform if requested
   if (!project.extras) {
-    console.log(commandRun.options.extras);
     if (commandRun.options.extras === false) {
       project.extras = [];
     }
@@ -158,6 +157,11 @@ export async function webcomponentProcess(commandRun, project, port = "8000") {
       let extras = ['launch', 'install', 'git'];
       if (!sysGit || project.isMonorepo) {
         extras.pop();
+      }
+      // haxtheweb/issues#3119: never start the dev server (a process that does
+      // not return) when nobody is there to use it; still install + commit
+      if (commandRun.options.i === false) {
+        extras = extras.filter((extra) => extra !== 'launch');
       }
       project.extras = extras;  
     }
@@ -167,7 +171,7 @@ export async function webcomponentProcess(commandRun, project, port = "8000") {
   // option to build github repo link for the user
   if (project.extras && project.extras.includes('git')) {
       // @todo need to support git@ and https methods
-      if (commandRun.options.auto) {
+      if (commandRun.options.auto || commandRun.options.i === false) {
         project.gitRepo = `https://github.com/${project.author}/${project.name}.git`;
       }
       else  {
@@ -246,9 +250,23 @@ export async function webcomponentProcess(commandRun, project, port = "8000") {
     }
   }
   s.stop('Files are now awesome!');
+  // haxtheweb/issues#3119: ship the web component skill inside standalone
+  // scaffolds so agents find it next to AGENTS.md (copied after ejs rendering
+  // so the skill text is never treated as a template)
+  if (!commandRun.options.isMonorepo && fs.existsSync(`${project.path}/${project.name}/AGENTS.md`)) {
+    const skillSource = path.resolve(__dirname, '../../skills/hax-webcomponent-dev/SKILL.md');
+    if (fs.existsSync(skillSource)) {
+      const skillDest = `${project.path}/${project.name}/.agents/skills/hax-webcomponent-dev`;
+      fs.mkdirSync(skillDest, { recursive: true });
+      fs.copyFileSync(skillSource, `${skillDest}/SKILL.md`);
+    }
+  }
   if (project.gitRepo && !commandRun.options.isMonorepo) {
     try {
-    await exec(`cd ${project.path}/${project.name} && git init && git add -A && git commit -m "first commit" && git branch -M main${project.gitRepo ? ` && git remote add origin ${project.gitRepo}` : ''}`);    
+    // haxtheweb/issues#3119: with no git identity (fresh containers / CI) the
+    // commit failed silently, leaving staged files and no commit
+    const identity = await gitIdentityFallbackArgs(`${project.path}/${project.name}`);
+    await exec(`cd ${project.path}/${project.name} && git init && git add -A && git ${identity}commit -m "first commit" && git branch -M main${project.gitRepo ? ` && git remote add origin ${project.gitRepo}` : ''}`);    
     }
     catch(e) {        
     }

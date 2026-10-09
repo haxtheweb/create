@@ -198,3 +198,28 @@ test('git extra with --auto builds the repo link and initializes git', opts, asy
     fs.rmSync(projectRoot, { recursive: true, force: true })
   }
 })
+
+// haxtheweb/issues#3119: `hax wc <name> --y --no-i` hung because the default
+// extras always included launch (a dev server that never returns)
+test('non-interactive default extras install and commit but never launch', opts, async () => {
+  const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'hax-wc-noi-'))
+  execCalls.length = 0
+  try {
+    const commandRun = makeCommandRun({ npmClient: 'npm', y: true, i: false, quiet: true })
+    const project = {
+      name: 'agent-el',
+      type: 'webcomponent',
+      path: projectRoot,
+      author: 'tester',
+    }
+    await webcomponentProcess(commandRun, project)
+    assert.ok(!project.extras.includes('launch'), 'launch dropped from default extras')
+    assert.ok(execCalls.some((c) => c.includes('npm install')), 'dependencies still installed')
+    assert.ok(!execCalls.some((c) => c.includes('npm start')), 'dev server never started')
+    if (project.extras.includes('git')) {
+      assert.ok(execCalls.some((c) => c.includes('git init')), 'git still initialized')
+    }
+  } finally {
+    fs.rmSync(projectRoot, { recursive: true, force: true })
+  }
+})
