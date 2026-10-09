@@ -231,6 +231,12 @@ test('CLI webcomponent creates a new element non-interactively (--y --no-i --no-
       fs.existsSync(path.join(projectDir, 'test', `${elementName}.test.js`)),
       'expected renamed test file',
     )
+    // haxtheweb/issues#3119: agents find context in the scaffold itself
+    assert.ok(fs.existsSync(path.join(projectDir, 'AGENTS.md')), 'expected AGENTS.md in the scaffold')
+    assert.ok(
+      fs.existsSync(path.join(projectDir, '.agents', 'skills', 'hax-webcomponent-dev', 'SKILL.md')),
+      'expected the hax-webcomponent-dev skill in the scaffold',
+    )
   } finally {
     fs.rmSync(parentDir, { recursive: true, force: true })
   }
@@ -375,3 +381,45 @@ test('CLI site (default action) inside a site reports agent orientation', smokeO
     fs.rmSync(parentDir, { recursive: true, force: true })
   }
 })
+
+// haxtheweb/issues#3119: `hax wc <name> --y --no-i` used to start the dev
+// server and never return. --npm-client is pointed at a stub so the test does
+// not install ~600 packages; the point is that it returns and never launches.
+test('CLI webcomponent with --y --no-i returns without launching a dev server', smokeOpts, () => {
+  const parentDir = fs.mkdtempSync(path.join(os.tmpdir(), 'hax-wc-noi-'))
+  const elementName = 'noi-element'
+  try {
+    const res = spawnSync(process.execPath, [
+      CLI, 'webcomponent',
+      '--name', elementName,
+      '--path', parentDir,
+      '--npm-client', 'pnpm',
+      '--y', '--no-i',
+    ], {
+      encoding: 'utf8',
+      env: { ...ISOLATED_ENV, PATH: `${stubBinDir()}${path.delimiter}${process.env.PATH}` },
+      cwd: parentDir,
+      timeout: 15000,
+    })
+    assert.notEqual(res.signal, 'SIGTERM', 'webcomponent scaffold hung until the timeout killed it')
+    assert.equal(res.status, 0, `stderr: ${res.stderr}\nstdout: ${res.stdout}`)
+    const calls = fs.existsSync(STUB_LOG) ? fs.readFileSync(STUB_LOG, 'utf8') : ''
+    assert.doesNotMatch(calls, /\bstart\b/, 'dev server was started')
+    assert.ok(fs.existsSync(path.join(parentDir, elementName, 'AGENTS.md')))
+  } finally {
+    fs.rmSync(parentDir, { recursive: true, force: true })
+  }
+})
+
+// a fake `pnpm` that records its arguments and exits 0 immediately
+const STUB_LOG = path.join(ISOLATED_HOME, 'pnpm-stub.log')
+function stubBinDir() {
+  const dir = path.join(ISOLATED_HOME, 'stub-bin')
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true })
+    const script = path.join(dir, 'pnpm')
+    fs.writeFileSync(script, `#!/bin/sh\necho "$@" >> "${STUB_LOG}"\nexit 0\n`)
+    fs.chmodSync(script, 0o755)
+  }
+  return dir
+}

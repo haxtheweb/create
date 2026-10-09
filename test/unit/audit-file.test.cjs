@@ -143,3 +143,26 @@ test('non-CSS declarations that lack the `prop: value;` shape are ignored', () =
     fs.rmSync(root, { recursive: true, force: true })
   }
 })
+
+// haxtheweb/issues#3119: hard-coded paint colors used to pass the audit
+test('fill / stroke / background with color literals are reported; tokens and keywords are not', () => {
+  tableCalls.length = 0
+  notes.length = 0
+  const root = makeProject([
+    ':host {',
+    '  fill: #000;',
+    '  stroke: currentColor;',
+    '  background: #ffffff;',
+    '  background: none;',
+    '  background: var(--ddd-theme-default-white);',
+    '}',
+  ].join('\n'))
+  try {
+    runAudit({ options: {} }, root)
+    assert.equal(tableCalls.length, 1)
+    const rows = tableCalls[0]
+    assert.deepEqual(rows.map((r) => [r['Line Number'], r['CSS Property']]), [[2, 'fill'], [4, 'background']])
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true })
+  }
+})

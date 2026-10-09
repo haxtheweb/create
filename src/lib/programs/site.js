@@ -12,7 +12,7 @@ import Twig from 'twig';
 
 import { parse } from 'node-html-parser';
 import { merlinSays, communityStatement } from "../statements.js";
-import { dashToCamel, interactiveExec, exec, findAvailablePort, validateNpmClient, spawn, validateDomain } from "../utils.js";
+import { dashToCamel, interactiveExec, exec, findAvailablePort, validateNpmClient, spawn, validateDomain, gitIdentityFallbackArgs } from "../utils.js";
 import { log } from "../logging.js";
 import { isSSRFError, resolveLocalPath, sanitizeIfString } from '../site-security.js';
 
@@ -3140,7 +3140,8 @@ export async function siteProcess(commandRun, project, port = '3000') {    // au
 
   if (project.gitRepo && !commandRun.options.isMonorepo) {
     try {
-      await exec(`cd ${project.path}/${project.name} && git init && git add -A && git commit -m "first commit" && git branch -M main${project.gitRepo ? ` && git remote add origin ${project.gitRepo}` : ''}`);    
+      const identity = await gitIdentityFallbackArgs(`${project.path}/${project.name}`);
+      await exec(`cd ${project.path}/${project.name} && git init && git add -A && git ${identity}commit -m "first commit" && git branch -M main${project.gitRepo ? ` && git remote add origin ${project.gitRepo}` : ''}`);    
     }
     catch(e) {        
     }

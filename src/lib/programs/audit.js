@@ -247,7 +247,43 @@ function auditFile(fileLocation, fileName) {
     "border-left-radius",
   ]);
 
-  lines.forEach(line => {
+  // haxtheweb/issues#3119: properties that commonly carry hard-coded colors
+  // which break dark mode. Unlike COLOR_PROPERTIES these are only flagged when
+  // the value contains an actual color literal (hex, rgb()/hsl()/..., or a
+  // named color), since none / currentColor / url(#id) / var(--x) are fine.
+  const COLOR_LITERAL_PROPERTIES = new Set([
+    "background",
+    "fill",
+    "stroke",
+    "stop-color",
+    "flood-color",
+    "lighting-color",
+    "outline-color",
+    "text-decoration-color",
+    "column-rule-color",
+  ]);
+
+  lines.forEach((line, index) => {
+    // JavaScript rules (the Polymer-era toolchain and HAX conventions)
+    if (fileName.endsWith('.js')) {
+      auditJavaScriptLine(line).forEach((finding) => {
+        data.push({
+          "Line Number": index + 1,
+          "CSS Property": finding.rule,
+          "Current Attribute": line.trim().substring(0, 80),
+          "Suggested Replacement Attribute": finding.suggestion
+        });
+      });
+    }
+    // hard-coded colors in SVG / HTML attributes, e.g. fill="#000"
+    auditColorAttributes(line).forEach((finding) => {
+      data.push({
+        "Line Number": index + 1,
+        "CSS Property": finding.rule,
+        "Current Attribute": finding.value,
+        "Suggested Replacement Attribute": 'Use currentColor or a --ddd-theme-* token (light-dark() with tokens for per-scheme values)'
+      });
+    });
     let trimmed = line.trim();
     if (trimmed.includes(':') && trimmed.endsWith(';')) {
       let [lineProperty, lineAttribute] = trimmed.split(":").map(item => item?.trim());
@@ -291,6 +327,16 @@ function auditFile(fileLocation, fileName) {
           "CSS Property": lineProperty,
           "Current Attribute": lineAttribute,
           "Suggested Replacement Attribute": helpAuditColors(lineAttribute)
+        });
+      }
+
+      // Check colors hiding in shorthands / SVG paint properties
+      if (COLOR_LITERAL_PROPERTIES.has(lineProperty) && !lineAttribute.includes("ddd") && hasColorLiteral(lineAttribute)) {
+        data.push({
+          "Line Number": lines.indexOf(line) + 1,
+          "CSS Property": lineProperty,
+          "Current Attribute": lineAttribute,
+          "Suggested Replacement Attribute": 'Use currentColor or a --ddd-theme-* token (light-dark() with tokens for per-scheme values)'
         });
       }
 
@@ -372,6 +418,73 @@ function auditFile(fileLocation, fileName) {
   } else {
     p.note("No changes needed!")
   }
+}
+
+/**
+ * @description True when a CSS value contains a hard-coded color: hex, a color
+ * function (rgb, hsl, ...), or a named color. transparent / currentColor and
+ * url(...) references are not color literals.
+ * @param value CSS value
+ * @returns Boolean
+ */
+export function hasColorLiteral(value) {
+  // drop url() references and custom property names (--my-red-thing)
+  let v = String(value).toLowerCase().replace(/url\([^)]*\)/g, '').replace(/--[a-z0-9_-]+/g, '');
+  if (/#[0-9a-f]{3,8}\b/.test(v)) {
+    return true;
+  }
+  if (/\b(rgba?|hsla?|hwb|lab|lch|oklab|oklch)\s*\(/.test(v)) {
+    return true;
+  }
+  return v.split(/[^a-z]+/).some((word) =>
+    word !== '' && word !== 'transparent' && helpAuditColors(word) !== 'No available suggestions. Check DDD documentation.'
+  );
+}
+
+/**
+ * @description haxtheweb/issues#3119: flag hard-coded colors in fill / stroke /
+ * stop-color attributes (inline SVG in templates and demos)
+ * @param line Source line
+ * @returns Array of { rule, value }
+ */
+export function auditColorAttributes(line) {
+  let findings = [];
+  const ATTRIBUTE = /\b(fill|stroke|stop-color)\s*=\s*["']([^"']*)["']/gi;
+  let match;
+  while ((match = ATTRIBUTE.exec(line)) !== null) {
+    if (!match[2].includes('ddd') && hasColorLiteral(match[2])) {
+      findings.push({ rule: `${match[1].toLowerCase()} attribute`, value: match[2] });
+    }
+  }
+  return findings;
+}
+
+/**
+ * @description haxtheweb/issues#3119: JavaScript rules for HAX web components,
+ * so conventions that agents (and people) skip in prose fail an audit instead
+ * @param line Source line
+ * @returns Array of { rule, suggestion }
+ */
+export function auditJavaScriptLine(line) {
+  let findings = [];
+  let code = line.trim();
+  // skip comment lines
+  if (code.startsWith('//') || code.startsWith('*') || code.startsWith('/*')) {
+    return findings;
+  }
+  if (/\?\.(?!\d)/.test(code)) {
+    findings.push({ rule: 'JS: optional chaining (?.)', suggestion: 'Use explicit && guards; the Polymer-era parser fails on ?.' });
+  }
+  if (/\?\?/.test(code)) {
+    findings.push({ rule: 'JS: nullish coalescing (??)', suggestion: 'Use an explicit undefined/null check or ||; same parser limitation as ?.' });
+  }
+  if (/(^|[^.\w$])window\s*[.[]/.test(code)) {
+    findings.push({ rule: 'JS: window reference', suggestion: 'Use globalThis instead of window' });
+  }
+  if (/\bDDD\s*\(\s*LitElement\s*\)/.test(code)) {
+    findings.push({ rule: 'JS: DDD(LitElement)', suggestion: 'Extend DDD directly, or DDDSuper(LitElement) / DDDSuper(I18NMixin(LitElement)) as the scaffold does' });
+  }
+  return findings;
 }
 
 /**

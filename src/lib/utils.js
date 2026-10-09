@@ -261,3 +261,29 @@ export function validateWebcomponentName(value, options = {}) {
   }
   return null;
 }
+
+// haxtheweb/issues#3116 / #3119: when no git identity is configured, return
+// `-c user.name=... -c user.email=...` args for a single commit so scaffold
+// commits succeed in fresh containers and CI. Never writes git config.
+export async function gitIdentityFallbackArgs(cwd = process.cwd()) {
+  const configValue = async (key) => {
+    try {
+      const { stdout } = await exec(`git config ${key}`, { cwd: fs.existsSync(cwd) ? cwd : process.cwd() });
+      return stdout.trim();
+    }
+    catch (e) {
+      return '';
+    }
+  };
+  let args = '';
+  if (!process.env.GIT_AUTHOR_NAME && !(await configValue('user.name'))) {
+    args += '-c user.name="HAX CLI" ';
+  }
+  if (!process.env.GIT_AUTHOR_EMAIL && !process.env.EMAIL && !(await configValue('user.email'))) {
+    args += '-c user.email="hax@localhost" ';
+  }
+  if (args !== '' && !process.haxquiet) {
+    process.stderr.write('hax: no git identity configured; first commit authored as "HAX CLI <hax@localhost>". Set git config user.name and user.email to use your own.\n');
+  }
+  return args;
+}

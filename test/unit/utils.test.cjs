@@ -17,6 +17,7 @@ const {
   capitalizeFirstLetter,
   getTimeDifference,
   generateUUID,
+  gitIdentityFallbackArgs,
 } = require('../../src/lib/utils.js')
 
 // --- Security validators: a regression = command injection ---
@@ -150,4 +151,38 @@ test('generateUUID returns unique UUIDv4-shaped strings', () => {
     /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i,
   )
   assert.notEqual(generateUUID(), generateUUID())
+})
+
+// haxtheweb/issues#3119: scaffold commits must succeed with no git identity
+test('gitIdentityFallbackArgs supplies -c identity only when none is configured', async () => {
+  const fs = require('node:fs')
+  const os = require('node:os')
+  const path = require('node:path')
+  const keys = ['GIT_AUTHOR_NAME', 'GIT_AUTHOR_EMAIL', 'GIT_COMMITTER_NAME', 'GIT_COMMITTER_EMAIL', 'EMAIL', 'GIT_CONFIG_GLOBAL', 'GIT_CONFIG_NOSYSTEM']
+  const saved = {}
+  keys.forEach((key) => { saved[key] = process.env[key] })
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'hax-ident-'))
+  const originalWrite = process.stderr.write
+  process.stderr.write = () => true
+  try {
+    keys.forEach((key) => { delete process.env[key] })
+    process.env.GIT_CONFIG_NOSYSTEM = '1'
+    process.env.GIT_CONFIG_GLOBAL = path.join(dir, 'empty-gitconfig')
+    const args = await gitIdentityFallbackArgs(dir)
+    assert.match(args, /-c user\.name="HAX CLI"/)
+    assert.match(args, /-c user\.email="hax@localhost"/)
+    process.env.GIT_AUTHOR_NAME = 'Someone'
+    process.env.GIT_AUTHOR_EMAIL = 'someone@local.invalid'
+    assert.equal(await gitIdentityFallbackArgs(dir), '')
+  } finally {
+    process.stderr.write = originalWrite
+    keys.forEach((key) => {
+      if (saved[key] === undefined) {
+        delete process.env[key]
+      } else {
+        process.env[key] = saved[key]
+      }
+    })
+    fs.rmSync(dir, { recursive: true, force: true })
+  }
 })
