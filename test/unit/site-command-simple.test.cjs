@@ -225,6 +225,31 @@ test('site:status can redirect the stats to a file', opts, async () => {
   fs.rmSync(statsPath, { force: true })
 })
 
+// haxtheweb/issues#3116: `hax site` doubles as agent orientation
+test('site:status includes agent orientation in human and structured output', opts, async () => {
+  resetMocks()
+  fs.writeFileSync(path.join(SITE_DIR, 'AGENTS.md'), '# agents\n')
+  const statsPath = path.join(os.tmpdir(), 'hax-site-stats-agent-test.json')
+  try {
+    const exitCode = await runSite({
+      command: 'site',
+      arguments: {},
+      options: { quiet: false, i: true, toFile: statsPath },
+    })
+    assert.equal(exitCode, 0)
+    assert.ok(notes.some((m) => m.includes('Read first: AGENTS.md')), 'orientation note lists AGENTS.md')
+    assert.ok(notes.some((m) => m.includes('--y --no-i')), 'orientation note shows scriptable flags')
+    const stats = JSON.parse(fs.readFileSync(statsPath, 'utf8'))
+    assert.equal(stats.agent.files['AGENTS.md'], true)
+    assert.equal(stats.agent.files['llms.txt'], false)
+    assert.deepEqual(stats.agent.readFirst, ['AGENTS.md'])
+    assert.ok(stats.agent.commands.every((c) => c === 'hax serve' || c.includes('--y --no-i')), 'every site command is scriptable')
+  } finally {
+    fs.rmSync(path.join(SITE_DIR, 'AGENTS.md'), { force: true })
+    fs.rmSync(statsPath, { force: true })
+  }
+})
+
 // --- site:items ---
 
 test('site:items writes the ordered items with content as yaml', opts, async () => {

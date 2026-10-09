@@ -37,3 +37,24 @@ jobs:
         run: yarn run build
       - name: Test
         run: yarn test
+  # haxtheweb/issues#3116: the agent / CI path. Runs as root in a fresh
+  # container with no TTY and no git identity, the context AI agents and
+  # CI runners give the CLI, so a prompt or launched dev server shows up as
+  # a hang and a missing identity shows up as a stack trace.
+  agent-path:
+    name: "agent path: no TTY, no git identity"
+    runs-on: ubuntu-latest
+    container: node:24
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Install
+        run: yarn install
+      - name: Build
+        run: yarn run build
+      - name: Smoke tests
+        env:
+          CI: 'true'
+          GIT_CONFIG_NOSYSTEM: '1'
+          GIT_CONFIG_GLOBAL: /dev/null
+        run: yarn test:smoke

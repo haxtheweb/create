@@ -39,6 +39,7 @@ hax start
 - `hax webcomponent my-element --y` - Make a new HAX capable, i18n wired, Design system (DDD) driven web component
   -  if in a monorepo root, will place in correct location / inherit settings
 - `hax site mysite --y` - create a new HAXsite (HAXcms, single site)
+  - in scripts and agents use `hax site mysite --y --no-i` so nothing prompts or launches a dev server (implied automatically when there is no TTY or `CI` is set)
 - `hax site mysite --skeleton-machine-name clean-one --y` - create a new HAXsite from an installed skeleton template
 - `hax audit` - Audits web components for compliance with DDD (HAX design system)
 - `hax update` - HAX CLI self update
@@ -90,6 +91,13 @@ hax site my-hax-site --y --no-i
 cd my-hax-site && hax serve
 # open the local URL printed by hax serve (http://localhost)
 ```
+
+### For AI agents
+
+- Always pass `--y --no-i` in scripts. With no TTY (agent sandboxes, CI, piped shells) the CLI implies `--no-i` on its own.
+- Use the global `hax` command, not `npx hax` (that resolves to a different npm package).
+- Inside a site, run `hax site` (or `hax site --format json`) first. It reports the site, its key files, which files are managed, and the scriptable commands.
+- Every site ships `AGENTS.md`, `llms.txt` and `.well-known/agent-skills/index.json`. Read those before changing anything.
 
 See the AI integration page on the [HAX documentation site](https://haxtheweb.org/) for the full guide.
 

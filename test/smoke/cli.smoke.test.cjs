@@ -267,3 +267,111 @@ test('CLI site creates a new site non-interactively (--y --no-i --no-extras)', s
     fs.rmSync(parentDir, { recursive: true, force: true })
   }
 })
+
+// haxtheweb/issues#3116: the agent / CI path must work first try. These run
+// through spawnSync, so stdout is never a TTY, which is exactly the context
+// an agent sandbox or CI runner provides.
+
+// Environment with no git identity from any config file or env var.
+function noGitIdentityEnv() {
+  const env = { ...ISOLATED_ENV, GIT_CONFIG_NOSYSTEM: '1', GIT_CONFIG_GLOBAL: path.join(ISOLATED_HOME, 'empty-gitconfig') }
+  for (const key of ['GIT_AUTHOR_NAME', 'GIT_AUTHOR_EMAIL', 'GIT_COMMITTER_NAME', 'GIT_COMMITTER_EMAIL', 'EMAIL']) {
+    delete env[key]
+  }
+  return env
+}
+
+test('CLI site creation without --no-i returns promptly when there is no TTY', smokeOpts, () => {
+  const parentDir = fs.mkdtempSync(path.join(os.tmpdir(), 'hax-site-notty-'))
+  const siteName = 'notty-site'
+  try {
+    // deliberately no --no-i and no --no-extras: this is the README command
+    // that used to launch a dev server and never return
+    const res = spawnSync(process.execPath, [
+      CLI, 'site',
+      '--name', siteName,
+      '--path', parentDir,
+      '--theme', 'clean-one',
+      '--y',
+    ], {
+      encoding: 'utf8',
+      env: ISOLATED_ENV,
+      cwd: parentDir,
+      timeout: 15000,
+    })
+    assert.notEqual(res.signal, 'SIGTERM', 'site creation hung until the timeout killed it')
+    assert.equal(res.status, 0, `stderr: ${res.stderr}\nstdout: ${res.stdout}`)
+    assert.match(res.stderr, /running as if --no-i was passed/)
+    assert.ok(fs.existsSync(path.join(parentDir, siteName, 'site.json')), 'site.json created')
+  } finally {
+    fs.rmSync(parentDir, { recursive: true, force: true })
+  }
+})
+
+// The git identity fallback lives in @haxtheweb/haxcms-nodejs (it makes the
+// site's first commit). Skip until the installed version carries it.
+let identitySkip = skipReason
+if (!identitySkip) {
+  try {
+    const backend = fs.readFileSync(require.resolve('@haxtheweb/haxcms-nodejs/dist/lib/HAXCMS.js'), 'utf8')
+    if (!backend.includes('GIT_AUTHOR_EMAIL')) {
+      identitySkip = 'installed @haxtheweb/haxcms-nodejs predates the git identity fallback (haxtheweb/issues#3116)'
+    }
+  } catch (e) {
+    identitySkip = 'could not read installed @haxtheweb/haxcms-nodejs'
+  }
+}
+
+test('CLI site creation with no git identity exits 0 without a stack trace', { ...smokeOpts, skip: identitySkip }, () => {
+  const parentDir = fs.mkdtempSync(path.join(os.tmpdir(), 'hax-site-noident-'))
+  const siteName = 'noident-site'
+  try {
+    const res = spawnSync(process.execPath, [
+      CLI, 'site',
+      '--name', siteName,
+      '--path', parentDir,
+      '--theme', 'clean-one',
+      '--y', '--no-i',
+    ], {
+      encoding: 'utf8',
+      env: noGitIdentityEnv(),
+      cwd: parentDir,
+      timeout: 15000,
+    })
+    assert.equal(res.status, 0, `stderr: ${res.stderr}\nstdout: ${res.stdout}`)
+    const output = `${res.stdout}\n${res.stderr}`
+    assert.doesNotMatch(output, /Author identity unknown/)
+    assert.doesNotMatch(output, /^\s+at .+:\d+:\d+\)?$/m, 'no stack trace lines')
+    const log = spawnSync('git', ['log', '--oneline'], { encoding: 'utf8', cwd: path.join(parentDir, siteName) })
+    assert.equal(log.status, 0, `initial commit missing: ${log.stderr}`)
+  } finally {
+    fs.rmSync(parentDir, { recursive: true, force: true })
+  }
+})
+
+test('CLI site (default action) inside a site reports agent orientation', smokeOpts, () => {
+  const parentDir = fs.mkdtempSync(path.join(os.tmpdir(), 'hax-site-orient-'))
+  const siteName = 'orient-site'
+  try {
+    const create = spawnSync(process.execPath, [
+      CLI, 'site',
+      '--name', siteName,
+      '--path', parentDir,
+      '--theme', 'clean-one',
+      '--y', '--no-i', '--no-extras',
+    ], { encoding: 'utf8', env: ISOLATED_ENV, cwd: parentDir, timeout: 15000 })
+    assert.equal(create.status, 0, `create stderr: ${create.stderr}`)
+    const siteDir = path.join(parentDir, siteName)
+    const statsPath = path.join(parentDir, 'stats.json')
+    const res = spawnSync(process.execPath, [
+      CLI, 'site', '--format', 'json', '--to-file', statsPath, '--y', '--no-i',
+    ], { encoding: 'utf8', env: ISOLATED_ENV, cwd: siteDir, timeout: 15000 })
+    assert.equal(res.status, 0, `stderr: ${res.stderr}\nstdout: ${res.stdout}`)
+    const stats = JSON.parse(fs.readFileSync(statsPath, 'utf8'))
+    assert.ok(stats.agent, 'stats include agent orientation')
+    assert.equal(stats.agent.files['site.json'], true)
+    assert.ok(Array.isArray(stats.agent.commands) && stats.agent.commands.length > 0)
+  } finally {
+    fs.rmSync(parentDir, { recursive: true, force: true })
+  }
+})

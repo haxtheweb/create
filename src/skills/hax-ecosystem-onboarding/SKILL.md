@@ -32,7 +32,7 @@ Onboard new developers to the HAX ecosystem by cloning repositories, installing 
 3. **Install Agent Skills**: Run `hax skills install --all` to install the bundled interface skills (site building, ClaudeHAX, web component dev, onboarding) into `~/.agents/skills/` so any agent can use them.
 4. **Configure Environment**: Set up Warp with HAX-specific rules. Create helpful development aliases. Configure shell to start in `~/Documents/git/haxtheweb/`. (PRAW Rule `bAKMWCMrqRLGdWmuNWgVUw`)
 5. **Scaffold First Component**: Use `hax webcomponent my-element --y` to create a LitElement with DDD and i18n support.
-6. **Scaffold First Site**: Use `hax site mysite --y` to generate a HAXcms-based static site.
+6. **Scaffold First Site**: Use `hax site mysite --y --no-i` to generate a HAXcms-based static site.
 7. **Run Development Server**: Use `hax serve` to launch the site at http://localhost.
 
 ## HAX CLI Core Commands
@@ -40,7 +40,7 @@ Onboard new developers to the HAX ecosystem by cloning repositories, installing 
 - `hax start` — Start interactive CLI with ASCII art via Clack
 - `hax serve` — Start development server
 - `hax webcomponent <name> --y` — Create a web component
-- `hax site <name> --y` — Create a HAXsite
+- `hax site <name> --y --no-i` — Create a HAXsite
 - `hax audit` — Run DDD compliance audit on CSS
 - `hax skills list` — List bundled agent skills
 - `hax skills install <name|--all>` — Install bundled skills into `.agents/skills/`
@@ -59,7 +59,7 @@ When scripting HAX commands, always use these flags to prevent interruptions:
 After setup, verify the environment:
 1. Run `hax --version` to confirm CLI installation
 2. Run `hax webcomponent test-element --y` to verify scaffolding works
-3. Run `hax site test-site --y` to verify site creation works
+3. Run `hax site test-site --y --no-i` to verify site creation works
 4. Run `hax skills list` to confirm bundled skills are available
 5. Check that `~/Documents/git/haxtheweb/` contains the expected repositories
 
