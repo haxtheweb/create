@@ -42,7 +42,8 @@ Always create pages through the `hax` CLI, never by manually creating page direc
 
 Two supported CLI paths, run from inside the site directory:
 
-- Single page: `hax site node:add --title "<title>" --slug "<slug>" --parent <parent-item-id> --content <path-to-html-file> --format html --y --no-i`. Capture the returned item id from the output to use as `--parent` for children.
+- Single page: `hax site node:add --title "<title>" --slug "<slug>" --parent <parent-id-or-slug> --content <path-to-html-or-md-file> --y --no-i`. Without `--order` the page is appended after its siblings. The output includes the new item id.
+- Update an existing page: `hax site node:edit --item-id <id-or-slug> --title "<title>" --content <file-or-html> --y --no-i` (any of `--title`, `--slug`, `--content`, `--description`, `--tags`, `--parent`, `--order`, `--published`, `--hide-in-menu`, `--theme`, applied together).
 - Bulk (preferred for a whole program): build a JOS items array (one object per page with `title`, `slug`, `parent`, `indent`, `order`, `metadata`, and `content`), then run `hax site site:items-import --items-import <items.json> --y --no-i`. The import remaps parent references to the newly generated ids automatically.
 
 To mark a page draft/private (e.g. verbatim transcripts), set `metadata.published: false` in the import item. After creation, verify with `hax site site:items`. (PRAW Rule — see RULES.md "HAXcms page creation via CLI".)

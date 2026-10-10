@@ -424,6 +424,62 @@ function stubBinDir() {
   return dir
 }
 
+// haxtheweb/issues#3116 acceptance idea, now that #3125 / #3126 / #3127 are
+// fixed: with no TTY and no prompts, add pages with content in order, edit
+// one, and list them. Runs against the real haxcms-nodejs backend.
+test('agent path: add pages with content in order, edit one, list items', { skip: skipReason, timeout: 120000 }, () => {
+  const parentDir = fs.mkdtempSync(path.join(os.tmpdir(), 'hax-site-pages-'))
+  const siteName = 'pages-site'
+  const run = (args, cwd) => {
+    const res = spawnSync(process.execPath, [CLI, ...args], {
+      encoding: 'utf8',
+      env: ISOLATED_ENV,
+      cwd: cwd,
+      timeout: 30000,
+    })
+    assert.notEqual(res.signal, 'SIGTERM', `hung: hax ${args.join(' ')}`)
+    assert.equal(res.status, 0, `hax ${args.join(' ')}\nstderr: ${res.stderr}\nstdout: ${res.stdout}`)
+    return res
+  }
+  try {
+    run(['site', '--name', siteName, '--path', parentDir, '--theme', 'clean-one', '--y', '--no-i', '--no-extras'], parentDir)
+    const siteDir = path.join(parentDir, siteName)
+    const htmlFile = path.join(parentDir, 'one.html')
+    const mdFile = path.join(parentDir, 'two.md')
+    fs.writeFileSync(htmlFile, '<h2>Page one from a file</h2>')
+    fs.writeFileSync(mdFile, '# Page two from markdown')
+    run(['site', 'node:add', '--title', 'One', '--slug', 'one', '--content', htmlFile, '--y', '--no-i'], siteDir)
+    run(['site', 'node:add', '--title', 'Two', '--slug', 'two', '--content', mdFile, '--y', '--no-i'], siteDir)
+    run(['site', 'node:add', '--title', 'Three', '--slug', 'three', '--content', '<p>three inline</p>', '--content-format', 'html', '--y', '--no-i'], siteDir)
+
+    const readSite = () => JSON.parse(fs.readFileSync(path.join(siteDir, 'site.json'), 'utf8'))
+    const bySlug = (manifest, slug) => manifest.items.find((item) => item.slug === slug)
+    const pageHtml = (item) => fs.readFileSync(path.join(siteDir, item.location), 'utf8')
+    let manifest = readSite()
+    const one = bySlug(manifest, 'one')
+    const two = bySlug(manifest, 'two')
+    const three = bySlug(manifest, 'three')
+    assert.ok(one && two && three, `pages missing: ${manifest.items.map((i) => i.slug).join(', ')}`)
+    assert.ok(one.order < two.order && two.order < three.order, `order not appended: ${one.order}, ${two.order}, ${three.order}`)
+    assert.match(pageHtml(one), /Page one from a file/)
+    assert.match(pageHtml(two), /Page two from markdown/)
+    assert.match(pageHtml(three), /three inline/)
+
+    run(['site', 'node:edit', '--item-id', 'two', '--title', 'Two edited', '--content', '<p>two edited</p>', '--y', '--no-i'], siteDir)
+    manifest = readSite()
+    const edited = manifest.items.find((item) => item.id === two.id)
+    assert.equal(edited.title, 'Two edited')
+    assert.match(pageHtml(edited), /two edited/)
+
+    const itemsFile = path.join(parentDir, 'items.json')
+    run(['site', 'site:items', '--format', 'json', '--to-file', itemsFile, '--y', '--no-i'], siteDir)
+    const listed = JSON.parse(fs.readFileSync(itemsFile, 'utf8'))
+    assert.ok(Array.isArray(listed) && listed.length >= 3, 'site:items lists the pages')
+  } finally {
+    fs.rmSync(parentDir, { recursive: true, force: true })
+  }
+})
+
 // haxtheweb/issues#3119: `hax wc --search` finds existing elements (offline:
 // HAX_ELEMENTS_CATALOG points at a fixture so CI needs no network)
 test('CLI wc --search returns matching elements as JSON', smokeOpts, () => {
