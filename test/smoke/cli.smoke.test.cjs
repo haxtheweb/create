@@ -423,3 +423,26 @@ function stubBinDir() {
   }
   return dir
 }
+
+// haxtheweb/issues#3119: `hax wc --search` finds existing elements (offline:
+// HAX_ELEMENTS_CATALOG points at a fixture so CI needs no network)
+test('CLI wc --search returns matching elements as JSON', smokeOpts, () => {
+  const fixture = path.join(ISOLATED_HOME, 'catalog-fixture.json')
+  fs.writeFileSync(fixture, JSON.stringify({
+    preferred: [{ tag: 'simple-tooltip', useFor: 'tooltips' }],
+    elements: [
+      { tag: 'simple-tooltip', title: '', description: 'a simple tooltip', import: '@haxtheweb/simple-tooltip/simple-tooltip.js', type: 'element', tags: [] },
+      { tag: 'video-player', title: 'Video', description: 'video', import: '@haxtheweb/video-player/video-player.js', type: 'element', tags: [] },
+    ],
+  }))
+  const res = spawnSync(process.execPath, [CLI, 'wc', '--search', 'tooltip', '--format', 'json'], {
+    encoding: 'utf8',
+    env: { ...ISOLATED_ENV, HAX_ELEMENTS_CATALOG: fixture },
+    cwd: ISOLATED_HOME,
+    timeout: 15000,
+  })
+  assert.equal(res.status, 0, `stderr: ${res.stderr}`)
+  const results = JSON.parse(res.stdout)
+  assert.deepEqual(results.map((r) => r.tag), ['simple-tooltip'])
+  assert.equal(results[0].preferred, 'tooltips')
+})

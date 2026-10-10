@@ -10,7 +10,7 @@ Instructions for AI coding agents working on this HAX web component.
 
 ## Before you build
 
-1. Check whether an existing HAX element already does this: <https://github.com/haxtheweb/webcomponents/tree/master/elements>. Prefer composing existing elements over writing new ones.
+1. Check whether an existing HAX element already does this: `hax wc --search "<words>"` searches every element in the monorepo. Prefer composing existing elements over writing new ones.
 2. Decide whether this is a leaf element or a parent that holds other elements. A parent that HAX authors place children into declares `"type": "grid"` in its haxProperties.
 3. Plan for dark mode from the start. Use `--ddd-theme-*` tokens or `currentColor`; when light and dark need different values, use `light-dark()` with tokens.
 

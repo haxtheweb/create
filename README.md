@@ -41,6 +41,7 @@ hax start
 - `hax site mysite --y` - create a new HAXsite (HAXcms, single site)
   - in scripts and agents use `hax site mysite --y --no-i` so nothing prompts or launches a dev server (implied automatically when there is no TTY or `CI` is set)
 - `hax site mysite --skeleton-machine-name clean-one --y` - create a new HAXsite from an installed skeleton template
+- `hax wc --search "tooltip"` - Search existing HAX elements (tag, title, description, tags) before building a new one; `--format json` for scripts
 - `hax audit` - Audits web components for compliance with DDD (HAX design system)
 - `hax update` - HAX CLI self update
 - `hax party` - Display options to join the HAX community and get involved!
