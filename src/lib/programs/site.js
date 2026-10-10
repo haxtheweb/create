@@ -676,7 +676,8 @@ export function siteAgentOrientation(siteDirectory) {
     managed: 'Generated files (llms.txt, sitemap.xml, rss.xml, manifest.json, lunrSearchIndex.json, ...) are rebuilt by tooling; do not hand-edit them',
     commands: [
       'hax site site:items --format json --y --no-i',
-      'hax site node:add --title "Page" --slug page --y --no-i',
+      'hax site node:add --title "Page" --slug page --content ./page.html --y --no-i',
+      'hax site node:edit --item-id page --title "New title" --content ./page.html --y --no-i',
       'hax site site:items-import --items-import ./items.json --y --no-i',
       'hax site site:export --y --no-i',
       'hax serve',
@@ -724,6 +725,8 @@ export async function siteCommandDetected(commandRun) {
       ...commandRun.arguments,
       ...commandRun.options
     };
+    // node:edit only changes the title when one was actually passed
+    const titleWasProvided = !!commandRun.options.title;
     if (!commandRun.options.title) {
       commandRun.options.title = "New Page";
     }
@@ -1117,10 +1120,15 @@ export async function siteCommandDetected(commandRun) {
               }
             };
             if (commandRun.options.parent && commandRun.options.parent !== '') {
-              createNodeBody.parent = commandRun.options.parent;
+              const parentNode = findNodeByIdOrSlug(activeHaxsite, commandRun.options.parent);
+              createNodeBody.parent = parentNode ? parentNode.id : commandRun.options.parent;
             }
             if (commandRun.options.order && !Number.isNaN(parseInt(commandRun.options.order))) {
               createNodeBody.order = parseInt(commandRun.options.order);
+            }
+            else {
+              // haxtheweb/issues#3127: append after the last sibling instead of order 0
+              createNodeBody.order = nextSiblingOrder(activeHaxsite.manifest.items, createNodeBody.parent);
             }
             if (commandRun.options.slug && commandRun.options.slug !== '') {
               createNodeBody.node.location = commandRun.options.slug;
@@ -1131,76 +1139,48 @@ export async function siteCommandDetected(commandRun) {
             if (commandRun.options.tags && commandRun.options.tags !== '') {
               createNodeBody.metadata = { tags: commandRun.options.tags };
             }
-            // this would be odd but could be direct with no format specified
-            if (commandRun.options.content && !commandRun.options.format) {
+            // haxtheweb/issues#3125: file / URL / inline content all resolve here
+            const nodeContent = await resolveNodeContent(commandRun);
+            if (nodeContent) {
               // only API where it's called contents and already out there {facepalm}
               // but user already has commands where it's --content as arg
-              createNodeBody.node.contents = commandRun.options.content;
-            }
-            else if (commandRun.options.content && commandRun.options.format) {
-              let locationContent = '';
-              // if we have format set, then  we need to interpret content as a url
-              let location = commandRun.options.content;
-              // support for address, as in import from some place else
-              if (location.startsWith('https://') || location.startsWith('http://')) {
-                // Security (H-2): route through safeFetch to block SSRF targets
-                // (private/loopback/link-local/metadata IPs) and cap redirects.
-                const resp = await safeFetch(location);
-                locationContent = resp.ok ? await resp.text() : '';
+              createNodeBody.node.contents = nodeContent.contents;
+              if (nodeContent.title) {
+                createNodeBody.node.title = nodeContent.title;
               }
-              // look on prem
-              else if(fs.existsSync(location)) {
-                // Security (L-1): canonicalize + reject null bytes for local paths.
-                locationContent = await fs.readFileSync(resolveLocalPath(location));
-              }
-              // format dictates additional processing; html is default
-              switch (commandRun.options.format) {
-                case 'json':
-                  locationContent = JSON.parse(locationContent);
-                break;
-                case 'yaml':
-                  locationContent = await load(locationContent);
-                break;
-                case 'md':
-                  // Security (Stream-A): on-prem haxcms-nodejs handler in-process
-                  // (replaces @haxtheweb/open-apis broker); raw mode dropped —
-                  // haxcms-nodejs returns HTML at .data.data.contents.
-                  let resp = await invokeRoute(allRoutesLib.allRoutes.system.map.post['actions/md-to-html'], { md: locationContent });
-                  if (resp.data && resp.data.data && resp.data.data.contents) {
-                    locationContent = resp.data.data.contents;
-                  }
-                break;
-              }
-              // support for scraper mode to find title from the content responsee
-              if (commandRun.options.titleScrape) {
-                let dom = parse(`${locationContent}`);
-                createNodeBody.node.title = dom.querySelector(`${commandRun.options.titleScrape}`).textContent;
-              }
-              // support scraper mode which targets a wrapper for the actual content
-              if (commandRun.options.contentScrape) {
-                let dom = parse(`${locationContent}`);
-                locationContent = dom.querySelector(`${commandRun.options.contentScrape}`).innerHTML;
-              }
-              // Security (H-5): sanitize remote/scraped HTML before storing.
-              // Objects (json/yaml format) pass through sanitizeIfString unchanged.
-              createNodeBody.node.contents = sanitizeIfString(locationContent);
             }
             const cliBridge = await getHaxcmsNodejsCli();
             let resp = await cliBridge.cliBridge('v1/items', createNodeBody, 'post');
+            const created = resp && resp.res ? resp.res.data : null;
             if (commandRun.options.v) {
-              log(resp.res.data, 'silly');
+              log(created, 'silly');
             }
-            if (!commandRun.options.quiet) {
-              log(`"${createNodeBody.node.title}" added to site`, 'info', createNodeBody.node);
+            if (!created || (created.status && created.status >= 400)) {
+              console.error(`node:add failed: ${created && created.data && created.data.message ? created.data.message : 'no response from the site API'}`);
+              process.exitCode = 1;
+            }
+            else if (!commandRun.options.quiet) {
+              const createdId = created.data && created.data.id ? created.data.id : '';
+              log(`"${createNodeBody.node.title}" added to site${createdId ? ` (id: ${createdId})` : ''}`, 'info', createNodeBody.node);
             }
           }
           catch(e) {
             log(formatErrorForLogging(e), 'error');
+            process.exitCode = 1;
           }
         break;
         case "node:edit":
           try {
+            const nodeEditNonInteractive = commandRun.options.i === false || commandRun.options.y;
+            // haxtheweb/issues#3126: any field flags (--title, --slug, --content, ...)
+            // are applied together without prompting
+            const nodeEdits = nodeEditsFromOptions(commandRun.options, titleWasProvided);
             if (!commandRun.options.itemId) {
+              if (nodeEditNonInteractive) {
+                console.error('node:edit needs --item-id <id or slug> when running non-interactively');
+                process.exitCode = 1;
+                break;
+              }
               commandRun.options.itemId = await p.select({
                 message: `Select an item to edit`,
                 required: true,
@@ -1208,8 +1188,22 @@ export async function siteCommandDetected(commandRun) {
               });
             }
             if (commandRun.options.itemId) {
+              let page = findNodeByIdOrSlug(activeHaxsite, commandRun.options.itemId);
+              if (!page) {
+                console.error(`node:edit: no page with id or slug "${commandRun.options.itemId}"`);
+                process.exitCode = 1;
+                break;
+              }
+              if (!commandRun.options.nodeOp && Object.keys(nodeEdits).length > 0) {
+                await applyNodeEdits(activeHaxsite, page, nodeEdits, commandRun);
+                break;
+              }
+              if (!commandRun.options.nodeOp && nodeEditNonInteractive) {
+                console.error('node:edit: nothing to change. Pass one or more of --title, --slug, --content, --description, --tags, --parent, --order, --published, --hide-in-menu, --theme');
+                process.exitCode = 1;
+                break;
+              }
               let nodeOps = siteNodeOperations();
-              let page = activeHaxsite.loadNode(commandRun.options.itemId);
               // select which aspect of this we are editing
               if (!commandRun.options.nodeOp) {
                 commandRun.options.nodeOp = await p.select({
@@ -1236,7 +1230,6 @@ export async function siteCommandDetected(commandRun) {
                     propValue = await p.confirm({
                       message: `${nodeProp}:`,
                       initialValue: Boolean(val),
-                      defaultValue: Boolean(val),
                     });
                   }
                   // these have fixed possible values
@@ -1258,97 +1251,20 @@ export async function siteCommandDetected(commandRun) {
                     });
                   }
                 }
-                if (nodeProp === 'order') {
-                  propValue = parseInt(propValue);
-                }
                 // account for CLI
                 if (propValue === "null") {
                   propValue = null;
                 }
-                commandRun.options[nodeProp] = propValue;
-              }
-              // ensure we set empty values, just not completely undefined values
-              if (typeof commandRun.options[commandRun.options.nodeOp] !== "undefined") {
-                if (commandRun.options.nodeOp === 'content') {
-                  let locationContent = '';
-                  // this would be odd but could be direct with no format specified
-                  if (commandRun.options.content && !commandRun.options.format) {
-                    locationContent = commandRun.options.content;
-                  }
-                  // this implies what we were given needs processing as a file / url
-                  else if (commandRun.options.content && commandRun.options.format) {
-                    // if we have format set, then  we need to interpret content as a url
-                    let location = commandRun.options.content;
-                    // support for address, as in import from some place else
-                    if (location.startsWith('https://') || location.startsWith('http://')) {
-                      // Security (H-2): route through safeFetch to block SSRF targets
-                      // (private/loopback/link-local/metadata IPs) and cap redirects.
-                      const resp = await safeFetch(location);
-                      locationContent = resp.ok ? await resp.text() : '';
-                    }
-                    // look on prem
-                    else if(fs.existsSync(location)) {
-                      // Security (L-1): canonicalize + reject null bytes for local paths.
-                      locationContent = await fs.readFileSync(resolveLocalPath(location));
-                    }
-                    // format dictates additional processing; html is default
-                    switch (commandRun.options.format) {
-                      case 'json':
-                        locationContent = JSON.parse(locationContent);
-                      break;
-                      case 'yaml':
-                        locationContent = await load(locationContent);
-                      break;
-                      case 'md':
-                        // Security (Stream-A): on-prem haxcms-nodejs handler in-process
-                        // (replaces @haxtheweb/open-apis broker); raw mode dropped —
-                        // haxcms-nodejs returns HTML at .data.data.contents.
-                        let resp = await invokeRoute(allRoutesLib.allRoutes.system.map.post['actions/md-to-html'], { md: locationContent });
-                        if (resp.data && resp.data.data && resp.data.data.contents) {
-                          locationContent = resp.data.data.contents;
-                        }
-                      break;
-                    }
-                    // support scraper mode which targets a wrapper for the actual content
-                    if (commandRun.options.contentScrape) {
-                      let dom = parse(`${locationContent}`);
-                      locationContent = dom.querySelector(`${commandRun.options.contentScrape}`).innerHTML;
-                    }
-                  }
-                  // Security (H-5): sanitize remote/scraped HTML before writing.
-                  // Objects (json/yaml format) pass through sanitizeIfString unchanged.
-                  const safeContent = sanitizeIfString(locationContent);
-                  // if we have content (meaning it's not blank) then try to write the page location                    
-                  if (safeContent && await page.writeLocation(safeContent)) {
-                    if (!commandRun.options.quiet) {
-                      log(`node:edit success updated page content: "${page.id}`);
-                    }
-                  }
-                  else {
-                    console.warn(`node:edit failure to write page content : ${page.id}`);
-                  }
-                }
-                else {
-                  if (['tags', 'published', 'hideInMenu'].includes(commandRun.options.nodeOp)) {
-                    page.metadata[commandRun.options.nodeOp] = commandRun.options[commandRun.options.nodeOp];
-                  }
-                  else if (commandRun.options.nodeOp === 'theme') {
-                    let themes = await HAXCMS.getThemes();
-                    page.metadata.theme = themes[commandRun.options[commandRun.options.nodeOp]];
-                  }
-                  else {
-                    page[commandRun.options.nodeOp] = commandRun.options[commandRun.options.nodeOp];
-                  }
-                  let resp = await activeHaxsite.updateNode(page);
-                  if (commandRun.options.v) {
-                    log(resp, 'silly');
-                  }
+                // ensure we set empty values, just not completely undefined values
+                if (typeof propValue !== "undefined") {
+                  await applyNodeEdits(activeHaxsite, page, { [nodeProp]: propValue }, commandRun);
                 }
               }
             }
           }
           catch(e) {
             log(formatErrorForLogging(e), 'error');
+            process.exitCode = 1;
           }
         break;
         case "node:delete":
@@ -2679,13 +2595,274 @@ export async function siteCommandDetected(commandRun) {
       }
       // y or noi need to act like it ran and finish instead of looping options
       if (commandRun.options.y || !commandRun.options.i || !actionAssigned) {
-        process.exit(0);
+        // keep a failure exit code set by the action (e.g. node:add / node:edit)
+        process.exit(process.exitCode || 0);
       }
       operation.action = null;
     }
     if (!commandRun.options.quiet) {
       communityStatement();
     }
+}
+
+// haxtheweb/issues#3127: order for a new node so it lands after its siblings
+export function nextSiblingOrder(items, parent = null) {
+  let max = -1;
+  (items || []).forEach((item) => {
+    const itemParent = item.parent ? item.parent : null;
+    if (itemParent === (parent ? parent : null)) {
+      const order = parseInt(item.order);
+      if (!Number.isNaN(order) && order > max) {
+        max = order;
+      }
+    }
+  });
+  return max + 1;
+}
+
+// resolve a node by id, falling back to slug
+export function findNodeByIdOrSlug(activeHaxsite, idOrSlug) {
+  if (!activeHaxsite || !idOrSlug) {
+    return null;
+  }
+  let page = activeHaxsite.loadNode(idOrSlug);
+  if (!page && activeHaxsite.manifest && activeHaxsite.manifest.items) {
+    const match = activeHaxsite.manifest.items.find((item) => item.slug === idOrSlug);
+    if (match) {
+      page = activeHaxsite.loadNode(match.id);
+    }
+  }
+  return page ? page : null;
+}
+
+const NODE_CONTENT_FORMATS = ['html', 'md', 'json', 'yaml'];
+
+function contentFormatFromPath(location) {
+  const ext = path.extname(location).toLowerCase();
+  if (ext === '.md' || ext === '.markdown') {
+    return 'md';
+  }
+  if (ext === '.json') {
+    return 'json';
+  }
+  if (ext === '.yaml' || ext === '.yml') {
+    return 'yaml';
+  }
+  return 'html';
+}
+
+// haxtheweb/issues#3125: --content may be a local file, a URL, or inline
+// content. Files are read as utf8 (they used to arrive as a Buffer and save an
+// empty page) and inline content is no longer discarded when --format is set.
+// --content-format (html, md, json, yaml) is preferred; --format still works
+// for node:add / node:edit but also means "output format" elsewhere.
+export async function resolveNodeContent(commandRun) {
+  const options = commandRun.options || {};
+  if (typeof options.content === 'undefined' || options.content === null) {
+    return null;
+  }
+  const content = String(options.content);
+  let format = options.contentFormat || options.format || null;
+  if (format === 'markdown') {
+    format = 'md';
+  }
+  if (format && !NODE_CONTENT_FORMATS.includes(format)) {
+    throw new Error(`Unknown content format "${format}". Use one of: ${NODE_CONTENT_FORMATS.join(', ')}`);
+  }
+  let contents = content;
+  let isFile = false;
+  const isUrl = content.startsWith('https://') || content.startsWith('http://');
+  if (!isUrl && content !== '' && !content.includes('\n') && content.length < 4096) {
+    try {
+      isFile = fs.existsSync(content) && fs.statSync(content).isFile();
+    }
+    catch (e) {
+      isFile = false;
+    }
+  }
+  if (isUrl) {
+    // Security (H-2): route through safeFetch to block SSRF targets
+    // (private/loopback/link-local/metadata IPs) and cap redirects.
+    const resp = await safeFetch(content);
+    if (!resp.ok) {
+      throw new Error(`Unable to fetch content from ${content} (HTTP ${resp.status})`);
+    }
+    contents = await resp.text();
+  }
+  else if (isFile) {
+    // Security (L-1): canonicalize + reject null bytes for local paths.
+    contents = fs.readFileSync(resolveLocalPath(content), 'utf8');
+    if (!format) {
+      format = contentFormatFromPath(content);
+    }
+  }
+  switch (format) {
+    case 'json':
+      contents = JSON.parse(contents);
+    break;
+    case 'yaml':
+      contents = await load(contents);
+    break;
+    case 'md':
+      // Security (Stream-A): on-prem haxcms-nodejs handler in-process
+      // (replaces @haxtheweb/open-apis broker); raw mode dropped —
+      // haxcms-nodejs returns HTML at .data.data.contents.
+      let resp = await invokeRoute(allRoutesLib.allRoutes.system.map.post['actions/md-to-html'], { md: contents });
+      if (resp.data && resp.data.data && resp.data.data.contents) {
+        contents = resp.data.data.contents;
+      }
+    break;
+  }
+  let title = null;
+  // support for scraper mode to find title from the content response
+  if (options.titleScrape) {
+    const titleNode = parse(`${contents}`).querySelector(`${options.titleScrape}`);
+    if (titleNode) {
+      title = titleNode.textContent;
+    }
+  }
+  // support scraper mode which targets a wrapper for the actual content
+  if (options.contentScrape) {
+    const contentNode = parse(`${contents}`).querySelector(`${options.contentScrape}`);
+    if (!contentNode) {
+      throw new Error(`--content-scrape selector "${options.contentScrape}" matched nothing`);
+    }
+    contents = contentNode.innerHTML;
+  }
+  // Security (H-5): sanitize remote/scraped HTML before storing.
+  // Objects (json/yaml format) pass through sanitizeIfString unchanged.
+  return { contents: sanitizeIfString(contents), title: title };
+}
+
+// haxtheweb/issues#3126: the node fields node:edit can change from flags
+export function nodeEditsFromOptions(options, titleWasProvided = true) {
+  let edits = {};
+  if (titleWasProvided && options.title) {
+    edits.title = options.title;
+  }
+  ['slug', 'content', 'description', 'tags', 'parent', 'order', 'published', 'hideInMenu', 'theme'].forEach((field) => {
+    if (typeof options[field] !== 'undefined') {
+      edits[field] = options[field];
+    }
+  });
+  return edits;
+}
+
+function toBoolean(value) {
+  if (typeof value === 'string') {
+    return !['false', '0', 'no', 'off', ''].includes(value.trim().toLowerCase());
+  }
+  return Boolean(value);
+}
+
+// apply one or more field edits to a node. Content is written to the page
+// file; everything else is saved to site.json in a single update.
+export async function applyNodeEdits(activeHaxsite, page, edits, commandRun) {
+  let changed = [];
+  let structureChanged = false;
+  for (const field of Object.keys(edits)) {
+    let value = edits[field];
+    if (value === 'null') {
+      value = null;
+    }
+    switch (field) {
+      case 'content':
+        const resolved = await resolveNodeContent({ options: { ...commandRun.options, content: value === null ? '' : value } });
+        const safeContent = resolved ? resolved.contents : '';
+        if (typeof safeContent === 'string' && await page.writeLocation(safeContent, activeHaxsite.siteDirectory || '')) {
+          // keep pages/<id>/index.json|md|... in step with index.html
+          if (typeof activeHaxsite.writePageAlternateFormats === 'function') {
+            await activeHaxsite.writePageAlternateFormats(page, safeContent);
+          }
+          changed.push('content');
+        }
+        else {
+          throw new Error(`failed to write page content for ${page.id}`);
+        }
+      break;
+      case 'slug':
+        const cleanSlug = typeof HAXCMS.generateSlugName === 'function' ? HAXCMS.generateSlugName(value) : value;
+        if (cleanSlug) {
+          page.slug = typeof activeHaxsite.getUniqueSlugName === 'function' ? activeHaxsite.getUniqueSlugName(cleanSlug, page, false) : cleanSlug;
+          page.metadata = page.metadata || {};
+          // a hand-set slug should not be regenerated from the title
+          page.metadata.overridePathauto = true;
+          structureChanged = true;
+          changed.push('slug');
+        }
+      break;
+      case 'tags':
+        page.metadata = page.metadata || {};
+        page.metadata.tags = value;
+        structureChanged = true;
+        changed.push('tags');
+      break;
+      case 'published':
+      case 'hideInMenu':
+        page.metadata = page.metadata || {};
+        page.metadata[field] = toBoolean(value);
+        structureChanged = true;
+        changed.push(field);
+      break;
+      case 'theme':
+        page.metadata = page.metadata || {};
+        if (value) {
+          const themes = await HAXCMS.getThemes();
+          if (!themes[value]) {
+            throw new Error(`Unknown theme "${value}"`);
+          }
+          page.metadata.theme = themes[value];
+        }
+        else {
+          delete page.metadata.theme;
+        }
+        structureChanged = true;
+        changed.push('theme');
+      break;
+      case 'parent':
+        if (value) {
+          const parentNode = findNodeByIdOrSlug(activeHaxsite, value);
+          if (!parentNode) {
+            throw new Error(`Parent "${value}" not found`);
+          }
+          if (parentNode.id === page.id) {
+            throw new Error('A page cannot be its own parent');
+          }
+          page.parent = parentNode.id;
+        }
+        else {
+          page.parent = null;
+        }
+        structureChanged = true;
+        changed.push('parent');
+      break;
+      case 'order':
+        const order = parseInt(value);
+        if (Number.isNaN(order)) {
+          throw new Error(`--order must be a number, got "${value}"`);
+        }
+        page.order = order;
+        structureChanged = true;
+        changed.push('order');
+      break;
+      default:
+        // title, description
+        page[field] = value;
+        structureChanged = true;
+        changed.push(field);
+      break;
+    }
+  }
+  if (structureChanged) {
+    let resp = await activeHaxsite.updateNode(page);
+    if (commandRun.options.v) {
+      log(resp, 'silly');
+    }
+  }
+  if (changed.length > 0 && !commandRun.options.quiet) {
+    log(`node:edit updated ${changed.join(', ')} on "${page.title}" (${page.id})`);
+  }
+  return changed;
 }
 
 export function siteNodeStatsOperations(search = null){

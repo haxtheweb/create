@@ -201,6 +201,8 @@ async function runSite(commandRun) {
     return exitCode
   } finally {
     process.exit = originalExit
+    // failure paths set process.exitCode; never let it leak into the runner
+    process.exitCode = 0
   }
 }
 
@@ -656,6 +658,127 @@ test('node:add posts a new item through the cliBridge', opts, async () => {
   assert.equal(call.body.node.title, 'A New Page')
   assert.equal(call.body.node.location, 'a-new-page')
   assert.equal(call.body.order, 3)
+})
+
+// --- haxtheweb/issues#3125 / #3126 / #3127 ---
+
+test('node:edit applies several fields at once without prompting (by slug)', opts, async () => {
+  resetMocks()
+  const exitCode = await runSite({
+    command: 'site',
+    arguments: { action: 'node:edit' },
+    options: {
+      quiet: true, i: false, y: true, itemId: 'page-one',
+      title: 'Edited Title', description: 'Edited description', order: '5',
+      hideInMenu: 'false', content: '<p>edited body</p>',
+    },
+  })
+  assert.equal(exitCode, 0)
+  assert.deepEqual(writeLocationCalls, ['<p>edited body</p>'])
+  assert.equal(updateNodeCalls.length, 1, 'one site.json update for all fields')
+  const saved = updateNodeCalls[0]
+  assert.equal(saved.id, 'item-1')
+  assert.equal(saved.title, 'Edited Title')
+  assert.equal(saved.description, 'Edited description')
+  assert.equal(saved.order, 5)
+  assert.equal(saved.metadata.hideInMenu, false)
+})
+
+test('node:edit non-interactive without --item-id fails instead of prompting', opts, async () => {
+  resetMocks()
+  const exitCode = await runSite({
+    command: 'site',
+    arguments: { action: 'node:edit' },
+    options: { quiet: true, i: false, y: true, title: 'Anything' },
+  })
+  assert.equal(exitCode, 1)
+  assert.equal(updateNodeCalls.length, 0)
+})
+
+test('node:edit non-interactive with nothing to change fails (default title is not an edit)', opts, async () => {
+  resetMocks()
+  const exitCode = await runSite({
+    command: 'site',
+    arguments: { action: 'node:edit' },
+    options: { quiet: true, i: false, y: true, itemId: 'item-1' },
+  })
+  assert.equal(exitCode, 1)
+  assert.equal(updateNodeCalls.length, 0)
+  assert.equal(writeLocationCalls.length, 0)
+})
+
+test('node:edit reports an unknown item id or slug', opts, async () => {
+  resetMocks()
+  const exitCode = await runSite({
+    command: 'site',
+    arguments: { action: 'node:edit' },
+    options: { quiet: true, i: false, y: true, itemId: 'nope', slug: 'x' },
+  })
+  assert.equal(exitCode, 1)
+  assert.equal(updateNodeCalls.length, 0)
+})
+
+test('node:add without --order appends after the last sibling', opts, async () => {
+  resetMocks()
+  await runSite({
+    command: 'site',
+    arguments: { action: 'node:add' },
+    options: { quiet: true, i: true, title: 'Top Level' },
+  })
+  // top-level siblings: item-1 (order 1)
+  assert.equal(cliBridgeCalls[0].body.order, 2)
+  resetMocks()
+  await runSite({
+    command: 'site',
+    arguments: { action: 'node:add' },
+    options: { quiet: true, i: true, title: 'Child', parent: 'page-one' },
+  })
+  // parent given by slug resolves to item-1; its children: item-2 (order 2)
+  assert.equal(cliBridgeCalls[0].body.parent, 'item-1')
+  assert.equal(cliBridgeCalls[0].body.order, 3)
+})
+
+test('node:add reads --content files as text (not a Buffer)', opts, async () => {
+  resetMocks()
+  const file = path.join(SITE_DIR, 'probe.html')
+  fs.writeFileSync(file, '<h2>From a file</h2>')
+  try {
+    await runSite({
+      command: 'site',
+      arguments: { action: 'node:add' },
+      options: { quiet: true, i: true, title: 'Probe', content: file, format: 'html' },
+    })
+    assert.equal(typeof cliBridgeCalls[0].body.node.contents, 'string')
+    assert.equal(cliBridgeCalls[0].body.node.contents, '<h2>From a file</h2>')
+  } finally {
+    fs.rmSync(file, { force: true })
+  }
+})
+
+test('node:add keeps inline --content when a format is given', opts, async () => {
+  resetMocks()
+  await runSite({
+    command: 'site',
+    arguments: { action: 'node:add' },
+    options: { quiet: true, i: true, title: 'Inline', content: '<h2>inline</h2>', contentFormat: 'html' },
+  })
+  assert.equal(cliBridgeCalls[0].body.node.contents, '<h2>inline</h2>')
+})
+
+test('node:add exits 1 when the site API reports a failure', opts, async () => {
+  resetMocks()
+  const previous = cliBridgeResponse
+  cliBridgeResponse = { res: { statusCode: 500, data: { status: 500, data: { message: 'nope' } } } }
+  try {
+    const exitCode = await runSite({
+      command: 'site',
+      arguments: { action: 'node:add' },
+      options: { quiet: true, i: false, y: true, title: 'Fails' },
+    })
+    assert.equal(exitCode, 1)
+  } finally {
+    cliBridgeResponse = previous
+  }
 })
 
 test('node:delete confirms and deletes through the cliBridge', opts, async () => {

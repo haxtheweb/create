@@ -82,6 +82,14 @@ Add a page, setting `root` so that the call can be executed from a different dir
 ```bash
 hax site --root ./zombocom node:add --title "My summer vacation" --content "<p>This is an awesome blog post I am writing about my vacation.</p>" --y
 ```
+Add a page from a file (HTML, or Markdown by `.md` extension), scripted. Without `--order` the page goes after its last sibling.
+```bash
+hax site node:add --title "Lesson 1" --slug lesson-1 --content ./lesson-1.md --y --no-i
+```
+Inline content in a specific format uses `--content-format` (`html`, `md`, `json`, `yaml`)
+```bash
+hax site node:add --title "Lesson 2" --content "# Lesson 2" --content-format md --y --no-i
+```
 ### node:stats
 Show data or content of a node, interactively
 ```bash
@@ -91,6 +99,10 @@ hax site node:stats
 Edit a detail about a node, interactively
 ```bash
 hax site node:edit
+```
+Edit several fields of a node at once, scripted (no `--node-op` needed). `--item-id` accepts an id or a slug, and `--content` accepts a file path, a URL, or inline HTML. Fields: `--title`, `--slug`, `--content`, `--description`, `--tags`, `--parent`, `--order`, `--published`, `--hide-in-menu`, `--theme`
+```bash
+hax site node:edit --item-id lesson-1 --title "Lesson 1: Basics" --content ./lesson-1.html --order 0 --y --no-i
 ```
 Edit the title of a specific node, scripted.
 ```bash
