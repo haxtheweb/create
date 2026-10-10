@@ -6,6 +6,7 @@ import { setTimeout } from 'node:timers/promises';
 import * as ejs from "ejs";
 import * as p from '@clack/prompts';
 import color from 'picocolors';
+import { dump } from 'js-yaml';
 
 import { merlinSays } from "../statements.js";
 import { log } from "../logging.js";
@@ -883,4 +884,115 @@ export async function webcomponentRename(commandRun, packageData) {
     s2.stop(color.yellow('Could not regenerate custom-elements.json.'));
     console.warn(color.yellow('Run `npm run analyze` manually.'));
   }
+}
+
+// haxtheweb/issues#3119: find an existing element before building a new one.
+// The catalog is generated in haxtheweb/webcomponents by
+// scripts/build-elements-catalog.mjs. Override the source with the
+// HAX_ELEMENTS_CATALOG env var (a file path or URL).
+export const ELEMENTS_CATALOG_URL = 'https://raw.githubusercontent.com/haxtheweb/webcomponents/master/elements-catalog.json';
+
+export async function loadElementsCatalog() {
+  const source = process.env.HAX_ELEMENTS_CATALOG || ELEMENTS_CATALOG_URL;
+  try {
+    if (!source.startsWith('http://') && !source.startsWith('https://')) {
+      return { catalog: JSON.parse(fs.readFileSync(source, 'utf8')), source };
+    }
+    const resp = await fetch(source, { signal: AbortSignal.timeout(8000) });
+    if (!resp.ok) {
+      throw new Error(`HTTP ${resp.status}`);
+    }
+    return { catalog: await resp.json(), source };
+  }
+  catch (e) {
+    // offline / unreachable: fall back to tag names from the bundled registry
+    let elements = [];
+    try {
+      const registry = JSON.parse(fs.readFileSync(path.join(__dirname, '../../lib/wc-registry.json'), 'utf8'));
+      elements = Object.keys(registry).map((tag) => ({ tag, title: '', description: '', import: registry[tag], type: 'element', tags: [] }));
+    }
+    catch (err) {
+      elements = [];
+    }
+    return { catalog: { preferred: [], elements }, source: 'bundled wc-registry.json (tag names only)', fallbackReason: e.message };
+  }
+}
+
+export function searchElementsCatalog(catalog, query, limit = 15) {
+  const terms = String(query || '').toLowerCase().split(/[\s,]+/).filter(Boolean);
+  if (terms.length === 0) {
+    return [];
+  }
+  const preferred = {};
+  (catalog.preferred || []).forEach((p) => {
+    preferred[p.tag] = p.useFor;
+  });
+  let results = [];
+  for (const el of catalog.elements || []) {
+    const fields = [
+      [String(el.tag || '').toLowerCase(), 5],
+      [String(el.title || '').toLowerCase(), 4],
+      [(el.tags || []).join(' ').toLowerCase(), 3],
+      [String(preferred[el.tag] || '').toLowerCase(), 3],
+      [String(el.description || '').toLowerCase(), 1],
+    ];
+    let score = 0;
+    let matchedAll = true;
+    for (const term of terms) {
+      let termScore = 0;
+      for (const [text, weight] of fields) {
+        if (text.includes(term)) {
+          termScore += weight;
+        }
+      }
+      if (termScore === 0) {
+        matchedAll = false;
+        break;
+      }
+      score += termScore;
+    }
+    if (matchedAll) {
+      if (preferred[el.tag]) {
+        score += 10;
+      }
+      results.push({ ...el, preferred: preferred[el.tag] || null, score });
+    }
+  }
+  results.sort((a, b) => b.score - a.score || a.tag.localeCompare(b.tag));
+  return results.slice(0, limit);
+}
+
+export async function elementsSearchCommand(commandRun) {
+  const query = commandRun.options.search;
+  const limit = parseInt(commandRun.options.searchLimit) || 15;
+  const { catalog, source, fallbackReason } = await loadElementsCatalog();
+  const results = searchElementsCatalog(catalog, query, limit);
+  if (fallbackReason && !commandRun.options.quiet) {
+    process.stderr.write(`hax: elements catalog unavailable (${fallbackReason}); searching ${source}\n`);
+  }
+  if (commandRun.options.format === 'json' || commandRun.options.format === 'yaml') {
+    const out = results.map(({ score, ...rest }) => rest);
+    process.stdout.write((commandRun.options.format === 'yaml' ? dump(out) : JSON.stringify(out, null, 2)) + '\n');
+    return results;
+  }
+  if (results.length === 0) {
+    console.log(`No existing elements match "${query}".`);
+    return results;
+  }
+  console.log(`Existing elements matching "${query}" (${source}):\n`);
+  for (const el of results) {
+    const badges = [el.preferred ? 'preferred' : '', el.type === 'grid' ? 'grid' : '', el.haxCapable ? 'HAX' : ''].filter(Boolean).join(', ');
+    console.log(`${el.tag}${el.title ? ` (${el.title})` : ''}${badges ? `  [${badges}]` : ''}`);
+    if (el.preferred) {
+      console.log(`  use for: ${el.preferred}`);
+    }
+    if (el.description) {
+      console.log(`  ${el.description}`);
+    }
+    if (el.import) {
+      console.log(`  import "${el.import}";`);
+    }
+    console.log('');
+  }
+  return results;
 }

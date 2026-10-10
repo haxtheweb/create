@@ -11,7 +11,7 @@ import { haxIntro, communityStatement } from "./lib/statements.js";
 import { log, consoleTransport, logger } from "./lib/logging.js";
 import { auditCommandDetected } from './lib/programs/audit.js';
 import { partyCommandDetected } from './lib/programs/party.js';
-import { webcomponentProcess, webcomponentCommandDetected, webcomponentActions } from "./lib/programs/webcomponent.js";
+import { webcomponentProcess, webcomponentCommandDetected, webcomponentActions, elementsSearchCommand } from "./lib/programs/webcomponent.js";
 import { siteActions, siteNodeOperations, siteProcess, siteCommandDetected, siteThemeList, siteSkeletonList } from "./lib/programs/site.js";
 import { skillsCommandDetected, skillsActions } from "./lib/programs/skills.js";
 import { camelToDash, exec, interactiveExec, writeConfigFile, readConfigFile, getTimeDifference, validateNpmClient, rejectShellMetacharacters, validateDomain } from "./lib/utils.js";
@@ -244,7 +244,7 @@ async function main() {
   .alias('webcomponent')
   .description('Create Lit based web components, with HAX recommendations')
   .argument('[action]', 'Actions to perform on web component include:' + "\n\r" + strWebcomponentActions)
-  .action((action) => {
+  .action((action, cmdOptions) => {
     commandRun = {
       command: 'webcomponent',
       arguments: {},
@@ -254,6 +254,10 @@ async function main() {
     if (action) {
       commandRun.arguments.action = action;
       commandRun.options.skip = true;
+    }
+    // haxtheweb/issues#3119: `hax wc --search <words>`
+    if (cmdOptions && cmdOptions.search) {
+      commandRun.options.search = cmdOptions.search;
     }
   })
   .option('--path <char>', 'path the project should be created in')
@@ -267,6 +271,7 @@ async function main() {
   .option('--no-i', 'prevent interactions / sub-process, good for scripting')
   .option('--root <char>', 'root location to execute the command from')
   .option('--force', 'force creation even if name exists in registry')
+  .option('--search <char>', 'search existing HAX elements before building a new one (e.g. --search "tooltip")')
   .version(packageJson.version);
 
   // audit program
@@ -525,7 +530,11 @@ async function main() {
     program.error(color.red(e.message));
   }
   // test for updating to latest or just run the command
-  if (commandRun.command === "update") {
+  if (commandRun.command === 'webcomponent' && commandRun.options.search) {
+    await elementsSearchCommand(commandRun);
+    process.exit(0);
+  }
+  else if (commandRun.command === "update") {
     await testForUpdates(commandRun);
   }
   else if (commandRun.command === 'audit') {
