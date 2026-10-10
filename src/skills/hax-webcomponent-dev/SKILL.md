@@ -4,7 +4,7 @@ description: >
   Develop HAX-capable web components using LitElement, DDD design system, and HAXSchema.
   Use when scaffolding new components, adding HAX editor support, auditing accessibility,
   or applying DDD tokens to elements in the webcomponents monorepo.
-version: 1.2.0
+version: 1.3.0
 license: Apache-2.0
 metadata:
   author: haxtheweb
@@ -29,7 +29,7 @@ Develop HAX-capable web components using LitElement, DDD design system, and HAXS
 
 Answer these before writing code. They are the corrections reviewers most often have to make.
 
-1. **Does an element already exist?** Browse <https://github.com/haxtheweb/webcomponents/tree/master/elements>. Compose existing elements (inputs, tooltips, icons, cards, collapses) instead of rebuilding them.
+1. **Does an element already exist?** Run `hax wc --search "<words>"` (add `--format json` for machine-readable results). It searches every element in the monorepo by tag, title, description and tags and flags the preferred building blocks. Compose existing elements (inputs, tooltips, icons, cards, collapses) instead of rebuilding them.
 2. **Leaf or parent?** A leaf renders its own content. A parent that HAX authors drop other elements into is a *grid* element: its haxProperties use `"type": "grid"` and its children are slotted elements. Decide this up front; it changes the haxProperties and the editing experience.
 3. **Dark mode.** Every color must come from a `--ddd-theme-*` token or `currentColor`. When light and dark need different values, use `light-dark()` with tokens. Plan this now; retrofitting it is where hard-coded fills slip through.
 4. **Which fields are essential?** Anything the element cannot render without is `"required": true` in haxProperties.
@@ -64,9 +64,9 @@ From the HAXSchema documented in `hax-body-behaviors/lib/HAXWiring.js`:
 
 All in <https://github.com/haxtheweb/webcomponents/tree/master/elements>:
 
-- **Grid parent / child**: `d-d-d/lib/ddd-steps-list.js` + `ddd-steps-list-item.js` (and their `.haxProperties.json`); `a11y-collapse-group` + `a11y-collapse`.
+- **Grid parent / child**: `career-timeline` (`career-timeline.js` + `lib/career-org-item.js` / `lib/career-role-item.js`); `d-d-d/lib/ddd-steps-list.js` + `ddd-steps-list-item.js` (and their `.haxProperties.json`); `a11y-collapse-group` + `a11y-collapse`.
 - **Managed inputs and dark-mode CSS**: `simple-fields/lib/simple-fields-field.js`, whose styles use `light-dark()` over DDD tokens.
-- **haxHooks**: `multiple-choice` (`gizmoRegistration`, `inlineContextMenu`, `preProcessInsertContent`).
+- **haxHooks**: `career-timeline/lib/career-org-item.js`; `multiple-choice` (`gizmoRegistration`, `inlineContextMenu`, `preProcessInsertContent`).
 
 ## Dark mode recipe
 
