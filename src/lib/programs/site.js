@@ -542,12 +542,177 @@ yarn-error.log*
   return false;
 }
 
+// haxtheweb/issues#3104: llms-full.txt is the whole site as one markdown
+// document for AI agents. HAXcms servers answer it on request; a static host
+// has no server, so the publish step writes it as a file. Same format and
+// visibility rule as GET x/api/v1/site/export/md for an anonymous caller
+// (haxcms-nodejs src/siteRoutes/v1/exports.js buildSiteExportMarkdown).
+// Directories where this process wrote llms-full.txt, so restore can remove
+// it again: on a HAXcms server a stale file on disk would shadow the live one.
+const llmsFullWrittenFor = new Set();
+
+function isMetadataFalse(value) {
+  if (value === false || value === 0) {
+    return true;
+  }
+  return typeof value === 'string' && ['0', 'false', 'no', 'off'].includes(value.trim().toLowerCase());
+}
+
+function isMetadataTrue(value) {
+  if (value === true || value === 1) {
+    return true;
+  }
+  return typeof value === 'string' && ['1', 'true', 'yes', 'on'].includes(value.trim().toLowerCase());
+}
+
+// published and not hidden from the menu (site API anonymous rule)
+function isItemVisibleForLlmsFull(item) {
+  if (!item || typeof item !== 'object') {
+    return false;
+  }
+  const metadata = item.metadata && typeof item.metadata === 'object' ? item.metadata : {};
+  if (Object.prototype.hasOwnProperty.call(metadata, 'published') && isMetadataFalse(metadata.published)) {
+    return false;
+  }
+  if (Object.prototype.hasOwnProperty.call(metadata, 'hideInMenu') && isMetadataTrue(metadata.hideInMenu)) {
+    return false;
+  }
+  return true;
+}
+
+function encodeSlugPathForLlmsFull(slug = '') {
+  return String(slug)
+    .split('/')
+    .map((part) => part.trim())
+    .filter((part) => part !== '')
+    .map((part) => encodeURIComponent(part))
+    .join('/');
+}
+
+/**
+ * Build llms-full.txt for a site directory, or return null when the site is
+ * private or has no readable site.json.
+ */
+export function buildStaticLlmsFull(siteDirectory) {
+  let manifest;
+  try {
+    manifest = JSON.parse(fs.readFileSync(path.join(siteDirectory, 'site.json'), 'utf8'));
+  } catch (e) {
+    return null;
+  }
+  if (!manifest || typeof manifest !== 'object') {
+    return null;
+  }
+  const settings = manifest.metadata && manifest.metadata.site && manifest.metadata.site.settings
+    ? manifest.metadata.site.settings
+    : {};
+  if (isMetadataTrue(settings.private)) {
+    return null;
+  }
+  let items = Array.isArray(manifest.items) ? manifest.items.filter((item) => item) : [];
+  try {
+    const jos = new JSONOutlineSchema();
+    jos.items = items;
+    items = jos.orderTree(items);
+  } catch (e) {
+    // keep site.json order
+  }
+  const domain = manifest.metadata && manifest.metadata.site ? manifest.metadata.site.domain : '';
+  const pageUrlBase = typeof domain === 'string' && /^https?:\/\//i.test(domain)
+    ? domain.replace(/\/+$/, '') + '/'
+    : '/';
+  const parts = [`# ${manifest.title ? String(manifest.title) : (manifest.metadata && manifest.metadata.site && manifest.metadata.site.name) || 'Site export'}`];
+  const description = manifest.description ? String(manifest.description).replace(/\s+/g, ' ').trim() : '';
+  if (description !== '') {
+    parts.push('');
+    parts.push(`> ${description}`);
+  }
+  const realSiteDirectory = fs.realpathSync(siteDirectory);
+  for (const item of items) {
+    if (!isItemVisibleForLlmsFull(item)) {
+      continue;
+    }
+    parts.push('');
+    parts.push(`## ${item.title || item.slug || item.id || 'Item export'}`);
+    parts.push('');
+    if (item.slug) {
+      parts.push(`Source: ${pageUrlBase}${encodeSlugPathForLlmsFull(item.slug)}`);
+      parts.push('');
+    }
+    let body = '';
+    if (typeof item.location === 'string' && item.location !== '' && !item.location.includes('..')) {
+      const markdownLocation = /\.html?$/i.test(item.location)
+        ? item.location.replace(/\.html?$/i, '.md')
+        : `${item.location}.md`;
+      const htmlPath = path.resolve(realSiteDirectory, item.location);
+      const markdownPath = path.resolve(realSiteDirectory, markdownLocation);
+      if (markdownPath.startsWith(realSiteDirectory + path.sep) && fs.existsSync(markdownPath)) {
+        // the save-time sidecar, same source the servers use
+        body = fs.readFileSync(markdownPath, 'utf8');
+      } else if (htmlPath.startsWith(realSiteDirectory + path.sep) && fs.existsSync(htmlPath)) {
+        // no sidecar: fall back to the page text
+        body = fs.readFileSync(htmlPath, 'utf8')
+          .replace(/<(script|style)[^>]*>[\s\S]*?<\/\1>/gi, ' ')
+          .replace(/<\/(p|div|h[1-6]|li|section|article|blockquote)>/gi, '\n\n')
+          .replace(/<br\s*\/?>/gi, '\n')
+          .replace(/<[^>]+>/g, '')
+          .replace(/[ \t]+/g, ' ')
+          .replace(/\n{3,}/g, '\n\n');
+      }
+    }
+    parts.push(String(body).trim());
+  }
+  return parts.join('\n').trim() + '\n';
+}
+
+/**
+ * Write llms-full.txt into a site directory for a static publish. Returns
+ * true when written. Never overwrites a file this process didn't create.
+ */
+export function writeStaticLlmsFull(siteDirectory) {
+  try {
+    const target = path.join(siteDirectory, 'llms-full.txt');
+    if (fs.existsSync(target) && !llmsFullWrittenFor.has(path.resolve(siteDirectory))) {
+      return false;
+    }
+    const markdown = buildStaticLlmsFull(siteDirectory);
+    if (markdown === null) {
+      return false;
+    }
+    fs.writeFileSync(target, markdown);
+    llmsFullWrittenFor.add(path.resolve(siteDirectory));
+    return true;
+  } catch (e) {
+    // best-effort; never block a publish
+    return false;
+  }
+}
+
+/**
+ * Remove an llms-full.txt this process wrote for a static publish.
+ */
+export function removeStaticLlmsFull(siteDirectory) {
+  const key = path.resolve(siteDirectory);
+  if (!llmsFullWrittenFor.has(key)) {
+    return false;
+  }
+  llmsFullWrittenFor.delete(key);
+  try {
+    fs.unlinkSync(path.join(siteDirectory, 'llms-full.txt'));
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
 export function prepareSiteForStaticPublish(siteDirectory) {
   let prepared = false;
   try {
     if (!fs.existsSync(siteDirectory)) {
       return false;
     }
+    // static hosts have no server to answer llms-full.txt (#3104)
+    writeStaticLlmsFull(siteDirectory);
     const indexPath = path.join(siteDirectory, 'index.html');
     const ghpagesPath = path.join(siteDirectory, 'ghpages.html');
     const backupPath = path.join(siteDirectory, 'index.html.bak');
@@ -603,6 +768,8 @@ export function restoreSiteAfterStaticPublish(siteDirectory) {
     if (!fs.existsSync(siteDirectory)) {
       return false;
     }
+    // llms-full.txt was only for the static host; HAXcms serves it live
+    removeStaticLlmsFull(siteDirectory);
     const indexPath = path.join(siteDirectory, 'index.html');
     const backupPath = path.join(siteDirectory, 'index.html.bak');
     if (fs.existsSync(backupPath)) {
@@ -1876,6 +2043,9 @@ export async function siteCommandDetected(commandRun) {
             log(formatErrorForLogging(e), 'error');
           }
           finally {
+            // the static-host llms-full.txt is removed even when the
+            // ghpages.html swap didn't happen (#3104)
+            removeStaticLlmsFull(activeHaxsite.directory);
             if (surgePrepared) {
               let restored = restoreSiteAfterStaticPublish(activeHaxsite.directory);
               if (restored && !commandRun.options.quiet) {
@@ -1938,6 +2108,9 @@ export async function siteCommandDetected(commandRun) {
             log(formatErrorForLogging(e), 'error');
           }
           finally {
+            // the static-host llms-full.txt is removed even when the
+            // ghpages.html swap didn't happen (#3104)
+            removeStaticLlmsFull(activeHaxsite.directory);
             if (netlifyPrepared) {
               let restored = restoreSiteAfterStaticPublish(activeHaxsite.directory);
               if (restored && !commandRun.options.quiet) {
@@ -2000,6 +2173,9 @@ export async function siteCommandDetected(commandRun) {
             log(formatErrorForLogging(e), 'error');
           }
           finally {
+            // the static-host llms-full.txt is removed even when the
+            // ghpages.html swap didn't happen (#3104)
+            removeStaticLlmsFull(activeHaxsite.directory);
             if (vercelPrepared) {
               let restored = restoreSiteAfterStaticPublish(activeHaxsite.directory);
               if (restored && !commandRun.options.quiet) {
