@@ -478,6 +478,8 @@ test('agent path: add pages with content in order, edit one, list items', { skip
   } finally {
     fs.rmSync(parentDir, { recursive: true, force: true })
   }
+})
+
 // haxtheweb/issues#3119: `hax wc --search` finds existing elements (offline:
 // HAX_ELEMENTS_CATALOG points at a fixture so CI needs no network)
 test('CLI wc --search returns matching elements as JSON', smokeOpts, () => {
