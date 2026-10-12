@@ -19,6 +19,9 @@ const {
   fixLegacyIgnoreFile,
   prepareSiteForStaticPublish,
   restoreSiteAfterStaticPublish,
+  buildStaticLlmsFull,
+  writeStaticLlmsFull,
+  removeStaticLlmsFull,
   readSurgeCnameDomain,
   surgeUsesNewGrammar,
 } = available ? siteModule : {}
@@ -240,4 +243,86 @@ test('surgeUsesNewGrammar gates the publish verb on the 0.40 CLI reorganization'
   // no argument reads the version captured by the module-load probe (null in
   // this suite because utils.exec is mocked before site.js is required)
   assert.equal(surgeUsesNewGrammar(), true)
+})
+
+// --- llms-full.txt for static publishes (haxtheweb/issues#3104) ---
+
+function makeLlmsSite(root, overrides) {
+  const manifest = Object.assign({
+    title: 'Intro to Biology',
+    description: 'An open\n course',
+    metadata: { site: { name: 'bio', settings: {} } },
+    items: [
+      { id: 'a', title: 'Getting Started', slug: 'getting-started', parent: null, order: 0, location: 'pages/a/index.html', metadata: {} },
+      { id: 'b', title: 'Photosynthesis', slug: 'week-1/photosynthesis', parent: 'a', order: 0, location: 'pages/b/index.html', metadata: {} },
+      { id: 'd', title: 'Draft', slug: 'draft', parent: null, order: 1, location: 'pages/d/index.html', metadata: { published: false } },
+      { id: 'h', title: 'Hidden', slug: 'hidden', parent: null, order: 2, location: 'pages/h/index.html', metadata: { hideInMenu: 'true' } },
+    ],
+  }, overrides || {})
+  fs.writeFileSync(path.join(root, 'site.json'), JSON.stringify(manifest))
+  for (const id of ['a', 'b', 'd', 'h']) {
+    fs.mkdirSync(path.join(root, 'pages', id), { recursive: true })
+    fs.writeFileSync(path.join(root, 'pages', id, 'index.html'), `<p>html for ${id}</p>`)
+  }
+  fs.writeFileSync(path.join(root, 'pages', 'a', 'index.md'), 'Welcome **learners**\n')
+}
+
+test('buildStaticLlmsFull matches the server markdown export format', opts, () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'hax-llmsfull-'))
+  try {
+    makeLlmsSite(root)
+    const md = buildStaticLlmsFull(root)
+    assert.ok(md.startsWith('# Intro to Biology\n\n> An open course\n'))
+    // outline order: parent before child, sidecar markdown preferred
+    assert.ok(md.indexOf('## Getting Started\n\nSource: /getting-started\n\nWelcome **learners**') !== -1)
+    assert.ok(md.indexOf('## Photosynthesis\n\nSource: /week-1/photosynthesis\n\nhtml for b') !== -1)
+    assert.ok(md.indexOf('## Getting Started') < md.indexOf('## Photosynthesis'))
+    // unpublished and hidden pages never reach agents
+    assert.equal(md.indexOf('Draft'), -1)
+    assert.equal(md.indexOf('Hidden'), -1)
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true })
+  }
+})
+
+test('buildStaticLlmsFull uses the site domain for Source URLs and skips private sites', opts, () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'hax-llmsfull-domain-'))
+  try {
+    makeLlmsSite(root, { metadata: { site: { name: 'bio', domain: 'https://bio.example.org/', settings: {} } } })
+    assert.ok(buildStaticLlmsFull(root).indexOf('Source: https://bio.example.org/getting-started') !== -1)
+    makeLlmsSite(root, { metadata: { site: { name: 'bio', settings: { private: true } } } })
+    assert.equal(buildStaticLlmsFull(root), null)
+    assert.equal(writeStaticLlmsFull(root), false)
+    assert.ok(!fs.existsSync(path.join(root, 'llms-full.txt')))
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true })
+  }
+})
+
+test('static publish writes llms-full.txt and restore removes it', opts, () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'hax-llmsfull-rt-'))
+  try {
+    makeLlmsSite(root)
+    fs.writeFileSync(path.join(root, 'index.html'), 'ORIGINAL INDEX')
+    fs.writeFileSync(path.join(root, 'ghpages.html'), 'GHPAGES ENTRY')
+    prepareSiteForStaticPublish(root)
+    assert.ok(fs.readFileSync(path.join(root, 'llms-full.txt'), 'utf8').startsWith('# Intro to Biology'))
+    restoreSiteAfterStaticPublish(root)
+    assert.ok(!fs.existsSync(path.join(root, 'llms-full.txt')), 'removed so HAXcms serves it live')
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true })
+  }
+})
+
+test('writeStaticLlmsFull never overwrites or removes a file it did not create', opts, () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'hax-llmsfull-own-'))
+  try {
+    makeLlmsSite(root)
+    fs.writeFileSync(path.join(root, 'llms-full.txt'), 'hand written')
+    assert.equal(writeStaticLlmsFull(root), false)
+    assert.equal(removeStaticLlmsFull(root), false)
+    assert.equal(fs.readFileSync(path.join(root, 'llms-full.txt'), 'utf8'), 'hand written')
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true })
+  }
 })
