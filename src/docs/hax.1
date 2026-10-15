@@ -96,6 +96,9 @@ Actions to perform on site include:
 .B site:vercel
 \- Publish site to Vercel
 .br
+.B site:login\-link
+\- Generate a one\-time login link (forgot password); see \-\-ttl, \-\-user, \-\-domain
+.br
 .B setup:github\-actions
 \- Setup GitHub Actions deployment
 .br
@@ -252,7 +255,13 @@ node operation to perform
 node ID to operate on
 .TP
 \--domain <char>
-published domain name
+published domain name (site:login\-link uses it as the HAXcms server URL)
+.TP
+\--ttl <char>
+lifetime of a site:login\-link (seconds, or 10m / 1h); default 10m
+.TP
+\--user <char>
+HAXcms account for site:login\-link (defaults to the site admin)
 .TP
 \--title\-scrape <char>
 CSS Selector for `title` in resource

@@ -122,6 +122,8 @@ async function main() {
   .option('--replace <char>', 'replacement text for search-replace')
   .option('--confirm', 'confirm destructive search-replace operation')
   .option('--destroy-confirm', 'confirm removing matched text in search-replace')
+  .option('--ttl <char>', 'lifetime of a site:login-link (seconds, or 10m / 1h); default 10m')
+  .option('--user <char>', 'HAXcms account for site:login-link (defaults to the site admin)')
 
   .version(packageJson.version)
   .helpCommand(true);
@@ -231,6 +233,8 @@ async function main() {
   .option('--replace <char>', 'replacement text for search-replace')
   .option('--confirm', 'confirm destructive search-replace operation')
   .option('--destroy-confirm', 'confirm removing matched text in search-replace')
+  .option('--ttl <char>', 'lifetime of a site:login-link (seconds, or 10m / 1h); default 10m')
+  .option('--user <char>', 'HAXcms account for site:login-link (defaults to the site admin)')
   .version(packageJson.version);
   let siteNodeOps = siteNodeOperations();
   for (var i in siteNodeOps) {

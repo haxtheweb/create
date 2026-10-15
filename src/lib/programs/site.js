@@ -15,6 +15,7 @@ import { merlinSays, communityStatement } from "../statements.js";
 import { dashToCamel, interactiveExec, exec, findAvailablePort, validateNpmClient, spawn, validateDomain, gitIdentityFallbackArgs } from "../utils.js";
 import { log, structuredOutputEnabled, writeData } from "../logging.js";
 import { isSSRFError, resolveLocalPath, sanitizeIfString } from '../site-security.js';
+import { resolveLoginLinkBase, buildLoginLinkUrl, buildLoginLinkPath, loadMagicLinkStore, parseLoginLinkTtl } from '../login-link.js';
 
 // Security (Stream-A): the deprecated @haxtheweb/open-apis npm dependency was
 // removed; converter calls now route in-process through haxcms-nodejs handlers
@@ -870,6 +871,7 @@ export function siteActions() {
     { value: 'site:surge', label: "Publish site to Surge.sh"},
     { value: 'site:netlify', label: "Publish site to Netlify"},
     { value: 'site:vercel', label: "Publish site to Vercel"},
+    { value: 'site:login-link', label: "Generate a one-time login link (forgot password)"},
     { value: 'setup:github-actions', label: "Setup GitHub Actions deployment"},
     { value: 'setup:gitlab-ci', label: "Setup GitLab CI deployment"},
     { value: 'setup:replit', label: "Setup Replit configuration"},
@@ -2347,6 +2349,51 @@ export async function siteCommandDetected(commandRun) {
             log(formatErrorForLogging(e), 'error');
           }
         break;
+        case "site:login-link":
+          // haxtheweb/issues#2854: recover access to a deployed HAXcms by
+          // minting a one-time sign-in link straight into the _config this
+          // site's server reads. Filesystem access to _config is the trust
+          // boundary (it already allows replacing .user), so no password needed.
+          try {
+            const magicLinkStore = await loadMagicLinkStore();
+            const ttlSeconds = parseLoginLinkTtl(commandRun.options.ttl);
+            const issued = magicLinkStore.issueMagicLink(HAXCMS, {
+              user: typeof commandRun.options.user === 'string' ? commandRun.options.user : undefined,
+              channel: 'cli',
+              ttlSeconds: ttlSeconds,
+            });
+            const manifestDomain = activeHaxsite.manifest && activeHaxsite.manifest.metadata && activeHaxsite.manifest.metadata.site
+              ? activeHaxsite.manifest.metadata.site.domain
+              : '';
+            const base = resolveLoginLinkBase(commandRun.options.domain, manifestDomain);
+            const expires = new Date(issued.expiresAt * 1000);
+            const result = {
+              url: base ? buildLoginLinkUrl(base, issued.token) : null,
+              path: buildLoginLinkPath(issued.token),
+              user: issued.user,
+              expiresAt: expires.toISOString(),
+              ttlSeconds: issued.ttlSeconds,
+              configDirectory: HAXCMS.configDirectory,
+            };
+            // the link IS the output, so it is printed even with --quiet
+            if (structuredOutputEnabled() || commandRun.options.i === false) {
+              logStructuredOutput(commandRun, result);
+            }
+            else {
+              const where = result.url
+                ? color.bold(result.url)
+                : `${color.bold(result.path)}\nPrefix it with the URL your HAXcms server answers on, or re-run with --domain https://your-site.example`;
+              p.note(
+                `${where}\n\nSigns in as ${color.bold(issued.user)} once, until ${expires.toLocaleString()} (${Math.round(issued.ttlSeconds / 60)} min).\nGenerating another link cancels this one. Anyone with this link can edit the site, so don't paste it into chats or tickets.`,
+                '🔑 One-time login link'
+              );
+            }
+          }
+          catch(e) {
+            log(formatErrorForLogging(e), 'error');
+            process.exitCode = 1;
+          }
+          break;
         case "site:file-list":
         case "site:list-files":
         let res = await invokeRoute(
