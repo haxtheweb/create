@@ -42,6 +42,7 @@ Onboard new developers to the HAX ecosystem by cloning repositories, installing 
 - `hax webcomponent <name> --y` — Create a web component
 - `hax site <name> --y --no-i` — Create a HAXsite
 - `hax audit` — Run DDD compliance audit on CSS
+- `hax audit schema` — Validate HAX schema documents (site.json, haxProperties, appstore.json, ...)
 - `hax skills list` — List bundled agent skills
 - `hax skills install <name|--all>` — Install bundled skills into `.agents/skills/`
 - `hax update` — Update HAX CLI

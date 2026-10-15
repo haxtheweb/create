@@ -9,8 +9,11 @@ let checksPassed = true;
 /**
  * @description Runs the audit command, to be called when `hax audit` command is run
  * @param commandRun Enables command line flags (such as `--debug`)
+ * @param path directory to audit (defaults to cwd)
+ * @param exit when false, return whether the checks passed instead of exiting (used by `hax audit all`)
  */
-export function auditCommandDetected(commandRun, path = null) {
+export function auditCommandDetected(commandRun, path = null, exit = true) {
+  checksPassed = true;
   const PROJECT_ROOT = path || process.cwd();
   p.intro(`${color.bgBlack(` 🚀 Auditing DDD Compliance: ${color.underline(color.bold(color.yellow(PROJECT_ROOT)))} `)}`)
   let dddignore = dddignoreInterpreter(PROJECT_ROOT);
@@ -27,6 +30,9 @@ export function auditCommandDetected(commandRun, path = null) {
     📘 For more information about DDD variables and capabilities: ${color.underline(color.cyan(`https://haxtheweb.org/documentation/ddd`))}
   `);
 
+  if (!exit) {
+    return checksPassed;
+  }
   returnCode();
 }
 

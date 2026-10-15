@@ -10,6 +10,7 @@ import color from 'picocolors';
 import { haxIntro, communityStatement } from "./lib/statements.js";
 import { log, consoleTransport, logger } from "./lib/logging.js";
 import { auditCommandDetected } from './lib/programs/audit.js';
+import { runAuditCommand as runAuditCommandWith } from './lib/programs/audit-schema.js';
 import { partyCommandDetected } from './lib/programs/party.js';
 import { webcomponentProcess, webcomponentCommandDetected, webcomponentActions, elementsSearchCommand } from "./lib/programs/webcomponent.js";
 import { siteActions, siteNodeOperations, siteProcess, siteCommandDetected, siteThemeList, siteSkeletonList } from "./lib/programs/site.js";
@@ -18,6 +19,9 @@ import { camelToDash, exec, interactiveExec, writeConfigFile, readConfigFile, ge
 import * as haxcmsLib from "@haxtheweb/haxcms-nodejs/dist/lib/HAXCMS.js";
 const HAXCMS = haxcmsLib.HAXCMS;
 const systemStructureContext = haxcmsLib.systemStructureContext;
+// `hax audit [ddd|schema|all]`; the DDD audit itself lives in audit.js
+const runAuditCommand = (commandRun, dddPath, schemaRoot) =>
+  runAuditCommandWith(commandRun, dddPath, schemaRoot, { auditDDD: auditCommandDetected });
 
 // check the last time this was run
 let lastTime = readConfigFile('hax-cli-last-run');
@@ -277,15 +281,18 @@ async function main() {
   // audit program
   program
   .command('audit')
-  .description('Audits web components for compliance with DDD (HAX design system)')
-  .action(() => {
+  .description('Audits for HAX compliance: DDD design system (default), HAX schemas, or both')
+  .argument('[type]', 'What to audit:' + "\n\r" + 'ddd - DDD design system usage in CSS / JS (default)' + "\n\r" + 'schema - site.json, skeletons, haxProperties, demoSchema, appstore.json and Merlin commands against the HAX schemas' + "\n\r" + 'all - ddd and schema')
+  .action((type, opts) => {
     commandRun = {
       command: 'audit',
-      arguments: {},
-      options: {}
+      arguments: { type: type || 'ddd' },
+      options: { ...opts }
     };
   })
   .option('--debug', 'Output for developers')
+  .option('--strict', 'schema audit: treat warnings as failures')
+  .option('--format <char>', 'schema audit: json for a machine-readable report')
   .version(packageJson.version);
 
   program
@@ -470,7 +477,7 @@ async function main() {
           commandRun.options.template = 'monorepo';
           // assumed if monorepo
           if (commandRun.command === "audit") {
-            auditCommandDetected(commandRun);
+            runAuditCommand(commandRun, null, process.cwd());
           }
           else {
             commandRun.command = 'webcomponent';
@@ -539,11 +546,12 @@ async function main() {
   }
   else if (commandRun.command === 'audit') {
     let customPath = null;
+    const inSite = await systemStructureContext();
     // test for haxcms context
-    if (await systemStructureContext() && fs.existsSync(`${process.cwd()}/custom`)) { 
+    if (inSite && fs.existsSync(`${process.cwd()}/custom`)) { 
       customPath = path.join(process.cwd(), 'custom');
     }
-    auditCommandDetected(commandRun, customPath)
+    runAuditCommand(commandRun, customPath, process.cwd());
   }
   else if (commandRun.command === 'party') {
     commandRun.options.author = author;

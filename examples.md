@@ -251,3 +251,19 @@ Audit HAX component while also printing all gathered .dddignore contents to cons
 ```bash
 hax --debug audit
 ```
+Validate HAX schema documents in the current folder: site.json, skeletons, haxProperties (+ demoSchema and locale overlays), appstore.json and Merlin commands in JS source
+```bash
+hax audit schema
+```
+Fail on schema warnings too, and print them
+```bash
+hax audit schema --strict
+```
+Machine-readable schema report (for agents and CI)
+```bash
+hax audit schema --format json
+```
+Run the DDD audit and the schema audit together
+```bash
+hax audit all
+```

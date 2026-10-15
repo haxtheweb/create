@@ -130,7 +130,17 @@ Actions to perform on web component include:
 .RE
 .PP
 .B audit
-[options] \- Audits web components for compliance with DDD (HAX design system)
+[options] [type] \- Audits for HAX compliance. Types:
+.RS
+.B ddd
+\- DDD design system usage in CSS / JS (default)
+.br
+.B schema
+\- site.json, skeletons, haxProperties, demoSchema, appstore.json and Merlin commands against the HAX schemas (\-\-strict fails on warnings, \-\-format json for a report)
+.br
+.B all
+\- ddd and schema
+.RE
 .PP
 .B party
 [options] [action] \- Party time! Join the HAX community and get involved!
@@ -380,6 +390,9 @@ Add a new page to an existing site
 .TP
 .B hax audit \--debug
 Audit web components for compliance with DDD (HAX design system) with debug output
+.TP
+.B hax audit schema \--strict
+Validate HAX schema documents in the current folder and fail on warnings
 .TP
 .B hax party \--repos haxtheweb/webcomponents
 Join the HAX community by cloning specific repositories

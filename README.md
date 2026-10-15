@@ -43,6 +43,8 @@ hax start
 - `hax site mysite --skeleton-machine-name clean-one --y` - create a new HAXsite from an installed skeleton template
 - `hax wc --search "tooltip"` - Search existing HAX elements (tag, title, description, tags) before building a new one; `--format json` for scripts
 - `hax audit` - Audits web components for compliance with DDD (HAX design system)
+- `hax audit schema` - Validates `site.json`, skeletons, `haxProperties` (and their `demoSchema` / locales), `appstore.json` and Merlin commands against the HAX schemas
+- `hax audit all` - Runs both
 - `hax update` - HAX CLI self update
 - `hax party` - Display options to join the HAX community and get involved!
 - `hax skills list` - List bundled agent skills shipped with the CLI
@@ -181,8 +183,8 @@ Commands:
   site [options] [action]             create or administer a HAXsite
   wc|webcomponent [options] [action]  Create Lit based web components, with HAX
                                       recommendations
-  audit [options]                     Audits web components for compliance with
-                                      DDD (HAX design system)
+  audit [options] [type]              Audits for HAX compliance: DDD design
+                                      system (default), HAX schemas, or both
   party [options] [action]            Party time! Join the HAX community and
                                       get involved!
   help [command]                      display help for command
