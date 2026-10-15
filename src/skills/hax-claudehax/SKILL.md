@@ -99,6 +99,7 @@ When operating outside the `/hax` slash command, use the HAX CLI directly:
 - `hax webcomponent <name> --y` — Scaffold a new component
 - `hax site <name> --y --no-i` — Create a new HAXsite
 - `hax audit` — DDD compliance audit
+- `hax audit schema` — validate site.json, skeletons, haxProperties, appstore.json and Merlin commands against the HAX schemas
 - `hax skills list` — List bundled agent skills
 - `hax skills install <name|--all>` — Install bundled skills into `.agents/skills/`
 - `hax update` — Update HAX CLI

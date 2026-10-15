@@ -246,6 +246,11 @@ The HAX ecosystem uses a sophisticated build pipeline optimized for unbundled Ja
   - Checks CSS and structure against DDD design system standards
   - Ignores files listed in `.dddignore`
   - Run from component root for accurate results
+- **Audit HAX schema documents** (site.json, skeletons, haxProperties + demoSchema + locales, appstore.json, Merlin commands):
+  ```bash
+  hax audit schema            # add --strict to fail on warnings, --format json for a report
+  hax audit all               # DDD + schema
+  ```
   - **Required** before submitting theme components
 
 ### Code Quality
@@ -291,7 +296,7 @@ LICENSE
 - **Pre-commit checks**:
   - Run `npm test` to ensure all tests pass.
   - Run `npm run lint` to verify code style.
-  - Run `hax audit` for web components to confirm DDD compliance.
+  - Run `hax audit` for web components to confirm DDD compliance, and `hax audit schema` when you change haxProperties, site.json, skeletons or appstore files.
 - **Commit Guidelines**:
   - Use clear, descriptive commit messages (e.g., "Add i18n support to my-element").
   - Include relevant changes to tests or documentation.
