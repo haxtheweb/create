@@ -573,3 +573,19 @@ test('CLI skills install accepts --all and a positional name into a new folder',
     fs.rmSync(parentDir, { recursive: true, force: true })
   }
 })
+
+// HAXcms is loaded during import, so the CLI-mode flag has to be set by the
+// first import. When it was set later, a fresh install printed the seeded
+// admin password on the first run of any command, even `hax --version`.
+test('CLI first run on a fresh machine does not print admin credentials', smokeOpts, () => {
+  const freshHome = fs.mkdtempSync(path.join(os.tmpdir(), 'hax-fresh-home-'))
+  try {
+    const res = spawnSync(process.execPath, [CLI, '--version'], {
+      encoding: 'utf8', env: { ...process.env, HOME: freshHome, USERPROFILE: freshHome }, cwd: freshHome, timeout: 15000,
+    })
+    assert.equal(res.status, 0, res.stderr)
+    assert.doesNotMatch(res.stdout + res.stderr, /seeded credentials|password:/)
+  } finally {
+    fs.rmSync(freshHome, { recursive: true, force: true })
+  }
+})
