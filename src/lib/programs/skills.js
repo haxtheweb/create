@@ -2,7 +2,7 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import * as p from '@clack/prompts';
 import color from 'picocolors';
-import { log } from '../logging.js';
+import { log, writeData } from '../logging.js';
 
 /**
  * @description Actions available for the skills command
@@ -98,7 +98,7 @@ export function installSkills(skills, skillName, targetPath) {
   if (skillName && skillName !== 'all') {
     toInstall = skills.filter(s => s.name === skillName || s.dir === skillName);
     if (toInstall.length === 0) {
-      log(`Skill "${skillName}" not found in bundled skills`, 'error');
+      log(`Skill "${skillName}" not found in bundled skills. Run \`hax skills list\` to see what is available.`, 'error');
       return [];
     }
   }
@@ -134,7 +134,7 @@ export async function skillsCommandDetected(commandRun) {
   if (action === 'list') {
     if (commandRun.options && commandRun.options.format === 'json') {
       const out = skills.map(s => ({ name: s.name, version: s.version, description: s.description }));
-      console.log(JSON.stringify(out, null, 2));
+      writeData(JSON.stringify(out, null, 2));
     } else {
       p.intro(`${color.bgBlack(color.white(` Bundled agent skills (${skills.length}) `))}`);
       for (const skill of skills) {
@@ -144,13 +144,17 @@ export async function skillsCommandDetected(commandRun) {
     }
   }
   else if (action === 'install') {
-    let skillName = commandRun.options && commandRun.options.skillName;
-    const targetPath = commandRun.options && commandRun.options.path;
+    const options = commandRun.options || {};
+    // accepted forms: --all, --skill-name <name|all>, or `hax skills install <name>`
+    let skillName = options.all ? 'all' : (options.skillName || (commandRun.arguments && commandRun.arguments.name));
+    const targetPath = options.path;
     if (!skillName) {
-      if (commandRun.options && commandRun.options.y) {
+      if (options.y) {
         skillName = 'all';
-      } else if (commandRun.options && commandRun.options.i) {
-        log('Must specify --skill-name <name> or --all for non-interactive install', 'error');
+      } else if (options.i === false) {
+        // nobody can answer a picker without a terminal
+        log('Specify which skills to install: hax skills install --all, hax skills install <name>, or --skill-name <name>', 'error');
+        process.exitCode = 1;
         return;
       } else {
         const choices = [
@@ -163,7 +167,14 @@ export async function skillsCommandDetected(commandRun) {
         });
       }
     }
+    if (p.isCancel(skillName)) {
+      return;
+    }
     const installed = installSkills(skills, skillName, targetPath);
+    if (installed.length === 0) {
+      process.exitCode = 1;
+      return;
+    }
     if (!process.env.haxquiet) {
       p.outro(`${color.green(installed.length)} skill(s) installed`);
     }
@@ -172,7 +183,7 @@ export async function skillsCommandDetected(commandRun) {
     // no action specified — show list
     if (commandRun.options && commandRun.options.format === 'json') {
       const out = skills.map(s => ({ name: s.name, version: s.version, description: s.description }));
-      console.log(JSON.stringify(out, null, 2));
+      writeData(JSON.stringify(out, null, 2));
     } else {
       p.intro(`${color.bgBlack(color.white(` Bundled agent skills (${skills.length}) `))}`);
       for (const skill of skills) {

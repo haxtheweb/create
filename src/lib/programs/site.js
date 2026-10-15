@@ -13,7 +13,7 @@ import Twig from 'twig';
 import { parse } from 'node-html-parser';
 import { merlinSays, communityStatement } from "../statements.js";
 import { dashToCamel, interactiveExec, exec, findAvailablePort, validateNpmClient, spawn, validateDomain, gitIdentityFallbackArgs } from "../utils.js";
-import { log } from "../logging.js";
+import { log, structuredOutputEnabled, writeData } from "../logging.js";
 import { isSSRFError, resolveLocalPath, sanitizeIfString } from '../site-security.js';
 
 // Security (Stream-A): the deprecated @haxtheweb/open-apis npm dependency was
@@ -256,6 +256,11 @@ export function formatStructuredOutput(commandRun, value) {
 }
 
 function logStructuredOutput(commandRun, value, level = 'info') {
+  // --format json|yaml: the payload is the only thing written to stdout
+  if (level === 'info' && structuredOutputEnabled()) {
+    writeData(formatStructuredOutput(commandRun, value));
+    return;
+  }
   log(formatStructuredOutput(commandRun, value), level);
 }
 
@@ -781,6 +786,58 @@ export function restoreSiteAfterStaticPublish(siteDirectory) {
     // Silent failure; restore is best-effort
   }
   return false;
+}
+
+// actions the site dispatcher accepts that are not listed in siteActions()
+// (aliases for common mistypes plus scripted-only operations)
+export function siteHiddenActions() {
+  return [
+    'site:status',
+    'node:status',
+    'site:file-list',
+    'site:files-upload',
+    'site:files-delete',
+    'site:search-replace',
+    'quit',
+  ];
+}
+
+function editDistance(a, b) {
+  const rows = a.length + 1;
+  const cols = b.length + 1;
+  let prev = Array.from({ length: cols }, (_, j) => j);
+  for (let i = 1; i < rows; i++) {
+    const cur = [i];
+    for (let j = 1; j < cols; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + cost);
+    }
+    prev = cur;
+  }
+  return prev[cols - 1];
+}
+
+// closest known site action for a mistyped one, or null if nothing is close
+export function suggestSiteAction(action) {
+  if (!action) {
+    return null;
+  }
+  const known = [...siteActions().map((a) => a.value), ...siteHiddenActions()];
+  let best = null;
+  let bestScore = Infinity;
+  for (const candidate of known) {
+    const score = editDistance(String(action), candidate);
+    if (score < bestScore) {
+      best = candidate;
+      bestScore = score;
+    }
+  }
+  return bestScore <= 3 ? best : null;
+}
+
+export function unknownSiteActionMessage(action) {
+  const suggestion = suggestSiteAction(action);
+  return `Unknown site action "${action}".${suggestion ? ` Did you mean ${suggestion}?` : ''} Run \`hax site --help\` for the full list.`;
 }
 
 export function siteActions() {
@@ -2767,6 +2824,15 @@ export async function siteCommandDetected(commandRun) {
         case "quit":
         // quit
         process.exit(0);
+        break;
+        default:
+          // an unknown action used to exit 0 with no output, which hid typos
+          // like `hax site node:ad` from people and agents alike
+          log(unknownSiteActionMessage(operation.action), 'error');
+          process.exitCode = 1;
+          if (commandRun.options.y || !commandRun.options.i || !actionAssigned) {
+            process.exit(1);
+          }
         break;
       }
       // y or noi need to act like it ran and finish instead of looping options

@@ -502,3 +502,74 @@ test('CLI wc --search returns matching elements as JSON', smokeOpts, () => {
   assert.deepEqual(results.map((r) => r.tag), ['simple-tooltip'])
   assert.equal(results[0].preferred, 'tooltips')
 })
+
+// --format json used to interleave clack banners and winston "info:" prefixes
+// with the payload on stdout, so `hax site ... --format json | jq` failed.
+// stdout must now be exactly the JSON document; chatter goes to stderr.
+test('CLI site --format json writes only parseable JSON to stdout', smokeOpts, () => {
+  const parentDir = fs.mkdtempSync(path.join(os.tmpdir(), 'hax-json-stdout-'))
+  const siteName = 'json-site'
+  try {
+    const create = spawnSync(process.execPath, [
+      CLI, 'site', '--name', siteName, '--path', parentDir, '--theme', 'clean-one',
+      '--y', '--no-i', '--no-extras',
+    ], { encoding: 'utf8', env: ISOLATED_ENV, cwd: parentDir, timeout: 15000 })
+    assert.equal(create.status, 0, `create stderr: ${create.stderr}`)
+    const siteDir = path.join(parentDir, siteName)
+    for (const action of ['site:stats', 'site:items']) {
+      const res = spawnSync(process.execPath, [CLI, 'site', action, '--format', 'json', '--y', '--no-i'], {
+        encoding: 'utf8', env: ISOLATED_ENV, cwd: siteDir, timeout: 15000,
+      })
+      assert.equal(res.status, 0, `${action} stderr: ${res.stderr}`)
+      assert.doesNotThrow(() => JSON.parse(res.stdout), `${action} stdout is not pure JSON:\n${res.stdout}`)
+    }
+  } finally {
+    fs.rmSync(parentDir, { recursive: true, force: true })
+  }
+})
+
+// a mistyped site action used to exit 0 with no output at all
+test('CLI site with an unknown action exits 1 and suggests the closest one', smokeOpts, () => {
+  const parentDir = fs.mkdtempSync(path.join(os.tmpdir(), 'hax-unknown-action-'))
+  const siteName = 'typo-site'
+  try {
+    const create = spawnSync(process.execPath, [
+      CLI, 'site', '--name', siteName, '--path', parentDir, '--theme', 'clean-one',
+      '--y', '--no-i', '--no-extras',
+    ], { encoding: 'utf8', env: ISOLATED_ENV, cwd: parentDir, timeout: 15000 })
+    assert.equal(create.status, 0, `create stderr: ${create.stderr}`)
+    const res = spawnSync(process.execPath, [CLI, 'site', 'node:ad', '--y', '--no-i'], {
+      encoding: 'utf8', env: ISOLATED_ENV, cwd: path.join(parentDir, siteName), timeout: 15000,
+    })
+    assert.equal(res.status, 1)
+    assert.match(res.stdout + res.stderr, /Unknown site action "node:ad"\. Did you mean node:add\?/)
+  } finally {
+    fs.rmSync(parentDir, { recursive: true, force: true })
+  }
+})
+
+// the README documents `hax skills install --all` and `hax skills install <name>`;
+// both used to be rejected by the argument parser
+test('CLI skills install accepts --all and a positional name into a new folder', smokeOpts, () => {
+  const parentDir = fs.mkdtempSync(path.join(os.tmpdir(), 'hax-skills-cli-'))
+  try {
+    const allTarget = path.join(parentDir, 'all', 'skills')
+    const all = spawnSync(process.execPath, [CLI, 'skills', 'install', '--all', '--path', allTarget, '--no-i'], {
+      encoding: 'utf8', env: ISOLATED_ENV, cwd: parentDir, timeout: 15000,
+    })
+    assert.equal(all.status, 0, `--all stderr: ${all.stderr}`)
+    assert.ok(fs.readdirSync(allTarget).length > 0, 'skills installed with --all')
+    const oneTarget = path.join(parentDir, 'one')
+    const one = spawnSync(process.execPath, [CLI, 'skills', 'install', 'hax-site-building', '--path', oneTarget, '--no-i'], {
+      encoding: 'utf8', env: ISOLATED_ENV, cwd: parentDir, timeout: 15000,
+    })
+    assert.equal(one.status, 0, `positional stderr: ${one.stderr}`)
+    assert.deepEqual(fs.readdirSync(oneTarget), ['hax-site-building'])
+    const none = spawnSync(process.execPath, [CLI, 'skills', 'install', '--no-i', '--path', path.join(parentDir, 'none')], {
+      encoding: 'utf8', env: ISOLATED_ENV, cwd: parentDir, timeout: 15000,
+    })
+    assert.equal(none.status, 1, 'no skill named in non-interactive mode fails')
+  } finally {
+    fs.rmSync(parentDir, { recursive: true, force: true })
+  }
+})

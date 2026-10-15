@@ -2,7 +2,8 @@
 
 // Covers skillsCommandDetected() in src/lib/programs/skills.js — the list /
 // no-action listing branches and the install branch (specific skill name,
-// --all via --y, and the non-interactive no-name error). The bundled skills
+// --all / --y / positional name, unknown names, and the non-interactive
+// no-name error). The bundled skills
 // live in src/skills/ so this works in the dev tree as well as the built
 // dist. Install targets are temp dirs; @clack/prompts is patched via the
 // shared clack stub.
@@ -42,19 +43,19 @@ test('with no action the bundled skills are listed', opts, async () => {
 
 test('list action with json format prints the skills as json', opts, async () => {
   resetMocks()
-  const originalLog = console.log
+  const originalWrite = process.stdout.write
   const logs = []
-  console.log = (...args) => { logs.push(args.map(String).join(' ')) }
+  process.stdout.write = (chunk) => { logs.push(String(chunk)); return true }
   try {
     await skillsCommandDetected({ arguments: { action: 'list' }, options: { format: 'json' } })
     const jsonLine = logs.find((l) => l.trim().startsWith('['))
-    assert.ok(jsonLine, 'json list printed')
+    assert.ok(jsonLine, 'json list printed to stdout')
     const parsed = JSON.parse(jsonLine)
     assert.ok(Array.isArray(parsed))
     assert.ok(parsed.length >= 1)
     assert.equal(typeof parsed[0].name, 'string')
   } finally {
-    console.log = originalLog
+    process.stdout.write = originalWrite
   }
 })
 
@@ -108,10 +109,69 @@ test('install action with --y installs all skills', opts, async (t) => {
 
 test('install action without a name errors in non-interactive mode', opts, async () => {
   resetMocks()
+  // --no-i sets options.i to false; it is the non-interactive case
   await skillsCommandDetected({
     arguments: { action: 'install' },
-    options: { i: true },
+    options: { i: false },
   })
-  // the error goes through log(); the observable effect is no install outro
+  // the error goes through log(); no install happens and the exit code fails
   assert.equal(outros.length, 0)
+  assert.equal(process.exitCode, 1)
+  process.exitCode = 0
+})
+
+test('install action with --all installs every skill', opts, async (t) => {
+  resetMocks()
+  const skills = listBundledSkills()
+  if (skills.length === 0) {
+    t.skip('no bundled skills available to install')
+    return
+  }
+  const target = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'hax-skills-all-')), 'not-yet-created')
+  try {
+    await skillsCommandDetected({
+      arguments: { action: 'install' },
+      options: { all: true, i: false, path: target },
+    })
+    for (const skill of skills) {
+      assert.ok(fs.existsSync(path.join(target, skill.dir, 'SKILL.md')), `${skill.name} installed`)
+    }
+  } finally {
+    fs.rmSync(path.dirname(target), { recursive: true, force: true })
+  }
+})
+
+test('install action accepts the skill name as a positional argument', opts, async (t) => {
+  resetMocks()
+  const skills = listBundledSkills()
+  if (skills.length === 0) {
+    t.skip('no bundled skills available to install')
+    return
+  }
+  const target = fs.mkdtempSync(path.join(os.tmpdir(), 'hax-skills-positional-'))
+  try {
+    await skillsCommandDetected({
+      arguments: { action: 'install', name: skills[0].name },
+      options: { i: false, path: target },
+    })
+    assert.ok(fs.existsSync(path.join(target, skills[0].dir, 'SKILL.md')), 'skill installed')
+  } finally {
+    fs.rmSync(target, { recursive: true, force: true })
+  }
+})
+
+test('install action with an unknown skill name fails', opts, async () => {
+  resetMocks()
+  const target = fs.mkdtempSync(path.join(os.tmpdir(), 'hax-skills-unknown-'))
+  try {
+    await skillsCommandDetected({
+      arguments: { action: 'install', name: 'not-a-real-skill' },
+      options: { i: false, path: target },
+    })
+    assert.equal(outros.length, 0)
+    assert.equal(process.exitCode, 1)
+  } finally {
+    process.exitCode = 0
+    fs.rmSync(target, { recursive: true, force: true })
+  }
 })

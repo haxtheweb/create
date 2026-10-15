@@ -44,6 +44,42 @@ export function log(msg, level = 'info', extra = null) {
   logger.log(level, msg, extra);
 }
 
+// --format json|yaml: stdout carries only the requested data so it can be
+// piped straight into a parser. Everything else (clack banners, spinners,
+// winston console logging) is sent to stderr instead.
+const realStdoutWrite = process.stdout.write.bind(process.stdout);
+let structuredOutput = false;
+
+export function isStructuredFormat(format) {
+  return format === 'json' || format === 'yaml';
+}
+
+export function enableStructuredOutput() {
+  if (structuredOutput) {
+    return;
+  }
+  structuredOutput = true;
+  process.stdout.write = process.stderr.write.bind(process.stderr);
+}
+
+export function structuredOutputEnabled() {
+  return structuredOutput;
+}
+
+// write the data payload for a command to the real stdout
+export function writeData(data) {
+  let str = typeof data === 'string' ? data : JSON.stringify(data, null, 2);
+  if (!str.endsWith('\n')) {
+    str += '\n';
+  }
+  if (structuredOutput) {
+    realStdoutWrite(str);
+  }
+  else {
+    process.stdout.write(str);
+  }
+}
+
 export function commandString(commandRun) {
   let comStr = `hax ${commandRun.command} ${commandRun.arguments.action}`;
   for (const key of Object.keys(commandRun.options)) {

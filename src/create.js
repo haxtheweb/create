@@ -8,7 +8,7 @@ import * as p from '@clack/prompts';
 import color from 'picocolors';
 
 import { haxIntro, communityStatement } from "./lib/statements.js";
-import { log, consoleTransport, logger } from "./lib/logging.js";
+import { log, consoleTransport, logger, isStructuredFormat, enableStructuredOutput } from "./lib/logging.js";
 import { auditCommandDetected } from './lib/programs/audit.js';
 import { partyCommandDetected } from './lib/programs/party.js';
 import { webcomponentProcess, webcomponentCommandDetected, webcomponentActions, elementsSearchCommand } from "./lib/programs/webcomponent.js";
@@ -318,18 +318,31 @@ async function main() {
   .command('skills')
   .description('List and install bundled agent skills for HAX ecosystem agents')
   .argument('[action]', 'Actions to perform:' + "\n\r" + strSkillsActions)
-  .action((action) => {
+  .argument('[name]', 'skill to install (same as --skill-name)')
+  .action((action, name, cmdOptions = {}) => {
     commandRun = {
       command: 'skills',
       arguments: {},
       options: {}
     };
+    // these only exist on the skills subcommand, so program.opts() never sees them
+    if (cmdOptions.skillName) {
+      commandRun.options.skillName = cmdOptions.skillName;
+    }
+    if (cmdOptions.all) {
+      commandRun.options.all = true;
+    }
     if (action) {
       commandRun.arguments.action = action;
       commandRun.options.skip = true;
     }
+    // `hax skills install hax-site-building` as the README documents
+    if (name) {
+      commandRun.arguments.name = name;
+    }
   })
   .option('--skill-name <char>', 'name of the skill to install (or "all")')
+  .option('--all', 'install every bundled skill (same as --skill-name all)')
   .option('--path <char>', 'target directory for skill installation (default: ~/.agents/skills/)')
   .option('--y', 'yes to all questions')
   .option('--auto', 'yes to all questions, alias of y')
@@ -341,6 +354,11 @@ async function main() {
   // process program arguments
   program.parse();
   commandRun.options = {...commandRun.options, ...program.opts()};
+  // --format json|yaml: keep stdout for the data payload only so scripts and
+  // agents can parse it; banners, spinners and log lines move to stderr
+  if (isStructuredFormat(commandRun.options.format)) {
+    enableStructuredOutput();
+  }
   // this is a false positive bc of the no-extras flag. no-extras does not imply true if not there
   // but that's how the CLI works. This then bombs things downstream. Its good to be false but NOT
   // good to be true since we need an array of options
@@ -522,7 +540,9 @@ async function main() {
     }
     if (commandRun.options.path) {
       rejectShellMetacharacters(commandRun.options.path, 'path');
-      if (!fs.existsSync(commandRun.options.path) || !fs.statSync(commandRun.options.path).isDirectory()) {
+      // skills install creates its target folder (like the ~/.agents/skills/ default)
+      const pathMayBeCreated = commandRun.command === 'skills' && !fs.existsSync(commandRun.options.path);
+      if (!pathMayBeCreated && (!fs.existsSync(commandRun.options.path) || !fs.statSync(commandRun.options.path).isDirectory())) {
         program.error(color.red(`Invalid --path: ${commandRun.options.path} is not an existing directory.`));
       }
     }

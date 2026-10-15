@@ -98,6 +98,8 @@ cd my-hax-site && hax serve
 - Always pass `--y --no-i` in scripts. With no TTY (agent sandboxes, CI, piped shells) the CLI implies `--no-i` on its own.
 - Use the global `hax` command, not `npx hax` (that resolves to a different npm package).
 - Inside a site, run `hax site` (or `hax site --format json`) first. It reports the site, its key files, which files are managed, and the scriptable commands.
+- With `--format json` or `--format yaml`, stdout carries only the data, so it can be piped straight into `jq` or a parser. Progress messages go to stderr.
+- A mistyped action (for example `hax site node:ad`) exits with status 1 and suggests the closest action.
 - Every site ships `AGENTS.md`, `llms.txt` and `.well-known/agent-skills/index.json`. Read those before changing anything.
 
 See the AI integration page on the [HAX documentation site](https://haxtheweb.org/) for the full guide.
