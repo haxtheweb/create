@@ -872,6 +872,7 @@ export function siteActions() {
     { value: 'site:vercel', label: "Publish site to Vercel"},
     { value: 'setup:github-actions', label: "Setup GitHub Actions deployment"},
     { value: 'setup:gitlab-ci', label: "Setup GitLab CI deployment"},
+    { value: 'setup:replit', label: "Setup Replit configuration"},
     { value: 'issue:general', label: "Issue: Submit an issue or suggestion"},
     { value: 'issue:theme', label: "Issue: Suggest custom theme"},
   ];
@@ -2307,6 +2308,39 @@ export async function siteCommandDetected(commandRun) {
             s.stop(merlinSays('GitLab CI pipeline created successfully'));
             if (!commandRun.options.quiet) {
               p.note(`🚀 GitLab CI pipeline has been set up!\n\nNext steps:\n1. Push your changes: ${color.bold('git add . && git commit -m "Add GitLab CI pipeline" && git push')}\n2. GitLab Pages will be automatically enabled\n3. Your site will deploy on every push to main/master\n4. Access your site at: ${color.cyan('https://yourusername.gitlab.io/yourproject')}`);
+            }
+          }
+          catch(e) {
+            log(formatErrorForLogging(e), 'error');
+          }
+        break;
+        case "setup:replit":
+          try {
+            let s = p.spinner();
+            s.start(merlinSays('Setting up Replit configuration'));
+
+            // Copy the .replit file
+            const replitFile = path.join(activeHaxsite.directory, '.replit');
+            if (fs.existsSync(replitFile) && !commandRun.options.y) {
+              s.stop(merlinSays('.replit already exists'));
+              let overwrite = await p.confirm({
+                message: '.replit already exists. Overwrite?',
+                initialValue: false
+              });
+              if (!overwrite) {
+                log('Skipped Replit setup');
+                break;
+              }
+            }
+
+            await fs.copyFileSync(
+              path.join(process.mainModule.path, 'templates/sitedotfiles/_replit'),
+              replitFile
+            );
+
+            s.stop(merlinSays('Replit configuration created successfully'));
+            if (!commandRun.options.quiet) {
+              p.note(`🚀 Replit configuration has been set up!\n\nNext steps:\n1. Import or push this repo into a Repl\n2. Replit will automatically run ${color.bold('npm run serve')} and deploy with a reserved VM (always-on, persistent disk)\n3. HAXcms seeds a random admin password on first boot and only prints it once to the server console. On Replit, set ${color.bold('HAXCMS_RUNTIME_USERNAME')} and ${color.bold('HAXCMS_RUNTIME_PASSWORD')} as Replit Secrets instead, so you have a known login without digging through console output\n4. Redeploy after adding/changing Secrets for them to take effect`);
             }
           }
           catch(e) {

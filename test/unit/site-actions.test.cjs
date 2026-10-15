@@ -59,6 +59,7 @@ test('siteActions returns the expected fixed list of actions', opts, () => {
     'site:vercel',
     'setup:github-actions',
     'setup:gitlab-ci',
+    'setup:replit',
     'issue:general',
     'issue:theme',
   ])
@@ -74,7 +75,7 @@ test('siteActions returns a fresh array each call (no shared state)', opts, () =
   const b = siteActions()
   assert.notEqual(a, b)
   a.push({ value: 'mutated', label: 'mutated' })
-  assert.equal(b.length, 32)
+  assert.equal(b.length, 33)
 })
 
 // --- unknown action suggestions ---

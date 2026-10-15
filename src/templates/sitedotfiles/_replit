@@ -1,0 +1,18 @@
+modules = ["nodejs-20"]
+run = "npm run serve"
+entrypoint = "index.html"
+
+[nix]
+channel = "stable-24_05"
+
+[deployment]
+# HAXcms is a stateful CMS: edits made through the admin UI are written to
+# the local filesystem (site.json, pages/, files/). A reserved VM keeps a
+# single persistent instance/disk instead of autoscaling across stateless
+# instances, which would lose or diverge content edits.
+deploymentTarget = "gce"
+run = ["npm", "run", "serve"]
+
+[[ports]]
+localPort = 3000
+externalPort = 80

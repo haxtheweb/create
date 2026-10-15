@@ -567,6 +567,17 @@ test('setup:gitlab-ci copies the CI file into the site', opts, async () => {
   assert.ok(fs.existsSync(path.join(SITE_DIR, '.gitlab-ci.yml')), 'CI file created')
 })
 
+test('setup:replit copies the .replit config into the site', opts, async () => {
+  resetMocks()
+  const exitCode = await runSite({
+    command: 'site',
+    arguments: { action: 'setup:replit' },
+    options: { quiet: true, i: true, y: true },
+  })
+  assert.equal(exitCode, 0)
+  assert.ok(fs.existsSync(path.join(SITE_DIR, '.replit')), '.replit file created')
+})
+
 // --- site:html / site:md / site:schema ---
 
 test('site:html writes the whole site as HTML to --to-file', opts, async () => {
