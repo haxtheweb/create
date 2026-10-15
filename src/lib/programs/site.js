@@ -3619,7 +3619,8 @@ ${color.underline(color.cyan(`http://localhost:${port}`))}
       }
   }
   else if (!commandRun.options.quiet) {
-    let nextSteps = `cd ${project.path}/${project.name} && hax start`;
+    // `hax serve` is the dev server; `hax start` inside a site only shows its status
+    let nextSteps = `cd ${project.path}/${project.name} && hax serve`;
     p.note(`${project.name} is ready to go. Run the following to start working with it:`);
     p.outro(nextSteps);
   }
