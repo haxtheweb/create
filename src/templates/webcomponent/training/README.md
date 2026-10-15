@@ -13,6 +13,11 @@ DDD + Lit web component based on OpenWC toolchain. This is intended to provide t
 - `npm start` - runs your web component for development, reloading on file changes
 - `npm run build` - builds your web component and outputs it in your `dist` directory for placement on web servers in a compiled form. Vercel automatically does this on commit to github.
 - `npm run release` - this will build your code, update the version, and publish it to npm for others to use
+- `npm test` - runs the tests in headless Chrome
+
+## Running tests
+
+Tests run in headless Chrome through web-test-runner. If `npm test` stops with "The CHROME_PATH environment variable must be set", either install Google Chrome or point `CHROME_PATH` at a Chromium binary, for example one installed with `npx playwright install chromium`.
 
 ## Working with your web component
 - edit `./<%= name %>.js`

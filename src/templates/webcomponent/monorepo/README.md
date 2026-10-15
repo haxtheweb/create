@@ -9,6 +9,10 @@ Web component built with Lit and the DDD design system.
 - `npm run test` - run tests
 - `npm run release` - build, version bump, and publish
 
+## Running tests
+
+Tests run in headless Chrome through web-test-runner. If `npm test` stops with "The CHROME_PATH environment variable must be set", either install Google Chrome or point `CHROME_PATH` at a Chromium binary, for example one installed with `npx playwright install chromium`.
+
 ## Working with the component
 
 - Edit `./<%= name %>.js` for the component source
