@@ -9,7 +9,7 @@ import color from 'picocolors';
 import { dump } from 'js-yaml';
 
 import { merlinSays } from "../statements.js";
-import { log } from "../logging.js";
+import { log, writeData } from "../logging.js";
 
 import { dashToCamel, readAllFiles, exec, validateWebcomponentName, validateNpmClient, gitIdentityFallbackArgs } from '../utils.js';
 import * as haxcmsLib from "@haxtheweb/haxcms-nodejs/dist/lib/HAXCMS.js";
@@ -972,7 +972,7 @@ export async function elementsSearchCommand(commandRun) {
   }
   if (commandRun.options.format === 'json' || commandRun.options.format === 'yaml') {
     const out = results.map(({ score, ...rest }) => rest);
-    process.stdout.write((commandRun.options.format === 'yaml' ? dump(out) : JSON.stringify(out, null, 2)) + '\n');
+    writeData(commandRun.options.format === 'yaml' ? dump(out) : JSON.stringify(out, null, 2));
     return results;
   }
   if (results.length === 0) {

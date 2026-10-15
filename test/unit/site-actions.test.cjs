@@ -18,7 +18,7 @@ const assert = require('node:assert/strict')
 
 const { available, skipReason, module: siteModule } = require('../_helpers/site-canary.cjs')
 
-const { siteActions } = available ? siteModule : {}
+const { siteActions, suggestSiteAction, unknownSiteActionMessage } = available ? siteModule : {}
 
 const opts = { skip: skipReason, timeout: 15000 }
 
@@ -75,4 +75,25 @@ test('siteActions returns a fresh array each call (no shared state)', opts, () =
   assert.notEqual(a, b)
   a.push({ value: 'mutated', label: 'mutated' })
   assert.equal(b.length, 32)
+})
+
+// --- unknown action suggestions ---
+
+test('suggestSiteAction finds the closest action for common typos', opts, () => {
+  assert.equal(suggestSiteAction('node:ad'), 'node:add')
+  assert.equal(suggestSiteAction('sitestats'), 'site:stats')
+  assert.equal(suggestSiteAction('site:item'), 'site:items')
+  assert.equal(suggestSiteAction('site:search-replac'), 'site:search-replace')
+})
+
+test('suggestSiteAction returns null when nothing is close', opts, () => {
+  assert.equal(suggestSiteAction('completely-unrelated-words'), null)
+  assert.equal(suggestSiteAction(''), null)
+  assert.equal(suggestSiteAction(undefined), null)
+})
+
+test('unknownSiteActionMessage names the action and points at --help', opts, () => {
+  assert.match(unknownSiteActionMessage('node:ad'), /Unknown site action "node:ad"\. Did you mean node:add\?/)
+  assert.match(unknownSiteActionMessage('zzzzzzzzzzzz'), /hax site --help/)
+  assert.doesNotMatch(unknownSiteActionMessage('zzzzzzzzzzzz'), /Did you mean/)
 })
