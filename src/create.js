@@ -1,7 +1,7 @@
 #!/usr/bin/env node
-// forces middleware into CLI mode so we don't automatically perform certain operations like pathing context
-process.env.haxcms_middleware = "node-cli";
-
+// forces middleware into CLI mode so we don't automatically perform certain operations like pathing context.
+// This must be the first import: imports run before any other statement here.
+import './lib/cli-mode.js';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import * as p from '@clack/prompts';
