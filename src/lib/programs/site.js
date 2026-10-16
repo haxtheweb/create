@@ -2273,8 +2273,15 @@ export async function siteCommandDetected(commandRun) {
             );
             
             s.stop(merlinSays('GitHub Actions workflow created successfully'));
+            // sites start with the branch-publishing workflow from the site
+            // boilerplate; left in place, every push would publish twice
+            const branchWorkflow = path.join(workflowDir, 'main.yml');
+            const hasBranchWorkflow = fs.existsSync(branchWorkflow) && fs.readFileSync(branchWorkflow, 'utf8').includes('github-pages-deploy-action');
             if (!commandRun.options.quiet) {
               p.note(`🚀 GitHub Actions workflow has been set up!\n\nNext steps:\n1. Push your changes: ${color.bold('git add . && git commit -m "Add GitHub Actions workflow" && git push')}\n2. Enable GitHub Pages in your repository settings\n3. Select "GitHub Actions" as the source\n4. Your site will automatically deploy on every push to main/master`);
+            }
+            if (hasBranchWorkflow) {
+              log(`.github/workflows/main.yml also publishes this site (to the gh-pages branch). Delete it so each push runs one deploy instead of two.`, 'warn');
             }
           }
           catch(e) {
