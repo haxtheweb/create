@@ -5,6 +5,7 @@ import * as child_process from "child_process";
 import * as util from "node:util";
 import { createServer } from 'node:net';
 import { randomUUID } from 'node:crypto';
+import { t } from './i18n.js';
 export const exec = util.promisify(child_process.exec);
 export const spawn = (child_process.spawn);
 
@@ -163,7 +164,7 @@ const ALLOWED_NPM_CLIENTS = new Set(["npm", "yarn", "pnpm"]);
 export function validateNpmClient(client) {
   if (typeof client !== "string" || !ALLOWED_NPM_CLIENTS.has(client)) {
     throw new Error(
-      `Invalid --npm-client "${client}". Allowed values: ${Array.from(ALLOWED_NPM_CLIENTS).join(", ")}`,
+      t('utilInvalidNpmClient', { client: `${client}`, allowed: Array.from(ALLOWED_NPM_CLIENTS).join(", ") }),
     );
   }
   return client;
@@ -188,7 +189,7 @@ export function rejectShellMetacharacters(value, optionName) {
   }
   if (typeof value !== 'string' || SHELL_METACHARACTER_RE.test(value)) {
     throw new Error(
-      `Invalid --${optionName} value: shell metacharacters are not allowed.`,
+      t('utilShellMetacharacters', { option: `${optionName}` }),
     );
   }
   return value;
@@ -209,7 +210,7 @@ export function validateDomain(value) {
   }
   if (typeof value !== 'string' || !DOMAIN_RE.test(value)) {
     throw new Error(
-      `Invalid --domain value: only letters, digits, dots, hyphens, and colons are allowed.`,
+      t('utilInvalidDomain'),
     );
   }
   return value;
@@ -230,34 +231,34 @@ const reservedNames = ["annotation-xml", "color-profile", "font-face", "font-fac
 export function validateWebcomponentName(value, options = {}) {
   const { wcReg, force, joint, checkExists = true } = options;
   if (!value) {
-    return "Name is required (Enter accepts default)";
+    return t('utilNameRequired');
   }
   if (reservedNames.includes(value)) {
-    return `Reserved name ${value} cannot be used`;
+    return t('utilNameReserved', { name: value });
   }
   if (value.toLocaleLowerCase() !== value) {
-    return "Name must be lowercase";
+    return t('utilNameLowercase');
   }
   if (/^\d/.test(value)) {
-    return "Name cannot start with a number";
+    return t('utilNameStartsWithNumber');
   }
   if (/[`~!@#$%^&*()_=+\[\]{}|;:\'",<.>\/?\\]/.test(value)) {
-    return "No special characters allowed in name";
+    return t('utilNameSpecialCharacters');
   }
   if (value.indexOf(' ') !== -1) {
-    return "No spaces allowed in name";
+    return t('utilNameSpaces');
   }
   if (value.indexOf('-') === -1 || value.replace('--', '') !== value || value[0] === '-' || value[value.length - 1] === '-') {
-    return "Name must include at least one `-` and must not start or end name.";
+    return t('utilNameHyphen');
   }
   if (!/^[a-z][a-z0-9.\-]*\-[a-z0-9.\-]*$/.test(value)) {
-    return `Name must follow the syntax my-component`;
+    return t('utilNameSyntax');
   }
   if (wcReg && wcReg[value] && !force) {
-    return "Name is already a web component in the wc-registry published for HAX.";
+    return t('utilNameInRegistry');
   }
   if (checkExists && joint && fs.existsSync(path.join(joint, value))) {
-    return `${path.join(joint, value)} exists, rename this project`;
+    return t('utilNameExists', { path: path.join(joint, value) });
   }
   return null;
 }
@@ -283,7 +284,7 @@ export async function gitIdentityFallbackArgs(cwd = process.cwd()) {
     args += '-c user.email="hax@localhost" ';
   }
   if (args !== '' && !process.haxquiet) {
-    process.stderr.write('hax: no git identity configured; first commit authored as "HAX CLI <hax@localhost>". Set git config user.name and user.email to use your own.\n');
+    process.stderr.write(`hax: ${t('utilNoGitIdentity', { identity: 'HAX CLI <hax@localhost>' })}\n`);
   }
   return args;
 }

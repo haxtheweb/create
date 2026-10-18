@@ -8,6 +8,7 @@ import * as p from '@clack/prompts';
 import color from 'picocolors';
 
 import { haxIntro, communityStatement } from "./lib/statements.js";
+import { t } from './lib/i18n.js';
 import { log, consoleTransport, logger, isStructuredFormat, enableStructuredOutput } from "./lib/logging.js";
 import { auditCommandDetected } from './lib/programs/audit.js';
 import { runAuditCommand as runAuditCommandWith } from './lib/programs/audit-schema.js';
@@ -58,70 +59,71 @@ async function main() {
   }
   var commandRun = {};
   program
-  .option('--v', 'Verbose output')
-  .option('--debug', 'Output for developers')
-  .option('--format <char>', 'Output format; json (default), yaml')
-  .option('--path <char>', 'where to perform operation')
-  .option('--name <char>', 'name of the project/web component')
-  .option('--npm-client <char>', 'npm client to use (must be installed) npm, yarn, pnpm', 'npm')
-  .option('--y', 'yes to all questions')
-  .option('--skip', 'skip frills like animations')
-  .option('--quiet', 'remove console logging')
-  .option('--auto', 'yes to all questions, alias of y')
-  .option('--no-i', 'prevent interactions / sub-process, good for scripting')
-  .option('--to-file <char>', 'redirect command output to a file')
-  .option('--no-extras', 'skip all extra / automatic command processing')
-  .option('--root <char>', 'root location to execute the command from')
+  .option('--v', t('cliOptVerbose'))
+  .option('--debug', t('cliOptDebug'))
+  .option('--format <char>', t('cliOptFormat'))
+  .option('--path <char>', t('cliOptPath'))
+  .option('--name <char>', t('cliOptName'))
+  .option('--npm-client <char>', t('cliOptNpmClient'), 'npm')
+  .option('--y', t('cliOptYes'))
+  .option('--skip', t('cliOptSkip'))
+  .option('--quiet', t('cliOptQuiet'))
+  .option('--auto', t('cliOptAuto'))
+  .option('--no-i', t('cliOptNoI'))
+  .option('--to-file <char>', t('cliOptToFile'))
+  .option('--no-extras', t('cliOptNoExtras'))
+  .option('--root <char>', t('cliOptRoot'))
+  .option('--lang <char>', t('cliOptLang'))
 
   // options for webcomponent
-  .option('--org <char>', 'organization for package.json')
-  .option('--author <char>', 'author for site / package.json')
-  .option('--template <char>', 'template type to use (compliant, minimal, training, monorepo)')
-  .option('--writeHaxProperties', 'Write haxProperties for the element')
-  .option('--force', 'force creation even if name exists in registry')
+  .option('--org <char>', t('cliOptOrg'))
+  .option('--author <char>', t('cliOptAuthor'))
+  .option('--template <char>', t('cliOptTemplate'))
+  .option('--writeHaxProperties', t('cliOptWriteHaxProperties'))
+  .option('--force', t('cliOptForce'))
 
   // options for site
-  .option('--import-site <char>', 'URL of site to import')
-  .option('--import-structure <char>', `import method to use:\n\rpressbooksToSite\n\relmslnToSite\n\rhaxcmsToSite\n\rnotionToSite\n\rgitbookToSite\n\revolutionToSite\n\rploneToSite\n\rwordpressPagesToSite\n\rdrupalToSite\n\ropenstaxToSite\n\rvitepressToSite\n\rhtmlToSite\n\rdocxToSite\n\rxlsxToSite`)
-  .option('--node-op <char>', 'node operation to perform')
-  .option('--item-id <char>', 'node ID to operate on')
-  .option('--domain <char>', 'published domain name')
-  .option('--title-scrape <char>', 'CSS Selector for `title` in resource')
-  .option('--content-scrape <char>', 'CSS Selector for `body` in resource')
-  .option('--content-format <char>', 'format of --content for node:add / node:edit: html (default), md, json, yaml')
-  .option('--description <char>', 'page description for node:add / node:edit')
-  .option('--items-import <char>', 'import items from a file / site')
-  .option('--custom-theme-name <char>', 'custom theme name')
-  .option('--custom-theme-template <char>', 'custom theme template; (options: base, polaris-flex, polaris-sidebar)')
-  .option('--skeleton-file <char>', 'path to skeleton JSON file')
-  .option('--skeleton-machine-name <char>', 'skeleton machine name (installed template) to create a site from')
-  .option('--search <char>', 'search query text or simple selector (for site:search)')
-  .option('--search-field <char>', 'comma-separated fields for text search (title,slug,description,tags,content,all)')
-  .option('--search-case-sensitive', 'case-sensitive text search')
-  .option('--search-limit <char>', 'max number of site search matches to return')
-  .option('--search-selector', 'treat --search as a selector query (tag, tag[attr], tag[attr=\"value\"], [attr])')
-  .option('--search-mode <char>', 'search mode override (text or selector)')
+  .option('--import-site <char>', t('cliOptImportSite'))
+  .option('--import-structure <char>', `${t('cliOptImportStructure')}\n\rpressbooksToSite\n\relmslnToSite\n\rhaxcmsToSite\n\rnotionToSite\n\rgitbookToSite\n\revolutionToSite\n\rploneToSite\n\rwordpressPagesToSite\n\rdrupalToSite\n\ropenstaxToSite\n\rvitepressToSite\n\rhtmlToSite\n\rdocxToSite\n\rxlsxToSite`)
+  .option('--node-op <char>', t('cliOptNodeOp'))
+  .option('--item-id <char>', t('cliOptItemId'))
+  .option('--domain <char>', t('cliOptDomain'))
+  .option('--title-scrape <char>', t('cliOptTitleScrape'))
+  .option('--content-scrape <char>', t('cliOptContentScrape'))
+  .option('--content-format <char>', t('cliOptContentFormat'))
+  .option('--description <char>', t('cliOptDescription'))
+  .option('--items-import <char>', t('cliOptItemsImport'))
+  .option('--custom-theme-name <char>', t('cliOptCustomThemeName'))
+  .option('--custom-theme-template <char>', t('cliOptCustomThemeTemplateList'))
+  .option('--skeleton-file <char>', t('cliOptSkeletonFile'))
+  .option('--skeleton-machine-name <char>', t('cliOptSkeletonMachineName'))
+  .option('--search <char>', t('cliOptSearchSiteSearch'))
+  .option('--search-field <char>', t('cliOptSearchField'))
+  .option('--search-case-sensitive', t('cliOptSearchCaseSensitive'))
+  .option('--search-limit <char>', t('cliOptSearchLimit'))
+  .option('--search-selector', t('cliOptSearchSelector'))
+  .option('--search-mode <char>', t('cliOptSearchMode'))
 
   // options for rsync
-  .option('--source <char>', 'rsync source directory or remote path')
-  .option('--destination <char>', 'rsync destination directory or remote path')
-  .option('--exclude <char>', 'comma-separated patterns to exclude from rsync')
-  .option('--dry-run', 'perform rsync dry run')
-  .option('--delete', 'delete extraneous files from destination')
+  .option('--source <char>', t('cliOptSource'))
+  .option('--destination <char>', t('cliOptDestination'))
+  .option('--exclude <char>', t('cliOptExclude'))
+  .option('--dry-run', t('cliOptDryRun'))
+  .option('--delete', t('cliOptDelete'))
 
   // options for party
-  .option('--repos <char...>', 'repositories to clone') 
+  .option('--repos <char...>', t('cliOptRepos')) 
 
   // options for new site commands
-  .option('--export-format <char>', 'export format for site:export (pdf, docx, epub, html, zip, markdown, skeleton)')
-  .option('--revision-id <char>', 'revision ID for site:revisions')
-  .option('--restore', 'restore a revision (used with site:revisions)')
-  .option('--target-path <char>', 'target subdirectory for files-upload')
-  .option('--file-uuid <char>', 'file UUID for files-delete')
-  .option('--file-path <char>', 'file path (alternative to UUID) for files-delete')
-  .option('--replace <char>', 'replacement text for search-replace')
-  .option('--confirm', 'confirm destructive search-replace operation')
-  .option('--destroy-confirm', 'confirm removing matched text in search-replace')
+  .option('--export-format <char>', t('cliOptExportFormat'))
+  .option('--revision-id <char>', t('cliOptRevisionId'))
+  .option('--restore', t('cliOptRestore'))
+  .option('--target-path <char>', t('cliOptTargetPath'))
+  .option('--file-uuid <char>', t('cliOptFileUuid'))
+  .option('--file-path <char>', t('cliOptFilePath'))
+  .option('--replace <char>', t('cliOptReplace'))
+  .option('--confirm', t('cliOptConfirm'))
+  .option('--destroy-confirm', t('cliOptDestroyConfirm'))
 
   .version(packageJson.version)
   .helpCommand(true);
@@ -129,7 +131,7 @@ async function main() {
   // default command which runs interactively
   program
   .command('start')
-  .description('Select which hax sub-program to run')
+  .description(t('cliCmdStart'))
   .action(() => {
     commandRun = {
       command: 'start',
@@ -140,8 +142,8 @@ async function main() {
 
   program
   .command('update')
-  .description('hax cli self update')
-  .option('--y', 'yes to all questions')
+  .description(t('cliCmdUpdate'))
+  .option('--y', t('cliOptYes'))
   .action(() => {
     commandRun = {
       command: 'update',
@@ -152,7 +154,7 @@ async function main() {
 
   program
   .command('serve')
-  .description('Launch HAXsite in development mode (http://localhost)')
+  .description(t('cliCmdServe'))
   .action(() => {
     commandRun = {
       command: 'serve',
@@ -170,8 +172,8 @@ async function main() {
   });
   let siteProg = program
   .command('site')
-  .description('create or administer a HAXsite')
-  .argument('[action]', 'Actions to perform on site include:' + "\n\r" + strActions)
+  .description(t('cliCmdSite'))
+  .argument('[action]', t('cliArgSiteAction') + "\n\r" + strActions)
   .action((action) => {
     commandRun = {
       command: 'site',
@@ -183,54 +185,54 @@ async function main() {
       commandRun.options.skip = true;
     }
   })
-  .option('--v', 'Verbose output')
-  .option('--debug', 'Output for developers')
-  .option('--format <char>', 'Output format; json (default), yaml')
-  .option('--path <char>', 'where to perform operation')
-  .option('--npm-client <char>', 'npm client to use (must be installed) npm, yarn, pnpm', 'npm')
-  .option('--y', 'yes to all questions')
-  .option('--skip', 'skip frills like animations')
-  .option('--quiet', 'remove console logging')
-  .option('--auto', 'yes to all questions, alias of y')
-  .option('--no-i', 'prevent interactions / sub-process, good for scripting')
-  .option('--to-file <char>', 'redirect command output to a file')
-  .option('--no-extras', 'skip all extra / automatic command processing')
-  .option('--root <char>', 'root location to execute the command from')
+  .option('--v', t('cliOptVerbose'))
+  .option('--debug', t('cliOptDebug'))
+  .option('--format <char>', t('cliOptFormat'))
+  .option('--path <char>', t('cliOptPath'))
+  .option('--npm-client <char>', t('cliOptNpmClient'), 'npm')
+  .option('--y', t('cliOptYes'))
+  .option('--skip', t('cliOptSkip'))
+  .option('--quiet', t('cliOptQuiet'))
+  .option('--auto', t('cliOptAuto'))
+  .option('--no-i', t('cliOptNoI'))
+  .option('--to-file <char>', t('cliOptToFile'))
+  .option('--no-extras', t('cliOptNoExtras'))
+  .option('--root <char>', t('cliOptRoot'))
 
-  .option('--import-site <char>', 'URL of site to import')
-  .option('--import-structure <char>', `import method to use:\n\rpressbooksToSite\n\relmslnToSite\n\rhaxcmsToSite\n\rnotionToSite\n\rgitbookToSite\n\revolutionToSite\n\rploneToSite\n\rwordpressPagesToSite\n\rdrupalToSite\n\ropenstaxToSite\n\rvitepressToSite\n\rhtmlToSite\n\rdocxToSite\n\rxlsxToSite`)
-  .option('--name <char>', 'name of the site (when creating a new one)')
-  .option('--domain <char>', 'published domain name')
-  .option('--node-op <char>', 'node operation to perform')
-  .option('--title-scrape <char>', 'CSS Selector for `title` in resource')
-  .option('--content-scrape <char>', 'CSS Selector for `body` in resource')
-  .option('--content-format <char>', 'format of --content for node:add / node:edit: html (default), md, json, yaml')
-  .option('--description <char>', 'page description for node:add / node:edit')
-  .option('--items-import <char>', 'import items from a file / site')
-  .option('--custom-theme-name <char>', 'custom theme name')
-  .option('--custom-theme-template <char>', 'custom theme template (options: base, polaris-flex, polaris-sidebar)')
-  .option('--skeleton-file <char>', 'path to skeleton JSON file')
-  .option('--skeleton-machine-name <char>', 'skeleton machine name (installed template) to create a site from')
-  .option('--search <char>', 'search query text or simple selector')
-  .option('--search-field <char>', 'comma-separated fields for text search (title,slug,description,tags,content,all)')
-  .option('--search-case-sensitive', 'case-sensitive text search')
-  .option('--search-limit <char>', 'max number of site search matches to return')
-  .option('--search-selector', 'treat --search as a selector query (tag, tag[attr], tag[attr=\"value\"], [attr])')
-  .option('--search-mode <char>', 'search mode override (text or selector)')
-  .option('--source <char>', 'rsync source directory or remote path')
-  .option('--destination <char>', 'rsync destination directory or remote path')
-  .option('--exclude <char>', 'comma-separated patterns to exclude from rsync')
-  .option('--dry-run', 'perform rsync dry run')
-  .option('--delete', 'delete extraneous files from destination')
-  .option('--export-format <char>', 'export format for site:export (pdf, docx, epub, html, zip, markdown, skeleton)')
-  .option('--revision-id <char>', 'revision ID for site:revisions')
-  .option('--restore', 'restore a revision (used with site:revisions)')
-  .option('--target-path <char>', 'target subdirectory for files-upload')
-  .option('--file-uuid <char>', 'file UUID for files-delete')
-  .option('--file-path <char>', 'file path (alternative to UUID) for files-delete')
-  .option('--replace <char>', 'replacement text for search-replace')
-  .option('--confirm', 'confirm destructive search-replace operation')
-  .option('--destroy-confirm', 'confirm removing matched text in search-replace')
+  .option('--import-site <char>', t('cliOptImportSite'))
+  .option('--import-structure <char>', `${t('cliOptImportStructure')}\n\rpressbooksToSite\n\relmslnToSite\n\rhaxcmsToSite\n\rnotionToSite\n\rgitbookToSite\n\revolutionToSite\n\rploneToSite\n\rwordpressPagesToSite\n\rdrupalToSite\n\ropenstaxToSite\n\rvitepressToSite\n\rhtmlToSite\n\rdocxToSite\n\rxlsxToSite`)
+  .option('--name <char>', t('cliOptSiteName'))
+  .option('--domain <char>', t('cliOptDomain'))
+  .option('--node-op <char>', t('cliOptNodeOp'))
+  .option('--title-scrape <char>', t('cliOptTitleScrape'))
+  .option('--content-scrape <char>', t('cliOptContentScrape'))
+  .option('--content-format <char>', t('cliOptContentFormat'))
+  .option('--description <char>', t('cliOptDescription'))
+  .option('--items-import <char>', t('cliOptItemsImport'))
+  .option('--custom-theme-name <char>', t('cliOptCustomThemeName'))
+  .option('--custom-theme-template <char>', t('cliOptCustomThemeTemplate'))
+  .option('--skeleton-file <char>', t('cliOptSkeletonFile'))
+  .option('--skeleton-machine-name <char>', t('cliOptSkeletonMachineName'))
+  .option('--search <char>', t('cliOptSearch'))
+  .option('--search-field <char>', t('cliOptSearchField'))
+  .option('--search-case-sensitive', t('cliOptSearchCaseSensitive'))
+  .option('--search-limit <char>', t('cliOptSearchLimit'))
+  .option('--search-selector', t('cliOptSearchSelector'))
+  .option('--search-mode <char>', t('cliOptSearchMode'))
+  .option('--source <char>', t('cliOptSource'))
+  .option('--destination <char>', t('cliOptDestination'))
+  .option('--exclude <char>', t('cliOptExclude'))
+  .option('--dry-run', t('cliOptDryRun'))
+  .option('--delete', t('cliOptDelete'))
+  .option('--export-format <char>', t('cliOptExportFormat'))
+  .option('--revision-id <char>', t('cliOptRevisionId'))
+  .option('--restore', t('cliOptRestore'))
+  .option('--target-path <char>', t('cliOptTargetPath'))
+  .option('--file-uuid <char>', t('cliOptFileUuid'))
+  .option('--file-path <char>', t('cliOptFilePath'))
+  .option('--replace <char>', t('cliOptReplace'))
+  .option('--confirm', t('cliOptConfirm'))
+  .option('--destroy-confirm', t('cliOptDestroyConfirm'))
   .version(packageJson.version);
   let siteNodeOps = siteNodeOperations();
   for (var i in siteNodeOps) {
@@ -246,8 +248,8 @@ async function main() {
   program
   .command('wc')
   .alias('webcomponent')
-  .description('Create Lit based web components, with HAX recommendations')
-  .argument('[action]', 'Actions to perform on web component include:' + "\n\r" + strWebcomponentActions)
+  .description(t('cliCmdWc'))
+  .argument('[action]', t('cliArgWcAction') + "\n\r" + strWebcomponentActions)
   .action((action, cmdOptions) => {
     commandRun = {
       command: 'webcomponent',
@@ -264,25 +266,25 @@ async function main() {
       commandRun.options.search = cmdOptions.search;
     }
   })
-  .option('--path <char>', 'path the project should be created in')
-  .option('--org <char>', 'organization for package.json')
-  .option('--author <char>', 'author for site / package.json')
-  .option('--name <char>', 'name of the web component')
-  .option('--writeHaxProperties', 'Write haxProperties for the element')
-  .option('--template <char>', 'template type to use (compliant, minimal, training, monorepo)')
-  .option('--to-file <char>', 'redirect command output to a file')
-  .option('--no-extras', 'skip all extra / automatic command processing')
-  .option('--no-i', 'prevent interactions / sub-process, good for scripting')
-  .option('--root <char>', 'root location to execute the command from')
-  .option('--force', 'force creation even if name exists in registry')
-  .option('--search <char>', 'search existing HAX elements before building a new one (e.g. --search "tooltip")')
+  .option('--path <char>', t('cliOptWcPath'))
+  .option('--org <char>', t('cliOptOrg'))
+  .option('--author <char>', t('cliOptAuthor'))
+  .option('--name <char>', t('cliOptWcName'))
+  .option('--writeHaxProperties', t('cliOptWriteHaxProperties'))
+  .option('--template <char>', t('cliOptTemplate'))
+  .option('--to-file <char>', t('cliOptToFile'))
+  .option('--no-extras', t('cliOptNoExtras'))
+  .option('--no-i', t('cliOptNoI'))
+  .option('--root <char>', t('cliOptRoot'))
+  .option('--force', t('cliOptForce'))
+  .option('--search <char>', t('cliOptWcSearch'))
   .version(packageJson.version);
 
   // audit program
   program
   .command('audit')
-  .description('Audits for HAX compliance: DDD design system (default), HAX schemas, translatable text, or all of them')
-  .argument('[type]', 'What to audit:' + "\n\r" + 'ddd - DDD design system usage in CSS / JS (default)' + "\n\r" + 'schema - site.json, skeletons, haxProperties, demoSchema, appstore.json and Merlin commands against the HAX schemas' + "\n\r" + 'i18n - English hardcoded in Lit templates instead of this.t' + "\n\r" + 'all - ddd, schema and i18n')
+  .description(t('cliCmdAudit'))
+  .argument('[type]', t('cliArgAuditType') + "\n\r" + 'ddd - ' + t('cliArgAuditDdd') + "\n\r" + 'schema - ' + t('cliArgAuditSchema') + "\n\r" + 'i18n - ' + t('cliArgAuditI18n') + "\n\r" + 'all - ' + t('cliArgAuditAll'))
   .action((type, opts) => {
     commandRun = {
       command: 'audit',
@@ -290,15 +292,15 @@ async function main() {
       options: { ...opts }
     };
   })
-  .option('--debug', 'Output for developers')
-  .option('--strict', 'schema audit: treat warnings as failures')
-  .option('--format <char>', 'schema / i18n audit: json for a machine-readable report')
+  .option('--debug', t('cliOptDebug'))
+  .option('--strict', t('cliOptStrict'))
+  .option('--format <char>', t('cliOptAuditFormat'))
   .version(packageJson.version);
 
   program
   .command('party')
-  .description('Party time! Join the HAX community and get involved!')
-  .argument('[action]', 'Actions to perform on web component include:' + "\n\r" + "test")
+  .description(t('cliCmdParty'))
+  .argument('[action]', t('cliArgWcAction') + "\n\r" + "test")
   .action((action) => {
     commandRun = {
       command: 'party',
@@ -310,10 +312,10 @@ async function main() {
       commandRun.options.skip = true;
     }
   })
-  .option('--root <char>', 'root location to execute the command from')
-  .option('--y', 'yes to all questions')
-  .option('--auto', 'yes to all questions, alias of y')
-  .option('--repos <char...>', 'repositories to clone')
+  .option('--root <char>', t('cliOptRoot'))
+  .option('--y', t('cliOptYes'))
+  .option('--auto', t('cliOptAuto'))
+  .option('--repos <char...>', t('cliOptRepos'))
   .version(packageJson.version);
 
   // skills program
@@ -323,9 +325,9 @@ async function main() {
   });
   program
   .command('skills')
-  .description('List and install bundled agent skills for HAX ecosystem agents')
-  .argument('[action]', 'Actions to perform:' + "\n\r" + strSkillsActions)
-  .argument('[name]', 'skill to install (same as --skill-name)')
+  .description(t('cliCmdSkills'))
+  .argument('[action]', t('cliArgSkillsAction') + "\n\r" + strSkillsActions)
+  .argument('[name]', t('cliArgSkillsName'))
   .action((action, name, cmdOptions = {}) => {
     commandRun = {
       command: 'skills',
@@ -348,14 +350,14 @@ async function main() {
       commandRun.arguments.name = name;
     }
   })
-  .option('--skill-name <char>', 'name of the skill to install (or "all")')
-  .option('--all', 'install every bundled skill (same as --skill-name all)')
-  .option('--path <char>', 'target directory for skill installation (default: ~/.agents/skills/)')
-  .option('--y', 'yes to all questions')
-  .option('--auto', 'yes to all questions, alias of y')
-  .option('--no-i', 'prevent interactions / sub-process, good for scripting')
-  .option('--format <char>', 'Output format; json (default), yaml')
-  .option('--quiet', 'remove console logging')
+  .option('--skill-name <char>', t('cliOptSkillName'))
+  .option('--all', t('cliOptSkillsAll'))
+  .option('--path <char>', t('cliOptSkillsPath'))
+  .option('--y', t('cliOptYes'))
+  .option('--auto', t('cliOptAuto'))
+  .option('--no-i', t('cliOptNoI'))
+  .option('--format <char>', t('cliOptFormat'))
+  .option('--quiet', t('cliOptQuiet'))
   .version(packageJson.version);
 
   // process program arguments
@@ -382,7 +384,7 @@ async function main() {
     commandRun.options.i = false;
     if (!commandRun.options.quiet) {
       // stderr so --format json/yaml output on stdout stays parseable
-      process.stderr.write(`hax: no interactive terminal${isCI ? ' (CI)' : ''} detected, running as if --no-i was passed\n`);
+      process.stderr.write(`hax: ${t('cliNoTtyNotice', { ci: isCI ? ' (CI)' : '' })}\n`);
     }
   }
   // Security (M-2): validate the CLI-provided --npm-client early, before the
@@ -405,7 +407,7 @@ async function main() {
     try {
       rejectShellMetacharacters(commandRun.options.root, 'root');
       if (!fs.existsSync(commandRun.options.root) || !fs.statSync(commandRun.options.root).isDirectory()) {
-        program.error(color.red(`Invalid --root: ${commandRun.options.root} is not an existing directory.`));
+        program.error(color.red(t('cliInvalidRoot', { root: commandRun.options.root })));
       }
     } catch (e) {
       program.error(color.red(e.message));
@@ -458,7 +460,7 @@ async function main() {
   }
   // validate theme cli commands
   if (commandRun.options.theme !== 'custom-theme' && (commandRun.options.customThemeName || commandRun.options.customThemeTemplate)) {
-      program.error(color.red('ERROR: You can only use the --custom-theme-name option with --theme custom-theme'));
+      program.error(color.red(t('cliCustomThemeNameNeedsTheme')));
   }
 
   let packageData = {};
@@ -488,7 +490,7 @@ async function main() {
         // see if we're in a monorepo
         if (packageData.useWorkspaces && packageData.workspaces && packageData.workspaces.packages && packageData.workspaces.packages[0]) {
           if (!commandRun.options.quiet) {
-            p.intro(`${color.bgBlack(color.white(` Monorepo detected : Setting relative defaults `))}`);
+            p.intro(`${color.bgBlack(color.white(` ${t('cliMonorepoDetected')} `))}`);
           }
           commandRun.options.isMonorepo = true;
           commandRun.options.auto = true;
@@ -550,7 +552,7 @@ async function main() {
       // skills install creates its target folder (like the ~/.agents/skills/ default)
       const pathMayBeCreated = commandRun.command === 'skills' && !fs.existsSync(commandRun.options.path);
       if (!pathMayBeCreated && (!fs.existsSync(commandRun.options.path) || !fs.statSync(commandRun.options.path).isDirectory())) {
-        program.error(color.red(`Invalid --path: ${commandRun.options.path} is not an existing directory.`));
+        program.error(color.red(t('cliInvalidPath', { path: commandRun.options.path })));
       }
     }
   } catch (e) {
@@ -617,10 +619,10 @@ async function main() {
         let execOut = await exec(`npm view @haxtheweb/create version`, { timeout: 3000 });
         let updateCheck = execOut.stdout.trim();
         if (updateCheck !== packageJson.version && !commandRun.options.quiet) {
-          p.intro(`${color.bgBlack(color.white(` HAX cli updates available! `))}`);
-          p.intro(`Current version: ${packageJson.version}`);
-          p.intro(`Latest version: ${updateCheck}`);  
-          p.intro(`Run ${color.bold(color.black(color.bgGreen('hax update')))} to update to the latest version`);
+          p.intro(`${color.bgBlack(color.white(` ${t('cliUpdatesAvailable')} `))}`);
+          p.intro(t('cliCurrentVersion', { version: packageJson.version }));
+          p.intro(t('cliLatestVersion', { version: updateCheck }));  
+          p.intro(t('cliRunToUpdate', { command: color.bold(color.black(color.bgGreen('hax update'))) }));
         }
       }
       catch (e) {
@@ -632,7 +634,7 @@ async function main() {
     while (project.type !== 'quit' && project.type !== 'update') {
       if (activeProject) {
         if (!commandRun.options.quiet) {
-          p.note(` 🧙🪄 BE GONE ${color.bold(color.black(color.bgGreen(activeProject)))} sub-process daemon! 🪄 + ✨ 👹 = 💀 `);
+          p.note(` 🧙🪄 ${t('cliBeGone', { project: color.bold(color.black(color.bgGreen(activeProject))) })} 🪄 + ✨ 👹 = 💀 `);
         }
         // ensure if we were automatically running the command we end
         if (commandRun.options.y) {
@@ -655,17 +657,17 @@ async function main() {
       }
       else if (commandRun.options.i) {
         let buildOptions = [
-          { value: 'webcomponent', label: '🏗️ Create a Web Component' },
-          { value: 'site', label: '🏡 Create a HAXsite'},
-          { value: 'party', label: '🎉 Join the HAX community' },
-          { value: 'update', label: '🤓 Check for hax cli updates' },
-          { value: 'quit', label: '🚪 Quit' },
+          { value: 'webcomponent', label: `🏗️ ${t('cliMenuWebcomponent')}` },
+          { value: 'site', label: `🏡 ${t('cliMenuSite')}`},
+          { value: 'party', label: `🎉 ${t('cliMenuParty')}` },
+          { value: 'update', label: `🤓 ${t('cliMenuUpdate')}` },
+          { value: 'quit', label: `🚪 ${t('cliMenuQuit')}` },
         ];
         project = await p.group(
           {
             type: ({ results }) =>
             p.select({
-              message: !activeProject ? `What should we build?` : `Thirsty for more? What should we create now?`,
+              message: !activeProject ? t('cliWhatToBuild') : t('cliWhatToBuildNext'),
               initialValue: 'webcomponent',
               required: true,
               options: buildOptions,
@@ -674,7 +676,7 @@ async function main() {
           {
             onCancel: () => {
               if (!commandRun.options.quiet) {
-                p.cancel('🧙🪄 Merlin: Canceling cli.. HAX ya later');
+                p.cancel(`🧙🪄 ${t('cliCancel')}`);
                 communityStatement();
               }
               process.exit(0);
@@ -694,7 +696,7 @@ async function main() {
       // set the path automatically so we skip the question
       else if ((commandRun.command === "site") && fs.existsSync(`${process.cwd()}/_sites`)) {
         if (!commandRun.options.quiet) {
-          p.intro(`${color.bgBlack(color.white(` HAXcms detected : Path set automatically `))}`);
+          p.intro(`${color.bgBlack(color.white(` ${t('cliHaxcmsDetected')} `))}`);
         }
         commandRun.options.path = `${process.cwd()}/_sites`;
       }
@@ -720,16 +722,16 @@ async function main() {
               let initialPath = `${process.cwd()}`;
               if (!commandRun.options.path && !commandRun.options.auto && !commandRun.options.skip) {
                 return p.text({
-                  message: `What folder will your ${(commandRun.command === "webcomponent" || results.type === "webcomponent") ? "project" : "site"} live in?`,
+                  message: (commandRun.command === "webcomponent" || results.type === "webcomponent") ? t('cliPathPromptProject') : t('cliPathPromptSite'),
                   placeholder: initialPath,
                   initialValue: initialPath,
                   required: true,
                   validate: (value) => {
                     if (!value) {
-                      return "Path is required (Enter accepts default)";
+                      return t('cliPathRequired');
                     }
                     if (!fs.existsSync(value)) {
-                      return `${value} does not exist. Select a valid folder`;
+                      return t('cliFolderMissing', { path: value });
                     }
                   }
                 });
@@ -739,14 +741,14 @@ async function main() {
               const reservedNames = ["annotation-xml", "color-profile", "font-face", "font-face-src", "font-face-uri", "font-face-format", "font-face-name", "missing-glyph"];
               if (!commandRun.arguments.action && !commandRun.options.name) {
                 if (commandRun.options.auto || commandRun.options.skip || !commandRun.options.i) {
-                  program.error(color.red("Name is required when running non-interactively. Pass --name <value>."));
+                  program.error(color.red(t('cliNameRequiredNonInteractive')));
                   process.exit(1);
                 }
                 let placeholder = "mysite";
-                let message = "Site name:";
+                let message = t('cliSiteNamePrompt');
                 if (commandRun.command === "webcomponent" || results.type === "webcomponent") {
                   placeholder = "my-element";
-                  message = "Element name:";
+                  message = t('cliElementNamePrompt');
                 }
                 return p.text({
                   message: message,
@@ -755,33 +757,33 @@ async function main() {
                   required: true,
                   validate: (value) => {
                     if (!value) {
-                      return "Name is required (Enter accepts default)";
+                      return t('cliNameRequired');
                     }
                     if(reservedNames.includes(value)) {
-                      return `Reserved name ${color.bold(value)} cannot be used`
+                      return t('cliNameReserved', { name: color.bold(value) })
                     }
                     if (value.toLocaleLowerCase() !== value) {
-                      return "Name must be lowercase";
+                      return t('cliNameLowercase');
                     }
                     if (/^\d/.test(value)) {
-                      return "Name cannot start with a number";
+                      return t('cliNameStartsWithNumber');
                     }
                     if (/[`~!@#$%^&*()_=+\[\]{}|;:\'",<.>\/?\\]/.test(value)) {
-                      return "No special characters allowed in name";
+                      return t('cliNameNoSpecialChars');
                     }
                     if (value.indexOf(' ') !== -1) {
-                      return "No spaces allowed in name";
+                      return t('cliNameNoSpaces');
                     }
                     if (results.type === "webcomponent" && (value.indexOf('-') === -1 || value.replace('--', '') !== value || value[0] === '-' || value[value.length-1] === '-')) {
-                      return "Name must include at least one `-` and must not start or end name.";
+                      return t('cliNameDashRule');
                     }
                     // test that this is not an existing element we use in the registry
                     if (results.type === "webcomponent" && wcReg[value] && !commandRun.options.force) {
-                      return "Name is already a web component in the wc-registry published for HAX.";
+                      return t('cliNameInRegistry');
                     }
                     // Check for any other syntax errors
                     if(results.type === "webcomponent" && !/^[a-z][a-z0-9.\-]*\-[a-z0-9.\-]*$/.test(value)){
-                      return `Name must follow the syntax ${color.bold("my-component")}`;
+                      return t('cliNameSyntax', { example: color.bold("my-component") });
                     }
                     // assumes auto was selected in CLI
                     let joint = process.cwd();
@@ -792,7 +794,7 @@ async function main() {
                       joint = results.path;
                     }
                     if (fs.existsSync(path.join(joint, value))) {
-                      return `${path.join(joint, value)} exists, rename this project`;
+                      return t('cliPathExists', { path: path.join(joint, value) });
                     }
                   }
                 });  
@@ -808,37 +810,37 @@ async function main() {
                   ? commandRun.options.name 
                   : (commandRun.arguments.action || commandRun.options.name);
                 if (!value) {
-                  program.error(color.red("Name is required (Enter accepts default)."));
+                  program.error(color.red(t('cliNameRequiredPeriod')));
                   process.exit(1);
                 }
                 if(reservedNames.includes(value)) {
-                  program.error(color.red(`Reserved name ${color.bold(value)} cannot be used`));
+                  program.error(color.red(t('cliNameReserved', { name: color.bold(value) })));
                   process.exit(1);
                 }
                 if (value.toLocaleLowerCase() !== value) {
-                  program.error(color.red("Name must be lowercase"));
+                  program.error(color.red(t('cliNameLowercase')));
                   process.exit(1);
                 }
                 if (/^\d/.test(value)) {
-                  program.error(color.red("Name cannot start with a number"));
+                  program.error(color.red(t('cliNameStartsWithNumber')));
                   process.exit(1);
                 }
                 if (value.indexOf(' ') !== -1) {
-                  program.error(color.red("No spaces allowed in name"));
+                  program.error(color.red(t('cliNameNoSpaces')));
                   process.exit(1);
                 }
                 if (results.type === "webcomponent" && (value.indexOf('-') === -1 || value.replace('--', '') !== value || value[0] === '-' || value[value.length-1] === '-')) {
-                  program.error(color.red("Name must include at least one `-` and must not start or end name."));
+                  program.error(color.red(t('cliNameDashRule')));
                   process.exit(1);
                 }
                 // test that this is not an existing element we use in the registry
                 if (results.type === "webcomponent" && wcReg[value] && !commandRun.options.force) {
-                  program.error(color.red("Name is already a web component in the wc-registry published for HAX."));
+                  program.error(color.red(t('cliNameInRegistry')));
                   process.exit(1);
                 }
                 // Check for any other syntax errors
                 if(results.type === "webcomponent" && !/^[a-z][a-z0-9.\-]*\-[a-z0-9.\-]*$/.test(value)){
-                  program.error(color.red(`Name must follow the syntax ${color.bold("my-component")}`));
+                  program.error(color.red(t('cliNameSyntax', { example: color.bold("my-component") })));
                   process.exit(1);
                 }
                 // assumes auto was selected in CLI
@@ -850,7 +852,7 @@ async function main() {
                   joint = results.path;
                 }
                 if (fs.existsSync(path.join(joint, value))) {
-                  program.error(color.red(`${path.join(joint, value)} exists, rename this project`));
+                  program.error(color.red(t('cliPathExists', { path: path.join(joint, value) })));
                   process.exit(1);
                 }
               }
@@ -859,13 +861,13 @@ async function main() {
               if (results.type === "webcomponent" && !commandRun.options.org && !commandRun.options.auto && !commandRun.options.skip) {
                 let initialOrg = '@yourOrganization';
                 return p.text({
-                  message: 'Organization:',
+                  message: t('cliOrgPrompt'),
                   placeholder: initialOrg,
                   initialValue: initialOrg,
                   required: false,
                   validate: (value) => {
                     if (value && !value.startsWith('@')) {
-                      return "Organizations are not required, but organizations must start with @ if used";
+                      return t('cliOrgInvalid');
                     }
                   }
                 });  
@@ -874,7 +876,7 @@ async function main() {
             author: ({ results }) => {
               if (!commandRun.options.author && !commandRun.options.auto && !commandRun.options.skip) {
                 return p.text({
-                  message: 'Author:',
+                  message: t('cliAuthorPrompt'),
                   required: false,
                   initialValue: author,
                 });
@@ -883,12 +885,12 @@ async function main() {
             template: ({ results }) => {
               if (results.type === 'webcomponent' && !commandRun.options.isMonorepo && !commandRun.options.template && !commandRun.options.auto && !commandRun.options.skip && commandRun.options.i) {
                 return p.select({
-                  message: 'Template:',
+                  message: t('cliTemplatePrompt'),
                   required: false,
                   options: [
-                    { value: 'compliant', label: 'Standard — DDD, i18n, HAX, full build (recommended)' },
-                    { value: 'minimal', label: 'Minimal — Lit only, no docs, no build pipeline' },
-                    { value: 'training', label: 'Training — Heavily documented tutorial example' },
+                    { value: 'compliant', label: t('cliTemplateCompliant') },
+                    { value: 'minimal', label: t('cliTemplateMinimal') },
+                    { value: 'training', label: t('cliTemplateTraining') },
                   ],
                   initialValue: 'compliant',
                 });
@@ -899,15 +901,15 @@ async function main() {
                 const hasSkeletonFile = Boolean(commandRun.options.skeletonFile);
                 const hasSkeletonMachineName = Boolean(commandRun.options.skeletonMachineName);
                 if (hasSkeletonFile && hasSkeletonMachineName) {
-                  program.error(color.red('You can only use one skeleton source when creating a site (--skeleton-file or --skeleton-machine-name).'));
+                  program.error(color.red(t('cliOneSkeletonSource')));
                   process.exit(1);
                 }
                 if ((hasSkeletonFile || hasSkeletonMachineName) && commandRun.options.theme) {
-                  program.error(color.red('Skeleton template creation and --theme are mutually exclusive. Use Start from Scratch when selecting a theme.'));
+                  program.error(color.red(t('cliSkeletonThemeExclusive')));
                   process.exit(1);
                 }
                 if ((hasSkeletonFile || hasSkeletonMachineName) && commandRun.options.importSite) {
-                  program.error(color.red('Skeleton template creation and --import-site are mutually exclusive.'));
+                  program.error(color.red(t('cliSkeletonImportExclusive')));
                   process.exit(1);
                 }
                 if (hasSkeletonFile || hasSkeletonMachineName) {
@@ -920,11 +922,11 @@ async function main() {
                   return 'scratch';
                 }
                 return p.select({
-                  message: 'How should this site start?',
+                  message: t('cliSiteStartPrompt'),
                   required: true,
                   options: [
-                    { value: 'scratch', label: 'Start from Scratch (pick a theme)' },
-                    { value: 'template', label: 'Start from Template (pick a skeleton)' },
+                    { value: 'scratch', label: t('cliSiteStartScratch') },
+                    { value: 'template', label: t('cliSiteStartTemplate') },
                   ],
                   initialValue: 'scratch'
                 });
@@ -939,16 +941,16 @@ async function main() {
                   return null;
                 }
                 if (!commandRun.options.i) {
-                  program.error(color.red('Template mode requires --skeleton-file or --skeleton-machine-name when running non-interactively.'));
+                  program.error(color.red(t('cliTemplateModeNeedsSkeleton')));
                   process.exit(1);
                 }
                 if (availableSkeletons.length === 0) {
                   return null;
                 }
                 let skeletonOptions = [...availableSkeletons];
-                skeletonOptions.push({ value: '__from_file__', label: 'Use skeleton JSON file' });
+                skeletonOptions.push({ value: '__from_file__', label: t('cliUseSkeletonFile') });
                 const selectedSkeleton = await p.select({
-                  message: 'Template:',
+                  message: t('cliTemplatePrompt'),
                   required: true,
                   options: skeletonOptions,
                   initialValue: skeletonOptions[0].value,
@@ -969,19 +971,19 @@ async function main() {
                 !commandRun.options.skeletonFile
               ) {
                 return p.text({
-                  message: 'Template JSON file path:',
+                  message: t('cliTemplateFilePrompt'),
                   placeholder: `${process.cwd()}/template.json`,
                   initialValue: `${process.cwd()}/template.json`,
                   required: true,
                   validate: (value) => {
                     if (!value) {
-                      return 'Template JSON file path is required';
+                      return t('cliTemplateFileRequired');
                     }
                     if (!fs.existsSync(value)) {
-                      return `${value} does not exist. Select a valid file`;
+                      return t('cliFileMissing', { path: value });
                     }
                     if (!value.endsWith('.json')) {
-                      return 'Template file must be a JSON file';
+                      return t('cliTemplateFileJson');
                     }
                   },
                 });
@@ -995,7 +997,7 @@ async function main() {
                 }
                 else {
                   return p.select({
-                    message: "Theme:",
+                    message: t('cliThemePrompt'),
                     required: false,
                     options: coreThemes,
                     initialValue: defaultCoreTheme.value
@@ -1004,7 +1006,7 @@ async function main() {
               }
               else if (results.type === "site" && results.siteCreationMode !== 'template' && commandRun.options.theme) {
                 if (coreThemes.filter((item => item.value === commandRun.options.theme)).length === 0) {
-                  program.error(color.red('Theme is not in the list of valid themes'));
+                  program.error(color.red(t('cliThemeInvalid')));
                   process.exit(1);
                 }
               }
@@ -1012,25 +1014,25 @@ async function main() {
             customThemeName: async ({ results }) => {
               if (results.theme === "custom-theme") {
                 let tmpCustomName = await p.text({
-                  message: 'Theme Name:',
+                  message: t('cliThemeNamePrompt'),
                   placeholder: `custom-${commandRun.arguments.action ? commandRun.arguments.action : (results.name ? results.name : commandRun.options.name)}-theme`,
                   initialValue: `custom-${commandRun.arguments.action ? commandRun.arguments.action : (results.name ? results.name : commandRun.options.name)}-theme`,
                   required: false,
                   validate: (value) => {
                     if (!value) {
-                      return "Theme name is required (Enter accepts default)";
+                      return t('cliThemeNameRequired');
                     }
                     if(coreThemes.some(theme => theme.value === value)) {
-                      return "Theme name is already in use";
+                      return t('cliThemeNameInUse');
                     }
                     if (/^\d/.test(value)) {
-                      return "Theme name cannot start with a number";
+                      return t('cliThemeNameStartsWithNumber');
                     }
                     if (/[A-Z]/.test(value)) {
-                      return "No uppercase letters allowed in theme name";
+                      return t('cliThemeNameNoUppercase');
                     }
                     if (value.indexOf(' ') !== -1) {
-                      return "No spaces allowed in theme name";
+                      return t('cliThemeNameNoSpaces');
                     }
                   }
                 })
@@ -1040,31 +1042,31 @@ async function main() {
                 // need to validate theme from CLI arguments
                 let value = `${commandRun.options.customThemeName ? commandRun.options.customThemeName : (results.name ? results.name : (commandRun.arguments.action ? commandRun.arguments.action : commandRun.options.name))}`;
                 if (!value) {
-                  program.error(color.red("Theme name is required (Enter accepts default)"));
+                  program.error(color.red(t('cliThemeNameRequired')));
                 }
                 if(coreThemes.some(theme => theme.value === value)) {
-                  program.error(color.red("Theme name is already in use"));
+                  program.error(color.red(t('cliThemeNameInUse')));
                 }
                 if (/^\d/.test(value)) {
-                  program.error(color.red("Theme name cannot start with a number"));
+                  program.error(color.red(t('cliThemeNameStartsWithNumber')));
                 }
                 if (/[A-Z]/.test(value)) {
-                  program.error(color.red("No uppercase letters allowed in theme name"));
+                  program.error(color.red(t('cliThemeNameNoUppercase')));
                 }
                 if (value.indexOf(' ') !== -1) {
-                  program.error(color.red("No spaces allowed in theme name"));
+                  program.error(color.red(t('cliThemeNameNoSpaces')));
                 }
               }
             },
             customThemeTemplate: ({ results }) => {
               if (results.theme === "custom-theme") {
                 const options = [
-                    { value: 'base', label: 'Vanilla Theme with Hearty Documentation' },
-                    { value: 'polaris-flex', label: 'Minimalist Theme with Horizontal Nav' },
-                    { value: 'polaris-sidebar', label: 'Content-Focused Theme with Flexible Sidebar' },
+                    { value: 'base', label: t('cliThemeTemplateBase') },
+                    { value: 'polaris-flex', label: t('cliThemeTemplatePolarisFlex') },
+                    { value: 'polaris-sidebar', label: t('cliThemeTemplatePolarisSidebar') },
                 ]
                 return p.select({
-                  message: 'Template:',
+                  message: t('cliTemplatePrompt'),
                   required: false,
                   options: options,
                   initialValue: `${results.theme}`
@@ -1077,9 +1079,9 @@ async function main() {
                 let initialValues = [];
                 if (commandRun.command === "webcomponent" || results.type === "webcomponent") {
                   options = [
-                    { value: 'launch', label: 'Launch project', hint: 'recommended' },
-                    { value: 'install', label: `Install dependencies via ${commandRun.options.npmClient}`, hint: 'recommended' },
-                    { value: 'git', label: 'Apply version control via git', hint: 'recommended' },
+                    { value: 'launch', label: t('cliExtraLaunch'), hint: t('cliHintRecommended') },
+                    { value: 'install', label: t('cliExtraInstall', { client: commandRun.options.npmClient }), hint: t('cliHintRecommended') },
+                    { value: 'git', label: t('cliExtraGit'), hint: t('cliHintRecommended') },
                   ];
                   initialValues = ['launch', 'install', 'git']
                   if (!sysGit || commandRun.options.isMonorepo) {
@@ -1089,12 +1091,12 @@ async function main() {
                 }
                 else {
                   options = [
-                    { value: 'launch', label: 'Launch project on creation', hint: 'recommended' },
+                    { value: 'launch', label: t('cliExtraLaunchOnCreate'), hint: t('cliHintRecommended') },
                   ];
                   initialValues = ['launch']
                 }
                 return p.multiselect({
-                  message: 'Additional setup',
+                  message: t('cliAdditionalSetup'),
                   initialValues: initialValues,
                   options: options,
                   required: false,
@@ -1105,7 +1107,7 @@ async function main() {
           {
             onCancel: () => {
               if (!commandRun.options.quiet) {
-                p.cancel('🧙🪄 Merlin: Canceling cli.. HAX ya later');
+                p.cancel(`🧙🪄 ${t('cliCancel')}`);
                 communityStatement();
               }
               process.exit(0);
@@ -1177,17 +1179,17 @@ export async function testForUpdates(commandRun) {
   }
   catch (e) {
     if (!commandRun.options.quiet) {
-      p.intro(`${color.bgBlack(color.white(` Unable to check for updates `))}`);
-      p.intro(`Could not reach the npm registry (offline or unreachable). Try again once you have a network connection.`);
+      p.intro(`${color.bgBlack(color.white(` ${t('cliUpdateCheckFailed')} `))}`);
+      p.intro(t('cliRegistryUnreachable'));
     }
     return;
   }
   let latest = execOut.stdout.trim();
   if (latest !== packageJson.version) {
     if (!commandRun.options.quiet) {
-      p.intro(`${color.bgBlack(color.white(` HAX cli updates available! `))}`);
-      p.intro(`Current version: ${packageJson.version}`);
-      p.intro(`Latest version: ${latest}`); 
+      p.intro(`${color.bgBlack(color.white(` ${t('cliUpdatesAvailable')} `))}`);
+      p.intro(t('cliCurrentVersion', { version: packageJson.version }));
+      p.intro(t('cliLatestVersion', { version: latest })); 
     }
     let runUpdates = { answer: false };
     if (!commandRun.options.y) {
@@ -1195,18 +1197,18 @@ export async function testForUpdates(commandRun) {
         {
           answer: ({ results }) =>
           p.confirm({
-            message: `Do you want to update the cli to the latest version? (${latest})`,
+            message: t('cliUpdateConfirm', { version: latest }),
             initialValue: true,
           }),
         },
         {
           onCancel: () => {
             if (!commandRun.options.quiet) {
-              p.cancel('🧙🪄 Merlin: Leaving so soon? HAX ya later');
+              p.cancel(`🧙🪄 ${t('cliLeavingSoon')}`);
               p.outro(`
-                🧙  Upgrade at any time: ${color.yellow('npm install --global @haxtheweb/create')}
+                🧙  ${t('cliUpgradeAnyTime', { command: color.yellow('npm install --global @haxtheweb/create') })}
                 
-                💡  ${color.bold(color.white(`Never. Stop. Innovating.`))}
+                💡  ${color.bold(color.white(t('cliNeverStopInnovating')))}
               `);
             }
             process.exit(0);
@@ -1222,27 +1224,27 @@ export async function testForUpdates(commandRun) {
       await interactiveExec('npm', ['install', '--global', '@haxtheweb/create']);
       if (!commandRun.options.quiet) {
         p.outro(`
-          🔮  HAX CLI updated to : ${color.yellow(latest)}
+          🔮  ${t('cliUpdatedTo', { version: color.yellow(latest) })}
           
-          🧙  Type ${color.yellow('hax help')} for latest commands
+          🧙  ${t('cliTypeHelp', { command: color.yellow('hax help') })}
           
-          💡  ${color.bold(color.white(`Never. Stop. Innovating.`))}
+          💡  ${color.bold(color.white(t('cliNeverStopInnovating')))}
         `);
       }
     }
     else {
       if (!commandRun.options.quiet) {
         p.outro(`
-          🧙  Upgrade at any time: ${color.yellow('npm install --global @haxtheweb/create')}
+          🧙  ${t('cliUpgradeAnyTime', { command: color.yellow('npm install --global @haxtheweb/create') })}
           
-          💡  ${color.bold(color.white(`Never. Stop. Innovating.`))}
+          💡  ${color.bold(color.white(t('cliNeverStopInnovating')))}
         `);
       }
     }
   }
   else {
     if (!commandRun.options.quiet) {
-      p.intro(`${color.bgBlack(color.white(` HAX CLI (${packageJson.version}) is up to date `))}`);
+      p.intro(`${color.bgBlack(color.white(` ${t('cliUpToDate', { version: packageJson.version })} `))}`);
     }
   }
 }

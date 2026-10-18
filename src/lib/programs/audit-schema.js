@@ -5,6 +5,7 @@ import { createRequire } from 'node:module';
 import path from 'node:path';
 import color from 'picocolors';
 import { auditI18nCommand } from './audit-i18n.js';
+import { t } from '../i18n.js';
 
 /**
  * Schema audits: "is this built correctly for HAX?" checks backed by the
@@ -16,36 +17,42 @@ import { auditI18nCommand } from './audit-i18n.js';
 export const SCHEMA_VALIDATORS = {
   site: {
     label: 'HAXcms site.json (JSON Outline Schema)',
+    labelKey: 'auditSchemaLabelSite',
     pkg: '@haxtheweb/json-outline-schema-spec',
     bin: 'jos-validate',
     args: ['--type', 'site'],
   },
   skeleton: {
     label: 'HAXcms site skeletons',
+    labelKey: 'auditSchemaLabelSkeleton',
     pkg: '@haxtheweb/json-outline-schema-spec',
     bin: 'jos-validate',
     args: ['--type', 'skeleton'],
   },
   haxProperties: {
     label: 'haxProperties (element HAX integration)',
+    labelKey: 'auditSchemaLabelHaxProperties',
     pkg: '@haxtheweb/hax-schema',
     bin: 'haxproperties-validate',
     args: [],
   },
   demoSchema: {
     label: 'demoSchema entries (HAXElementSchema)',
+    labelKey: 'auditSchemaLabelDemoSchema',
     pkg: '@haxtheweb/hax-element-schema',
     bin: 'hax-element-validate',
     args: [],
   },
   appstore: {
     label: 'appstore payloads',
+    labelKey: 'auditSchemaLabelAppstore',
     pkg: '@haxtheweb/appstore-spec',
     bin: 'appstore-validate',
     args: [],
   },
   merlin: {
     label: 'Merlin commands in JS source',
+    labelKey: 'auditSchemaLabelMerlin',
     pkg: '@haxtheweb/merlin-schema',
     bin: 'merlin-validate',
     args: ['--scan'],
@@ -197,13 +204,17 @@ export function auditSchemaCommand(commandRun, root = null, deps = {}) {
   const targets = discoverSchemaTargets(projectRoot);
   const results = {};
   let passed = true;
+  // error / warning tags, padded so report lines stay aligned
+  const errorTag = t('auditSchemaErrorTag');
+  const warningTag = t('auditSchemaWarningTag');
+  const tagPad = (tag) => ' '.repeat(Math.max(1, Math.max(errorTag.length, warningTag.length) + 1 - tag.length));
   if (!asJson) {
-    p.intro(`${color.bgBlack(` 🔎 Auditing HAX schema compliance: ${color.underline(color.bold(color.yellow(projectRoot)))} `)}`);
+    p.intro(`${color.bgBlack(` 🔎 ${t('auditSchemaStart', { path: color.underline(color.bold(color.yellow(projectRoot))) })} `)}`);
   }
   const kinds = Object.keys(SCHEMA_VALIDATORS).filter((k) => targets[k].length > 0);
   if (kinds.length === 0) {
     if (!asJson) {
-      p.note('No site.json, skeletons, haxProperties, appstore.json or Merlin commands found.');
+      p.note(t('auditSchemaNothingFound'));
     }
   }
   for (const kind of kinds) {
@@ -222,12 +233,12 @@ export function auditSchemaCommand(commandRun, root = null, deps = {}) {
     passed = passed && kindPassed;
     results[kind] = { files: targets[kind].length, errors, warnings, passed: kindPassed, ...outcome };
     if (!asJson) {
-      const label = SCHEMA_VALIDATORS[kind].label;
+      const label = t(SCHEMA_VALIDATORS[kind].labelKey);
       if (!outcome.ok) {
-        p.log.error(`${label}: ${outcome.error}`);
+        p.log.error(t('auditSchemaValidatorFailed', { label, error: outcome.error }));
         continue;
       }
-      const head = `${label}: ${targets[kind].length} file(s), ${errors} error(s), ${warnings} warning(s)`;
+      const head = t('auditSchemaSummary', { label, files: targets[kind].length, errors, warnings });
       if (kindPassed) {
         p.log.success(head);
       } else {
@@ -236,11 +247,11 @@ export function auditSchemaCommand(commandRun, root = null, deps = {}) {
       for (const r of outcome.reports) {
         const rel = path.relative(projectRoot, r.file || '') || r.file;
         for (const e of r.errors || []) {
-          p.log.message(`${color.red('error')}   ${rel} ${e.path}: ${e.message}`);
+          p.log.message(`${color.red(errorTag)}${tagPad(errorTag)}${rel} ${e.path}: ${e.message}`);
         }
         if (options.debug || strict) {
           for (const w of r.warnings || []) {
-            p.log.message(`${color.yellow('warning')} ${rel} ${w.path}: ${w.message}`);
+            p.log.message(`${color.yellow(warningTag)}${tagPad(warningTag)}${rel} ${w.path}: ${w.message}`);
           }
         }
       }
@@ -257,8 +268,8 @@ export function auditSchemaCommand(commandRun, root = null, deps = {}) {
     out(JSON.stringify({ passed, strict, results: summary }, null, 2) + '\n');
   } else {
     p.outro(passed
-      ? '🎉 HAX schema checks passed'
-      : `Schema problems found. Re-run with ${color.cyan('--debug')} to see warnings, or ${color.cyan('--strict')} to fail on them.`);
+      ? `🎉 ${t('auditSchemaPassed')}`
+      : t('auditSchemaProblems', { debug: color.cyan('--debug'), strict: color.cyan('--strict') }));
   }
   return { passed, results };
 }
@@ -294,6 +305,6 @@ export function runAuditCommand(commandRun, dddPath, schemaRoot, deps = {}) {
     const i18n = auditI18n(commandRun, schemaRoot);
     return exit(dddPassed && r.passed && i18n.passed ? 0 : 1);
   }
-  console.error(color.red(`Unknown audit type "${type}". Use ddd, schema, i18n or all.`));
+  console.error(color.red(t('auditUnknownType', { type })));
   return exit(1);
 }
