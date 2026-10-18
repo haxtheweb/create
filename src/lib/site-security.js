@@ -5,6 +5,7 @@
 
 import * as path from 'node:path';
 import * as sanitizeContentLib from "@haxtheweb/haxcms-nodejs/dist/lib/sanitizeContent.js";
+import { t } from './i18n.js';
 const sanitizeHTMLForStorage = sanitizeContentLib.sanitizeHTMLForStorage;
 
 // Security (H-1/H-2/H-3): true when an error thrown by safeFetch/
@@ -27,7 +28,7 @@ export function sanitizeIfString(html) {
 // a harmless normalization that does not change which file is read.
 export function resolveLocalPath(p) {
   if (typeof p !== 'string' || p.indexOf(String.fromCharCode(0)) !== -1) {
-    throw new Error('Invalid local path: null bytes are not allowed.');
+    throw new Error(t('utilInvalidLocalPath'));
   }
   return path.resolve(p);
 }

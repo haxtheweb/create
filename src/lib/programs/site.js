@@ -1198,7 +1198,7 @@ export async function siteCommandDetected(commandRun) {
             if (!commandRun.options.quiet) {
               p.intro(`${t('siteStartingServer')} `);
               p.note(`🚀 ${t('siteServerRunningAt', { url: color.underline(color.cyan(`http://localhost:${port}`)) })}
-⌨️  ${t('siteServerStopPress', { keys: color.bold(color.black(color.bgRed(` CTRL + C or CTRL + BREAK `))) })}`);
+⌨️  ${t('siteServerStopPress', { keys: color.bold(color.black(color.bgRed(` ${t('wcCtrlCOrBreak')} `))) })}`);
             }
             // Security (M-4): HAXCMS_DISABLE_JWT_CHECKS is scoped to local
             // dev only. HOST=127.0.0.1 is a forward-compatible hint so the
@@ -1223,7 +1223,7 @@ export async function siteCommandDetected(commandRun) {
               p.intro(`${t('siteStartingServerDev')} `);
               p.note(`🚀 ${t('siteServerRunningAt', { url: color.underline(color.cyan(`http://localhost:${port}`)) })}
 💻 ${t('siteServerLiveReload', { path: color.bold('custom/src') })}
-⌨️  ${t('siteServerStopPress', { keys: color.bold(color.black(color.bgRed(` CTRL + C or CTRL + BREAK `))) })}`);
+⌨️  ${t('siteServerStopPress', { keys: color.bold(color.black(color.bgRed(` ${t('wcCtrlCOrBreak')} `))) })}`);
             }
             // Security (M-4): same HOST=127.0.0.1 hint + scoped JWT-disable as start.
             // Issue #2993: same in-process spawn (with npx fallback) as start.
@@ -2094,9 +2094,9 @@ export async function siteCommandDetected(commandRun) {
               }
               execOutput = await interactiveExec('surge', surgeArgs, {cwd: activeHaxsite.directory});
               if (surgeDomain) {
-                log(merlinSays(`Site published: https://${surgeDomain}`));
+                log(merlinSays(t('siteSitePublished', { url: `https://${surgeDomain}` })));
               } else {
-                log(merlinSays('Site published'));
+                log(merlinSays(t('siteSitePublishedNoUrl')));
               }
             }
           }
@@ -2162,7 +2162,7 @@ export async function siteCommandDetected(commandRun) {
                 netlifyArgs.push('--site', commandRun.options.domain);
               }
               execOutput = await interactiveExec('netlify', netlifyArgs, {cwd: activeHaxsite.directory});
-              log(merlinSays(`Site deployed to Netlify`));
+              log(merlinSays(t('siteNetlifyDeployed')));
             }
           }
           catch(e) {
@@ -2227,7 +2227,7 @@ export async function siteCommandDetected(commandRun) {
                 vercelArgs.push('--name', commandRun.options.domain);
               }
               execOutput = await interactiveExec('vercel', vercelArgs, {cwd: activeHaxsite.directory});
-              log(merlinSays(`Site deployed to Vercel`));
+              log(merlinSays(t('siteVercelDeployed')));
             }
           }
           catch(e) {
@@ -3638,7 +3638,7 @@ ${color.underline(color.cyan(`http://localhost:${port}`))}
 📘  ${t('siteVsCodeProject', { command: color.bold(color.yellow(color.bgBlack(`code ${optionPath}`))) })}
 🚧  ${t('siteLaunchLater', { command: color.bold(color.yellow(color.bgBlack(`${command}`))) })}
 
-⌨️  ${t('siteResumeMerlin', { merlin: '🧙 Merlin', keys: color.bold(color.black(color.bgRed(` CTRL + C or CTRL + BREAK `))) })}
+⌨️  ${t('siteResumeMerlin', { merlin: '🧙 Merlin', keys: color.bold(color.black(color.bgRed(` ${t('wcCtrlCOrBreak')} `))) })}
 `);
     }
       // at least a second to see the message print at all

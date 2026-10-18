@@ -37,18 +37,27 @@ test('normalizeLanguage handles OS locale formats', () => {
   assert.equal(normalizeLanguage('es-419'), 'es-419')
   assert.equal(normalizeLanguage('FR'), 'fr')
   assert.equal(normalizeLanguage('haw'), 'haw')
+  // codes we ship under another name
+  assert.equal(normalizeLanguage('fil_PH.UTF-8'), 'tl-PH')
+  assert.equal(normalizeLanguage('nn_NO'), 'nb-NO')
+  assert.equal(normalizeLanguage('iw'), 'he')
   for (const v of ['C', 'C.UTF-8', 'POSIX', '', null, undefined, '123', 'english']) {
     assert.equal(normalizeLanguage(v), null, String(v))
   }
 })
 
-test('detectLanguage: --lang, then HAX_LANG, LC_ALL, LC_MESSAGES, LANG, OS, English', () => {
+test('detectLanguage: --lang, HAX_LANG, then the first locale variable that is set, OS, English', () => {
   const env = { HAX_LANG: 'fr', LC_ALL: 'de_DE.UTF-8', LANG: 'es_ES.UTF-8' }
   assert.equal(detectLanguage(['node', 'hax', '--lang', 'ja'], env, 'it-IT'), 'ja')
   assert.equal(detectLanguage(['node', 'hax', '--lang=ko'], env, 'it-IT'), 'ko')
   assert.equal(detectLanguage(['node', 'hax'], env, 'it-IT'), 'fr')
-  assert.equal(detectLanguage(['node', 'hax'], { LC_ALL: 'C', LC_MESSAGES: 'nl_NL', LANG: 'es' }, 'it'), 'nl-NL')
-  assert.equal(detectLanguage(['node', 'hax'], { LANG: 'C.UTF-8' }, 'it-IT'), 'it-IT')
+  // POSIX: LC_ALL=C wins over LANG, so scripts get stable English
+  assert.equal(detectLanguage(['node', 'hax'], { LC_ALL: 'C', LC_MESSAGES: 'nl_NL', LANG: 'es' }, 'it'), 'en')
+  assert.equal(detectLanguage(['node', 'hax'], { LC_MESSAGES: 'nl_NL', LANG: 'es' }, 'it'), 'nl-NL')
+  assert.equal(detectLanguage(['node', 'hax'], { LANG: 'C.UTF-8' }, 'it-IT'), 'en')
+  assert.equal(detectLanguage(['node', 'hax'], { LC_ALL: '', LANG: 'de_DE.UTF-8' }, 'it-IT'), 'de-DE')
+  // HAX_LANG still beats LC_ALL=C
+  assert.equal(detectLanguage(['node', 'hax'], { HAX_LANG: 'ja', LC_ALL: 'C' }, ''), 'ja')
   assert.equal(detectLanguage(['node', 'hax'], {}, ''), 'en')
   // a bad --lang value falls through instead of breaking
   assert.equal(detectLanguage(['node', 'hax', '--lang', '!!'], {}, ''), 'en')
@@ -57,6 +66,9 @@ test('detectLanguage: --lang, then HAX_LANG, LC_ALL, LC_MESSAGES, LANG, OS, Engl
 test('interpolate fills known placeholders and leaves the rest', () => {
   assert.equal(interpolate('Hi {name}, {count} new', { name: 'Ana', count: 0 }), 'Hi Ana, 0 new')
   assert.equal(interpolate('Keep {missing}', { other: 1 }), 'Keep {missing}')
+  // passed but empty renders like a template literal did before
+  assert.equal(interpolate('Description: {d}', { d: undefined }), 'Description: undefined')
+  assert.equal(interpolate('Name: {n}', { n: null }), 'Name: null')
   assert.equal(interpolate('Cost $& {v}', { v: "$'" }), "Cost $& $'")
   assert.equal(interpolate('No params', null), 'No params')
 })

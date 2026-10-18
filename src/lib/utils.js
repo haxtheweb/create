@@ -88,7 +88,7 @@ export function findAvailablePort(startPort = 3000, maxPort = 65535) {
   return new Promise((resolve, reject) => {
     function tryPort(port) {
       if (port > maxPort) {
-        reject(new Error('No available ports found'))
+        reject(new Error(t('utilNoAvailablePorts')))
         return
       }
       const server = createServer()

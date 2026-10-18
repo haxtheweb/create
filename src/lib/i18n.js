@@ -11,13 +11,23 @@ import path from 'node:path';
  * anything a language doesn't have yet.
  *
  * Language, first match wins:
- *   --lang <code>, HAX_LANG, LC_ALL, LC_MESSAGES, LANG, the OS locale, English.
+ *   --lang <code>, HAX_LANG, then the first of LC_ALL / LC_MESSAGES / LANG
+ *   that is set (C or POSIX there means English), the OS locale, English.
  *
  * Command names, flags, --format json output and logs stay English so
  * scripts and agents keep working; only what people read is translated.
  */
 
 const LOCALES_DIR = path.resolve(__dirname, '../locales');
+// code people's systems report -> code our locale files use
+const LANGUAGE_ALIASES = {
+  fil: 'tl', // Filipino -> Tagalog
+  nn: 'nb', // Norwegian Nynorsk -> Bokmal (closest we have)
+  iw: 'he', // legacy Hebrew
+  in: 'id', // legacy Indonesian
+  ji: 'yi', // legacy Yiddish
+  jw: 'jv', // legacy Javanese
+};
 const NAMESPACE = 'create';
 
 // namespace -> directory holding <namespace>.<lang>.json
@@ -43,7 +53,9 @@ export function normalizeLanguage(value) {
   if (!/^[a-z]{2,3}$/i.test(parts[0] || '')) {
     return null;
   }
-  const lang = parts[0].toLowerCase();
+  let lang = parts[0].toLowerCase();
+  // older or alternate codes for languages we ship under another code
+  lang = LANGUAGE_ALIASES[lang] || lang;
   // keep a region (2 letters or 3 digits), drop scripts like Hans / Latn
   const region = parts.slice(1).find((p) => /^([a-z]{2}|\d{3})$/i.test(p));
   return region ? `${lang}-${region.toUpperCase()}` : lang;
@@ -70,10 +82,15 @@ export function detectLanguage(argv = process.argv, env = process.env, osLocale 
       }
     }
   }
-  for (const name of ['HAX_LANG', 'LC_ALL', 'LC_MESSAGES', 'LANG']) {
-    const code = normalizeLanguage(env[name]);
-    if (code) {
-      return code;
+  const hax = normalizeLanguage(env.HAX_LANG);
+  if (hax) {
+    return hax;
+  }
+  // POSIX: the first of LC_ALL, LC_MESSAGES, LANG that is set decides, so
+  // LC_ALL=C (common in scripts) means English even if LANG says otherwise
+  for (const name of ['LC_ALL', 'LC_MESSAGES', 'LANG']) {
+    if (typeof env[name] === 'string' && env[name].trim() !== '') {
+      return normalizeLanguage(env[name]) || 'en';
     }
   }
   if (osLocale === null) {
@@ -175,10 +192,10 @@ export function interpolate(text, params) {
   if (!params || typeof text !== 'string') {
     return text;
   }
+  // a param that is passed but empty renders like a template literal would
+  // ("undefined"), so output matches what the CLI printed before translation
   return text.replace(/\{(\w+)\}/g, (match, name) =>
-    Object.prototype.hasOwnProperty.call(params, name) && params[name] !== undefined && params[name] !== null
-      ? String(params[name])
-      : match,
+    Object.prototype.hasOwnProperty.call(params, name) ? String(params[name]) : match,
   );
 }
 
