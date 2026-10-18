@@ -105,7 +105,9 @@ export function discoverSchemaTargets(root) {
         }
         continue;
       }
-      if (name.endsWith('.haxProperties.json')) {
+      // base schemas are <tag>.haxProperties.json; editor-locale overlays are
+      // locales/<tag>.haxProperties.<lang>.json
+      if (name.endsWith('.haxProperties.json') || (path.basename(dir) === 'locales' && /\.haxProperties\.[A-Za-z-]+\.json$/.test(name))) {
         targets.haxProperties.push(full);
         if (path.basename(dir) !== 'locales') {
           targets.demoSchema.push(full);
