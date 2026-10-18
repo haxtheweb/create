@@ -263,7 +263,15 @@ Machine-readable schema report (for agents and CI)
 ```bash
 hax audit schema --format json
 ```
-Run the DDD audit and the schema audit together
+Find English hardcoded in Lit templates that should come from `this.t` (exits 1 when any is found, so it works in CI)
+```bash
+hax audit i18n
+```
+Machine-readable list of hardcoded strings
+```bash
+hax audit i18n --format json
+```
+Run the DDD, schema and i18n audits together
 ```bash
 hax audit all
 ```

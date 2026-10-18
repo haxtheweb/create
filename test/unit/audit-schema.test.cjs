@@ -154,11 +154,12 @@ test('resolveLocalValidator finds a package bin next to the audited project', ()
   }
 })
 
-test('runAuditCommand routes ddd, schema and all', () => {
+test('runAuditCommand routes ddd, schema, i18n and all', () => {
   const calls = []
   const deps = {
     auditDDD: (cr, p, exit) => { calls.push(['ddd', exit]); return exit === false ? true : 'ddd-exited' },
     auditSchema: () => { calls.push(['schema']); return { passed: false } },
+    auditI18n: () => { calls.push(['i18n']); return { passed: true } },
     exit: (code) => code,
   }
   assert.equal(runAuditCommand({ arguments: {} , options: {} }, null, '/x', deps), 'ddd-exited')
@@ -166,7 +167,10 @@ test('runAuditCommand routes ddd, schema and all', () => {
   assert.equal(runAuditCommand({ arguments: { type: 'schema' }, options: {} }, null, '/x', deps), 1)
   calls.length = 0
   assert.equal(runAuditCommand({ arguments: { type: 'all' }, options: {} }, null, '/x', deps), 1)
-  assert.deepEqual(calls, [['ddd', false], ['schema']])
+  assert.deepEqual(calls, [['ddd', false], ['schema'], ['i18n']])
+  calls.length = 0
+  assert.equal(runAuditCommand({ arguments: { type: 'i18n' }, options: {} }, null, '/x', deps), 0)
+  assert.deepEqual(calls, [['i18n']])
   const origError = console.error
   console.error = () => {}
   try {

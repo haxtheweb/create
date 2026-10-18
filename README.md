@@ -44,7 +44,8 @@ hax start
 - `hax wc --search "tooltip"` - Search existing HAX elements (tag, title, description, tags) before building a new one; `--format json` for scripts
 - `hax audit` - Audits web components for compliance with DDD (HAX design system)
 - `hax audit schema` - Validates `site.json`, skeletons, `haxProperties` (and their `demoSchema` / locales), `appstore.json` and Merlin commands against the HAX schemas
-- `hax audit all` - Runs both
+- `hax audit i18n` - Finds English hardcoded in Lit templates (text and attributes like `aria-label`, `title`, `placeholder`) that should come from `this.t` so it can be translated
+- `hax audit all` - Runs all three
 - `hax update` - HAX CLI self update
 - `hax party` - Display options to join the HAX community and get involved!
 - `hax skills list` - List bundled agent skills shipped with the CLI
@@ -186,7 +187,8 @@ Commands:
   wc|webcomponent [options] [action]  Create Lit based web components, with HAX
                                       recommendations
   audit [options] [type]              Audits for HAX compliance: DDD design
-                                      system (default), HAX schemas, or both
+                                      system (default), HAX schemas,
+                                      translatable text, or all of them
   party [options] [action]            Party time! Join the HAX community and
                                       get involved!
   help [command]                      display help for command
@@ -251,6 +253,7 @@ Build a HAX site that can be published and transported anywhere. Your users migh
 ## HAX Audit
 Audits your HAX based web components to suggest improvements to better align with DDD, the design system built into HAX components.
 - Use `.dddignore` file to instruct audit program what files should be ignored. Each component generated comes with a `.dddignore` file in its root directory.
+- `hax audit i18n` skips `test`, `demo`, `locales` and build folders. Mark intentional English (brand names, code samples) with an `i18n-ignore` comment on that line or the line above, `i18n-ignore-file` anywhere in a file, or list paths in a `.i18nignore` file (same format as `.dddignore`).
 - Run command from root of the component project.
 - Provides suggested changes for component CSS to align with DDD design standards, if a change cannot be suggested, developer will be refered to look at the manual for a change that works for them!
 

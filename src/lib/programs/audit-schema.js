@@ -4,6 +4,7 @@ import { existsSync, readdirSync, readFileSync, statSync, writeSync } from 'node
 import { createRequire } from 'node:module';
 import path from 'node:path';
 import color from 'picocolors';
+import { auditI18nCommand } from './audit-i18n.js';
 
 /**
  * Schema audits: "is this built correctly for HAX?" checks backed by the
@@ -264,7 +265,7 @@ export function auditSchemaCommand(commandRun, root = null, deps = {}) {
 
 /**
  * @description Entry point for `hax audit [type]`; exits with 0 (compliant) or 1.
- * @param commandRun CLI state; commandRun.arguments.type is ddd (default), schema or all
+ * @param commandRun CLI state; commandRun.arguments.type is ddd (default), schema, i18n or all
  * @param dddPath directory for the DDD audit (null = cwd)
  * @param schemaRoot directory for the schema audit
  * @param deps injectable { auditDDD, auditSchema, exit } for tests
@@ -274,6 +275,7 @@ export function runAuditCommand(commandRun, dddPath, schemaRoot, deps = {}) {
   const exit = deps.exit || ((code) => process.exit(code));
   const auditDDD = deps.auditDDD;
   const auditSchema = deps.auditSchema || auditSchemaCommand;
+  const auditI18n = deps.auditI18n || auditI18nCommand;
   if (type === 'ddd') {
     // DDD audit keeps its existing behavior, including exiting itself
     return auditDDD(commandRun, dddPath);
@@ -282,11 +284,16 @@ export function runAuditCommand(commandRun, dddPath, schemaRoot, deps = {}) {
     const r = auditSchema(commandRun, schemaRoot);
     return exit(r.passed ? 0 : 1);
   }
+  if (type === 'i18n') {
+    const r = auditI18n(commandRun, schemaRoot);
+    return exit(r.passed ? 0 : 1);
+  }
   if (type === 'all') {
     const dddPassed = auditDDD(commandRun, dddPath, false);
     const r = auditSchema(commandRun, schemaRoot);
-    return exit(dddPassed && r.passed ? 0 : 1);
+    const i18n = auditI18n(commandRun, schemaRoot);
+    return exit(dddPassed && r.passed && i18n.passed ? 0 : 1);
   }
-  console.error(color.red(`Unknown audit type "${type}". Use ddd, schema or all.`));
+  console.error(color.red(`Unknown audit type "${type}". Use ddd, schema, i18n or all.`));
   return exit(1);
 }

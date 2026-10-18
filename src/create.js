@@ -19,7 +19,7 @@ import { camelToDash, exec, interactiveExec, writeConfigFile, readConfigFile, ge
 import * as haxcmsLib from "@haxtheweb/haxcms-nodejs/dist/lib/HAXCMS.js";
 const HAXCMS = haxcmsLib.HAXCMS;
 const systemStructureContext = haxcmsLib.systemStructureContext;
-// `hax audit [ddd|schema|all]`; the DDD audit itself lives in audit.js
+// `hax audit [ddd|schema|i18n|all]`; the DDD audit itself lives in audit.js
 const runAuditCommand = (commandRun, dddPath, schemaRoot) =>
   runAuditCommandWith(commandRun, dddPath, schemaRoot, { auditDDD: auditCommandDetected });
 
@@ -281,8 +281,8 @@ async function main() {
   // audit program
   program
   .command('audit')
-  .description('Audits for HAX compliance: DDD design system (default), HAX schemas, or both')
-  .argument('[type]', 'What to audit:' + "\n\r" + 'ddd - DDD design system usage in CSS / JS (default)' + "\n\r" + 'schema - site.json, skeletons, haxProperties, demoSchema, appstore.json and Merlin commands against the HAX schemas' + "\n\r" + 'all - ddd and schema')
+  .description('Audits for HAX compliance: DDD design system (default), HAX schemas, translatable text, or all of them')
+  .argument('[type]', 'What to audit:' + "\n\r" + 'ddd - DDD design system usage in CSS / JS (default)' + "\n\r" + 'schema - site.json, skeletons, haxProperties, demoSchema, appstore.json and Merlin commands against the HAX schemas' + "\n\r" + 'i18n - English hardcoded in Lit templates instead of this.t' + "\n\r" + 'all - ddd, schema and i18n')
   .action((type, opts) => {
     commandRun = {
       command: 'audit',
@@ -292,7 +292,7 @@ async function main() {
   })
   .option('--debug', 'Output for developers')
   .option('--strict', 'schema audit: treat warnings as failures')
-  .option('--format <char>', 'schema audit: json for a machine-readable report')
+  .option('--format <char>', 'schema / i18n audit: json for a machine-readable report')
   .version(packageJson.version);
 
   program
