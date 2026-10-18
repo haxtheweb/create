@@ -2136,16 +2136,16 @@ export async function siteCommandDetected(commandRun) {
             // system test did not see it globally
             if (!sysNetlify) {
               let s = p.spinner();
-              s.start(merlinSays('Installing Netlify CLI globally so we can publish'));
+              s.start(merlinSays(t('siteNetlifyInstalling')));
               let execOutput = await exec(`npm install --global netlify-cli`);
-              s.stop(merlinSays('Netlify CLI installed globally'));
+              s.stop(merlinSays(t('siteNetlifyInstalled')));
               log(execOutput.stdout.trim());
               sysNetlify = true;
             }
             let execOutput;
             if (commandRun.options.y) {
               let s = p.spinner();
-              s.start(merlinSays('Deploying site to Netlify ..'));
+              s.start(merlinSays(t('siteNetlifyDeploying')));
               if (commandRun.options.domain) {
                 // If specific site/domain is specified, deploy to existing site
                 execOutput = await exec(`cd ${activeHaxsite.directory} && netlify deploy --prod --site ${commandRun.options.domain}`);
@@ -2154,7 +2154,7 @@ export async function siteCommandDetected(commandRun) {
                 execOutput = await exec(`cd ${activeHaxsite.directory} && netlify deploy --prod`);
               }
               log(execOutput.stdout.trim());
-              s.stop(merlinSays(`Site deployed to Netlify`));
+              s.stop(merlinSays(t('siteNetlifyDeployed')));
             }
             else {
               let netlifyArgs = ['deploy', '--prod'];
@@ -2201,16 +2201,16 @@ export async function siteCommandDetected(commandRun) {
             // system test did not see it globally
             if (!sysVercel) {
               let s = p.spinner();
-              s.start(merlinSays('Installing Vercel CLI globally so we can publish'));
+              s.start(merlinSays(t('siteVercelInstalling')));
               let execOutput = await exec(`npm install --global vercel`);
-              s.stop(merlinSays('Vercel CLI installed globally'));
+              s.stop(merlinSays(t('siteVercelInstalled')));
               log(execOutput.stdout.trim());
               sysVercel = true;
             }
             let execOutput;
             if (commandRun.options.y) {
               let s = p.spinner();
-              s.start(merlinSays('Deploying site to Vercel ..'));
+              s.start(merlinSays(t('siteVercelDeploying')));
               if (commandRun.options.domain) {
                 // Deploy with specific domain/project name
                 execOutput = await exec(`cd ${activeHaxsite.directory} && vercel --prod --name ${commandRun.options.domain}`);
@@ -2219,7 +2219,7 @@ export async function siteCommandDetected(commandRun) {
                 execOutput = await exec(`cd ${activeHaxsite.directory} && vercel --prod`);
               }
               log(execOutput.stdout.trim());
-              s.stop(merlinSays(`Site deployed to Vercel`));
+              s.stop(merlinSays(t('siteVercelDeployed')));
             }
             else {
               let vercelArgs = ['--prod'];
@@ -2248,7 +2248,7 @@ export async function siteCommandDetected(commandRun) {
         case "setup:github-actions":
           try {
             let s = p.spinner();
-            s.start(merlinSays('Setting up GitHub Actions deployment workflow'));
+            s.start(merlinSays(t('siteGithubActionsSettingUp')));
             
             // Create .github/workflows directory
             const workflowDir = path.join(activeHaxsite.directory, '.github', 'workflows');
@@ -2259,9 +2259,9 @@ export async function siteCommandDetected(commandRun) {
             // Copy the workflow file
             const workflowFile = path.join(workflowDir, 'deploy.yml');
             if (fs.existsSync(workflowFile) && !commandRun.options.y) {
-              s.stop(merlinSays('GitHub Actions workflow already exists'));
+              s.stop(merlinSays(t('siteGithubActionsExists')));
               let overwrite = await p.confirm({ 
-                message: 'GitHub Actions workflow file already exists. Overwrite?',
+                message: t('siteGithubActionsOverwrite'),
                 initialValue: false
               });
               if (!overwrite) {
@@ -2275,9 +2275,9 @@ export async function siteCommandDetected(commandRun) {
               workflowFile
             );
             
-            s.stop(merlinSays('GitHub Actions workflow created successfully'));
+            s.stop(merlinSays(t('siteGithubActionsCreated')));
             if (!commandRun.options.quiet) {
-              p.note(`🚀 GitHub Actions workflow has been set up!\n\nNext steps:\n1. Push your changes: ${color.bold('git add . && git commit -m "Add GitHub Actions workflow" && git push')}\n2. Enable GitHub Pages in your repository settings\n3. Select "GitHub Actions" as the source\n4. Your site will automatically deploy on every push to main/master`);
+              p.note(`🚀 ${t('siteGithubActionsReady')}\n\n${t('siteNextSteps')}\n1. ${t('sitePushChanges', { command: color.bold('git add . && git commit -m "Add GitHub Actions workflow" && git push') })}\n2. ${t('siteGithubActionsEnablePages')}\n3. ${t('siteGithubActionsSelectSource')}\n4. ${t('siteGithubActionsAutoDeploy')}`);
             }
           }
           catch(e) {
@@ -2287,14 +2287,14 @@ export async function siteCommandDetected(commandRun) {
         case "setup:gitlab-ci":
           try {
             let s = p.spinner();
-            s.start(merlinSays('Setting up GitLab CI deployment pipeline'));
+            s.start(merlinSays(t('siteGitlabSettingUp')));
             
             // Copy the GitLab CI file
             const ciFile = path.join(activeHaxsite.directory, '.gitlab-ci.yml');
             if (fs.existsSync(ciFile) && !commandRun.options.y) {
-              s.stop(merlinSays('GitLab CI file already exists'));
+              s.stop(merlinSays(t('siteGitlabExists')));
               let overwrite = await p.confirm({ 
-                message: '.gitlab-ci.yml already exists. Overwrite?',
+                message: t('siteFileExistsOverwrite', { file: '.gitlab-ci.yml' }),
                 initialValue: false
               });
               if (!overwrite) {
@@ -2308,9 +2308,9 @@ export async function siteCommandDetected(commandRun) {
               ciFile
             );
             
-            s.stop(merlinSays('GitLab CI pipeline created successfully'));
+            s.stop(merlinSays(t('siteGitlabCreated')));
             if (!commandRun.options.quiet) {
-              p.note(`🚀 GitLab CI pipeline has been set up!\n\nNext steps:\n1. Push your changes: ${color.bold('git add . && git commit -m "Add GitLab CI pipeline" && git push')}\n2. GitLab Pages will be automatically enabled\n3. Your site will deploy on every push to main/master\n4. Access your site at: ${color.cyan('https://yourusername.gitlab.io/yourproject')}`);
+              p.note(`🚀 ${t('siteGitlabReady')}\n\n${t('siteNextSteps')}\n1. ${t('sitePushChanges', { command: color.bold('git add . && git commit -m "Add GitLab CI pipeline" && git push') })}\n2. ${t('siteGitlabPagesEnabled')}\n3. ${t('siteGitlabAutoDeploy')}\n4. ${t('siteGitlabAccessAt', { url: color.cyan('https://yourusername.gitlab.io/yourproject') })}`);
             }
           }
           catch(e) {
@@ -2320,14 +2320,14 @@ export async function siteCommandDetected(commandRun) {
         case "setup:replit":
           try {
             let s = p.spinner();
-            s.start(merlinSays('Setting up Replit configuration'));
+            s.start(merlinSays(t('siteReplitSettingUp')));
 
             // Copy the .replit file
             const replitFile = path.join(activeHaxsite.directory, '.replit');
             if (fs.existsSync(replitFile) && !commandRun.options.y) {
-              s.stop(merlinSays('.replit already exists'));
+              s.stop(merlinSays(t('siteFileExists', { file: '.replit' })));
               let overwrite = await p.confirm({
-                message: '.replit already exists. Overwrite?',
+                message: t('siteFileExistsOverwrite', { file: '.replit' }),
                 initialValue: false
               });
               if (!overwrite) {
@@ -2341,9 +2341,9 @@ export async function siteCommandDetected(commandRun) {
               replitFile
             );
 
-            s.stop(merlinSays('Replit configuration created successfully'));
+            s.stop(merlinSays(t('siteReplitCreated')));
             if (!commandRun.options.quiet) {
-              p.note(`🚀 Replit configuration has been set up!\n\nNext steps:\n1. Import or push this repo into a Repl\n2. Replit will automatically run ${color.bold('npm run serve')} and deploy with a reserved VM (always-on, persistent disk)\n3. HAXcms seeds a random admin password on first boot and only prints it once to the server console. On Replit, set ${color.bold('HAXCMS_RUNTIME_USERNAME')} and ${color.bold('HAXCMS_RUNTIME_PASSWORD')} as Replit Secrets instead, so you have a known login without digging through console output\n4. Redeploy after adding/changing Secrets for them to take effect`);
+              p.note(`🚀 ${t('siteReplitReady')}\n\n${t('siteNextSteps')}\n1. ${t('siteReplitImport')}\n2. ${t('siteReplitAutoRun', { command: color.bold('npm run serve') })}\n3. ${t('siteReplitSecrets', { username: color.bold('HAXCMS_RUNTIME_USERNAME'), password: color.bold('HAXCMS_RUNTIME_PASSWORD') })}\n4. ${t('siteReplitRedeploy')}`);
             }
           }
           catch(e) {
@@ -2368,14 +2368,14 @@ export async function siteCommandDetected(commandRun) {
           try {
             if (!commandRun.options.search) {
               commandRun.options.search = await p.text({
-                message: 'Search query (text search across site fields)',
+                message: t('siteSearchQueryPrompt'),
                 placeholder: 'lesson',
                 validate: (value) => {
                   if (!value) {
-                    return 'Search query is required';
+                    return t('siteSearchQueryRequired');
                   }
                   if (value.length > 256) {
-                    return 'Search query is too long (max 256 characters)';
+                    return t('siteSearchQueryTooLong', { max: 256 });
                   }
                 }
               });
@@ -2466,9 +2466,9 @@ export async function siteCommandDetected(commandRun) {
           try {
             if (!commandRun.options.itemId) {
               commandRun.options.itemId = await p.select({
-                message: `Select an item to view revisions`,
+                message: t('siteSelectItemRevisions'),
                 required: true,
-                options: [ {value: null, label: "-- exit --" }, ...await siteItemsOptionsList(activeHaxsite)],
+                options: [ {value: null, label: `-- ${t('siteExitLower')} --` }, ...await siteItemsOptionsList(activeHaxsite)],
               });
             }
             if (commandRun.options.itemId) {
@@ -2477,10 +2477,10 @@ export async function siteCommandDetected(commandRun) {
                 let revisionId = commandRun.options.revisionId;
                 if (!revisionId && !commandRun.options.y) {
                   revisionId = await p.text({
-                    message: 'Revision ID to restore',
+                    message: t('siteRevisionIdPrompt'),
                     placeholder: 'abc1234',
                     validate: (value) => {
-                      if (!value) return 'Revision ID is required';
+                      if (!value) return t('siteRevisionIdRequired');
                     }
                   });
                 }
@@ -2488,7 +2488,7 @@ export async function siteCommandDetected(commandRun) {
                   let del = true;
                   if (!commandRun.options.y) {
                     del = await p.confirm({
-                      message: `Are you sure you want to restore revision ${revisionId} for item ${commandRun.options.itemId}?`,
+                      message: t('siteConfirmRestoreRevision', { revision: revisionId, id: commandRun.options.itemId }),
                       initialValue: true,
                     });
                   }
@@ -2520,7 +2520,7 @@ export async function siteCommandDetected(commandRun) {
             if (!exportFormat || !validExportFormats.includes(exportFormat)) {
               if (!commandRun.options.y) {
                 exportFormat = await p.select({
-                  message: 'Export format',
+                  message: t('siteExportFormatPrompt'),
                   options: [
                     { value: 'pdf', label: 'PDF' },
                     { value: 'docx', label: 'DOCX' },
@@ -2560,7 +2560,7 @@ export async function siteCommandDetected(commandRun) {
                 targetFile = path.resolve(targetFile);
                 fs.writeFileSync(targetFile, resp.res.data);
                 if (!commandRun.options.quiet) {
-                  p.outro(`${color.green('✓')} Exported to ${targetFile}`);
+                  p.outro(`${color.green('✓')} ${t('siteExportedTo', { path: targetFile })}`);
                 }
               } else {
                 // zip/markdown/skeleton: the v1 backend returns a JSON export
@@ -2584,11 +2584,11 @@ export async function siteCommandDetected(commandRun) {
           try {
             if (!commandRun.options.source) {
               commandRun.options.source = await p.text({
-                message: 'Source file or directory to upload',
+                message: t('siteUploadSourcePrompt'),
                 placeholder: './assets/image.png',
                 validate: (value) => {
-                  if (!value) return 'Source path is required';
-                  if (!fs.existsSync(value)) return 'Source path does not exist';
+                  if (!value) return t('siteSourcePathRequired');
+                  if (!fs.existsSync(value)) return t('siteSourcePathMissing');
                 }
               });
             }
