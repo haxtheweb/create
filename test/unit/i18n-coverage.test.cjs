@@ -26,15 +26,23 @@ function sourceFiles() {
   return out
 }
 
-const hasWords = (s) => /\p{L}{2,}/u.test(s)
+// prose: two words separated by spaces, or one capitalized word ("Cancel").
+// Example values, identifiers, paths, emails, URLs, acronyms ("PDF") and
+// commands ("hax site") are not prose.
+function isProse(text) {
+  const s = String(text).trim()
+  if (/^hax(\s+[\w:{}-]+)+$/.test(s)) return false
+  if (/\p{L}{2,}\S*[^\S\r\n]+\S*\p{L}{2,}/u.test(s)) return true
+  return /^\p{Lu}\p{Ll}+[.!?:]?$/u.test(s)
+}
 
-// literal text a person would read, ignoring what is inside ${...}
+// literal text a person would read; ${...} parts count as a placeholder
 function literalText(node) {
   if (!node) return null
-  if (node.type === 'Literal' && typeof node.value === 'string') return hasWords(node.value) ? node.value : null
+  if (node.type === 'Literal' && typeof node.value === 'string') return isProse(node.value) ? node.value : null
   if (node.type === 'TemplateLiteral') {
-    const text = node.quasis.map((q) => q.value.cooked || '').join(' ')
-    return hasWords(text) ? text.trim() : null
+    const text = node.quasis.map((q) => q.value.cooked || '').join('{}')
+    return isProse(text) ? text.trim() : null
   }
   return null
 }
@@ -97,7 +105,8 @@ function findUntranslated(file) {
 function usedKeys(file) {
   const source = fs.readFileSync(file, 'utf8')
   const keys = new Set()
-  for (const m of source.matchAll(/\bt\(\s*['"]([\w.-]+)['"]/g)) keys.add(m[1])
+  // t('key') calls, plus keys looked up indirectly (e.g. labelKey: 'auditSchemaLabelSite')
+  for (const m of source.matchAll(/['"]([A-Za-z][\w.-]*)['"]/g)) keys.add(m[1])
   return keys
 }
 
@@ -112,7 +121,11 @@ test('every t() key exists in create.en.json and every English key is used', () 
   const en = JSON.parse(fs.readFileSync(path.join(LOCALES, 'create.en.json'), 'utf8'))
   const used = new Set()
   for (const f of sourceFiles()) for (const k of usedKeys(f)) used.add(k)
-  const missing = [...used].filter((k) => !(k in en))
+  const called = new Set()
+  for (const f of sourceFiles()) {
+    for (const m of fs.readFileSync(f, 'utf8').matchAll(/\bt\(\s*['"]([\w.-]+)['"]/g)) called.add(m[1])
+  }
+  const missing = [...called].filter((k) => !(k in en))
   assert.deepEqual(missing, [], 'keys used in code but missing from create.en.json')
   const unused = Object.keys(en).filter((k) => !used.has(k))
   assert.deepEqual(unused, [], 'keys in create.en.json that no code uses')

@@ -2369,7 +2369,7 @@ export async function siteCommandDetected(commandRun) {
             if (!commandRun.options.search) {
               commandRun.options.search = await p.text({
                 message: t('siteSearchQueryPrompt'),
-                placeholder: 'lesson',
+                placeholder: t('siteSearchPlaceholder'),
                 validate: (value) => {
                   if (!value) {
                     return t('siteSearchQueryRequired');
@@ -2527,8 +2527,8 @@ export async function siteCommandDetected(commandRun) {
                     { value: 'epub', label: 'EPUB' },
                     { value: 'html', label: 'HTML' },
                     { value: 'zip', label: 'ZIP' },
-                    { value: 'markdown', label: 'Markdown' },
-                    { value: 'skeleton', label: 'Skeleton' },
+                    { value: 'markdown', label: 'Markdown' }, // i18n-ignore: format name
+                    { value: 'skeleton', label: t('siteExportSkeletonLabel') },
                   ],
                 });
               } else {
@@ -2620,7 +2620,7 @@ export async function siteCommandDetected(commandRun) {
                   }
                 }
                 if (!commandRun.options.quiet) {
-                  p.outro(`${color.green('✓')} Uploaded ${uploaded} files`);
+                  p.outro(`${color.green('✓')} ${t('siteUploadedFiles', { count: uploaded })}`);
                 }
               } else {
                 let tmpFile = path.join(os.tmpdir(), `hax-cli-upload-${Date.now()}-${Math.floor(Math.random() * 1000000)}-${path.basename(commandRun.options.source)}`);
@@ -2649,10 +2649,10 @@ export async function siteCommandDetected(commandRun) {
             if (!fileUuid) {
               if (!commandRun.options.y) {
                 fileUuid = await p.text({
-                  message: 'File UUID to delete',
+                  message: t('siteFileUuidPrompt'),
                   placeholder: 'abc12345-...',
                   validate: (value) => {
-                    if (!value) return 'File UUID is required';
+                    if (!value) return t('siteFileUuidRequired');
                   }
                 });
               } else {
@@ -2664,7 +2664,7 @@ export async function siteCommandDetected(commandRun) {
               let del = true;
               if (!commandRun.options.y) {
                 del = await p.confirm({
-                  message: `Are you sure you want to delete file ${fileUuid}? (This cannot be undone)`,
+                  message: t('siteConfirmDeleteFile', { id: fileUuid }),
                   initialValue: true,
                 });
               }
@@ -2685,18 +2685,18 @@ export async function siteCommandDetected(commandRun) {
           try {
             if (!commandRun.options.search) {
               commandRun.options.search = await p.text({
-                message: 'Search text to replace',
-                placeholder: 'old text',
+                message: t('siteSearchTextPrompt'),
+                placeholder: t('siteSearchTextPlaceholder'),
                 validate: (value) => {
-                  if (!value) return 'Search text is required';
-                  if (value.length <= 1) return 'Search text must be more than 1 character';
+                  if (!value) return t('siteSearchTextRequired');
+                  if (value.length <= 1) return t('siteSearchTextTooShort');
                 }
               });
             }
             if (!commandRun.options.replace && commandRun.options.replace !== '') {
               commandRun.options.replace = await p.text({
-                message: 'Replacement text',
-                placeholder: 'new text',
+                message: t('siteReplacementTextPrompt'),
+                placeholder: t('siteReplacementTextPlaceholder'),
                 initialValue: '',
               });
             }
@@ -2712,7 +2712,7 @@ export async function siteCommandDetected(commandRun) {
                 replaceBody.replaceDestroyConfirm = true;
               } else {
                 let destroyConfirm = await p.confirm({
-                  message: 'You are about to remove matched text. Confirm?',
+                  message: t('siteConfirmRemoveMatched'),
                   initialValue: false,
                 });
                 if (!destroyConfirm) {
@@ -2726,7 +2726,7 @@ export async function siteCommandDetected(commandRun) {
               replaceBody.replaceConfirm = true;
             } else {
               let confirm = await p.confirm({
-                message: `Replace all occurrences of "${commandRun.options.search}" with "${commandRun.options.replace}"?`,
+                message: t('siteConfirmReplaceAll', { search: commandRun.options.search, replace: commandRun.options.replace }),
                 initialValue: true,
               });
               if (!confirm) {
@@ -2824,19 +2824,19 @@ export async function siteCommandDetected(commandRun) {
         break;
         case "issue:general":
           // open the issues
-          p.intro(`${color.bgBlue(color.white(` Submit issue / suggestion on Github `))}`);
-          p.intro(`${color.bgBlue(color.white(` Opening in browser `))}`);
+          p.intro(`${color.bgBlue(color.white(` ${t('siteIssueSubmitGeneral')} `))}`);
+          p.intro(`${color.bgBlue(color.white(` ${t('siteOpeningInBrowser')} `))}`);
           await open("https://github.com/haxtheweb/issues/issues/new");
           p.outro(`${color.bgBlue(color.white(` https://github.com/haxtheweb/issues/issues/new `))}`);
         break;
         case "issue:theme":
           // open the issues
-          p.intro(`${color.bgBlue(color.white(` Submit custom theme on Github `))}`);
-          p.intro(`${color.bgBlue(color.white(` Opening in browser `))}`);
+          p.intro(`${color.bgBlue(color.white(` ${t('siteIssueSubmitTheme')} `))}`);
+          p.intro(`${color.bgBlue(color.white(` ${t('siteOpeningInBrowser')} `))}`);
           let allContents= '';
           fs.readdir(`${activeHaxsite.directory}/custom/src`, (err, files) => {
             if (err) {
-              console.error('Error reading directory:', err);
+              console.error(t('siteErrorReadingDirectory'), err);
               return;
             }
             files.forEach((file, index) => {
@@ -2849,13 +2849,13 @@ export async function siteCommandDetected(commandRun) {
               }
 
               if (index === files.length - 1) {
-                console.log('Combined contents of all files:\n', allContents);
+                console.log(`${t('siteCombinedContents')}\n`, allContents);
               }
             });
           });
           console.log(allContents);
           await open(`https://github.com/haxtheweb/issues/issues/new?template=new-design.md`);
-          p.outro(`${color.bgBlue(color.white(` Copy the output of the console into the issue's js template area `))}`);
+          p.outro(`${color.bgBlue(color.white(` ${t('siteIssueCopyConsole')} `))}`);
           p.outro(`${color.bgBlue(color.white(` https://github.com/haxtheweb/issues/issues/new?template=new-design.md `))}`);            
         break;
         case "quit":
@@ -2946,7 +2946,7 @@ export async function resolveNodeContent(commandRun) {
     format = 'md';
   }
   if (format && !NODE_CONTENT_FORMATS.includes(format)) {
-    throw new Error(`Unknown content format "${format}". Use one of: ${NODE_CONTENT_FORMATS.join(', ')}`);
+    throw new Error(t('siteUnknownContentFormat', { format, formats: NODE_CONTENT_FORMATS.join(', ') }));
   }
   let contents = content;
   let isFile = false;
@@ -2964,7 +2964,7 @@ export async function resolveNodeContent(commandRun) {
     // (private/loopback/link-local/metadata IPs) and cap redirects.
     const resp = await safeFetch(content);
     if (!resp.ok) {
-      throw new Error(`Unable to fetch content from ${content} (HTTP ${resp.status})`);
+      throw new Error(t('siteUnableToFetchContent', { url: content, status: resp.status }));
     }
     contents = await resp.text();
   }
@@ -3004,7 +3004,7 @@ export async function resolveNodeContent(commandRun) {
   if (options.contentScrape) {
     const contentNode = parse(`${contents}`).querySelector(`${options.contentScrape}`);
     if (!contentNode) {
-      throw new Error(`--content-scrape selector "${options.contentScrape}" matched nothing`);
+      throw new Error(t('siteContentScrapeNoMatch', { flag: '--content-scrape', selector: options.contentScrape }));
     }
     contents = contentNode.innerHTML;
   }
@@ -3056,7 +3056,7 @@ export async function applyNodeEdits(activeHaxsite, page, edits, commandRun) {
           changed.push('content');
         }
         else {
-          throw new Error(`failed to write page content for ${page.id}`);
+          throw new Error(t('siteFailedWritePageContent', { id: page.id }));
         }
       break;
       case 'slug':
@@ -3088,7 +3088,7 @@ export async function applyNodeEdits(activeHaxsite, page, edits, commandRun) {
         if (value) {
           const themes = await HAXCMS.getThemes();
           if (!themes[value]) {
-            throw new Error(`Unknown theme "${value}"`);
+            throw new Error(t('siteUnknownTheme', { theme: value }));
           }
           page.metadata.theme = themes[value];
         }
@@ -3102,10 +3102,10 @@ export async function applyNodeEdits(activeHaxsite, page, edits, commandRun) {
         if (value) {
           const parentNode = findNodeByIdOrSlug(activeHaxsite, value);
           if (!parentNode) {
-            throw new Error(`Parent "${value}" not found`);
+            throw new Error(t('siteParentNotFound', { parent: value }));
           }
           if (parentNode.id === page.id) {
-            throw new Error('A page cannot be its own parent');
+            throw new Error(t('siteOwnParent'));
           }
           page.parent = parentNode.id;
         }
@@ -3118,7 +3118,7 @@ export async function applyNodeEdits(activeHaxsite, page, edits, commandRun) {
       case 'order':
         const order = parseInt(value);
         if (Number.isNaN(order)) {
-          throw new Error(`--order must be a number, got "${value}"`);
+          throw new Error(t('siteOrderNotNumber', { flag: '--order', value }));
         }
         page.order = order;
         structureChanged = true;
@@ -3146,10 +3146,10 @@ export async function applyNodeEdits(activeHaxsite, page, edits, commandRun) {
 
 export function siteNodeStatsOperations(search = null){
   let obj = [
-    {value: 'details', label: "Details"},
-    {value: 'html', label: "Page as HTML source"},
-    {value: 'schema', label: "Page as HAXElementSchema"},
-    {value: 'md', label: "Page as Markdown"},    
+    {value: 'details', label: t('siteNodeOpDetails')},
+    {value: 'html', label: t('siteNodeOpHtml')},
+    {value: 'schema', label: t('siteNodeOpSchema')},
+    {value: 'md', label: t('siteNodeOpMd')},    
   ];
   if (search) {
     for (const op of obj) {
@@ -3164,15 +3164,15 @@ export function siteNodeStatsOperations(search = null){
 
 export function siteNodeOperations(search = null){
   let obj = [
-    {value: 'title', label: "Title"},
-    {value: 'content', label: "Page content"},
-    {value: 'slug', label: "Path (slug)"},
-    {value: 'published', label: "Publishing status"},
-    {value: 'tags', label: "Tags"},
-    {value: 'parent', label: "Parent"},
-    {value: 'order', label: "Order"},
-    {value: 'theme', label: "Theme"},
-    {value: 'hideInMenu', label: "Hide in menu"},
+    {value: 'title', label: t('siteNodeOpTitle')},
+    {value: 'content', label: t('siteNodeOpContent')},
+    {value: 'slug', label: t('siteNodeOpSlug')},
+    {value: 'published', label: t('siteNodeOpPublished')},
+    {value: 'tags', label: t('siteNodeOpTags')},
+    {value: 'parent', label: t('siteNodeOpParent')},
+    {value: 'order', label: t('siteNodeOpOrder')},
+    {value: 'theme', label: t('siteNodeOpTheme')},
+    {value: 'hideInMenu', label: t('siteNodeOpHideInMenu')},
   ];
   if (search) {
     for (const op of obj) {
@@ -3240,7 +3240,7 @@ export function extractSkeletonPayload(rawData) {
     skeleton = rawData.data.skeleton;
   }
   if (!isObjectLike(skeleton)) {
-    throw new Error('Invalid skeleton JSON structure');
+    throw new Error(t('siteInvalidSkeletonJson'));
   }
   if (!isObjectLike(skeleton.meta)) {
     skeleton.meta = {};
@@ -3284,13 +3284,13 @@ export function extractSkeletonPayload(rawData) {
 export function loadSkeletonFileData(skeletonFilePath) {
   const absolutePath = resolveAbsolutePath(skeletonFilePath);
   if (!absolutePath) {
-    throw new Error('Skeleton file path is required');
+    throw new Error(t('siteSkeletonPathRequired'));
   }
   if (!fs.existsSync(absolutePath)) {
-    throw new Error(`Skeleton file does not exist: ${absolutePath}`);
+    throw new Error(t('siteSkeletonFileMissing', { path: absolutePath }));
   }
   if (!fs.lstatSync(absolutePath).isFile()) {
-    throw new Error(`Skeleton file path is not a file: ${absolutePath}`);
+    throw new Error(t('siteSkeletonPathNotFile', { path: absolutePath }));
   }
   const rawContents = fs.readFileSync(absolutePath, 'utf8');
   const parsed = JSON.parse(rawContents);
@@ -3307,7 +3307,7 @@ export function installSkeletonFile(skeletonFilePath, machineNameOverride = null
   const overrideName = normalizeSkeletonMachineName(machineNameOverride);
   const machineName = overrideName || loadedSkeleton.machineName;
   if (!machineName) {
-    throw new Error('Skeleton machine name could not be resolved');
+    throw new Error(t('siteSkeletonNameUnresolved'));
   }
   skeleton.meta.machineName = machineName;
   skeleton.meta.name = machineName;
@@ -3370,10 +3370,10 @@ export async function siteProcess(commandRun, project, port = '3000') {    // au
       ? project.skeletonMachineName
       : null;
   if (skeletonFilePath && skeletonMachineName) {
-    throw new Error('You can only pass one skeleton source when creating a site (--skeleton-file or --skeleton-machine-name)');
+    throw new Error(t('siteOneSkeletonSource', { fileFlag: '--skeleton-file', nameFlag: '--skeleton-machine-name' }));
   }
   if ((skeletonFilePath || skeletonMachineName) && commandRun.options.importSite) {
-    throw new Error('Skeleton template creation cannot be combined with --import-site');
+    throw new Error(t('siteSkeletonNoImport', { flag: '--import-site' }));
   }
   if (skeletonFilePath || skeletonMachineName) {
     siteRequest.build.structure = 'from-skeleton';
@@ -3383,7 +3383,7 @@ export async function siteProcess(commandRun, project, port = '3000') {    // au
     if (skeletonMachineName) {
       const normalizedMachineName = normalizeSkeletonMachineName(skeletonMachineName);
       if (!normalizedMachineName) {
-        throw new Error('Invalid skeleton machine name supplied');
+        throw new Error(t('siteInvalidSkeletonName'));
       }
       siteRequest.build.skeletonMachineName = normalizedMachineName;
     }
@@ -3568,7 +3568,7 @@ export async function siteProcess(commandRun, project, port = '3000') {    // au
   // created successfully, but only if not in quiet mode (default)
   if (!commandRun.options.quiet) {
     process.stdout.write('\x1Bc');
-    s.start(merlinSays(`Creating new site: ${project.name}`));
+    s.start(merlinSays(t('siteCreatingSite', { name: project.name })));
     await setTimeout(1000);
   }
   // matching the common object elsewhere tho different reference in this command since it creates from nothing
@@ -3581,17 +3581,17 @@ export async function siteProcess(commandRun, project, port = '3000') {    // au
     logStructuredOutput(commandRun, res.data, 'silly');
   }
   if (!commandRun.options.quiet) {
-    s.stop(merlinSays(`${project.name} created successfully!`));
+    s.stop(merlinSays(t('siteCreatedSuccessfully', { name: project.name })));
     await setTimeout(500);
   }
   
   // Write theme template to site/custom
   if(commandRun.options.theme === 'custom-theme' && commandRun.options.customThemeName && commandRun.options.customThemeTemplate || project.customThemeName && project.customThemeTemplate) {
-    s.start(merlinSays(`Creating new theme: ${commandRun.options.customThemeName ? commandRun.options.customThemeName : project.customThemeName}`));
+    s.start(merlinSays(t('siteCreatingTheme', { name: commandRun.options.customThemeName ? commandRun.options.customThemeName : project.customThemeName })));
 
     await customSiteTheme(commandRun, project);
     
-    s.stop(merlinSays(`${commandRun.options.customThemeName ? commandRun.options.customThemeName : project.customThemeName} theme created!`));
+    s.stop(merlinSays(t('siteThemeCreated', { name: commandRun.options.customThemeName ? commandRun.options.customThemeName : project.customThemeName })));
   }
 
   if (project.gitRepo && !commandRun.options.isMonorepo) {
@@ -3627,18 +3627,18 @@ export async function siteProcess(commandRun, project, port = '3000') {    // au
     // even though we no longer shell out through npx ourselves (issue #2993).
     let command = `HOST=127.0.0.1 HAXCMS_DISABLE_JWT_CHECKS=true npx @haxtheweb/haxcms-nodejs`;
     if (!commandRun.options.quiet) {
-    p.note(`${merlinSays(`I have summoned a sub-process daemon 👹`)}
+    p.note(`${merlinSays(`${t('siteSummonedDaemon')} 👹`)}
 
-🚀  Running your ${color.bold(project.type)} ${color.bold(project.name)}:
+🚀  ${t('siteRunningYour', { type: color.bold(project.type), name: color.bold(project.name) })}
 ${color.underline(color.cyan(`http://localhost:${port}`))}
 
-🏠  Launched: ${color.underline(color.bold(color.yellow(color.bgBlack(`${optionPath}`))))}
-💻  Folder: ${color.bold(color.yellow(color.bgBlack(`cd ${optionPath}`)))}
-📂  Open folder: ${color.bold(color.yellow(color.bgBlack(`open ${optionPath}`)))}
-📘  VS Code Project: ${color.bold(color.yellow(color.bgBlack(`code ${optionPath}`)))}
-🚧  Launch later: ${color.bold(color.yellow(color.bgBlack(`${command}`)))}
+🏠  ${t('siteLaunched', { path: color.underline(color.bold(color.yellow(color.bgBlack(`${optionPath}`)))) })}
+💻  ${t('siteFolder', { command: color.bold(color.yellow(color.bgBlack(`cd ${optionPath}`))) })}
+📂  ${t('siteOpenFolder', { command: color.bold(color.yellow(color.bgBlack(`open ${optionPath}`))) })}
+📘  ${t('siteVsCodeProject', { command: color.bold(color.yellow(color.bgBlack(`code ${optionPath}`))) })}
+🚧  ${t('siteLaunchLater', { command: color.bold(color.yellow(color.bgBlack(`${command}`))) })}
 
-⌨️  To resume 🧙 Merlin press: ${color.bold(color.black(color.bgRed(` CTRL + C or CTRL + BREAK `)))}
+⌨️  ${t('siteResumeMerlin', { merlin: '🧙 Merlin', keys: color.bold(color.black(color.bgRed(` CTRL + C or CTRL + BREAK `))) })}
 `);
     }
       // at least a second to see the message print at all
@@ -3658,7 +3658,7 @@ ${color.underline(color.cyan(`http://localhost:${port}`))}
   else if (!commandRun.options.quiet) {
     // `hax serve` is the dev server; `hax start` inside a site only shows its status
     let nextSteps = `cd ${project.path}/${project.name} && hax serve`;
-    p.note(`${project.name} is ready to go. Run the following to start working with it:`);
+    p.note(t('siteReadyToGo', { name: project.name }));
     p.outro(nextSteps);
   }
 }
@@ -3776,7 +3776,7 @@ export async function siteThemeList(coreOnly = true, directory = null) {
   if (coreOnly) {
     items.push({
       value: 'custom-theme',
-      label: 'Create Custom Theme'
+      label: t('siteCreateCustomTheme')
     })
     if (directory && fs.existsSync(`${directory}/custom/custom-elements.json`)) {
       try {
