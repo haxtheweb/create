@@ -32,6 +32,7 @@ const {
   discoverI18nTargets,
   i18nignoreInterpreter,
   auditI18nCommand,
+  scrubTemplatePart,
 } = require('../../src/lib/programs/audit-i18n.js')
 
 function write(root, rel, content) {
@@ -78,10 +79,33 @@ test('ignores CSS, code samples, comments and non-html templates', () => {
     'const a = css`.x { content: "Hello there"; }`;',
     'const b = `<p>Plain template string</p>`;',
     'const c = html`<style>.y::after { content: "Words here"; }</style>',
-    '<pre>Example output text</pre><code>npm install thing</code>',
+    '<pre>Example output text</pre><code>npm install thing</code><kbd>shift+r</kbd>',
     '<!-- a comment with words -->`;',
   ].join('\n')
   assert.deepEqual(texts(src), [])
+})
+
+test('ignores comments and code blocks that span bindings', () => {
+  const src = [
+    'html`<div data-x="${a}">',
+    '<!-- @todo <simple-fields-field title="Select all ${b.name}"',
+    '  aria-label="${b.name}"></simple-fields-field> -->',
+    '<style>.x { --c: ${c}; } .y::after { content: "Words"; }</style>',
+    '<pre>${sample} more sample text</pre>',
+    '<p>Visible text</p>',
+    '</div>`;',
+  ].join('\n')
+  assert.deepEqual(texts(src), ['Visible text'])
+})
+
+test('scrubTemplatePart keeps line breaks and carries the open block', () => {
+  const first = scrubTemplatePart('<p>a</p><!-- open\nstill')
+  assert.equal(first.open, 'comment')
+  assert.equal(first.text.split('\n').length, 2)
+  const second = scrubTemplatePart(' end --><b>Bold</b>', first.open)
+  assert.equal(second.open, null)
+  assert.ok(second.text.endsWith('<b>Bold</b>'))
+  assert.equal(scrubTemplatePart('<pre>x', null).open, 'pre')
 })
 
 test('supports member-expression html tags', () => {

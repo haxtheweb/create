@@ -113,6 +113,44 @@ function position(starts, offset) {
   return { line: lo + 1, column: offset - starts[lo] + 1 };
 }
 
+const BLANK = (text) => text.replace(/[^\n]/g, ' ');
+
+/**
+ * @description Blank out comments and style / script / code / pre / kbd /
+ * samp / var blocks in
+ * one static part of a template. Blocks can span ${} bindings, so the open
+ * block (if any) carries over to the next part.
+ * @param raw the static template text
+ * @param open the block still open from the previous part: null, 'comment' or a tag name
+ * @returns {{text: string, open: string|null}}
+ */
+export function scrubTemplatePart(raw, open = null) {
+  let out = '';
+  let rest = raw;
+  while (rest.length) {
+    if (open) {
+      const close = open === 'comment' ? /-->/ : new RegExp(`</${open}\\s*>`, 'i');
+      const m = rest.match(close);
+      if (!m) {
+        return { text: out + BLANK(rest), open };
+      }
+      const end = m.index + m[0].length;
+      out += BLANK(rest.slice(0, end));
+      rest = rest.slice(end);
+      open = null;
+      continue;
+    }
+    const m = rest.match(/<!--|<(style|script|code|pre|kbd|samp|var)\b[^>]*>/i);
+    if (!m) {
+      return { text: out + rest, open: null };
+    }
+    out += rest.slice(0, m.index) + BLANK(m[0]);
+    rest = rest.slice(m.index + m[0].length);
+    open = m[1] ? m[1].toLowerCase() : 'comment';
+  }
+  return { text: out, open };
+}
+
 function isHtmlTag(tag) {
   // html`` and lit's svg-free variants like this.html`` / lit.html``
   if (tag.type === 'Identifier') {
@@ -161,12 +199,13 @@ export function findHardcodedStrings(source) {
       return;
     }
     const quasis = node.quasi.quasis;
+    let open = null;
     quasis.forEach((quasi, index) => {
       const raw = quasi.value.raw;
       // blank out style / script / code blocks so CSS and samples aren't read as text
-      const scrubbed = raw
-        .replace(/<!--[\s\S]*?-->/g, (s) => ' '.repeat(s.length))
-        .replace(/<(style|script|code|pre)\b[\s\S]*?<\/\1>/gi, (s) => ' '.repeat(s.length));
+      const part = scrubTemplatePart(raw, open);
+      const scrubbed = part.text;
+      open = part.open;
       for (const m of scrubbed.matchAll(ATTRIBUTE_RE)) {
         const value = m[2] !== undefined ? m[2] : m[3];
         const text = translatableText(value);
