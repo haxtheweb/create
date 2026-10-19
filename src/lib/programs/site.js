@@ -16,11 +16,15 @@ import {
   dashToCamel,
   interactiveExec,
   exec,
+  runCommand,
   findAvailablePort,
   validateNpmClient,
   spawn,
   validateDomain,
-  gitIdentityFallbackArgs,
+  initGitRepo,
+  hasNameSpecialCharacters,
+  rejectLeadingDash,
+  rejectShellMetacharacters,
 } from "../utils.js";
 import { log, structuredOutputEnabled, writeData } from "../logging.js";
 import {
@@ -84,6 +88,48 @@ exec("rsync --version", (error) => {
     sysRsync = false;
   }
 });
+
+// Security (R2-L-4): publish CLIs are only installed globally after the user
+// agrees (or passed --y), and pinned to the major version current when this
+// was written so a hijacked or breaking new major is never pulled in silently.
+export const PUBLISH_CLI_PACKAGES = {
+  surge: "surge@^0.46.0",
+  netlify: "netlify-cli@^27.13.0",
+  vercel: "vercel@^64.5.0",
+};
+
+// ask before a global install (skipped with --y); throws if declined
+export async function confirmPublishCliInstall(tool, commandRun) {
+  if (commandRun.options.y) {
+    return;
+  }
+  const approved = await p.confirm({
+    message: t("sitePublishCliInstallConfirm", {
+      command: `npm install --global ${PUBLISH_CLI_PACKAGES[tool]}`,
+    }),
+    initialValue: true,
+  });
+  if (p.isCancel(approved) || !approved) {
+    throw new Error(t("sitePublishCliInstallDeclined", { tool: tool }));
+  }
+}
+
+export function installPublishCli(tool) {
+  return runCommand("npm", ["install", "--global", PUBLISH_CLI_PACKAGES[tool]]);
+}
+
+// Security (R2-M-1 / R2-L-3): one check for rsync source / destination /
+// exclude values, whether they come from flags or prompts. Returns an error
+// message (for prompt validate callbacks) or undefined when the value is OK.
+export function rsyncArgError(value, optionName) {
+  try {
+    rejectShellMetacharacters(value, optionName);
+    rejectLeadingDash(value, optionName);
+  } catch (e) {
+    return e.message;
+  }
+  return undefined;
+}
 
 let twigConstantFunctionRegistered = false;
 let haxcmsNodejsCli = null;
@@ -1351,18 +1397,16 @@ export async function siteCommandDetected(commandRun) {
             p.note(`🚀 ${t("siteServerRunningAt", { url: color.underline(color.cyan(`http://localhost:${port}`)) })}
 ⌨️  ${t("siteServerStopPress", { keys: color.bold(color.black(color.bgRed(` ${t("wcCtrlCOrBreak")} `))) })}`);
           }
-          // Security (M-4): HAXCMS_DISABLE_JWT_CHECKS is scoped to local
-          // dev only. HOST=127.0.0.1 is a forward-compatible hint so the
-          // server binds loopback once haxcms-nodejs honors it (today it
-          // calls server.listen(port) with no host, binding all interfaces;
-          // loopback enforcement requires a server-side change).
+          // Security (M-4 / R2-H-1): HAXCMS_DISABLE_JWT_CHECKS is scoped to
+          // local dev only. haxcms-nodejs binds 127.0.0.1 automatically in
+          // this mode (HAXCMS_HOST overrides) and rejects non-loopback Host
+          // headers, so the no-login server isn't reachable from the network.
           // Issue #2993: spawn the locally-resolved haxcms-nodejs bin
           // directly (no npx/network round-trip); falls back to npx only
           // if local resolution fails.
           await spawnHaxcmsNodejs(activeHaxsite.directory, {
             ...process.env,
             PORT: `${port}`,
-            HOST: "127.0.0.1",
             HAXCMS_DISABLE_JWT_CHECKS: "true",
           });
         } catch (e) {
@@ -1378,12 +1422,11 @@ export async function siteCommandDetected(commandRun) {
 💻 ${t("siteServerLiveReload", { path: color.bold("custom/src") })}
 ⌨️  ${t("siteServerStopPress", { keys: color.bold(color.black(color.bgRed(` ${t("wcCtrlCOrBreak")} `))) })}`);
           }
-          // Security (M-4): same HOST=127.0.0.1 hint + scoped JWT-disable as start.
+          // Security (M-4 / R2-H-1): same loopback-only, scoped JWT-disable as start.
           // Issue #2993: same in-process spawn (with npx fallback) as start.
           await spawnHaxcmsNodejs(activeHaxsite.directory, {
             ...process.env,
             PORT: `${port}`,
-            HOST: "127.0.0.1",
             HAXCMS_DISABLE_JWT_CHECKS: "true",
             NODE_ENV: "development",
           });
@@ -1902,7 +1945,9 @@ export async function siteCommandDetected(commandRun) {
       case "site:sync":
         // @todo git sync might need other arguments / be combined with publishing
         try {
-          await exec(`cd ${activeHaxsite.directory} && git pull && git push`);
+          // Security (R2-L-1): directory travels as cwd, never shell text
+          await runCommand("git", ["pull"], { cwd: activeHaxsite.directory });
+          await runCommand("git", ["push"], { cwd: activeHaxsite.directory });
         } catch (e) {
           log(formatErrorForLogging(e), "error");
         }
@@ -1956,6 +2001,8 @@ export async function siteCommandDetected(commandRun) {
                 placeholder: "user@example.com:/var/www/html",
                 validate: (value) => {
                   if (!value) return t("siteRsyncSourceRequired");
+                  // Security (R2-L-3): same checks as --source
+                  return rsyncArgError(value, "source");
                 },
               });
               destination = activeHaxsite.directory;
@@ -1973,6 +2020,8 @@ export async function siteCommandDetected(commandRun) {
                     : "/backup/location",
                 validate: (value) => {
                   if (!value) return t("siteRsyncDestinationRequired");
+                  // Security (R2-L-3): same checks as --destination
+                  return rsyncArgError(value, "destination");
                 },
               });
             }
@@ -1981,6 +2030,14 @@ export async function siteCommandDetected(commandRun) {
               message: t("siteRsyncExcludePrompt"),
               placeholder: "node_modules,.git,.DS_Store,dist,build",
               initialValue: "node_modules,.git,.DS_Store,dist,build",
+              validate: (value) => {
+                // Security (R2-L-3): same checks as --exclude
+                const patterns = value ? value.split(",") : [];
+                for (const pattern of patterns) {
+                  const error = rsyncArgError(pattern.trim(), "exclude");
+                  if (error) return error;
+                }
+              },
             });
 
             if (excludeInput) {
@@ -2016,9 +2073,10 @@ export async function siteCommandDetected(commandRun) {
             rsyncArgs.push("--dry-run");
           }
 
-          // Add exclude patterns
+          // Add exclude patterns (--exclude=<pattern> so a pattern can never
+          // be read as a separate option)
           excludePatterns.forEach((pattern) => {
-            rsyncArgs.push("--exclude", pattern);
+            rsyncArgs.push(`--exclude=${pattern}`);
           });
 
           // Add delete flag to mirror source (be careful with this)
@@ -2032,7 +2090,10 @@ export async function siteCommandDetected(commandRun) {
             source += "/";
           }
 
-          rsyncArgs.push(source, destination);
+          // Security (R2-M-1): "--" ends option parsing so source and
+          // destination are always treated as paths, never as rsync options
+          // like -e <cmd>.
+          rsyncArgs.push("--", source, destination);
 
           if (!commandRun.options.quiet) {
             p.intro(
@@ -2044,8 +2105,9 @@ export async function siteCommandDetected(commandRun) {
             // Interactive execution for real-time progress
             await interactiveExec("rsync", rsyncArgs);
           } else {
-            // Silent execution
-            const result = await exec(`rsync ${rsyncArgs.join(" ")}`);
+            // Silent execution. Security (R2-M-1): argument array, no shell, so
+            // spaces/quotes in a path can't split into extra rsync options.
+            const result = await runCommand("rsync", rsyncArgs);
             if (!commandRun.options.quiet && result.stdout) {
               console.log(result.stdout);
             }
@@ -2104,6 +2166,11 @@ export async function siteCommandDetected(commandRun) {
                   }
                   if (value.indexOf(" ") !== -1) {
                     return t("siteThemeNameNoSpaces");
+                  }
+                  // Security (R2-M-2): theme name becomes a file path and a
+                  // JS import / class name; no /, ., quotes, etc.
+                  if (hasNameSpecialCharacters(value)) {
+                    return t("utilNameSpecialCharacters");
                   }
                 },
               });
@@ -2326,9 +2393,10 @@ export async function siteCommandDetected(commandRun) {
             commandRun.options.npmClient = "npm";
           }
           if (fs.existsSync(`${project.path}/custom/custom-elements.json`)) {
-            await exec(
-              `cd custom && ${commandRun.options.npmClient} run analyze`,
-            );
+            // Security (R2-L-1): cwd instead of `cd custom && ...`
+            await runCommand(commandRun.options.npmClient, ["run", "analyze"], {
+              cwd: path.join(project.path, "custom"),
+            });
           }
 
           p.note(
@@ -2372,9 +2440,10 @@ export async function siteCommandDetected(commandRun) {
           // attempt to install; implies they asked to publish with surge but
           // system test did not see it globally
           if (!sysSurge) {
+            await confirmPublishCliInstall("surge", commandRun);
             let s = p.spinner();
             s.start(merlinSays(t("siteSurgeInstalling")));
-            let execOutput = await exec(`npm install --global surge`);
+            let execOutput = await installPublishCli("surge");
             s.stop(merlinSays(t("siteSurgeInstalled")));
             log(execOutput.stdout.trim());
             sysSurge = true;
@@ -2422,9 +2491,10 @@ export async function siteCommandDetected(commandRun) {
             // with no prompts on every surge version
             let s = p.spinner();
             s.start(merlinSays(t("siteSurgeSending")));
-            execOutput = await exec(
-              `cd ${activeHaxsite.directory} && surge . ${surgeDomain}`,
-            );
+            // Security (R2-L-1): directory as cwd, domain as an argument
+            execOutput = await runCommand("surge", [".", surgeDomain], {
+              cwd: activeHaxsite.directory,
+            });
             log(execOutput.stdout.trim());
             s.stop(
               merlinSays(
@@ -2508,9 +2578,10 @@ export async function siteCommandDetected(commandRun) {
           // attempt to install; implies they asked to publish with netlify but
           // system test did not see it globally
           if (!sysNetlify) {
+            await confirmPublishCliInstall("netlify", commandRun);
             let s = p.spinner();
             s.start(merlinSays(t("siteNetlifyInstalling")));
-            let execOutput = await exec(`npm install --global netlify-cli`);
+            let execOutput = await installPublishCli("netlify");
             s.stop(merlinSays(t("siteNetlifyInstalled")));
             log(execOutput.stdout.trim());
             sysNetlify = true;
@@ -2519,17 +2590,16 @@ export async function siteCommandDetected(commandRun) {
           if (commandRun.options.y) {
             let s = p.spinner();
             s.start(merlinSays(t("siteNetlifyDeploying")));
+            // Security (R2-L-1): directory as cwd, values as arguments.
+            // With --domain, deploy to that existing site; otherwise netlify
+            // creates a new site or uses the existing site config.
+            const netlifyArgs = ["deploy", "--prod"];
             if (commandRun.options.domain) {
-              // If specific site/domain is specified, deploy to existing site
-              execOutput = await exec(
-                `cd ${activeHaxsite.directory} && netlify deploy --prod --site ${commandRun.options.domain}`,
-              );
-            } else {
-              // Auto deploy - will create a new site or use existing site config
-              execOutput = await exec(
-                `cd ${activeHaxsite.directory} && netlify deploy --prod`,
-              );
+              netlifyArgs.push("--site", commandRun.options.domain);
             }
+            execOutput = await runCommand("netlify", netlifyArgs, {
+              cwd: activeHaxsite.directory,
+            });
             log(execOutput.stdout.trim());
             s.stop(merlinSays(t("siteNetlifyDeployed")));
           } else {
@@ -2591,9 +2661,10 @@ export async function siteCommandDetected(commandRun) {
           // attempt to install; implies they asked to publish with vercel but
           // system test did not see it globally
           if (!sysVercel) {
+            await confirmPublishCliInstall("vercel", commandRun);
             let s = p.spinner();
             s.start(merlinSays(t("siteVercelInstalling")));
-            let execOutput = await exec(`npm install --global vercel`);
+            let execOutput = await installPublishCli("vercel");
             s.stop(merlinSays(t("siteVercelInstalled")));
             log(execOutput.stdout.trim());
             sysVercel = true;
@@ -2602,17 +2673,15 @@ export async function siteCommandDetected(commandRun) {
           if (commandRun.options.y) {
             let s = p.spinner();
             s.start(merlinSays(t("siteVercelDeploying")));
+            // Security (R2-L-1): directory as cwd, values as arguments.
+            // --domain sets the project name; otherwise default settings.
+            const vercelArgs = ["--prod"];
             if (commandRun.options.domain) {
-              // Deploy with specific domain/project name
-              execOutput = await exec(
-                `cd ${activeHaxsite.directory} && vercel --prod --name ${commandRun.options.domain}`,
-              );
-            } else {
-              // Auto deploy with default settings
-              execOutput = await exec(
-                `cd ${activeHaxsite.directory} && vercel --prod`,
-              );
+              vercelArgs.push("--name", commandRun.options.domain);
             }
+            execOutput = await runCommand("vercel", vercelArgs, {
+              cwd: activeHaxsite.directory,
+            });
             log(execOutput.stdout.trim());
             s.stop(merlinSays(t("siteVercelDeployed")));
           } else {
@@ -4255,12 +4324,9 @@ export async function siteProcess(commandRun, project, port = "3000") {
 
   if (project.gitRepo && !commandRun.options.isMonorepo) {
     try {
-      const identity = await gitIdentityFallbackArgs(
-        `${project.path}/${project.name}`,
-      );
-      await exec(
-        `cd ${project.path}/${project.name} && git init && git add -A && git ${identity}commit -m "first commit" && git branch -M main${project.gitRepo ? ` && git remote add origin ${project.gitRepo}` : ""}`,
-      );
+      // Security (R2-H-2): no shell string, so the site name / path can't
+      // inject commands
+      await initGitRepo(path.join(project.path, project.name), project.gitRepo);
     } catch (e) {
       // best-effort: a failed git init/commit shouldn't block site creation
     }
@@ -4304,10 +4370,10 @@ export async function siteProcess(commandRun, project, port = "3000") {
     project.extras.includes("launch")
   ) {
     let optionPath = `${project.path}/${project.name}`;
-    // Security (M-4): HOST=127.0.0.1 hint + scoped JWT-disable for local launch.
-    // 'command' is still shown to the user as the "launch later" instructions,
-    // even though we no longer shell out through npx ourselves (issue #2993).
-    let command = `HOST=127.0.0.1 HAXCMS_DISABLE_JWT_CHECKS=true npx @haxtheweb/haxcms-nodejs`;
+    // Security (M-4 / R2-H-1): scoped JWT-disable for local launch; the server
+    // binds loopback on its own in this mode. 'command' is shown to the user
+    // as the "launch later" instructions (issue #2993).
+    let command = `hax serve`;
     if (!commandRun.options.quiet) {
       p.note(`${merlinSays(`${t("siteSummonedDaemon")} 👹`)}
 
@@ -4331,7 +4397,6 @@ ${color.underline(color.cyan(`http://localhost:${port}`))}
       // resolution fails.
       await spawnHaxcmsNodejs(optionPath, {
         ...process.env,
-        HOST: "127.0.0.1",
         HAXCMS_DISABLE_JWT_CHECKS: "true",
       });
     } catch (e) {
@@ -4529,6 +4594,17 @@ async function customSiteTheme(commandRun, project) {
   project.customThemeName = commandRun.options.customThemeName
     ? commandRun.options.customThemeName
     : project.customThemeName;
+  // Security (R2-M-2): the name becomes a file path, a JS import line in
+  // custom.js and a class name in generated code. Enforce the rule here too
+  // so no caller (CLI flag, prompt, programmatic) can pass ../ or quotes.
+  if (
+    !project.customThemeName ||
+    hasNameSpecialCharacters(project.customThemeName) ||
+    /[A-Z]/.test(project.customThemeName) ||
+    /^\d/.test(project.customThemeName)
+  ) {
+    throw new Error(t("utilNameSpecialCharacters"));
+  }
 
   // validate start and end tags for theme name
   if (
@@ -4648,9 +4724,12 @@ async function customSiteTheme(commandRun, project) {
   activeHaxsite.manifest.save(false);
 
   // install and build theme dependencies
-  await exec(
-    `cd ${sitePath}/custom/ && ${commandRun.options.npmClient} install && ${commandRun.options.npmClient} run build && ${commandRun.options.npmClient} run analyze && cd ${sitePath}`,
-  );
+  // Security (R2-H-2 / R2-L-1): site path travels as cwd, not shell text
+  const npmClient = validateNpmClient(commandRun.options.npmClient || "npm");
+  const customDir = path.join(sitePath, "custom");
+  await runCommand(npmClient, ["install"], { cwd: customDir });
+  await runCommand(npmClient, ["run", "build"], { cwd: customDir });
+  await runCommand(npmClient, ["run", "analyze"], { cwd: customDir });
 }
 
 // @fork of the hax core util for this so that we avoid api difference between real dom and parse nodejs dom

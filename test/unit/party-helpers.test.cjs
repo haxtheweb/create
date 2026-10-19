@@ -77,16 +77,34 @@ test("resolveInstallCommands returns lerna+yarn install commands for webcomponen
     "/home/user/projects",
   );
   assert.deepEqual(commands, [
-    "yarn global add lerna web-component-analyzer",
-    "cd /home/user/projects/webcomponents && yarn install",
+    {
+      command: "yarn",
+      args: ["global", "add", "lerna", "web-component-analyzer"],
+      cwd: "/home/user/projects",
+    },
+    {
+      command: "yarn",
+      args: ["install"],
+      cwd: "/home/user/projects/webcomponents",
+    },
   ]);
 });
 
 test("resolveInstallCommands returns a single npmClient install for simple repos", () => {
   for (const repo of ["create", "hax-the-club", "haxcms-nodejs", "desktop"]) {
     const commands = resolveInstallCommands(repo, "pnpm", "/base");
-    assert.deepEqual(commands, [`cd /base/${repo} && pnpm install`]);
+    assert.deepEqual(commands, [
+      { command: "pnpm", args: ["install"], cwd: `/base/${repo}` },
+    ]);
   }
+});
+
+// Security (R2-L-1): a base directory with shell syntax stays a plain cwd
+test("resolveInstallCommands never builds shell strings from the base dir", () => {
+  const commands = resolveInstallCommands("create", "npm", "/tmp/a;touch x");
+  assert.deepEqual(commands, [
+    { command: "npm", args: ["install"], cwd: "/tmp/a;touch x/create" },
+  ]);
 });
 
 test("resolveInstallCommands returns no commands for haxcms-php and HAXiam", () => {

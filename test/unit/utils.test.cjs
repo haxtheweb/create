@@ -18,6 +18,12 @@ const {
   getTimeDifference,
   generateUUID,
   gitIdentityFallbackArgs,
+  rejectLeadingDash,
+  hasNameSpecialCharacters,
+  isValidGithubOwner,
+  isValidGithubRepo,
+  runCommand,
+  initGitRepo,
 } = require("../../src/lib/utils.js");
 
 // --- Security validators: a regression = command injection ---
@@ -224,11 +230,15 @@ test("gitIdentityFallbackArgs supplies -c identity only when none is configured"
     process.env.GIT_CONFIG_NOSYSTEM = "1";
     process.env.GIT_CONFIG_GLOBAL = path.join(dir, "empty-gitconfig");
     const args = await gitIdentityFallbackArgs(dir);
-    assert.match(args, /-c user\.name="HAX CLI"/);
-    assert.match(args, /-c user\.email="hax@localhost"/);
+    assert.deepEqual(args, [
+      "-c",
+      "user.name=HAX CLI",
+      "-c",
+      "user.email=hax@localhost",
+    ]);
     process.env.GIT_AUTHOR_NAME = "Someone";
     process.env.GIT_AUTHOR_EMAIL = "someone@local.invalid";
-    assert.equal(await gitIdentityFallbackArgs(dir), "");
+    assert.deepEqual(await gitIdentityFallbackArgs(dir), []);
   } finally {
     process.stderr.write = originalWrite;
     keys.forEach((key) => {
@@ -239,5 +249,122 @@ test("gitIdentityFallbackArgs supplies -c identity only when none is configured"
       }
     });
     fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+// --- Security (round 2) helpers ---
+
+test("rejectLeadingDash blocks option-looking values (R2-M-1)", () => {
+  assert.equal(
+    rejectLeadingDash("user@host:/var/www", "destination"),
+    "user@host:/var/www",
+  );
+  assert.equal(rejectLeadingDash(undefined, "destination"), undefined);
+  assert.equal(rejectLeadingDash("", "destination"), "");
+  assert.throws(
+    () => rejectLeadingDash("-e touch /tmp/x", "destination"),
+    /cannot start with/,
+  );
+  assert.throws(
+    () => rejectLeadingDash("  --rsync-path=x", "source"),
+    /cannot start with/,
+  );
+  assert.throws(() => rejectLeadingDash(42, "source"), /cannot start with/);
+});
+
+test("hasNameSpecialCharacters rejects injection / traversal characters incl. tabs (R2-H-2, R2-M-2)", () => {
+  for (const ok of ["mysite", "my-site", "custom-my-theme", "site2"]) {
+    assert.equal(hasNameSpecialCharacters(ok), false, ok);
+  }
+  for (const bad of [
+    "a;b",
+    "a\ttouch",
+    "a b",
+    "../x",
+    "a/b",
+    "a.b",
+    'a"b',
+    "a'b",
+    "a$b",
+    "a`b",
+    "a|b",
+    "a&b",
+    "a_b",
+    "a\nb",
+  ]) {
+    assert.equal(hasNameSpecialCharacters(bad), true, JSON.stringify(bad));
+  }
+  assert.equal(hasNameSpecialCharacters(undefined), true);
+});
+
+test("isValidGithubOwner / isValidGithubRepo (R2-L-2)", () => {
+  assert.equal(isValidGithubOwner("btopro"), true);
+  assert.equal(isValidGithubOwner("hax-the-web"), true);
+  assert.equal(isValidGithubOwner("Jane Doe"), false);
+  assert.equal(isValidGithubOwner("a;b"), false);
+  assert.equal(isValidGithubOwner("-lead"), false);
+  assert.equal(isValidGithubOwner(""), false);
+  assert.equal(isValidGithubRepo("webcomponents"), true);
+  assert.equal(isValidGithubRepo("haxcms.nodejs_x"), true);
+  assert.equal(isValidGithubRepo("a b"), false);
+  assert.equal(isValidGithubRepo("a/b"), false);
+  assert.equal(isValidGithubRepo(".."), false);
+  assert.equal(isValidGithubRepo("x;id"), false);
+});
+
+test("runCommand passes args literally, never through a shell (R2-L-1)", async () => {
+  if (process.platform === "win32") return;
+  const { stdout } = await runCommand(process.execPath, [
+    "-e",
+    "process.stdout.write(process.argv[1])",
+    "a; echo pwned $(id)",
+  ]);
+  assert.equal(stdout, "a; echo pwned $(id)");
+});
+
+test("initGitRepo works in a directory whose name contains shell syntax (R2-H-2)", async () => {
+  const fs = require("node:fs");
+  const os = require("node:os");
+  const path = require("node:path");
+  const base = fs.mkdtempSync(path.join(os.tmpdir(), "hax-git-"));
+  // a shell would run `touch hax-r2-pwned` in the process cwd
+  const marker = path.join(process.cwd(), "hax-r2-pwned");
+  const dir = path.join(base, "a;touch hax-r2-pwned;b");
+  fs.mkdirSync(dir);
+  fs.writeFileSync(path.join(dir, "index.html"), "<p>hi</p>");
+  const originalWrite = process.stderr.write;
+  process.stderr.write = () => true;
+  const savedName = process.env.GIT_AUTHOR_NAME;
+  const savedEmail = process.env.GIT_AUTHOR_EMAIL;
+  try {
+    process.env.GIT_AUTHOR_NAME = "Test";
+    process.env.GIT_AUTHOR_EMAIL = "test@local.invalid";
+    process.env.GIT_COMMITTER_NAME = "Test";
+    process.env.GIT_COMMITTER_EMAIL = "test@local.invalid";
+    await initGitRepo(dir, "https://github.com/example/site.git");
+    assert.equal(
+      fs.existsSync(marker),
+      false,
+      "shell syntax in the path must not run",
+    );
+    const { stdout } = await runCommand(
+      "git",
+      ["remote", "get-url", "origin"],
+      { cwd: dir },
+    );
+    assert.equal(stdout.trim(), "https://github.com/example/site.git");
+    await assert.rejects(
+      () => initGitRepo(dir, "--upload-pack=touch x"),
+      /cannot start with/,
+    );
+  } finally {
+    process.stderr.write = originalWrite;
+    if (savedName === undefined) delete process.env.GIT_AUTHOR_NAME;
+    else process.env.GIT_AUTHOR_NAME = savedName;
+    if (savedEmail === undefined) delete process.env.GIT_AUTHOR_EMAIL;
+    else process.env.GIT_AUTHOR_EMAIL = savedEmail;
+    delete process.env.GIT_COMMITTER_NAME;
+    delete process.env.GIT_COMMITTER_EMAIL;
+    fs.rmSync(base, { recursive: true, force: true });
   }
 });

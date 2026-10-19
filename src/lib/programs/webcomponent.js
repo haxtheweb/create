@@ -16,9 +16,12 @@ import {
   dashToCamel,
   readAllFiles,
   exec,
+  runCommand,
   validateWebcomponentName,
   validateNpmClient,
-  gitIdentityFallbackArgs,
+  initGitRepo,
+  rejectShellMetacharacters,
+  rejectLeadingDash,
 } from "../utils.js";
 import * as haxcmsLib from "@haxtheweb/haxcms-nodejs/dist/lib/HAXCMS.js";
 const HAXCMS = haxcmsLib.HAXCMS;
@@ -197,6 +200,15 @@ export async function webcomponentProcess(commandRun, project, port = "8000") {
         message: t("wcGitRepoLocation"),
         placeholder: `https://github.com/${project.author}/${project.name}.git`,
         initialValue: `https://github.com/${project.author}/${project.name}.git`,
+        // Security (R2-L-3): same checks as the --git-repo flag
+        validate: (value) => {
+          try {
+            rejectShellMetacharacters(value, "git-repo");
+            rejectLeadingDash(value, "git-repo");
+          } catch (e) {
+            return e.message;
+          }
+        },
       });
     }
     // if they supplied one and it has github in it, build a link automatically for ejs index
@@ -332,13 +344,9 @@ export async function webcomponentProcess(commandRun, project, port = "8000") {
   if (project.gitRepo && !commandRun.options.isMonorepo) {
     try {
       // haxtheweb/issues#3119: with no git identity (fresh containers / CI) the
-      // commit failed silently, leaving staged files and no commit
-      const identity = await gitIdentityFallbackArgs(
-        `${project.path}/${project.name}`,
-      );
-      await exec(
-        `cd ${project.path}/${project.name} && git init && git add -A && git ${identity}commit -m "first commit" && git branch -M main${project.gitRepo ? ` && git remote add origin ${project.gitRepo}` : ""}`,
-      );
+      // commit failed silently, leaving staged files and no commit.
+      // Security (R2-L-1): no shell string around the path / remote URL.
+      await initGitRepo(path.join(project.path, project.name), project.gitRepo);
     } catch (e) {
       // non-fatal: scaffold still succeeds without a local git history
     }
@@ -359,9 +367,9 @@ export async function webcomponentProcess(commandRun, project, port = "8000") {
     try {
       // monorepos install from top but then still need to launch from local location
       if (!commandRun.options.isMonorepo) {
-        await exec(
-          `cd ${project.path}/${project.name} && ${commandRun.options.npmClient} install`,
-        );
+        await runCommand(commandRun.options.npmClient, ["install"], {
+          cwd: path.join(project.path, project.name),
+        });
       }
     } catch (e) {
       console.warn(e);
@@ -388,9 +396,13 @@ ${color.underline(color.cyan(`http://localhost:${port}`))}
     // at least a second to see the message print at all
     await setTimeout(1000);
     try {
-      await exec(
-        `cd ${optionPath} && ${command} && ${commandRun.options.npmClient} run analyze`,
-      );
+      // Security (R2-L-1): cwd instead of `cd ${optionPath} && ...`
+      await runCommand(commandRun.options.npmClient, ["start"], {
+        cwd: optionPath,
+      });
+      await runCommand(commandRun.options.npmClient, ["run", "analyze"], {
+        cwd: optionPath,
+      });
     } catch (e) {
       // don't log bc output is weird
     }
@@ -510,13 +522,13 @@ export async function webcomponentCommandDetected(
                   }),
                 ),
               );
-              await exec(`${commandRun.options.npmClient} install`);
+              await runCommand(commandRun.options.npmClient, ["install"]);
               s.stop(merlinSays(t("wcEverythingInstalled")));
             } else {
-              await exec(`${commandRun.options.npmClient} install`);
+              await runCommand(commandRun.options.npmClient, ["install"]);
             }
           }
-          await exec(`${commandRun.options.npmClient} start`);
+          await runCommand(commandRun.options.npmClient, ["start"]);
         } catch (e) {
           // don't log bc output is odd
         }
@@ -543,7 +555,7 @@ export async function webcomponentCommandDetected(
           `);
             }
 
-            await exec(`${commandRun.options.npmClient} run serve`);
+            await runCommand(commandRun.options.npmClient, ["run", "serve"]);
           } else {
             // if no serve script, run start instead
             if (!commandRun.options.quiet) {
@@ -562,7 +574,7 @@ export async function webcomponentCommandDetected(
           `);
             }
 
-            await exec(`${commandRun.options.npmClient} start`);
+            await runCommand(commandRun.options.npmClient, ["start"]);
           }
         } catch (e) {
           // don't log bc output is odd
@@ -740,7 +752,7 @@ export async function webcomponentCommandDetected(
 export async function webcomponentGenerateHAXSchema(commandRun, packageData) {
   // run analyzer automatically if we have it so that it's up to date
   if (packageData.scripts.analyze) {
-    await exec(`${commandRun.options.npmClient} run analyze`);
+    await runCommand(commandRun.options.npmClient, ["run", "analyze"]);
   }
   if (fs.existsSync(`${process.cwd()}/${packageData.customElements}`)) {
     const ceFileData = fs.readFileSync(
@@ -1026,8 +1038,11 @@ export async function webcomponentRename(commandRun, packageData) {
     merlinSays(t("wcRegeneratingCem", { file: "custom-elements.json" })),
   );
   try {
-    await exec(
-      `cd ${newDir} && ${commandRun.options.npmClient || "npm"} run analyze`,
+    // Security (R2-L-1): cwd instead of `cd ${newDir} && ...`
+    await runCommand(
+      validateNpmClient(commandRun.options.npmClient || "npm"),
+      ["run", "analyze"],
+      { cwd: newDir },
     );
     s2.stop(
       merlinSays(t("wcCemRegenerated", { file: "custom-elements.json" })),

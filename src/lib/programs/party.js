@@ -1,5 +1,12 @@
 import * as fs from "node:fs";
-import { exec, interactiveExec } from "../utils.js";
+import {
+  exec,
+  interactiveExec,
+  runCommand,
+  isValidGithubOwner,
+  isValidGithubRepo,
+} from "../utils.js";
+import * as path from "node:path";
 import open from "open";
 
 import * as p from "@clack/prompts";
@@ -49,22 +56,29 @@ export function isRepoAlreadyExistsError(error) {
   );
 }
 
-// Pure mapping from a HAX repo name to the shell commands needed to install
-// its dependencies, given the npm client and the base directory repos were
+// Pure mapping from a HAX repo name to the commands needed to install its
+// dependencies, given the npm client and the base directory repos were
 // cloned into. Extracted from the inline switch in cloneHAXRepositories so
 // the per-repo dependency logic can be unit tested without exec()/network.
+// Security (R2-L-1): returns { command, args, cwd } for runCommand instead of
+// `cd ${baseDir}/${repo} && ...` shell strings.
 export function resolveInstallCommands(repoName, npmClient, baseDir) {
+  const repoDir = path.join(baseDir, repoName);
   switch (repoName) {
     case "webcomponents":
       return [
-        `yarn global add lerna web-component-analyzer`,
-        `cd ${baseDir}/${repoName} && yarn install`,
+        {
+          command: "yarn",
+          args: ["global", "add", "lerna", "web-component-analyzer"],
+          cwd: baseDir,
+        },
+        { command: "yarn", args: ["install"], cwd: repoDir },
       ];
     case "create":
     case "hax-the-club":
     case "haxcms-nodejs":
     case "desktop":
-      return [`cd ${baseDir}/${repoName} && ${npmClient} install`];
+      return [{ command: npmClient, args: ["install"], cwd: repoDir }];
     case "haxcms-php":
       // ddev setup
       return [];
@@ -345,7 +359,44 @@ ${t("partyGhSelectOptions", { sshOption: color.cyan(`Generate a new SSH key`), b
     await exec(`npm install -g yarn`);
   }
 
+  // Security (R2-L-2): the clone owner must be a GitHub username, not the
+  // free-form `git config user.name` ("Jane Doe"), and it's restricted to the
+  // characters GitHub allows because it becomes part of the clone URL. Prefer
+  // the authenticated gh login when the GitHub CLI is available.
+  let githubOwner = commandRun.options.author;
+  if (sysGh) {
+    try {
+      const { stdout } = await runCommand("gh", [
+        "api",
+        "user",
+        "--jq",
+        ".login",
+      ]);
+      if (stdout && stdout.trim()) {
+        githubOwner = stdout.trim();
+      }
+    } catch (e) {
+      // fall back to --author
+    }
+  }
+  if (!isValidGithubOwner(githubOwner)) {
+    console.error(
+      color.red(
+        t("partyInvalidGithubUser", {
+          user: `${githubOwner}`,
+          flag: "--author",
+        }),
+      ),
+    );
+    process.exit(1);
+  }
+
   for (const item of commandRun.options.repos) {
+    // Security (R2-L-2): --repos values become part of clone/fork targets
+    if (!isValidGithubRepo(item)) {
+      console.error(color.red(t("partyInvalidRepo", { repo: `${item}` })));
+      continue;
+    }
     // If GitHub CLI is installed
     if (sysGh) {
       try {
@@ -356,9 +407,10 @@ ${t("partyGhSelectOptions", { sshOption: color.cyan(`Generate a new SSH key`), b
             path: color.bold(process.cwd()),
           }),
         );
-        await exec(
-          `git clone git@github.com:${commandRun.options.author}/${item}.git`,
-        );
+        await runCommand("git", [
+          "clone",
+          `git@github.com:${githubOwner}/${item}.git`,
+        ]);
         s.stop(
           t("partyCloneSuccess", {
             successfully: color.green(t("partySuccessfully")),
@@ -393,7 +445,12 @@ ${t("partyGhSelectOptions", { sshOption: color.cyan(`Generate a new SSH key`), b
             repo: color.bold(item),
           }),
         );
-        await exec(`gh repo fork haxtheweb/${item} --clone`);
+        await runCommand("gh", [
+          "repo",
+          "fork",
+          `haxtheweb/${item}`,
+          "--clone",
+        ]);
         s.stop(
           t("partyCloneSuccess", {
             successfully: color.green(t("partySuccessfully")),
@@ -428,9 +485,10 @@ ${t("partyGhSelectOptions", { sshOption: color.cyan(`Generate a new SSH key`), b
             );
           }
 
-          await exec(
-            `git clone git@github.com:${commandRun.options.author}/${item}.git`,
-          );
+          await runCommand("git", [
+            "clone",
+            `git@github.com:${githubOwner}/${item}.git`,
+          ]);
           s.stop(
             t("partyCloneSuccess", {
               successfully: color.green(t("partySuccessfully")),
@@ -490,7 +548,9 @@ ${t("partyGhSelectOptions", { sshOption: color.cyan(`Generate a new SSH key`), b
       process.cwd(),
     );
     for (const installCommand of installCommands) {
-      await exec(installCommand);
+      await runCommand(installCommand.command, installCommand.args, {
+        cwd: installCommand.cwd,
+      });
     }
     s.stop(t("partyDepsInstalled", { repo: item }));
   }

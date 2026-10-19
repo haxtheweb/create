@@ -114,6 +114,15 @@ utils.exec = async (cmd, cmdOpts) => {
   execCalls.push({ cmd, opts: cmdOpts });
   return { stdout: "git-user", stderr: "" };
 };
+// Security (R2-L-1): argument-array commands + git init helper
+utils.runCommand = async (cmd, args = [], cmdOpts = {}) => {
+  execCalls.push({ cmd: `${cmd} ${args.join(" ")}`, args, opts: cmdOpts });
+  return { stdout: "", stderr: "" };
+};
+const gitInitCalls = [];
+utils.initGitRepo = async (dir, gitRepo) => {
+  gitInitCalls.push({ dir, gitRepo });
+};
 const spawnCalls = [];
 utils.spawn = (cmd, args, spawnOpts) => {
   const record = { cmd, args, opts: spawnOpts, handlers: {} };
@@ -151,6 +160,7 @@ function resetMocks() {
   sitesHandlerCalls.length = 0;
   importHandlerCalls.length = 0;
   execCalls.length = 0;
+  gitInitCalls.length = 0;
   spawnCalls.length = 0;
   manifestSaves.length = 0;
   notes.length = 0;
@@ -231,7 +241,7 @@ test("launch extra summons the local haxcms-nodejs server", opts, async () => {
     );
     assert.equal(spawnCalls.length, 1);
     assert.equal(spawnCalls[0].opts.cwd, path.join(root, "launch-site"));
-    assert.equal(spawnCalls[0].opts.env.HOST, "127.0.0.1");
+    // R2-H-1: haxcms-nodejs binds loopback itself in no-login mode
     assert.equal(spawnCalls[0].opts.env.HAXCMS_DISABLE_JWT_CHECKS, "true");
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
@@ -258,12 +268,12 @@ test("gitRepo extra initializes the repo with a remote", opts, async () => {
         gitRepo: "https://github.com/tester/git-site.git",
       },
     );
-    const gitInit = execCalls.find((c) => c.cmd.includes("git init"));
-    assert.ok(gitInit, "git init executed");
-    assert.ok(
-      gitInit.cmd.includes(
-        "git remote add origin https://github.com/tester/git-site.git",
-      ),
+    // Security (R2-H-2): git runs via initGitRepo (no shell string)
+    assert.equal(gitInitCalls.length, 1, "git init executed");
+    assert.equal(gitInitCalls[0].dir, path.join(root, "git-site"));
+    assert.equal(
+      gitInitCalls[0].gitRepo,
+      "https://github.com/tester/git-site.git",
     );
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
@@ -319,14 +329,51 @@ test(
       );
       assert.ok(manifestSaves.length >= 1, "manifest saved");
       // install/build command issued for the theme
-      assert.ok(
-        execCalls.some(
-          (c) =>
-            c.cmd ===
-            `cd ${siteDir}/custom/ && npm install && npm run build && npm run analyze && cd ${siteDir}`,
-        ),
-        "theme install command executed",
-      );
+      // Security (R2-L-1): each step runs with custom/ as cwd
+      const customDir = path.join(siteDir, "custom");
+      for (const step of ["npm install", "npm run build", "npm run analyze"]) {
+        assert.ok(
+          execCalls.some((c) => c.cmd === step && c.opts.cwd === customDir),
+          `theme step executed: ${step}`,
+        );
+      }
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  },
+);
+
+// Security (R2-M-2): a theme name with traversal / quotes never reaches the fs
+test(
+  "custom theme names with path or quote characters are rejected",
+  opts,
+  async () => {
+    resetMocks();
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), "hax-site-proc-bad-"));
+    try {
+      makeSiteDir(root, "bad-theme-site");
+      for (const badName of ["../../escape", 'x";alert(1)//']) {
+        await assert.rejects(() =>
+          siteProcess(
+            {
+              command: "site",
+              arguments: {},
+              options: { quiet: true, npmClient: "npm", i: false },
+            },
+            {
+              name: "bad-theme-site",
+              type: "site",
+              path: root,
+              theme: "custom-theme",
+              customThemeName: badName,
+              customThemeTemplate: "base",
+              extras: [],
+            },
+          ),
+        );
+      }
+      assert.ok(!fs.existsSync(path.join(root, "escape-theme.js")));
+      assert.equal(execCalls.length, 0, "no install ran for a rejected name");
     } finally {
       fs.rmSync(root, { recursive: true, force: true });
     }

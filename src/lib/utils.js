@@ -8,6 +8,33 @@ import { randomUUID } from "node:crypto";
 import { t } from "./i18n.js";
 export const exec = util.promisify(child_process.exec);
 export const spawn = child_process.spawn;
+const execFilePromise = util.promisify(child_process.execFile);
+
+/**
+ * Run a program with an argument array and an explicit cwd — no shell string.
+ * Security (R2-L-1): values passed as args / cwd can never be parsed as shell
+ * syntax, unlike exec(`cd ${dir} && cmd ${arg}`). On Windows the npm/yarn/
+ * surge/netlify/vercel shims are .cmd files, which Node only runs through a
+ * shell (same approach interactiveExec already uses); paths travel in `cwd`
+ * there too, so they are never part of the command line.
+ * @param {string} command program name (npm, git, rsync, ...)
+ * @param {string[]} args argument array
+ * @param {object} options child_process options (cwd, env, timeout, ...)
+ * @returns {Promise<{stdout: string, stderr: string}>}
+ */
+export function runCommand(command, args = [], options = {}) {
+  const runOptions = { maxBuffer: 1024 * 1024 * 50, ...options };
+  let runArgs = args;
+  if (process.platform === "win32" && typeof runOptions.shell === "undefined") {
+    runOptions.shell = true;
+    // with shell: true Node joins args with spaces, so quote any arg that
+    // contains whitespace or quotes (e.g. -m "first commit")
+    runArgs = args.map((arg) =>
+      /[\s"]/.test(arg) ? `"${String(arg).replace(/"/g, '""')}"` : arg,
+    );
+  }
+  return execFilePromise(command, runArgs, runOptions);
+}
 
 export function getTimeDifference(timestamp1, timestamp2) {
   const time1 = new Date(timestamp1).getTime();
@@ -200,6 +227,59 @@ export function rejectShellMetacharacters(value, optionName) {
   return value;
 }
 
+/**
+ * Reject values that start with "-" so they can't be read as an option by the
+ * program they're passed to (e.g. rsync `-e <cmd>` runs a command).
+ * Security (R2-M-1): argument injection, which the metacharacter check above
+ * does not cover.
+ * @param {string} value
+ * @param {string} optionName
+ * @returns {string}
+ */
+export function rejectLeadingDash(value, optionName) {
+  if (value === undefined || value === null || value === "") {
+    return value;
+  }
+  if (typeof value !== "string" || value.trim().startsWith("-")) {
+    throw new Error(t("utilLeadingDash", { option: `${optionName}` }));
+  }
+  return value;
+}
+
+// Security (R2-H-2 / R2-M-2): characters never allowed in site, element or
+// theme names. Names end up in file paths, generated JS (import statements,
+// class names) and child process cwd values, so anything beyond a plain
+// lowercase slug (/, ., quotes, ;, $, whitespace incl. tabs, ...) is refused.
+const NAME_SPECIAL_CHARACTERS_RE = /[`~!@#$%^&*()_=+[\]{}|;:'",<.>/?\\\s]/;
+
+/**
+ * True when a site / element / theme name contains a disallowed character.
+ * Shared by the interactive prompts and the non-interactive CLI path so both
+ * enforce the same rule.
+ * @param {string} value
+ * @returns {boolean}
+ */
+export function hasNameSpecialCharacters(value) {
+  return typeof value !== "string" || NAME_SPECIAL_CHARACTERS_RE.test(value);
+}
+
+// GitHub user / org / repo names: letters, digits, hyphen (repos also allow
+// dot and underscore). Security (R2-L-2): these are interpolated into clone
+// URLs, so they're restricted to the characters GitHub itself accepts.
+const GITHUB_OWNER_RE = /^[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})$/;
+const GITHUB_REPO_RE = /^[A-Za-z0-9._-]{1,100}$/;
+export function isValidGithubOwner(value) {
+  return typeof value === "string" && GITHUB_OWNER_RE.test(value);
+}
+export function isValidGithubRepo(value) {
+  return (
+    typeof value === "string" &&
+    GITHUB_REPO_RE.test(value) &&
+    value !== "." &&
+    value !== ".."
+  );
+}
+
 // Security (M-1): allowlist for --domain / --site (surge/netlify/vercel deploy
 // targets). Hostnames, ports, and dotted domain labels only.
 const DOMAIN_RE = /^[A-Za-z0-9.\-:]+$/;
@@ -286,7 +366,7 @@ export function validateWebcomponentName(value, options = {}) {
 export async function gitIdentityFallbackArgs(cwd = process.cwd()) {
   const configValue = async (key) => {
     try {
-      const { stdout } = await exec(`git config ${key}`, {
+      const { stdout } = await runCommand("git", ["config", key], {
         cwd: fs.existsSync(cwd) ? cwd : process.cwd(),
       });
       return stdout.trim();
@@ -294,21 +374,49 @@ export async function gitIdentityFallbackArgs(cwd = process.cwd()) {
       return "";
     }
   };
-  let args = "";
+  // Security (R2-L-1): returned as an argument array for runCommand("git", ...)
+  // instead of a string spliced into a shell command.
+  let args = [];
   if (!process.env.GIT_AUTHOR_NAME && !(await configValue("user.name"))) {
-    args += '-c user.name="HAX CLI" ';
+    args.push("-c", "user.name=HAX CLI");
   }
   if (
     !process.env.GIT_AUTHOR_EMAIL &&
     !process.env.EMAIL &&
     !(await configValue("user.email"))
   ) {
-    args += '-c user.email="hax@localhost" ';
+    args.push("-c", "user.email=hax@localhost");
   }
-  if (args !== "" && !process.haxquiet) {
+  if (args.length > 0 && !process.haxquiet) {
     process.stderr.write(
       `hax: ${t("utilNoGitIdentity", { identity: "HAX CLI <hax@localhost>" })}\n`,
     );
   }
   return args;
+}
+
+/**
+ * git init + first commit (+ optional origin remote) for a new project.
+ * Security (R2-H-2 / R2-L-1): replaces `cd ${dir} && git init && ...` shell
+ * strings, which ran any shell syntax in the project name or path. The remote
+ * URL is passed as one argument and may not start with "-" (git option).
+ * @param {string} dir project directory
+ * @param {string} [gitRepo] remote URL for origin
+ */
+export async function initGitRepo(dir, gitRepo = null) {
+  if (gitRepo) {
+    rejectLeadingDash(gitRepo, "git-repo");
+  }
+  const identity = await gitIdentityFallbackArgs(dir);
+  await runCommand("git", ["init"], { cwd: dir });
+  await runCommand("git", ["add", "-A"], { cwd: dir });
+  await runCommand("git", [...identity, "commit", "-m", "first commit"], {
+    cwd: dir,
+  });
+  await runCommand("git", ["branch", "-M", "main"], { cwd: dir });
+  if (gitRepo) {
+    await runCommand("git", ["remote", "add", "origin", gitRepo], {
+      cwd: dir,
+    });
+  }
 }

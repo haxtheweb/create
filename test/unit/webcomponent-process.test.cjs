@@ -53,6 +53,17 @@ utils.exec = async (cmd) => {
   execCalls.push(cmd);
   return { stdout: "", stderr: "" };
 };
+// Security (R2-L-1): argument-array commands record their cwd
+const runCwds = [];
+utils.runCommand = async (cmd, args = [], cmdOpts = {}) => {
+  const line = `${cmd} ${args.join(" ")}`;
+  execCalls.push(line);
+  runCwds.push({ line, cwd: cmdOpts.cwd });
+  return { stdout: "", stderr: "" };
+};
+utils.initGitRepo = async (dir, gitRepo) => {
+  execCalls.push(`git init ${dir} && git remote add origin ${gitRepo}`);
+};
 
 // replace recurseCopy with a mock that builds the mini template tree
 const haxcmsLib = require("@haxtheweb/haxcms-nodejs/dist/lib/HAXCMS.js");
@@ -221,16 +232,11 @@ test(
       await webcomponentProcess(commandRun, project);
 
       const scaffold = path.join(projectRoot, "launch-el");
-      assert.ok(
-        execCalls.some((c) => c === `cd ${scaffold} && yarn install`),
-        "install ran",
-      );
-      assert.ok(
-        execCalls.some(
-          (c) => c === `cd ${scaffold} && yarn start && yarn run analyze`,
-        ),
-        "launch ran",
-      );
+      const ranIn = (line) =>
+        runCwds.some((r) => r.line === line && r.cwd === scaffold);
+      assert.ok(ranIn("yarn install"), "install ran");
+      assert.ok(ranIn("yarn start"), "launch ran");
+      assert.ok(ranIn("yarn run analyze"), "analyze ran after launch");
       assert.ok(
         notes.some((n) => n.includes("sub-process daemon")),
         "launch note recorded",

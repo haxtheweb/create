@@ -65,6 +65,11 @@ utils.exec = async (cmd) => {
   execCalls.push(cmd);
   return { stdout: "", stderr: "" };
 };
+// Security (R2-L-1): npm scripts now run as argument arrays
+utils.runCommand = async (cmd, args = []) => {
+  execCalls.push(`${cmd} ${args.join(" ")}`);
+  return { stdout: "", stderr: "" };
+};
 
 const { probeModule } = require("../_helpers/module-canary.cjs");
 const {

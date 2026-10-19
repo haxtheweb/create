@@ -43,6 +43,8 @@ import {
   getTimeDifference,
   validateNpmClient,
   rejectShellMetacharacters,
+  rejectLeadingDash,
+  hasNameSpecialCharacters,
   validateDomain,
 } from "./lib/utils.js";
 import * as haxcmsLib from "@haxtheweb/haxcms-nodejs/dist/lib/HAXCMS.js";
@@ -635,10 +637,17 @@ async function main() {
     rejectShellMetacharacters(commandRun.options.gitRepo, "git-repo");
     rejectShellMetacharacters(commandRun.options.source, "source");
     rejectShellMetacharacters(commandRun.options.destination, "destination");
+    // Security (R2-M-1): a value starting with "-" would be parsed by rsync
+    // as an option (e.g. -e <cmd> runs a program).
+    rejectLeadingDash(commandRun.options.source, "source");
+    rejectLeadingDash(commandRun.options.destination, "destination");
     if (commandRun.options.exclude) {
       String(commandRun.options.exclude)
         .split(",")
-        .forEach((pat) => rejectShellMetacharacters(pat.trim(), "exclude"));
+        .forEach((pat) => {
+          rejectShellMetacharacters(pat.trim(), "exclude");
+          rejectLeadingDash(pat.trim(), "exclude");
+        });
     }
     if (commandRun.options.path) {
       rejectShellMetacharacters(commandRun.options.path, "path");
@@ -674,7 +683,11 @@ async function main() {
     }
     runAuditCommand(commandRun, customPath, process.cwd());
   } else if (commandRun.command === "party") {
-    commandRun.options.author = author;
+    // Security (R2-L-2): keep an explicit (validated) --author; only fall back
+    // to git user.name. party.js validates the final value as a GitHub user.
+    if (!commandRun.options.author) {
+      commandRun.options.author = author;
+    }
     await partyCommandDetected(commandRun);
   } else if (commandRun.command === "skills") {
     await skillsCommandDetected(commandRun);
@@ -917,6 +930,10 @@ async function main() {
                     if (value.indexOf(" ") !== -1) {
                       return t("cliNameNoSpaces");
                     }
+                    // also catches tabs / other whitespace
+                    if (hasNameSpecialCharacters(value)) {
+                      return t("cliNameNoSpecialChars");
+                    }
                     if (
                       results.type === "webcomponent" &&
                       (value.indexOf("-") === -1 ||
@@ -992,6 +1009,13 @@ async function main() {
                 }
                 if (value.indexOf(" ") !== -1) {
                   program.error(color.red(t("cliNameNoSpaces")));
+                  process.exit(1);
+                }
+                // Security (R2-H-2): the non-interactive path must enforce the
+                // same special-character rule as the prompt above; the name
+                // reaches file paths and child process calls.
+                if (hasNameSpecialCharacters(value)) {
+                  program.error(color.red(t("cliNameNoSpecialChars")));
                   process.exit(1);
                 }
                 if (
@@ -1267,6 +1291,11 @@ async function main() {
                     if (value.indexOf(" ") !== -1) {
                       return t("cliThemeNameNoSpaces");
                     }
+                    // Security (R2-M-2): theme name becomes a file path and a
+                    // JS import / class name; no /, ., quotes, etc.
+                    if (hasNameSpecialCharacters(value)) {
+                      return t("cliNameNoSpecialChars");
+                    }
                   },
                 });
                 return tmpCustomName;
@@ -1287,6 +1316,10 @@ async function main() {
                 }
                 if (value.indexOf(" ") !== -1) {
                   program.error(color.red(t("cliThemeNameNoSpaces")));
+                }
+                // Security (R2-M-2): same rule as the prompt above
+                if (hasNameSpecialCharacters(value)) {
+                  program.error(color.red(t("cliNameNoSpecialChars")));
                 }
               }
             },

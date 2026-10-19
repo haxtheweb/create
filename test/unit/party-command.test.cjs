@@ -89,6 +89,14 @@ utils.exec = async (cmd) => {
 utils.interactiveExec = async (cmd, args) => {
   execCalls.push(`${cmd} ${args.join(" ")}`);
 };
+// Security (R2-L-1): commands now run as argument arrays via runCommand
+const runCwds = {};
+utils.runCommand = async (cmd, args = [], cmdOpts = {}) => {
+  const line = `${cmd} ${args.join(" ")}`;
+  execCalls.push(line);
+  runCwds[line] = cmdOpts.cwd;
+  return { stdout: "", stderr: "" };
+};
 
 const { partyCommandDetected } = require("../../src/lib/programs/party.js");
 
@@ -201,13 +209,30 @@ test("the github branch clones the selected repo and runs its install commands",
   // webcomponents repo install sequence (the monorepo install is hardcoded
   // to yarn regardless of --npm-client)
   assert.ok(execCalls.includes("yarn global add lerna web-component-analyzer"));
-  assert.ok(
-    execCalls.some(
-      (c) => c === `cd ${process.cwd()}/webcomponents && yarn install`,
-    ),
+  assert.ok(execCalls.includes("yarn install"));
+  assert.equal(
+    runCwds["yarn install"],
+    require("node:path").join(process.cwd(), "webcomponents"),
+    "install runs with the repo as cwd, not a cd shell string",
   );
   assert.ok(
     spinnerMessages.some((m) => m.includes("Cloning")),
     "clone spinner used",
+  );
+});
+
+// Security (R2-L-2): a git display name / injection attempt is refused
+test("the github branch refuses an owner that is not a GitHub username", async () => {
+  resetMocks();
+  // the github branch's try/catch swallows the mocked process.exit(1), so
+  // assert the effect: nothing is cloned with an invalid owner
+  await runParty({
+    command: "party",
+    arguments: { action: "github" },
+    options: { quiet: true, auto: true, author: "Jane Doe", npmClient: "npm" },
+  });
+  assert.ok(
+    !execCalls.some((c) => c.startsWith("git clone")),
+    "no clone attempted",
   );
 });

@@ -168,6 +168,10 @@ utils.exec = async (cmd, cmdOpts) => {
   execCalls.push({ cmd, opts: cmdOpts });
   return { stdout: "", stderr: "" };
 };
+utils.runCommand = async (cmd, args = [], cmdOpts = {}) => {
+  execCalls.push({ cmd: `${cmd} ${args.join(" ")}`, opts: cmdOpts });
+  return { stdout: "", stderr: "" };
+};
 const spawnCalls = [];
 utils.spawn = (cmd, args, spawnOpts) => {
   const record = { cmd, args, opts: spawnOpts, handlers: {} };
@@ -437,7 +441,6 @@ test(
       "local haxcms bin used",
     );
     assert.equal(record.opts.cwd, SITE_DIR);
-    assert.equal(record.opts.env.HOST, "127.0.0.1");
     assert.equal(record.opts.env.HAXCMS_DISABLE_JWT_CHECKS, "true");
     assert.ok(parseInt(record.opts.env.PORT, 10) > 0, "a port was selected");
   },

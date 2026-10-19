@@ -229,6 +229,11 @@ utils.exec = async (cmd, cmdOpts) => {
 utils.interactiveExec = async (cmd, args, cmdOpts) => {
   execCalls.push({ cmd: `${cmd} ${args.join(" ")}`, opts: cmdOpts });
 };
+// Security (R2-L-1): non-interactive commands run as argument arrays
+utils.runCommand = async (cmd, args = [], cmdOpts = {}) => {
+  execCalls.push({ cmd: `${cmd} ${args.join(" ")}`, args, opts: cmdOpts });
+  return { stdout: "", stderr: "" };
+};
 
 const {
   available,
@@ -486,10 +491,11 @@ test("site:sync pulls and pushes the site repo", opts, async () => {
     arguments: { action: "site:sync" },
     options: { quiet: true, i: true },
   });
-  assert.ok(
-    execCalls.some((c) => c.cmd === `cd ${SITE_DIR} && git pull && git push`),
-    "git pull/push executed",
-  );
+  const pull = execCalls.find((c) => c.cmd === "git pull");
+  const push = execCalls.find((c) => c.cmd === "git push");
+  assert.ok(pull && push, "git pull/push executed");
+  assert.equal(pull.opts.cwd, SITE_DIR, "site dir passed as cwd");
+  assert.equal(push.opts.cwd, SITE_DIR, "site dir passed as cwd");
 });
 
 test(
@@ -519,16 +525,34 @@ test(
       assert.ok(rsync, "rsync executed");
       assert.ok(rsync.cmd.includes("--dry-run"), "dry run flag included");
       assert.ok(
-        rsync.cmd.includes("--exclude node_modules --exclude dist"),
+        rsync.cmd.includes("--exclude=node_modules --exclude=dist"),
         "exclude patterns included",
       );
-      assert.ok(
-        rsync.cmd.includes(`${SITE_DIR}/ ${destination}`),
-        "source with trailing slash + destination",
-      );
+      // Security (R2-M-1): "--" ends option parsing before the paths and the
+      // paths are separate argv entries (no shell)
+      assert.deepEqual(rsync.args.slice(-3), [
+        "--",
+        `${SITE_DIR}/`,
+        destination,
+      ]);
     } finally {
       fs.rmSync(destination, { recursive: true, force: true });
     }
+  },
+);
+
+// Security (R2-M-1): an option-looking --destination is refused before rsync
+test(
+  "site:rsync prompt validation rejects an option-looking destination",
+  opts,
+  async () => {
+    const { rsyncArgError } = siteModule;
+    assert.match(
+      rsyncArgError("-e touch /tmp/x", "destination"),
+      /cannot start with/,
+    );
+    assert.match(rsyncArgError("a;b", "destination"), /shell metacharacters/);
+    assert.equal(rsyncArgError("user@host:/var/www", "destination"), undefined);
   },
 );
 
