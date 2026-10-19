@@ -48,6 +48,7 @@ hax start
 - `hax audit schema` - Validates `site.json`, skeletons, `haxProperties` (and their `demoSchema` / locales), `appstore.json` and Merlin commands against the HAX schemas
 - `hax audit i18n` - Finds English hardcoded in Lit templates (text and attributes like `aria-label`, `title`, `placeholder`) that should come from `this.t` so it can be translated
 - `hax audit all` - Runs all three
+- `hax audit ssr` - Report-only: server-renders every element in `wc-registry.json` with `@lit-labs/ssr` and buckets the result (rendered / shell / empty / no shadow root / threw) with output and style sizes. Never fails on render problems and is not part of `all`. Options: `--only <tags>`, `--timeout <ms>`, `--save-html <dir>`, `--format json`
 - `hax update` - HAX CLI self update
 - `hax party` - Display options to join the HAX community and get involved!
 - `hax skills list` - List bundled agent skills shipped with the CLI

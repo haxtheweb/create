@@ -270,6 +270,7 @@ The HAX ecosystem uses a sophisticated build pipeline optimized for unbundled Ja
   hax audit schema            # add --strict to fail on warnings, --format json for a report
   hax audit i18n              # English hardcoded in Lit templates instead of this.t
   hax audit all               # DDD + schema + i18n
+  hax audit ssr               # report-only: how each wc-registry element server-renders (never fails, not in all)
   ```
   - **Required** before submitting theme components
 

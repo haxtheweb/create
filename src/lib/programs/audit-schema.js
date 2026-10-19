@@ -11,6 +11,7 @@ import { createRequire } from "node:module";
 import path from "node:path";
 import color from "picocolors";
 import { auditI18nCommand } from "./audit-i18n.js";
+import { auditSsrCommand } from "./audit-ssr.js";
 import { t } from "../i18n.js";
 
 /**
@@ -384,7 +385,7 @@ export function auditSchemaCommand(commandRun, root = null, deps = {}) {
 
 /**
  * @description Entry point for `hax audit [type]`; exits with 0 (compliant) or 1.
- * @param commandRun CLI state; commandRun.arguments.type is ddd (default), schema, i18n or all
+ * @param commandRun CLI state; commandRun.arguments.type is ddd (default), schema, i18n, ssr or all
  * @param dddPath directory for the DDD audit (null = cwd)
  * @param schemaRoot directory for the schema audit
  * @param deps injectable { auditDDD, auditSchema, exit } for tests
@@ -395,6 +396,7 @@ export function runAuditCommand(commandRun, dddPath, schemaRoot, deps = {}) {
   const auditDDD = deps.auditDDD;
   const auditSchema = deps.auditSchema || auditSchemaCommand;
   const auditI18n = deps.auditI18n || auditI18nCommand;
+  const auditSsr = deps.auditSsr || auditSsrCommand;
   if (type === "ddd") {
     // DDD audit keeps its existing behavior, including exiting itself
     return auditDDD(commandRun, dddPath);
@@ -406,6 +408,13 @@ export function runAuditCommand(commandRun, dddPath, schemaRoot, deps = {}) {
   if (type === "i18n") {
     const r = auditI18n(commandRun, schemaRoot);
     return exit(r.passed ? 0 : 1);
+  }
+  if (type === "ssr") {
+    // a coverage report, not a check: only fails when it can't run (and is
+    // not part of "all"). Async because it renders in a child process.
+    return Promise.resolve(auditSsr(commandRun, schemaRoot)).then((r) =>
+      exit(r.passed ? 0 : 1),
+    );
   }
   if (type === "all") {
     const dddPassed = auditDDD(commandRun, dddPath, false);
