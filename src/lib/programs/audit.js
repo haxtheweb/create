@@ -3,8 +3,16 @@ import { program } from "commander";
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import path from "node:path";
 import color from 'picocolors';
+import { t } from '../i18n.js';
 
 let checksPassed = true;
+
+/**
+ * @description Suggestion for hard-coded colors (CSS values stay as placeholders)
+ */
+function themeColorSuggestion() {
+  return t('auditUseThemeColorToken', { currentColor: 'currentColor', token: '--ddd-theme-*', lightDark: 'light-dark()' });
+}
 
 /**
  * @description Runs the audit command, to be called when `hax audit` command is run
@@ -15,19 +23,19 @@ let checksPassed = true;
 export function auditCommandDetected(commandRun, path = null, exit = true) {
   checksPassed = true;
   const PROJECT_ROOT = path || process.cwd();
-  p.intro(`${color.bgBlack(` 🚀 Auditing DDD Compliance: ${color.underline(color.bold(color.yellow(PROJECT_ROOT)))} `)}`)
+  p.intro(`${color.bgBlack(` 🚀 ${t('auditDddStart', { path: color.underline(color.bold(color.yellow(PROJECT_ROOT))) })} `)}`)
   let dddignore = dddignoreInterpreter(PROJECT_ROOT);
 
   if (commandRun.options.debug) {
-    p.intro(`${color.bgBlack(color.white(` 🚧 Debug: displaying .dddignore contents `))}`)
+    p.intro(`${color.bgBlack(color.white(` 🚧 ${t('auditDebugDddignore', { file: '.dddignore' })} `))}`)
     console.table(dddignore)
   }
 
   auditNavigator(PROJECT_ROOT, dddignore);
   p.outro(`
-    🎉 Process Completed
+    🎉 ${t('auditProcessCompleted')}
     
-    📘 For more information about DDD variables and capabilities: ${color.underline(color.cyan(`https://haxtheweb.org/documentation/ddd`))}
+    📘 ${t('auditDddMoreInfo', { url: color.underline(color.cyan(`https://haxtheweb.org/documentation/ddd`)) })}
   `);
 
   if (!exit) {
@@ -145,7 +153,12 @@ function auditNavigator(root, dddignore) {
  */
 function auditFile(fileLocation, fileName) {
   let data = [];
-  p.intro(`\n ${color.bgBlue(color.white(` 🪄 Auditing: ${fileName} `))}`)
+  p.intro(`\n ${color.bgBlue(color.white(` 🪄 ${t('auditFileStart', { file: fileName })} `))}`)
+  // console.table column headers (people read these)
+  const COL_LINE = t('auditColumnLineNumber');
+  const COL_PROPERTY = t('auditColumnCssProperty');
+  const COL_CURRENT = t('auditColumnCurrentAttribute');
+  const COL_SUGGESTED = t('auditColumnSuggestedReplacement');
   let lines = readFileSync(fileLocation, 'utf-8').split('\n');
 
   const COLOR_PROPERTIES = new Set([
@@ -274,20 +287,20 @@ function auditFile(fileLocation, fileName) {
     if (fileName.endsWith('.js')) {
       auditJavaScriptLine(line).forEach((finding) => {
         data.push({
-          "Line Number": index + 1,
-          "CSS Property": finding.rule,
-          "Current Attribute": line.trim().substring(0, 80),
-          "Suggested Replacement Attribute": finding.suggestion
+          [COL_LINE]: index + 1,
+          [COL_PROPERTY]: finding.rule,
+          [COL_CURRENT]: line.trim().substring(0, 80),
+          [COL_SUGGESTED]: finding.suggestion
         });
       });
     }
     // hard-coded colors in SVG / HTML attributes, e.g. fill="#000"
     auditColorAttributes(line).forEach((finding) => {
       data.push({
-        "Line Number": index + 1,
-        "CSS Property": finding.rule,
-        "Current Attribute": finding.value,
-        "Suggested Replacement Attribute": 'Use currentColor or a --ddd-theme-* token (light-dark() with tokens for per-scheme values)'
+        [COL_LINE]: index + 1,
+        [COL_PROPERTY]: finding.rule,
+        [COL_CURRENT]: finding.value,
+        [COL_SUGGESTED]: themeColorSuggestion()
       });
     });
     let trimmed = line.trim();
@@ -299,120 +312,120 @@ function auditFile(fileLocation, fileName) {
       // Check border shorthands
       if (BORDER_SHORTHANDS.has(lineProperty) && !lineAttribute.includes("ddd")) {
         data.push({
-          "Line Number": lines.indexOf(line) + 1,
-          "CSS Property": lineProperty,
-          "Current Attribute": lineAttribute,
-          "Suggested Replacement Attribute": helpAuditBorderShorthands(lineAttribute)
+          [COL_LINE]: lines.indexOf(line) + 1,
+          [COL_PROPERTY]: lineProperty,
+          [COL_CURRENT]: lineAttribute,
+          [COL_SUGGESTED]: helpAuditBorderShorthands(lineAttribute)
         });
       }
 
       // Check border thicknesses
       if (BORDER_THICKNESS_PROPERTIES.has(lineProperty) && !lineAttribute.includes("ddd")) {
         data.push({
-          "Line Number": lines.indexOf(line) + 1,
-          "CSS Property": lineProperty,
-          "Current Attribute": lineAttribute,
-          "Suggested Replacement Attribute": helpAuditBorderThickness(lineAttribute)
+          [COL_LINE]: lines.indexOf(line) + 1,
+          [COL_PROPERTY]: lineProperty,
+          [COL_CURRENT]: lineAttribute,
+          [COL_SUGGESTED]: helpAuditBorderThickness(lineAttribute)
         });
       }
 
       // Check box shadows
       if (lineProperty === "box-shadow" && !lineAttribute.includes("ddd")) {
         data.push({
-          "Line Number": lines.indexOf(line) + 1,
-          "CSS Property": lineProperty,
-          "Current Attribute": lineAttribute,
-          "Suggested Replacement Attribute": helpAuditBoxShadow(lineAttribute)
+          [COL_LINE]: lines.indexOf(line) + 1,
+          [COL_PROPERTY]: lineProperty,
+          [COL_CURRENT]: lineAttribute,
+          [COL_SUGGESTED]: helpAuditBoxShadow(lineAttribute)
         });
       }
 
       // Check colors
       if (COLOR_PROPERTIES.has(lineProperty) && !lineAttribute.includes("ddd")) {
         data.push({
-          "Line Number": lines.indexOf(line) + 1,
-          "CSS Property": lineProperty,
-          "Current Attribute": lineAttribute,
-          "Suggested Replacement Attribute": helpAuditColors(lineAttribute)
+          [COL_LINE]: lines.indexOf(line) + 1,
+          [COL_PROPERTY]: lineProperty,
+          [COL_CURRENT]: lineAttribute,
+          [COL_SUGGESTED]: helpAuditColors(lineAttribute)
         });
       }
 
       // Check colors hiding in shorthands / SVG paint properties
       if (COLOR_LITERAL_PROPERTIES.has(lineProperty) && !lineAttribute.includes("ddd") && hasColorLiteral(lineAttribute)) {
         data.push({
-          "Line Number": lines.indexOf(line) + 1,
-          "CSS Property": lineProperty,
-          "Current Attribute": lineAttribute,
-          "Suggested Replacement Attribute": 'Use currentColor or a --ddd-theme-* token (light-dark() with tokens for per-scheme values)'
+          [COL_LINE]: lines.indexOf(line) + 1,
+          [COL_PROPERTY]: lineProperty,
+          [COL_CURRENT]: lineAttribute,
+          [COL_SUGGESTED]: themeColorSuggestion()
         });
       }
 
       // Check font family
       if (lineProperty === "font-family" && !lineAttribute.includes("ddd")) {
         data.push({
-          "Line Number": lines.indexOf(line) + 1,
-          "CSS Property": lineProperty,
-          "Current Attribute": lineAttribute,
-          "Suggested Replacement Attribute": helpAuditFontFamily(lineAttribute)
+          [COL_LINE]: lines.indexOf(line) + 1,
+          [COL_PROPERTY]: lineProperty,
+          [COL_CURRENT]: lineAttribute,
+          [COL_SUGGESTED]: helpAuditFontFamily(lineAttribute)
         });
       }
 
       // Check font size
       if (lineProperty === "font-size" && !lineAttribute.includes("ddd")) {
         data.push({
-          "Line Number": lines.indexOf(line) + 1,
-          "CSS Property": lineProperty,
-          "Current Attribute": lineAttribute,
-          "Suggested Replacement Attribute": helpAuditFontSize(lineAttribute)
+          [COL_LINE]: lines.indexOf(line) + 1,
+          [COL_PROPERTY]: lineProperty,
+          [COL_CURRENT]: lineAttribute,
+          [COL_SUGGESTED]: helpAuditFontSize(lineAttribute)
         });
       }
 
       // Check font weight
       if (lineProperty === "font-weight" && !lineAttribute.includes("ddd")) {
         data.push({
-          "Line Number": lines.indexOf(line) + 1,
-          "CSS Property": lineProperty,
-          "Current Attribute": lineAttribute,
-          "Suggested Replacement Attribute": helpAuditFontWeight(lineAttribute)
+          [COL_LINE]: lines.indexOf(line) + 1,
+          [COL_PROPERTY]: lineProperty,
+          [COL_CURRENT]: lineAttribute,
+          [COL_SUGGESTED]: helpAuditFontWeight(lineAttribute)
         })
       }
 
       // Check letter spacing
       if (lineProperty === "letter-spacing" && !lineAttribute.includes("ddd")) {
         data.push({
-          "Line Number": lines.indexOf(line) + 1,
-          "CSS Property": lineProperty,
-          "Current Attribute": lineAttribute,
-          "Suggested Replacement Attribute": helpAuditLetterSpacing(lineAttribute)
+          [COL_LINE]: lines.indexOf(line) + 1,
+          [COL_PROPERTY]: lineProperty,
+          [COL_CURRENT]: lineAttribute,
+          [COL_SUGGESTED]: helpAuditLetterSpacing(lineAttribute)
         });
       }
 
       // Check line height spacing
       if (lineProperty === "line-height" && !lineAttribute.includes("ddd")) {
         data.push({
-          "Line Number": lines.indexOf(line) + 1,
-          "CSS Property": lineProperty,
-          "Current Attribute": lineAttribute,
-          "Suggested Replacement Attribute": helpAuditLineHeight(lineAttribute)
+          [COL_LINE]: lines.indexOf(line) + 1,
+          [COL_PROPERTY]: lineProperty,
+          [COL_CURRENT]: lineAttribute,
+          [COL_SUGGESTED]: helpAuditLineHeight(lineAttribute)
         });
       }
 
       // Check radius
       if (RADIUS_PROPERTIES.has(lineProperty) && !lineAttribute.includes("ddd")) {
         data.push({
-          "Line Number": lines.indexOf(line) + 1,
-          "CSS Property": lineProperty,
-          "Current Attribute": lineAttribute,
-          "Suggested Replacement Attribute": helpAuditRadius(lineAttribute)
+          [COL_LINE]: lines.indexOf(line) + 1,
+          [COL_PROPERTY]: lineProperty,
+          [COL_CURRENT]: lineAttribute,
+          [COL_SUGGESTED]: helpAuditRadius(lineAttribute)
         });
       }
 
       // Check spacing
       if (SPACING_PROPERTIES.has(lineProperty) && !lineAttribute.includes("ddd")) {
         data.push({
-          "Line Number": lines.indexOf(line) + 1,
-          "CSS Property": lineProperty,
-          "Current Attribute": lineAttribute,
-          "Suggested Replacement Attribute": helpAuditSpacing(lineAttribute)
+          [COL_LINE]: lines.indexOf(line) + 1,
+          [COL_PROPERTY]: lineProperty,
+          [COL_CURRENT]: lineAttribute,
+          [COL_SUGGESTED]: helpAuditSpacing(lineAttribute)
         });
       }
     }
@@ -422,7 +435,7 @@ function auditFile(fileLocation, fileName) {
     console.table(data);
     checksPassed = false;
   } else {
-    p.note("No changes needed!")
+    p.note(t('auditNoChangesNeeded'))
   }
 }
 
@@ -443,7 +456,7 @@ export function hasColorLiteral(value) {
     return true;
   }
   return v.split(/[^a-z]+/).some((word) =>
-    word !== '' && word !== 'transparent' && helpAuditColors(word) !== 'No available suggestions. Check DDD documentation.'
+    word !== '' && word !== 'transparent' && helpAuditColors(word) !== t('auditNoSuggestion')
   );
 }
 
@@ -459,7 +472,7 @@ export function auditColorAttributes(line) {
   let match;
   while ((match = ATTRIBUTE.exec(line)) !== null) {
     if (!match[2].includes('ddd') && hasColorLiteral(match[2])) {
-      findings.push({ rule: `${match[1].toLowerCase()} attribute`, value: match[2] });
+      findings.push({ rule: t('auditColorAttributeRule', { attribute: match[1].toLowerCase() }), value: match[2] });
     }
   }
   return findings;
@@ -479,16 +492,28 @@ export function auditJavaScriptLine(line) {
     return findings;
   }
   if (/\?\.(?!\d)/.test(code)) {
-    findings.push({ rule: 'JS: optional chaining (?.)', suggestion: 'Use explicit && guards; the Polymer-era parser fails on ?.' });
+    findings.push({
+      rule: t('auditJsOptionalChainingRule', { operator: '?.' }),
+      suggestion: t('auditJsOptionalChainingSuggestion', { guard: '&&', operator: '?.' }),
+    });
   }
   if (/\?\?/.test(code)) {
-    findings.push({ rule: 'JS: nullish coalescing (??)', suggestion: 'Use an explicit undefined/null check or ||; same parser limitation as ?.' });
+    findings.push({
+      rule: t('auditJsNullishRule', { operator: '??' }),
+      suggestion: t('auditJsNullishSuggestion', { values: 'undefined/null', fallback: '||', other: '?.' }),
+    });
   }
   if (/(^|[^.\w$])window\s*[.[]/.test(code)) {
-    findings.push({ rule: 'JS: window reference', suggestion: 'Use globalThis instead of window' });
+    findings.push({
+      rule: t('auditJsWindowRule', { name: 'window' }),
+      suggestion: t('auditJsWindowSuggestion', { replacement: 'globalThis', name: 'window' }),
+    });
   }
   if (/\bDDD\s*\(\s*LitElement\s*\)/.test(code)) {
-    findings.push({ rule: 'JS: DDD(LitElement)', suggestion: 'Extend DDD directly, or DDDSuper(LitElement) / DDDSuper(I18NMixin(LitElement)) as the scaffold does' });
+    findings.push({
+      rule: 'JS: DDD(LitElement)',
+      suggestion: t('auditJsDddLitElementSuggestion', { ddd: 'DDD', dddSuper: 'DDDSuper(LitElement)', dddSuperI18n: 'DDDSuper(I18NMixin(LitElement))' }),
+    });
   }
   return findings;
 }
@@ -498,7 +523,7 @@ export function auditJavaScriptLine(line) {
  */
 function returnCode() {
   if (!checksPassed) { // Not-compliant
-    program.error(color.red("Component not compliant with DDD"));
+    program.error(color.red(t('auditDddNotCompliant')));
     process.exit(1);
   }
   
@@ -532,7 +557,7 @@ export function helpAuditBorderShorthands(borderPreset) {
     }
   }
 
-  return "No available suggestions. Check DDD documentation.";
+  return t('auditNoSuggestion');
 }
 
 /**
@@ -558,7 +583,7 @@ export function helpAuditBorderThickness(borderThickness) {
     }
   }
 
-  return "No available suggestions. Check DDD documentation.";  
+  return t('auditNoSuggestion');  
 }
 
 /**
@@ -595,7 +620,7 @@ export function helpAuditBoxShadow(boxShadow) {
     }
   }
 
-  return "No available suggestions. Check DDD documentation.";
+  return t('auditNoSuggestion');
 }
 
 /**
@@ -756,7 +781,7 @@ export function helpAuditColors(color) {
     "yellowGreen":          "--ddd-theme-default-forestGreen",
   }
 
-  return COLOR_OBJECT[color.toLowerCase()] ?? 'No available suggestions. Check DDD documentation.';
+  return COLOR_OBJECT[color.toLowerCase()] ?? t('auditNoSuggestion');
 }
 
 /**
@@ -839,7 +864,7 @@ export function helpAuditFontSize(fontSize) {
     }
   }
 
-  return "No available suggestions. Check DDD documentation.";
+  return t('auditNoSuggestion');
 }
 
 /**
@@ -881,7 +906,7 @@ export function helpAuditFontWeight(fontWeight) {
     case "bolder":
       return "--ddd-font-weight-black" // 900
     default:
-      return "No available suggestions. Check DDD documentation.";
+      return t('auditNoSuggestion');
   }
 }
 
@@ -968,7 +993,7 @@ export function helpAuditLetterSpacing(letterSpacing) {
     }
   }
 
-  return "No available suggestions. Check DDD documentation.";
+  return t('auditNoSuggestion');
 }
 
 /**
@@ -991,7 +1016,7 @@ export function helpAuditLineHeight(lineHeight) {
     }
   }
 
-  return "No available suggestions. Check DDD documentation.";
+  return t('auditNoSuggestion');
 }
 
 /**
@@ -1033,7 +1058,7 @@ export function helpAuditRadius(radius) {
     }
   }
   
-  return "No available suggestions. Check DDD documentation.";
+  return t('auditNoSuggestion');
 }
 
 /**
@@ -1143,5 +1168,5 @@ export function helpAuditSpacing(spacing) {
     return "--ddd-spacing-0"; // 0px
   }
   
-  return "No available suggestions. Check DDD documentation.";
+  return t('auditNoSuggestion');
 }

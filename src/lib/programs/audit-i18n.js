@@ -4,6 +4,7 @@ import path from 'node:path';
 import color from 'picocolors';
 import * as acorn from 'acorn';
 import * as walk from 'acorn-walk';
+import { t } from '../i18n.js';
 
 /**
  * `hax audit i18n`: find English hardcoded in Lit html`` templates so new
@@ -393,7 +394,7 @@ export function auditI18nCommand(commandRun, root = null, deps = {}) {
     out(JSON.stringify({ passed, files: files.length, findings, errors }, null, 2) + '\n');
     return { passed, files: files.length, findings, errors };
   }
-  p.intro(`${color.bgBlack(` 🌐 Auditing translatable text: ${color.underline(color.bold(color.yellow(projectRoot)))} `)}`);
+  p.intro(`${color.bgBlack(` 🌐 ${t('auditI18nStart', { path: color.underline(color.bold(color.yellow(projectRoot))) })} `)}`);
   let current = null;
   for (const f of findings) {
     if (f.file !== current) {
@@ -405,11 +406,17 @@ export function auditI18nCommand(commandRun, root = null, deps = {}) {
   }
   if (options.debug) {
     for (const e of errors) {
-      p.log.warn(`Could not parse ${e.file}: ${e.error}`);
+      p.log.warn(t('auditI18nParseError', { file: e.file, error: e.error }));
     }
   }
   p.outro(passed
-    ? `🎉 No hardcoded text in ${files.length} file(s)`
-    : `${findings.length} hardcoded string(s) in ${new Set(findings.map((f) => f.file)).size} file(s). Move each into this.t and render it as \${this.t.key} so it can be translated; mark intentional ones with an i18n-ignore comment.`);
+    ? `🎉 ${t('auditI18nNoHardcoded', { count: files.length })}`
+    : t('auditI18nFound', {
+      strings: findings.length,
+      files: new Set(findings.map((f) => f.file)).size,
+      thisT: 'this.t',
+      binding: '${this.t.key}',
+      ignore: 'i18n-ignore',
+    }));
   return { passed, files: files.length, findings, errors };
 }
