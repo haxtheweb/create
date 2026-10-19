@@ -40,7 +40,7 @@ Answer these before writing code. They are the corrections reviewers most often 
 2. **Base class**: Import from `@haxtheweb/d-d-d/d-d-d.js`. The scaffold's `class MyEl extends DDDSuper(I18NMixin(LitElement))` is correct. `DDD` itself is an exported class (`DDDSuper(SimpleColorsSuper(LitElement))`), so `extends DDD` also works. Never write `DDD(LitElement)`: `DDD` is a class, not a mixin.
 3. **Implement HAXSchema**: Keep `lib/<element>.haxProperties.json` in sync with the element's properties, including a `demoSchema` that HAX can insert as a working example.
 4. **Style with DDD**: `--ddd-spacing-*`, `--ddd-font-*`, `--ddd-theme-*`, `--ddd-radius-*`, `--ddd-icon-*`. SimpleColors only where DDD has no equivalent shade.
-5. **Verify**: run `hax audit` from the element folder and fix everything it reports (see "What `hax audit` checks"), then `hax audit schema` to validate the element's `haxProperties`, `demoSchema` and locale files.
+5. **Verify**: run `hax audit` from the element folder and fix everything it reports (see "What `hax audit` checks"), then `hax audit schema` to validate the element's `haxProperties`, `demoSchema` and locale files, and `hax audit i18n` to catch UI text that isn't in `this.t`.
 6. **Build themes**: after changing a HAXCMSLitElement theme run `yarn run build`; never hand-edit `custom-elements.json`.
 
 ## Preferred building blocks
@@ -107,7 +107,7 @@ Check ARIA attributes, keyboard navigation (every interactive control reachable 
 
 ## References
 
-- HAX CLI: `hax webcomponent --help`, `hax audit`, `hax audit schema`
+- HAX CLI: `hax webcomponent --help`, `hax audit`, `hax audit schema`, `hax audit i18n`
 - DDD: `webcomponents/elements/d-d-d`; the `hax-design-system` skill in <https://github.com/haxtheweb/praw/tree/main/skills>
 - HAXSchema reference: `webcomponents/elements/hax-body-behaviors/lib/HAXWiring.js`
 - Ecosystem rules: <https://github.com/haxtheweb/praw/blob/main/RULES.md>
