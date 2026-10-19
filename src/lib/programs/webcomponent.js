@@ -143,6 +143,15 @@ export class HAXWiring {
 }
 
 // processing an element
+// --quiet must silence the progress spinner as well as the notes; the spinner
+// redraws its line constantly, which floods logs in CI and agent runs.
+function quietAwareSpinner(commandRun) {
+  if (commandRun && commandRun.options && commandRun.options.quiet) {
+    return { start() {}, stop() {}, message() {} };
+  }
+  return p.spinner();
+}
+
 export async function webcomponentProcess(commandRun, project, port = "8000") {
   // Security (M-2): defense-in-depth re-check of --npm-client at the point it
   // is interpolated into exec() shell strings. create.js validates earlier,
@@ -201,7 +210,7 @@ export async function webcomponentProcess(commandRun, project, port = "8000") {
   else {
     project.org = '';
   }
-  let s = p.spinner();
+  let s = quietAwareSpinner(commandRun);
   s.start(merlinSays(t('wcCopyingProjectFiles')));
   // leverage this little helper from HAXcms
   let templateDir = project.template || 'compliant';
@@ -790,7 +799,7 @@ export async function webcomponentRename(commandRun, packageData) {
   const newScopedName = scope + newName;
   const newDir = path.join(parentDir, newName);
 
-  let s = p.spinner();
+  let s = quietAwareSpinner(commandRun);
   s.start(merlinSays(t('wcRenaming', { oldName, newName })));
 
   // rewrite file contents
@@ -873,7 +882,7 @@ export async function webcomponentRename(commandRun, packageData) {
   }
 
   // regenerate custom-elements.json
-  let s2 = p.spinner();
+  let s2 = quietAwareSpinner(commandRun);
   s2.start(merlinSays(t('wcRegeneratingCem', { file: 'custom-elements.json' })));
   try {
     await exec(`cd ${newDir} && ${commandRun.options.npmClient || 'npm'} run analyze`);
