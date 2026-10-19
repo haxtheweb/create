@@ -919,47 +919,80 @@ export async function loadElementsCatalog() {
   }
 }
 
-export function searchElementsCatalog(catalog, query, limit = 15) {
-  const terms = String(query || '').toLowerCase().split(/[\s,]+/).filter(Boolean);
-  if (terms.length === 0) {
-    return [];
+function searchTerms(query) {
+  return String(query || '').toLowerCase().split(/[\s,]+/).filter(Boolean);
+}
+
+// score one element against the terms: how many terms hit, and the weighted
+// total of the hits (tag > title > gizmo tags / preferred use > description)
+function scoreElement(el, terms, preferred) {
+  const fields = [
+    [String(el.tag || '').toLowerCase(), 5],
+    [String(el.title || '').toLowerCase(), 4],
+    [(el.tags || []).join(' ').toLowerCase(), 3],
+    [String(preferred[el.tag] || '').toLowerCase(), 3],
+    [String(el.description || '').toLowerCase(), 1],
+  ];
+  let score = 0;
+  let matched = 0;
+  for (const term of terms) {
+    let termScore = 0;
+    for (const [text, weight] of fields) {
+      if (text.includes(term)) {
+        termScore += weight;
+      }
+    }
+    if (termScore > 0) {
+      matched++;
+      score += termScore;
+    }
   }
+  return { score, matched };
+}
+
+function preferredLookup(catalog) {
   const preferred = {};
   (catalog.preferred || []).forEach((p) => {
     preferred[p.tag] = p.useFor;
   });
+  return preferred;
+}
+
+// every term has to match
+export function searchElementsCatalog(catalog, query, limit = 15) {
+  const terms = searchTerms(query);
+  if (terms.length === 0) {
+    return [];
+  }
+  const preferred = preferredLookup(catalog);
   let results = [];
   for (const el of catalog.elements || []) {
-    const fields = [
-      [String(el.tag || '').toLowerCase(), 5],
-      [String(el.title || '').toLowerCase(), 4],
-      [(el.tags || []).join(' ').toLowerCase(), 3],
-      [String(preferred[el.tag] || '').toLowerCase(), 3],
-      [String(el.description || '').toLowerCase(), 1],
-    ];
-    let score = 0;
-    let matchedAll = true;
-    for (const term of terms) {
-      let termScore = 0;
-      for (const [text, weight] of fields) {
-        if (text.includes(term)) {
-          termScore += weight;
-        }
-      }
-      if (termScore === 0) {
-        matchedAll = false;
-        break;
-      }
-      score += termScore;
-    }
-    if (matchedAll) {
-      if (preferred[el.tag]) {
-        score += 10;
-      }
-      results.push({ ...el, preferred: preferred[el.tag] || null, score });
+    const { score, matched } = scoreElement(el, terms, preferred);
+    if (matched === terms.length) {
+      results.push({ ...el, preferred: preferred[el.tag] || null, score: score + (preferred[el.tag] ? 10 : 0) });
     }
   }
   results.sort((a, b) => b.score - a.score || a.tag.localeCompare(b.tag));
+  return results.slice(0, limit);
+}
+
+// at least one term has to match; more matched terms rank first. Used when a
+// descriptive multi-word query ("schedule agenda session") matches nothing
+// strictly, so a person or agent still sees the nearest existing elements.
+export function searchElementsCatalogPartial(catalog, query, limit = 15) {
+  const terms = searchTerms(query);
+  if (terms.length === 0) {
+    return [];
+  }
+  const preferred = preferredLookup(catalog);
+  let results = [];
+  for (const el of catalog.elements || []) {
+    const { score, matched } = scoreElement(el, terms, preferred);
+    if (matched > 0) {
+      results.push({ ...el, preferred: preferred[el.tag] || null, score: score + (preferred[el.tag] ? 10 : 0), matchedTerms: matched });
+    }
+  }
+  results.sort((a, b) => b.matchedTerms - a.matchedTerms || b.score - a.score || a.tag.localeCompare(b.tag));
   return results.slice(0, limit);
 }
 
@@ -967,12 +1000,17 @@ export async function elementsSearchCommand(commandRun) {
   const query = commandRun.options.search;
   const limit = parseInt(commandRun.options.searchLimit) || 15;
   const { catalog, source, fallbackReason } = await loadElementsCatalog();
-  const results = searchElementsCatalog(catalog, query, limit);
+  let results = searchElementsCatalog(catalog, query, limit);
+  let partial = false;
+  if (results.length === 0 && searchTerms(query).length > 1) {
+    results = searchElementsCatalogPartial(catalog, query, limit);
+    partial = results.length > 0;
+  }
   if (fallbackReason && !commandRun.options.quiet) {
     process.stderr.write(`hax: ${t('wcCatalogUnavailable', { reason: fallbackReason, source })}\n`);
   }
   if (commandRun.options.format === 'json' || commandRun.options.format === 'yaml') {
-    const out = results.map(({ score, ...rest }) => rest);
+    const out = results.map(({ score, ...rest }) => (partial ? { ...rest, partial: true } : rest));
     writeData(commandRun.options.format === 'yaml' ? dump(out) : JSON.stringify(out, null, 2));
     return results;
   }
@@ -980,7 +1018,7 @@ export async function elementsSearchCommand(commandRun) {
     console.log(t('wcSearchNoMatch', { query }));
     return results;
   }
-  console.log(`${t('wcSearchMatching', { query, source })}\n`);
+  console.log(`${t(partial ? 'wcSearchPartial' : 'wcSearchMatching', { query, source })}\n`);
   for (const el of results) {
     const badges = [el.preferred ? 'preferred' : '', el.type === 'grid' ? 'grid' : '', el.haxCapable ? 'HAX' : ''].filter(Boolean).join(', ');
     console.log(`${el.tag}${el.title ? ` (${el.title})` : ''}${badges ? `  [${badges}]` : ''}`);
