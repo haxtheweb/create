@@ -2276,8 +2276,15 @@ export async function siteCommandDetected(commandRun) {
             );
             
             s.stop(merlinSays(t('siteGithubActionsCreated')));
+            // sites start with the branch-publishing workflow from the site
+            // boilerplate; left in place, every push would publish twice
+            const branchWorkflow = path.join(workflowDir, 'main.yml');
+            const hasBranchWorkflow = fs.existsSync(branchWorkflow) && fs.readFileSync(branchWorkflow, 'utf8').includes('github-pages-deploy-action');
             if (!commandRun.options.quiet) {
               p.note(`🚀 ${t('siteGithubActionsReady')}\n\n${t('siteNextSteps')}\n1. ${t('sitePushChanges', { command: color.bold('git add . && git commit -m "Add GitHub Actions workflow" && git push') })}\n2. ${t('siteGithubActionsEnablePages')}\n3. ${t('siteGithubActionsSelectSource')}\n4. ${t('siteGithubActionsAutoDeploy')}`);
+            }
+            if (hasBranchWorkflow) {
+              log(`.github/workflows/main.yml also publishes this site (to the gh-pages branch). Delete it so each push runs one deploy instead of two.`, 'warn');
             }
           }
           catch(e) {

@@ -72,6 +72,30 @@ export class <%= className %> extends DDDSuper(I18NMixin(LitElement)) {
   }
 
   /**
+   * HAX hooks this element implements
+   */
+  haxHooks() {
+    return {
+      gizmoRegistration: "haxgizmoRegistration",
+    };
+  }
+
+  /**
+   * Register the haxProperties locales so HAX can translate the editor UI.
+   * Files live at locales/<%= name %>.haxProperties.<lang>.json
+   */
+  haxgizmoRegistration(store) {
+    globalThis.dispatchEvent(
+      new CustomEvent("i18n-manager-register-element", {
+        detail: {
+          namespace: `<%= name %>.haxProperties`,
+          localesPath: new URL(`./locales`, import.meta.url).href,
+        },
+      }),
+    );
+  }
+
+  /**
    * haxProperties integration via file reference
    */
   static get haxProperties() {

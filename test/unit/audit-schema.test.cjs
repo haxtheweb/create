@@ -48,6 +48,8 @@ function makeProject() {
   write(root, '_config/skeletons/course.json', { meta: {}, site: {}, build: { items: [] } })
   write(root, 'custom/lib/my-el.haxProperties.json', { settings: { configure: [] } })
   write(root, 'custom/locales/my-el.es.haxProperties.json', {})
+  write(root, 'custom/locales/my-el.haxProperties.fr.json', {})
+  write(root, 'custom/locales/my-el.fr.json', {})
   write(root, 'appstore.json', { status: 200 })
   write(root, 'custom/my-el.js', 'SuperDaemonInstance.defineOption({ title: "x" })')
   write(root, 'custom/other.js', 'export const nothing = 1')
@@ -64,7 +66,9 @@ test('discoverSchemaTargets groups files by validator and skips build output', (
     const rel = (list) => list.map((f) => path.relative(root, f)).sort()
     assert.deepEqual(rel(t.site), ['site.json'])
     assert.deepEqual(rel(t.skeleton), [path.join('_config', 'skeletons', 'course.json')])
-    assert.deepEqual(rel(t.haxProperties), [path.join('custom', 'lib', 'my-el.haxProperties.json'), path.join('custom', 'locales', 'my-el.es.haxProperties.json')])
+    // overlays are found under the canonical <tag>.haxProperties.<lang>.json name and the
+    // legacy <tag>.<lang>.haxProperties.json name; plain this.t locales are not schema targets
+    assert.deepEqual(rel(t.haxProperties), [path.join('custom', 'lib', 'my-el.haxProperties.json'), path.join('custom', 'locales', 'my-el.es.haxProperties.json'), path.join('custom', 'locales', 'my-el.haxProperties.fr.json')])
     // locale overlays are not demoSchema sources
     assert.deepEqual(rel(t.demoSchema), [path.join('custom', 'lib', 'my-el.haxProperties.json')])
     assert.deepEqual(rel(t.appstore), ['appstore.json'])
