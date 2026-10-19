@@ -3,6 +3,7 @@ import * as path from 'node:path';
 import * as p from '@clack/prompts';
 import color from 'picocolors';
 import { log, writeData } from '../logging.js';
+import { t } from '../i18n.js';
 
 /**
  * @description Actions available for the skills command
@@ -10,8 +11,8 @@ import { log, writeData } from '../logging.js';
  */
 export function skillsActions() {
   return [
-    { value: 'list', label: 'List bundled agent skills' },
-    { value: 'install', label: 'Install bundled skills into .agents/skills/' },
+    { value: 'list', label: t('skillsActionList') },
+    { value: 'install', label: t('skillsActionInstall', { path: '.agents/skills/' }) },
   ];
 }
 
@@ -109,7 +110,7 @@ export function installSkills(skills, skillName, targetPath) {
     copySkillDir(srcDir, destDir);
     installed.push(skill);
     if (!process.env.haxquiet) {
-      p.intro(`${color.bgGreen(color.black(` ✓ Installed: ${skill.name} → ${destDir} `))}`);
+      p.intro(`${color.bgGreen(color.black(` ✓ ${t('skillsInstalled', { name: skill.name, path: destDir })} `))}`);
     }
   }
   return installed;
@@ -126,7 +127,7 @@ export async function skillsCommandDetected(commandRun) {
   if (skills.length === 0) {
     const bundledPath = getBundledSkillsPath();
     if (!process.env.haxquiet) {
-      p.intro(`${color.bgBlack(color.white(` No bundled skills found at ${bundledPath} `))}`);
+      p.intro(`${color.bgBlack(color.white(` ${t('skillsNoneFound', { path: bundledPath })} `))}`);
     }
     return;
   }
@@ -136,11 +137,11 @@ export async function skillsCommandDetected(commandRun) {
       const out = skills.map(s => ({ name: s.name, version: s.version, description: s.description }));
       writeData(JSON.stringify(out, null, 2));
     } else {
-      p.intro(`${color.bgBlack(color.white(` Bundled agent skills (${skills.length}) `))}`);
+      p.intro(`${color.bgBlack(color.white(` ${t('skillsBundledList', { count: skills.length })} `))}`);
       for (const skill of skills) {
         p.intro(`${color.cyan(skill.name)} v${skill.version || '?'} — ${skill.description || ''}`);
       }
-      p.outro(`Install with: ${color.bold('hax skills install --all')} or ${color.bold('hax skills install <name>')}`);
+      p.outro(t('skillsInstallWith', { all: color.bold('hax skills install --all'), one: color.bold('hax skills install <name>') }));
     }
   }
   else if (action === 'install') {
@@ -158,11 +159,11 @@ export async function skillsCommandDetected(commandRun) {
         return;
       } else {
         const choices = [
-          { value: 'all', label: 'All bundled skills' },
+          { value: 'all', label: t('skillsAllBundled') },
           ...skills.map(s => ({ value: s.name, label: `${s.name} v${s.version || '?'}` })),
         ];
         skillName = await p.select({
-          message: 'Which skill(s) to install?',
+          message: t('skillsWhichToInstall'),
           options: choices,
         });
       }
@@ -176,7 +177,7 @@ export async function skillsCommandDetected(commandRun) {
       return;
     }
     if (!process.env.haxquiet) {
-      p.outro(`${color.green(installed.length)} skill(s) installed`);
+      p.outro(t('skillsInstalledCount', { count: color.green(installed.length) }));
     }
   }
   else {
@@ -185,11 +186,11 @@ export async function skillsCommandDetected(commandRun) {
       const out = skills.map(s => ({ name: s.name, version: s.version, description: s.description }));
       writeData(JSON.stringify(out, null, 2));
     } else {
-      p.intro(`${color.bgBlack(color.white(` Bundled agent skills (${skills.length}) `))}`);
+      p.intro(`${color.bgBlack(color.white(` ${t('skillsBundledList', { count: skills.length })} `))}`);
       for (const skill of skills) {
         p.intro(`${color.cyan(skill.name)} v${skill.version || '?'} — ${skill.description || ''}`);
       }
-      p.outro(`Install with: ${color.bold('hax skills install --all')} or ${color.bold('hax skills install <name>')}`);
+      p.outro(t('skillsInstallWith', { all: color.bold('hax skills install --all'), one: color.bold('hax skills install <name>') }));
     }
   }
 }

@@ -5,6 +5,7 @@ import open from 'open';
 import * as p from '@clack/prompts';
 import color from 'picocolors';
 import { merlinSays } from "../statements.js";
+import { t } from '../i18n.js';
 
 const osPathCmd = process.platform === "win32" ? "where.exe" : "which";
 
@@ -26,13 +27,13 @@ let sysSSH = true;
 
 export function partyActions(){
     return [
-      { value: 'docs', label: "View the HAX documentation"},
-      { value: 'playground', label: "Explore HAX.cloud playground"},
-      { value: 'psu', label: "Visit official hax.psu.edu site"},
-      { value: 'issues', label: "Engage with HAX issues on GitHub"},
-      { value: 'discord', label: "Join the HAX Discord community"},
-      { value: 'club', label: "Check out HAX The Club at PSU"},
-      { value: 'github', label: "Contribute to core development for HAX"},
+      { value: 'docs', label: t('partyActionDocs')},
+      { value: 'playground', label: t('partyActionPlayground')},
+      { value: 'psu', label: t('partyActionPsu')},
+      { value: 'issues', label: t('partyActionIssues')},
+      { value: 'discord', label: t('partyActionDiscord')},
+      { value: 'club', label: t('partyActionClub')},
+      { value: 'github', label: t('partyActionGithub')},
     ];
   }
 
@@ -77,7 +78,7 @@ export function resolveInstallCommands(repoName, npmClient, baseDir) {
 
 export async function partyCommandDetected(commandRun) {
   if (!commandRun.options.quiet) {
-    p.intro(`${color.bgBlack(color.white(` HAXTheWeb : Party detected `))}`);
+    p.intro(`${color.bgBlack(color.white(` ${t('partyDetected')} `))}`);
   }
 
   let actions = partyActions();
@@ -96,7 +97,7 @@ export async function partyCommandDetected(commandRun) {
     ...commandRun.options
   };
 
-  actions.push({ value: 'quit', label: "🚪 Quit"});
+  actions.push({ value: 'quit', label: `🚪 ${t('partyActionQuit')}`});
 
   while (operation.action !== 'quit') {
     if (!operation.action) {
@@ -112,7 +113,7 @@ export async function partyCommandDetected(commandRun) {
         {
           action: ({ results }) =>
             p.select({
-              message: `Actions you can take:`,
+              message: t('partyActionsPrompt'),
               defaultValue: actions[0],
               initialValue: actions[0],
               options: actions,
@@ -121,7 +122,7 @@ export async function partyCommandDetected(commandRun) {
         {
           onCancel: () => {
             if (!commandRun.options.quiet) {
-              p.cancel('🧙 Merlin: Canceling CLI.. HAX ya later 🪄');
+              p.cancel(`🧙 Merlin: ${t('partyCancel')} 🪄`);
             }
             process.exit(0);
           },
@@ -148,43 +149,43 @@ export async function partyCommandDetected(commandRun) {
       break;
       case "docs":
         // open the docs
-        p.intro(`${color.bgBlue(color.white(` HAX Documentation `))}`);
-        p.intro(`${color.bgBlue(color.white(` Opening in browser `))}`);
+        p.intro(`${color.bgBlue(color.white(` ${t('partyDocsTitle')} `))}`);
+        p.intro(`${color.bgBlue(color.white(` ${t('partyOpeningInBrowser')} `))}`);
         await open("https://haxtheweb.org/");
         p.outro(`${color.bgBlue(color.white(` https://haxtheweb.org/ `))}`);
       break;
       case "playground":
         // open the playground
-        p.intro(`${color.bgBlue(color.white(` HAX Playground `))}`);
-        p.intro(`${color.bgBlue(color.white(` Opening in browser `))}`);
+        p.intro(`${color.bgBlue(color.white(` ${t('partyPlaygroundTitle')} `))}`);
+        p.intro(`${color.bgBlue(color.white(` ${t('partyOpeningInBrowser')} `))}`);
         await open("https://hax.cloud/");
         p.outro(`${color.bgBlue(color.white(` https://hax.cloud/ `))}`);
       break;
       case "psu":
         // open the psu site
         p.intro(`${color.bgBlue(color.white(` HAX PSU `))}`);
-        p.intro(`${color.bgBlue(color.white(` Opening in browser `))}`);
+        p.intro(`${color.bgBlue(color.white(` ${t('partyOpeningInBrowser')} `))}`);
         await open("https://hax.psu.edu/");
         p.outro(`${color.bgBlue(color.white(` https://hax.psu.edu/ `))}`);
       break;
       case "issues":
         // open the issues
-        p.intro(`${color.bgBlue(color.white(` HAX Issues on Github `))}`);
-        p.intro(`${color.bgBlue(color.white(` Opening in browser `))}`);
+        p.intro(`${color.bgBlue(color.white(` ${t('partyIssuesTitle')} `))}`);
+        p.intro(`${color.bgBlue(color.white(` ${t('partyOpeningInBrowser')} `))}`);
         await open("https://github.com/haxtheweb/issues/issues");
         p.outro(`${color.bgBlue(color.white(` https://github.com/haxtheweb/issues/issues `))}`);
       break;
       case "discord":
         // open the discord
         p.intro(`${color.bgBlue(color.white(` HAX Discord `))}`);
-        p.intro(`${color.bgBlue(color.white(` Opening in browser `))}`);
+        p.intro(`${color.bgBlue(color.white(` ${t('partyOpeningInBrowser')} `))}`);
         await open("https://discord.gg/aCGxmRHEJP");
         p.outro(`${color.bgBlue(color.white(` https://discord.gg/aCGxmRHEJP `))}`);
       break;
       case "club":
         // open the club
-        p.intro(`${color.bgBlue(color.white(` HAX The Club is a student organization at PSU `))}`);
-        p.intro(`${color.bgBlue(color.white(` Opening in browser `))}`);
+        p.intro(`${color.bgBlue(color.white(` ${t('partyClubTitle')} `))}`);
+        p.intro(`${color.bgBlue(color.white(` ${t('partyOpeningInBrowser')} `))}`);
         await open("https://orgcentral.psu.edu/organization/hax-the-club");
         p.outro(`${color.bgBlue(color.white(` https://orgcentral.psu.edu/organization/hax-the-club `))}`);
         // we can change this to the club website when it's up
@@ -195,16 +196,16 @@ export async function partyCommandDetected(commandRun) {
           // auto and y are aliases
           if(!commandRun.options.root && !commandRun.options.auto){
             commandRun.options.root = await p.text({
-              message: 'What folder will your HAX projects live in?',
+              message: t('partyRootPrompt'),
               placeholder: process.cwd(),
               initialValue: process.cwd(),
               required: true,
               validate: (value) => {
                 if (!value) {
-                  return "Path is required (Enter accepts default)";
+                  return t('partyPathRequired');
                 }
                 if (!fs.existsSync(value)) {
-                  return `${value} does not exist. Select a valid folder`;
+                  return t('partyPathMissing', { path: value });
                 }
               }
             })
@@ -215,8 +216,8 @@ export async function partyCommandDetected(commandRun) {
           // list HAX repos
           const initialValues = [ "webcomponents" ];
           const options = [ 
-            { value: "webcomponents", label: "Webcomponents Monorepo - haxtheweb/webcomponents" }, 
-            { value: "create", label: "Create CLI - haxtheweb/create" }, 
+            { value: "webcomponents", label: `${t('partyRepoWebcomponents')} - haxtheweb/webcomponents` }, 
+            { value: "create", label: `${t('partyRepoCreate')} - haxtheweb/create` }, 
             { value: "hax-the-club", label: "HAX The Club - haxtheweb/hax-the-club" },
             { value: "haxcms-nodejs", label: "HAXcms Node.js - haxtheweb/haxcms-nodejs" }, 
             { value: "haxcms-php", label: "HAXcms PHP - haxtheweb/haxcms-php" }, 
@@ -224,13 +225,13 @@ export async function partyCommandDetected(commandRun) {
             { value: "HAXiam", label: "HAXiam - haxtheweb/HAXiam" }
           ];
 
-          p.note(`${merlinSays(`${color.magenta(color.bold('HAX is a party,'))} so you can select ${color.bold('multiple')} repositories at once!`)}
-      Remember to ${color.bold('fork each project')} on ${color.bold('GitHub')} (or you'll be asked to later!)`);
+          p.note(`${merlinSays(t('partySelectMultiple', { party: color.magenta(color.bold(t('partyIsAParty'))), multiple: color.bold(t('partyMultiple')) }))}
+      ${t('partyRememberToFork', { forkEachProject: color.bold(t('partyForkEachProject')), github: color.bold('GitHub') })}`);
           if(!commandRun.options.repos && commandRun.options.auto){
             commandRun.options.repos = initialValues;
           } else if(!commandRun.options.repos) {
             commandRun.options.repos = await p.multiselect({
-              message: 'Choose GitHub repositories to clone',
+              message: t('partyReposPrompt'),
               initialValues: initialValues,
               options: options,
               required: false,
@@ -258,8 +259,8 @@ async function cloneHAXRepositories(commandRun) {
   let s = p.spinner();
   // check for system dependencies: ssh, yarn, etc.
   if(!sysGit) {
-    console.error(`${color.red(`Git is not installed. The Git CLI is required to access GitHub with ${color.bold('hax party')}.`)}
-    Please follow the instructions at:
+    console.error(`${color.red(t('partyGitNotInstalled', { command: color.bold('hax party') }))}
+    ${t('partyFollowInstructions')}
     ${color.underline(color.cyan(`https://git-scm.com/book/en/v2/Getting-Started-Installing-Git`))}`);
     process.exit(1);
   }
@@ -275,8 +276,8 @@ async function cloneHAXRepositories(commandRun) {
     }
 
     if(!sysSSH) {
-        console.error(`${color.red(`SSH keys are not set up correctly. SSH is required to access GitHub with ${color.bold('hax party')}.`)}
-        Please follow the instructions at:
+        console.error(`${color.red(t('partySshNotSetUp', { command: color.bold('hax party') }))}
+        ${t('partyFollowInstructions')}
         ${color.underline(color.cyan(`https://docs.github.com/en/authentication/connecting-to-github-with-ssh`))}`);
         process.exit(1);
     }
@@ -285,9 +286,9 @@ async function cloneHAXRepositories(commandRun) {
     try {
       await exec('gh auth status')
     } catch {
-      console.log(`${color.red(`You have GitHub CLI installed, but it is not properly authenticated.`)}
-To access GitHub with ${color.bold('hax party')}, please follow this guided login:
-Select the ${color.cyan(`Generate a new SSH key`)} and ${color.cyan(`Login with a web browser`)} options`);
+      console.log(`${color.red(t('partyGhNotAuthenticated'))}
+${t('partyGhGuidedLogin', { command: color.bold('hax party') })}
+${t('partyGhSelectOptions', { sshOption: color.cyan(`Generate a new SSH key`), browserOption: color.cyan(`Login with a web browser`) })}`);
       
       await interactiveExec('gh', ['auth', 'login', '-p', 'ssh', '--clipboard'])
     }
@@ -304,23 +305,23 @@ Select the ${color.cyan(`Generate a new SSH key`)} and ${color.cyan(`Login with 
     if(sysGh){
       try {
         // ssh link is used since https prompts for password
-        s.start(`Cloning ${color.bold(item)} to ${color.bold(process.cwd())}`);
+        s.start(t('partyCloning', { repo: color.bold(item), path: color.bold(process.cwd()) }));
         await exec(`git clone git@github.com:${commandRun.options.author}/${item}.git`);
-        s.stop(`${color.green("Successfully")} cloned ${color.bold(item)} to ${color.bold(process.cwd())}`);
+        s.stop(t('partyCloneSuccess', { successfully: color.green(t('partySuccessfully')), repo: color.bold(item), path: color.bold(process.cwd()) }));
       } catch (e) {
         // skip the loop if the repo already exists
         if(isRepoAlreadyExistsError(e)){
-          s.stop(`${color.yellow(`${color.bold(`${item}`)} already exists in ${color.bold(process.cwd())}`)}`);
+          s.stop(`${color.yellow(t('partyRepoExists', { repo: color.bold(`${item}`), path: color.bold(process.cwd()) }))}`);
           break;
         }
 
-        s.stop(`${color.red("Failed")} to clone ${color.bold(item)} to ${color.bold(process.cwd())}`);
+        s.stop(t('partyCloneFailed', { failed: color.red(t('partyFailed')), repo: color.bold(item), path: color.bold(process.cwd()) }));
 
-        p.note(`${color.red(`Error: HAX could not find your personal ${color.bold("fork")} of the ${color.bold(item)} repository on GitHub`)}`)
+        p.note(`${color.red(t('partyForkNotFound', { fork: color.bold(t('partyFork')), repo: color.bold(item) }))}`)
         
-        s.start(`Using ${color.bold(`gh repo`)} utility to fork and clone ${color.bold(item)}`);
+        s.start(t('partyGhForking', { tool: color.bold(`gh repo`), repo: color.bold(item) }));
         await exec(`gh repo fork haxtheweb/${item} --clone`)
-        s.stop(`${color.green("Successfully")} cloned ${color.bold(item)} to ${color.bold(process.cwd())}`);
+        s.stop(t('partyCloneSuccess', { successfully: color.green(t('partySuccessfully')), repo: color.bold(item), path: color.bold(process.cwd()) }));
       }
     } 
     // Standard git, not GitHub CLI
@@ -333,30 +334,30 @@ Select the ${color.cyan(`Generate a new SSH key`)} and ${color.cyan(`Login with 
         try {
           // ssh link is used since https prompts for password
           if(firstRun){
-            s.start(`Cloning ${color.bold(item)} to ${color.bold(process.cwd())}`);
+            s.start(t('partyCloning', { repo: color.bold(item), path: color.bold(process.cwd()) }));
           } else {
-            s.start(`Trying again... Cloning ${item} to ${color.bold(process.cwd())}`);
+            s.start(t('partyCloningRetry', { repo: item, path: color.bold(process.cwd()) }));
           }
 
           await exec(`git clone git@github.com:${commandRun.options.author}/${item}.git`);
-          s.stop(`${color.green("Successfully")} cloned ${color.bold(item)} to ${color.bold(process.cwd())}`);
+          s.stop(t('partyCloneSuccess', { successfully: color.green(t('partySuccessfully')), repo: color.bold(item), path: color.bold(process.cwd()) }));
 
           isForked = true;
         } catch (e) {
           // skip the loop if the repo already exists
           if(isRepoAlreadyExistsError(e)){
-            s.stop(`${color.yellow(`${color.bold(`${item}`)} already exists in ${color.bold(process.cwd())}`)}`);
+            s.stop(`${color.yellow(t('partyRepoExists', { repo: color.bold(`${item}`), path: color.bold(process.cwd()) }))}`);
             break;
           }
 
-          s.stop(`${color.red("Failed")} to clone ${color.bold(item)} to ${color.bold(process.cwd())}`);
+          s.stop(t('partyCloneFailed', { failed: color.red(t('partyFailed')), repo: color.bold(item), path: color.bold(process.cwd()) }));
 
-          p.note(`${color.red(`Error: HAX cannot find a personal ${color.bold("fork")} of the ${color.bold(item)} repository on your GitHub account`)}
-      Use the following link to fork ${color.bold(item)}: ${color.underline(color.cyan(`https://github.com/haxtheweb/${item}/fork`))}`);
+          p.note(`${color.red(t('partyForkNotFoundAccount', { fork: color.bold(t('partyFork')), repo: color.bold(item) }))}
+      ${t('partyForkLink', { repo: color.bold(item), url: color.underline(color.cyan(`https://github.com/haxtheweb/${item}/fork`)) })}`);
 
           // We don't want to spam the link every time
           if(firstRun){  
-            p.intro(`${merlinSays("The link will open in your browser in a few seconds")}`)
+            p.intro(`${merlinSays(t('partyLinkWillOpen'))}`)
             setTimeout(async () => {
               await open(`https://github.com/haxtheweb/${item}/fork`)
             }, 3000);
@@ -364,24 +365,24 @@ Select the ${color.cyan(`Generate a new SSH key`)} and ${color.cyan(`Login with 
           }
 
           let response = await p.confirm({
-            message: `Have you forked the repository? Would you like to try again?`,
+            message: t('partyForkedConfirm'),
             initialValue: true,
           });
 
           // Multiple ways to quit (select no, ctrl+c, etc)
           if(p.isCancel(response) || !response) {
-            p.cancel('🧙 Merlin: Canceling CLI.. HAX ya later 🪄');
+            p.cancel(`🧙 Merlin: ${t('partyCancel')} 🪄`);
             process.exit(0);
           }
         }
       }
     }
 
-    s.start(`Installing dependencies for ${item}`);
+    s.start(t('partyInstallingDeps', { repo: item }));
     const installCommands = resolveInstallCommands(item, commandRun.options.npmClient, process.cwd());
     for (const installCommand of installCommands) {
       await exec(installCommand);
     }
-    s.stop(`Dependencies installed for ${item}`);
+    s.stop(t('partyDepsInstalled', { repo: item }));
   };
 }

@@ -26,9 +26,9 @@
     "dev": "nodemon --watch src",
     "haxcms-nodejs": "haxcms-nodejs",
     "local": "npm run build && npm link",
-    "test": "node --test test/unit/**/*.test.cjs test/smoke/**/*.test.cjs",
-    "test:unit": "node --test test/unit/**/*.test.cjs",
-    "test:smoke": "node --test test/smoke/**/*.test.cjs"
+    "test": "node --require ./test/_helpers/english.cjs --test test/unit/**/*.test.cjs test/smoke/**/*.test.cjs",
+    "test:unit": "node --require ./test/_helpers/english.cjs --test test/unit/**/*.test.cjs",
+    "test:smoke": "node --require ./test/_helpers/english.cjs --test test/smoke/**/*.test.cjs"
   },
   "man": [
     "./dist/docs/hax.1"
