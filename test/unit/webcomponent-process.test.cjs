@@ -64,6 +64,7 @@ haxcmsLib.HAXCMS.recurseCopy = async (src, dest) => {
     'webcomponent.js': 'export class <%= className %> extends HTMLElement {}\n',
     'lib/webcomponent.haxProperties.json': '{"tag": "<%= name %>"}\n',
     'locales/webcomponent.es.json': '{"name": "<%= name %>"}\n',
+    'locales/webcomponent.haxProperties.es.json': '{"settings": {}}\n',
     'test/webcomponent.test.js': "import '../<%= name %>.js';\n",
     'image.jpg': 'not-an-ejs-template',
   }
@@ -123,6 +124,8 @@ test('copies templates, renames dotfiles and element names, and renders ejs', op
     assert.ok(fs.existsSync(path.join(scaffold, 'my-cool-el.js')))
     assert.ok(fs.existsSync(path.join(scaffold, 'lib', 'my-cool-el.haxProperties.json')))
     assert.ok(fs.existsSync(path.join(scaffold, 'locales', 'my-cool-el.es.json')))
+    // editor-locale overlays land on the name the i18n manager fetches for <tag>.haxProperties
+    assert.ok(fs.existsSync(path.join(scaffold, 'locales', 'my-cool-el.haxProperties.es.json')))
     assert.ok(fs.existsSync(path.join(scaffold, 'test', 'my-cool-el.test.js')))
     assert.ok(!fs.existsSync(path.join(scaffold, 'webcomponent.js')))
 
