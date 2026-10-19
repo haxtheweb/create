@@ -6,10 +6,6 @@ jobs:
       contents: write
     runs-on: ubuntu-latest
     steps:
-      - name: ACTIONS_ALLOW_UNSECURE_COMMANDS
-        id: ACTIONS_ALLOW_UNSECURE_COMMANDS
-        run: echo 'ACTIONS_ALLOW_UNSECURE_COMMANDS=true' >> $GITHUB_ENV
-
       - name: set env variable actor
         run: echo 'GITHUB_ACTOR=$GITHUB_ACTOR' >> $GITHUB_ENV
         
