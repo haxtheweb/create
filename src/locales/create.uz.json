@@ -414,6 +414,8 @@
   "siteNewPagePlaceholder": "Yangi sahifa",
   "siteTitleRequired": "Sarlavha kiritilishi shart (Enter standart qiymatni qabul qiladi)",
   "siteNodeAddFailed": "node:add bajarilmadi: {reason}",
+  "siteExportFailed": "Eksport bajarilmadi: {reason}",
+  "siteImportFailed": "{source} manbasidan import bajarilmadi: {reason}",
   "siteNoApiResponse": "sayt API dan javob kelmadi",
   "siteNodeEditNeedsItemId": "interaktiv boʻlmagan rejimda node:edit uchun {flag} kerak",
   "siteNodeEditNoPage": "node:edit: \"{id}\" id yoki slug li sahifa yoʻq",

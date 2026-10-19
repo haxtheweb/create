@@ -414,6 +414,8 @@
   "siteNewPagePlaceholder": "Nuova pagina",
   "siteTitleRequired": "Il titolo è obbligatorio (Invio accetta il predefinito)",
   "siteNodeAddFailed": "node:add non riuscito: {reason}",
+  "siteExportFailed": "Esportazione non riuscita: {reason}",
+  "siteImportFailed": "Importazione da {source} non riuscita: {reason}",
   "siteNoApiResponse": "nessuna risposta dall'API del sito",
   "siteNodeEditNeedsItemId": "node:edit richiede {flag} in modalità non interattiva",
   "siteNodeEditNoPage": "node:edit: nessuna pagina con id o slug \"{id}\"",

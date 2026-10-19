@@ -414,6 +414,8 @@
   "siteNewPagePlaceholder": "نواں صفحہ",
   "siteTitleRequired": "عنوان لازمی اے (Enter ڈیفالٹ منن لیندا اے)",
   "siteNodeAddFailed": "node:add ناکام: {reason}",
+  "siteExportFailed": "ایکسپورٹ ناکام: {reason}",
+  "siteImportFailed": "{source} توں امپورٹ ناکام: {reason}",
   "siteNoApiResponse": "سائٹ API توں کوئی جواب نئیں آیا",
   "siteNodeEditNeedsItemId": "بغیر انٹریکشن چلاندیاں node:edit نوں {flag} چاہیدا اے",
   "siteNodeEditNoPage": "node:edit: id یا slug \"{id}\" والا کوئی صفحہ نئیں",

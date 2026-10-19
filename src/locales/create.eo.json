@@ -414,6 +414,8 @@
   "siteNewPagePlaceholder": "Nova paĝo",
   "siteTitleRequired": "Titolo devas esti agordita (Enigo akceptas la defaŭlton)",
   "siteNodeAddFailed": "node:add malsukcesis: {reason}",
+  "siteExportFailed": "Eksporto malsukcesis: {reason}",
+  "siteImportFailed": "Importo el {source} malsukcesis: {reason}",
   "siteNoApiResponse": "neniu respondo de la reteja API",
   "siteNodeEditNeedsItemId": "node:edit bezonas {flag} dum neinteraga rulado",
   "siteNodeEditNoPage": "node:edit: neniu paĝo kun id aŭ slug \"{id}\"",

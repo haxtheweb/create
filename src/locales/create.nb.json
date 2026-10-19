@@ -414,6 +414,8 @@
   "siteNewPagePlaceholder": "Ny side",
   "siteTitleRequired": "Tittel må angis (Enter godtar standard)",
   "siteNodeAddFailed": "node:add mislyktes: {reason}",
+  "siteExportFailed": "Eksport mislyktes: {reason}",
+  "siteImportFailed": "Import fra {source} mislyktes: {reason}",
   "siteNoApiResponse": "ingen svar fra nettstedets API",
   "siteNodeEditNeedsItemId": "node:edit krever {flag} ved ikke-interaktiv kjøring",
   "siteNodeEditNoPage": "node:edit: ingen side med id eller slug «{id}»",

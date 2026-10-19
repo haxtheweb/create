@@ -414,6 +414,8 @@
   "siteNewPagePlaceholder": "Uus leht",
   "siteTitleRequired": "Pealkiri peab olema määratud (Enter võtab vaikeväärtuse)",
   "siteNodeAddFailed": "node:add nurjus: {reason}",
+  "siteExportFailed": "Eksport nurjus: {reason}",
+  "siteImportFailed": "Import allikast {source} nurjus: {reason}",
   "siteNoApiResponse": "saidi API ei vastanud",
   "siteNodeEditNeedsItemId": "node:edit vajab mitteinteraktiivsel käitamisel {flag}",
   "siteNodeEditNoPage": "node:edit: lehte ID või slugiga \"{id}\" pole",

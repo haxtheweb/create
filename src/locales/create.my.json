@@ -414,6 +414,8 @@
   "siteNewPagePlaceholder": "စာမျက်နှာအသစ်",
   "siteTitleRequired": "ခေါင်းစဉ် သတ်မှတ်ရမည် (Enter နှိပ်လျှင် default ကို လက်ခံမည်)",
   "siteNodeAddFailed": "node:add မအောင်မြင်ပါ: {reason}",
+  "siteExportFailed": "Export မအောင်မြင်ပါ: {reason}",
+  "siteImportFailed": "{source} မှ import မအောင်မြင်ပါ: {reason}",
   "siteNoApiResponse": "site API မှ တုံ့ပြန်မှု မရှိပါ",
   "siteNodeEditNeedsItemId": "Non-interactive run သောအခါ node:edit တွင် {flag} လိုအပ်သည်",
   "siteNodeEditNoPage": "node:edit: id သို့မဟုတ် slug \"{id}\" ရှိသော စာမျက်နှာ မရှိပါ",

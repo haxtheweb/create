@@ -414,6 +414,8 @@
   "siteNewPagePlaceholder": "புதிய பக்கம்",
   "siteTitleRequired": "தலைப்பு அமைக்கப்பட வேண்டும் (Enter இயல்புநிலையை ஏற்கும்)",
   "siteNodeAddFailed": "node:add தோல்வியடைந்தது: {reason}",
+  "siteExportFailed": "ஏற்றுமதி தோல்வியடைந்தது: {reason}",
+  "siteImportFailed": "{source} இலிருந்து இறக்குமதி தோல்வியடைந்தது: {reason}",
   "siteNoApiResponse": "தள API இலிருந்து பதில் இல்லை",
   "siteNodeEditNeedsItemId": "ஊடாடல் இல்லாமல் இயக்கும்போது node:edit க்கு {flag} தேவை",
   "siteNodeEditNoPage": "node:edit: \"{id}\" என்ற id அல்லது slug உடைய பக்கம் இல்லை",

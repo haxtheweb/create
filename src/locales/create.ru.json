@@ -414,6 +414,8 @@
   "siteNewPagePlaceholder": "Новая страница",
   "siteTitleRequired": "Требуется заголовок (Enter — значение по умолчанию)",
   "siteNodeAddFailed": "Ошибка node:add: {reason}",
+  "siteExportFailed": "Ошибка экспорта: {reason}",
+  "siteImportFailed": "Ошибка импорта из {source}: {reason}",
   "siteNoApiResponse": "нет ответа от API сайта",
   "siteNodeEditNeedsItemId": "в неинтерактивном режиме node:edit требует {flag}",
   "siteNodeEditNoPage": "node:edit: нет страницы с id или slug \"{id}\"",

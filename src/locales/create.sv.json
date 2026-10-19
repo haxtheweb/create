@@ -414,6 +414,8 @@
   "siteNewPagePlaceholder": "Ny sida",
   "siteTitleRequired": "Titel måste anges (Enter godtar standardvärdet)",
   "siteNodeAddFailed": "node:add misslyckades: {reason}",
+  "siteExportFailed": "Exporten misslyckades: {reason}",
+  "siteImportFailed": "Importen från {source} misslyckades: {reason}",
   "siteNoApiResponse": "inget svar från webbplatsens API",
   "siteNodeEditNeedsItemId": "node:edit kräver {flag} vid icke-interaktiv körning",
   "siteNodeEditNoPage": "node:edit: ingen sida med id eller slug \"{id}\"",

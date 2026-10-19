@@ -414,6 +414,8 @@
   "siteNewPagePlaceholder": "Kuatiarogue pyahu",
   "siteTitleRequired": "Téra oñemoĩvaʼerã (Enter omoneĩ ypykue)",
   "siteNodeAddFailed": "node:add ojavy: {reason}",
+  "siteExportFailed": "Ñemondo ojavy: {reason}",
+  "siteImportFailed": "Jegueru {source}-gui ojavy: {reason}",
   "siteNoApiResponse": "tenda API ndombohovái",
   "siteNodeEditNeedsItemId": "node:edit oikotevẽ {flag} oñemboguata jave ñomongetaʼỹre",
   "siteNodeEditNoPage": "node:edit: ndaipóri kuatiarogue id térã slug \"{id}\" reheve",

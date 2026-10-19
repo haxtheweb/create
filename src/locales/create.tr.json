@@ -414,6 +414,8 @@
   "siteNewPagePlaceholder": "Yeni sayfa",
   "siteTitleRequired": "Başlık belirtilmeli (Enter varsayılanı kabul eder)",
   "siteNodeAddFailed": "node:add başarısız: {reason}",
+  "siteExportFailed": "Dışa aktarma başarısız: {reason}",
+  "siteImportFailed": "{source} kaynağından içe aktarma başarısız: {reason}",
   "siteNoApiResponse": "site API'sinden yanıt yok",
   "siteNodeEditNeedsItemId": "node:edit etkileşimsiz çalıştırılırken {flag} gerektirir",
   "siteNodeEditNoPage": "node:edit: \"{id}\" kimliğine veya slug'ına sahip sayfa yok",

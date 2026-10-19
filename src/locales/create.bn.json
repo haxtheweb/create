@@ -414,6 +414,8 @@
   "siteNewPagePlaceholder": "নতুন পেজ",
   "siteTitleRequired": "শিরোনাম দিতে হবে (Enter চাপলে ডিফল্ট গৃহীত হবে)",
   "siteNodeAddFailed": "node:add ব্যর্থ হয়েছে: {reason}",
+  "siteExportFailed": "এক্সপোর্ট ব্যর্থ হয়েছে: {reason}",
+  "siteImportFailed": "{source} থেকে ইমপোর্ট ব্যর্থ হয়েছে: {reason}",
   "siteNoApiResponse": "সাইট API থেকে কোনো সাড়া নেই",
   "siteNodeEditNeedsItemId": "নন-ইন্টারঅ্যাক্টিভভাবে চালালে node:edit-এর জন্য {flag} প্রয়োজন",
   "siteNodeEditNoPage": "node:edit: \"{id}\" id বা slug-এর কোনো পেজ নেই",

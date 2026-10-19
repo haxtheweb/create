@@ -414,6 +414,8 @@
   "siteNewPagePlaceholder": "Fuula haaraa",
   "siteTitleRequired": "Mata-dureen kaa'amuu qaba (Enter kan durtii fudhata)",
   "siteNodeAddFailed": "node:add hin milkoofne: {reason}",
+  "siteExportFailed": "Erguun hin milkoofne: {reason}",
+  "siteImportFailed": "Galchuun {source} irraa hin milkoofne: {reason}",
   "siteNoApiResponse": "API marsariitii irraa deebiin hin jiru",
   "siteNodeEditNeedsItemId": "node:edit yeroo walqunnamtii malee hojjetu {flag} barbaada",
   "siteNodeEditNoPage": "node:edit: fuulli id ykn slug \"{id}\" qabu hin jiru",

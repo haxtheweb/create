@@ -414,6 +414,8 @@
   "siteNewPagePlaceholder": "Nowa strona",
   "siteTitleRequired": "Tytuł musi być ustawiony (Enter akceptuje domyślny)",
   "siteNodeAddFailed": "node:add nie powiodło się: {reason}",
+  "siteExportFailed": "Eksport nie powiódł się: {reason}",
+  "siteImportFailed": "Import z {source} nie powiódł się: {reason}",
   "siteNoApiResponse": "brak odpowiedzi z API witryny",
   "siteNodeEditNeedsItemId": "node:edit wymaga {flag} w trybie nieinteraktywnym",
   "siteNodeEditNoPage": "node:edit: brak strony o id lub slug \"{id}\"",

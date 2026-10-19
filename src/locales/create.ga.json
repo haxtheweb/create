@@ -414,6 +414,8 @@
   "siteNewPagePlaceholder": "Leathanach nua",
   "siteTitleRequired": "Caithfear teideal a shocrú (glacann Enter leis an réamhshocrú)",
   "siteNodeAddFailed": "theip ar node:add: {reason}",
+  "siteExportFailed": "Theip ar easpórtáil: {reason}",
+  "siteImportFailed": "Theip ar iompórtáil ó {source}: {reason}",
   "siteNoApiResponse": "gan freagra ó API an tsuímh",
   "siteNodeEditNeedsItemId": "teastaíonn {flag} ó node:edit nuair a ritear go neamh-idirghníomhach",
   "siteNodeEditNoPage": "node:edit: níl aon leathanach le id nó slug \"{id}\"",

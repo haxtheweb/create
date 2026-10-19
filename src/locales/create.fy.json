@@ -414,6 +414,8 @@
   "siteNewPagePlaceholder": "Nije side",
   "siteTitleRequired": "Titel moat ynsteld wêze (Enter akseptearret standert)",
   "siteNodeAddFailed": "node:add mislearre: {reason}",
+  "siteExportFailed": "Eksportearjen mislearre: {reason}",
+  "siteImportFailed": "Ymportearjen fan {source} mislearre: {reason}",
   "siteNoApiResponse": "gjin antwurd fan de site-API",
   "siteNodeEditNeedsItemId": "node:edit hat {flag} nedich by net-ynteraktyf útfieren",
   "siteNodeEditNoPage": "node:edit: gjin side mei id of slug \"{id}\"",

@@ -414,6 +414,8 @@
   "siteNewPagePlaceholder": "ახალი გვერდი",
   "siteTitleRequired": "სათაური უნდა მიეთითოს (Enter იღებს ნაგულისხმევს)",
   "siteNodeAddFailed": "node:add ვერ შესრულდა: {reason}",
+  "siteExportFailed": "ექსპორტი ვერ შესრულდა: {reason}",
+  "siteImportFailed": "იმპორტი {source}-დან ვერ შესრულდა: {reason}",
   "siteNoApiResponse": "საიტის API-დან პასუხი არ არის",
   "siteNodeEditNeedsItemId": "არაინტერაქტიულ რეჟიმში node:edit-ს სჭირდება {flag}",
   "siteNodeEditNoPage": "node:edit: გვერდი id-ით ან slug-ით \"{id}\" არ არსებობს",

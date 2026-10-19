@@ -414,6 +414,8 @@
   "siteNewPagePlaceholder": "Nova pagina",
   "siteTitleRequired": "U titulu deve esse definitu (Entrée accetta u valore predefinitu)",
   "siteNodeAddFailed": "node:add fiascu: {reason}",
+  "siteExportFailed": "Espurtazione fiasca: {reason}",
+  "siteImportFailed": "Impurtazione da {source} fiasca: {reason}",
   "siteNoApiResponse": "nisuna risposta da l'API di u situ",
   "siteNodeEditNeedsItemId": "node:edit richiede {flag} in modu micca interattivu",
   "siteNodeEditNoPage": "node:edit: nisuna pagina cù l'id o u slug \"{id}\"",

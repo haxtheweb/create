@@ -414,6 +414,8 @@
   "siteNewPagePlaceholder": "Jauna lapa",
   "siteTitleRequired": "Virsraksts ir obligāts (Enter pieņem noklusējumu)",
   "siteNodeAddFailed": "node:add neizdevās: {reason}",
+  "siteExportFailed": "Eksportēšana neizdevās: {reason}",
+  "siteImportFailed": "Importēšana no {source} neizdevās: {reason}",
   "siteNoApiResponse": "nav atbildes no vietnes API",
   "siteNodeEditNeedsItemId": "node:edit neinteraktīvā režīmā nepieciešams {flag}",
   "siteNodeEditNoPage": "node:edit: nav lapas ar id vai slug \"{id}\"",

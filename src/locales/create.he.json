@@ -414,6 +414,8 @@
   "siteNewPagePlaceholder": "דף חדש",
   "siteTitleRequired": "יש להגדיר כותרת (Enter מקבל את ברירת המחדל)",
   "siteNodeAddFailed": "node:add נכשל: {reason}",
+  "siteExportFailed": "הייצוא נכשל: {reason}",
+  "siteImportFailed": "הייבוא מ-{source} נכשל: {reason}",
   "siteNoApiResponse": "אין תגובה מה-API של האתר",
   "siteNodeEditNeedsItemId": "node:edit דורש {flag} בהרצה לא אינטראקטיבית",
   "siteNodeEditNoPage": "node:edit: אין דף עם המזהה או ה-slug \"{id}\"",

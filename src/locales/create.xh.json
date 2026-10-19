@@ -414,6 +414,8 @@
   "siteNewPagePlaceholder": "Iphepha elitsha",
   "siteTitleRequired": "Isihloko kufuneka sisetwe (u-Enter wamkela engagqibekanga)",
   "siteNodeAddFailed": "node:add isilele: {reason}",
+  "siteExportFailed": "Ukuthumela kusilele: {reason}",
+  "siteImportFailed": "Ukungenisa ukusuka ku-{source} kusilele: {reason}",
   "siteNoApiResponse": "akukho mpendulo ivela kwi-API yesayithi",
   "siteNodeEditNeedsItemId": "node:edit ifuna {flag} xa kuqhutywa ngaphandle konxibelelwano",
   "siteNodeEditNoPage": "node:edit: akukho phepha line-id okanye i-slug \"{id}\"",

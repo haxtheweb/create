@@ -414,6 +414,8 @@
   "siteNewPagePlaceholder": "Kaca anyar",
   "siteTitleRequired": "Judhul kudu diisi (Enter nampa default)",
   "siteNodeAddFailed": "node:add gagal: {reason}",
+  "siteExportFailed": "Ekspor gagal: {reason}",
+  "siteImportFailed": "Impor saka {source} gagal: {reason}",
   "siteNoApiResponse": "ora ana tanggapan saka API situs",
   "siteNodeEditNeedsItemId": "node:edit mbutuhake {flag} yen mlaku tanpa interaksi",
   "siteNodeEditNoPage": "node:edit: ora ana kaca kanthi id utawa slug \"{id}\"",

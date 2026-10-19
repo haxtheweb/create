@@ -247,6 +247,22 @@ test('standalone scaffold ships the whole hax-webcomponent-dev skill, references
     }
   } finally {
     haxcmsLib.HAXCMS.recurseCopy = originalCopy
+  }
+})
+
+test('--quiet runs the scaffold without starting any progress spinner', opts, async () => {
+  const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'hax-wc-quiet-'))
+  try {
+    const before = spinnerStarts.length
+    const quiet = makeCommandRun({ npmClient: 'npm', y: true, i: false, quiet: true })
+    await webcomponentProcess(quiet, { name: 'quiet-el', type: 'webcomponent', path: projectRoot, author: 'tester' })
+    assert.equal(spinnerStarts.length, before, 'no spinner started with --quiet')
+    assert.ok(fs.existsSync(path.join(projectRoot, 'quiet-el', 'quiet-el.js')), 'scaffold still created')
+
+    const loud = makeCommandRun({ npmClient: 'npm', y: true, i: false })
+    await webcomponentProcess(loud, { name: 'loud-el', type: 'webcomponent', path: projectRoot, author: 'tester' })
+    assert.ok(spinnerStarts.length > before, 'spinner still used without --quiet')
+  } finally {
     fs.rmSync(projectRoot, { recursive: true, force: true })
   }
 })

@@ -414,6 +414,8 @@
   "siteNewPagePlaceholder": "Uusi sivu",
   "siteTitleRequired": "Otsikko on asetettava (Enter hyväksyy oletuksen)",
   "siteNodeAddFailed": "node:add epäonnistui: {reason}",
+  "siteExportFailed": "Vienti epäonnistui: {reason}",
+  "siteImportFailed": "Tuonti lähteestä {source} epäonnistui: {reason}",
   "siteNoApiResponse": "ei vastausta sivuston API:lta",
   "siteNodeEditNeedsItemId": "node:edit vaatii valitsimen {flag} ei-interaktiivisessa ajossa",
   "siteNodeEditNoPage": "node:edit: ei sivua, jonka id tai slug on \"{id}\"",

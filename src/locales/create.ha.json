@@ -414,6 +414,8 @@
   "siteNewPagePlaceholder": "Sabon shafi",
   "siteTitleRequired": "Dole a saita take (Enter yana karɓar tsoho)",
   "siteNodeAddFailed": "node:add ya kasa: {reason}",
+  "siteExportFailed": "Fitarwa ta kasa: {reason}",
+  "siteImportFailed": "Shigo da daga {source} ya kasa: {reason}",
   "siteNoApiResponse": "babu amsa daga API na shafi",
   "siteNodeEditNeedsItemId": "node:edit yana buƙatar {flag} lokacin gudanarwa ba tare da hulɗa ba",
   "siteNodeEditNoPage": "node:edit: babu shafi mai id ko slug \"{id}\"",

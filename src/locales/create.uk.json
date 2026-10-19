@@ -414,6 +414,8 @@
   "siteNewPagePlaceholder": "Нова сторінка",
   "siteTitleRequired": "Заголовок обов'язковий (Enter — значення за замовчуванням)",
   "siteNodeAddFailed": "node:add не вдалося: {reason}",
+  "siteExportFailed": "Не вдалося експортувати: {reason}",
+  "siteImportFailed": "Не вдалося імпортувати з {source}: {reason}",
   "siteNoApiResponse": "немає відповіді від API сайту",
   "siteNodeEditNeedsItemId": "у неінтерактивному режимі node:edit потребує {flag}",
   "siteNodeEditNoPage": "node:edit: немає сторінки з id або slug \"{id}\"",

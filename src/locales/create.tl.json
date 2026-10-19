@@ -414,6 +414,8 @@
   "siteNewPagePlaceholder": "Bagong page",
   "siteTitleRequired": "Dapat may pamagat (Enter para tanggapin ang default)",
   "siteNodeAddFailed": "pumalya ang node:add: {reason}",
+  "siteExportFailed": "Pumalya ang export: {reason}",
+  "siteImportFailed": "Pumalya ang import mula sa {source}: {reason}",
   "siteNoApiResponse": "walang tugon mula sa site API",
   "siteNodeEditNeedsItemId": "kailangan ng node:edit ang {flag} kapag hindi interactive ang pagpapatakbo",
   "siteNodeEditNoPage": "node:edit: walang page na may id o slug na \"{id}\"",

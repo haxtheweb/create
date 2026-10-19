@@ -414,6 +414,8 @@
   "siteNewPagePlaceholder": "نیا صفحہ",
   "siteTitleRequired": "عنوان دینا ضروری ہے (Enter ڈیفالٹ قبول کرتا ہے)",
   "siteNodeAddFailed": "node:add ناکام: {reason}",
+  "siteExportFailed": "ایکسپورٹ ناکام: {reason}",
+  "siteImportFailed": "{source} سے درآمد ناکام: {reason}",
   "siteNoApiResponse": "سائٹ API سے کوئی جواب نہیں ملا",
   "siteNodeEditNeedsItemId": "غیر انٹرایکٹو طور پر چلاتے وقت node:edit کو {flag} درکار ہے",
   "siteNodeEditNoPage": "node:edit: id یا slug \"{id}\" والا کوئی صفحہ نہیں",

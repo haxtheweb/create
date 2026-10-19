@@ -414,6 +414,8 @@
   "siteNewPagePlaceholder": "Paġna ġdida",
   "siteTitleRequired": "It-titolu jrid jiġi ssettjat (Enter jaċċetta d-default)",
   "siteNodeAddFailed": "node:add falla: {reason}",
+  "siteExportFailed": "L-esportazzjoni falliet: {reason}",
+  "siteImportFailed": "L-importazzjoni minn {source} falliet: {reason}",
   "siteNoApiResponse": "l-ebda tweġiba mill-API tas-sit",
   "siteNodeEditNeedsItemId": "node:edit jeħtieġ {flag} meta jitħaddem b'mod mhux interattiv",
   "siteNodeEditNoPage": "node:edit: l-ebda paġna b'id jew slug \"{id}\"",

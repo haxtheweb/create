@@ -414,6 +414,8 @@
   "siteNewPagePlaceholder": "కొత్త పేజీ",
   "siteTitleRequired": "శీర్షిక సెట్ చేయాలి (Enter డిఫాల్ట్‌ను అంగీకరిస్తుంది)",
   "siteNodeAddFailed": "node:add విఫలమైంది: {reason}",
+  "siteExportFailed": "ఎగుమతి విఫలమైంది: {reason}",
+  "siteImportFailed": "{source} నుండి దిగుమతి విఫలమైంది: {reason}",
   "siteNoApiResponse": "సైట్ API నుండి స్పందన లేదు",
   "siteNodeEditNeedsItemId": "ఇంటరాక్టివ్ కాని మోడ్‌లో node:edit‌కు {flag} అవసరం",
   "siteNodeEditNoPage": "node:edit: id లేదా slug \"{id}\"‌తో పేజీ లేదు",

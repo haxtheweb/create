@@ -414,6 +414,8 @@
   "siteNewPagePlaceholder": "新页面",
   "siteTitleRequired": "标题一定要设（揿 Enter 用默认值）",
   "siteNodeAddFailed": "node:add 失败：{reason}",
+  "siteExportFailed": "导出失败：{reason}",
+  "siteImportFailed": "从 {source} 导入失败：{reason}",
   "siteNoApiResponse": "站点 API 呒没响应",
   "siteNodeEditNeedsItemId": "非交互运行个辰光，node:edit 需要 {flag}",
   "siteNodeEditNoPage": "node:edit：寻勿着 id 或者 slug 是 \"{id}\" 个页面",
