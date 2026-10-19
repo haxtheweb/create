@@ -21,6 +21,7 @@ export function installInertDom(target = globalThis) {
   if (!g.window) {
     g.window = g;
   }
+  g.self ||= g;
   g.addEventListener ||= noop;
   g.removeEventListener ||= noop;
   g.dispatchEvent ||= () => true;
@@ -47,6 +48,22 @@ export function installInertDom(target = globalThis) {
         }
       };
     }
+  }
+  if (g.document && g.customElements) {
+    // the shim's createElement hands back a plain element; singletons built
+    // with document.createElement("tag") then lack their own methods
+    const create = g.document.createElement.bind(g.document);
+    g.document.createElement = (tag, ...rest) => {
+      const Ctor = g.customElements.get(String(tag).toLowerCase());
+      if (Ctor) {
+        try {
+          return new Ctor();
+        } catch {
+          // fall back to the plain element
+        }
+      }
+      return create(tag, ...rest);
+    };
   }
   if (g.document) {
     g.document.addEventListener ||= noop;

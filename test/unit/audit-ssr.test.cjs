@@ -342,3 +342,23 @@ test("installInertDom fills in the missing browser surface and leaves existing A
   el.style.setProperty("--a", "b");
   el.style = "ignored";
 });
+
+test("installInertDom builds registered classes from document.createElement and aliases self", async () => {
+  const { installInertDom } = await import(
+    "../../src/lib/programs/audit-ssr-env.mjs"
+  );
+  class Registered {}
+  const target = {
+    HTMLElement: class {},
+    customElements: {
+      get: (tag) => (tag === "x-known" ? Registered : undefined),
+    },
+    document: { createElement: (tag) => ({ plain: tag }) },
+  };
+  installInertDom(target);
+  assert.equal(target.self, target);
+  assert.ok(target.document.createElement("X-Known") instanceof Registered);
+  assert.deepEqual(target.document.createElement("x-other"), {
+    plain: "x-other",
+  });
+});
