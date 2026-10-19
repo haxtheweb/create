@@ -427,6 +427,52 @@ test('site:theme records an unknown theme as a custom entry', opts, async () => 
   assert.ok(fakeHaxsite.manifest.__saved, 'manifest saved')
 })
 
+test('site:theme keeps the site theme variables when switching to a core theme', opts, async () => {
+  resetMocks()
+  const variables = {
+    icon: 'icons:record-voice-over',
+    hexCode: '#3f51b5',
+    cssVariable: '--simple-colors-default-theme-light-blue-7',
+  }
+  fakeHaxsite.manifest.metadata.theme = { name: 'clean-one', element: 'clean-one', variables }
+  await runSite({
+    command: 'site',
+    arguments: { action: 'site:theme' },
+    options: { quiet: true, i: true, theme: 'clean-two' },
+  })
+  assert.equal(fakeHaxsite.manifest.metadata.theme.element, 'clean-two')
+  assert.deepEqual(fakeHaxsite.manifest.metadata.theme.variables, variables)
+})
+
+test('site:theme keeps the site theme variables for an unregistered theme', opts, async () => {
+  resetMocks()
+  fakeHaxsite.manifest.metadata.theme = {
+    name: 'clean-one',
+    element: 'clean-one',
+    variables: { hexCode: '#aa8833' },
+  }
+  await runSite({
+    command: 'site',
+    arguments: { action: 'site:theme' },
+    options: { quiet: true, i: true, theme: 'another-new-theme' },
+  })
+  assert.equal(fakeHaxsite.manifest.metadata.theme.element, 'another-new-theme')
+  assert.deepEqual(fakeHaxsite.manifest.metadata.theme.variables, { hexCode: '#aa8833' })
+})
+
+test('site:theme always writes a variables object even when the site had none', opts, async () => {
+  resetMocks()
+  fakeHaxsite.manifest.metadata.theme = { name: 'clean-one', element: 'clean-one' }
+  await runSite({
+    command: 'site',
+    arguments: { action: 'site:theme' },
+    options: { quiet: true, i: true, theme: 'clean-two' },
+  })
+  const theme = fakeHaxsite.manifest.metadata.theme
+  assert.equal(typeof theme.variables, 'object')
+  assert.ok(theme.variables !== null && !Array.isArray(theme.variables))
+})
+
 test('site:element writes the rendered element into custom/src', opts, async () => {
   resetMocks()
   const exitCode = await runSite({

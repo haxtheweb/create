@@ -23,9 +23,41 @@ const {
   siteItemsOptionsList,
   siteThemeList,
   siteSkeletonList,
+  withSiteThemeVariables,
 } = available ? siteModule : {}
 
 const opts = { skip: skipReason, timeout: 15000 }
+
+// --- withSiteThemeVariables ---
+
+test('withSiteThemeVariables carries site variables onto a registry theme', opts, () => {
+  const registry = { element: 'resume-theme', path: '@haxtheweb/resume-theme/resume-theme.js' }
+  const previous = { element: 'clean-one', variables: { hexCode: '#3f51b5', icon: 'icons:face' } }
+  const result = withSiteThemeVariables(registry, previous)
+  assert.equal(result.element, 'resume-theme')
+  assert.deepEqual(result.variables, { hexCode: '#3f51b5', icon: 'icons:face' })
+})
+
+test('withSiteThemeVariables lets site values win over theme defaults', opts, () => {
+  const registry = { element: 'x', variables: { hexCode: '#000000', palette: 'blue' } }
+  const previous = { variables: { hexCode: '#ffffff' } }
+  assert.deepEqual(withSiteThemeVariables(registry, previous).variables, {
+    hexCode: '#ffffff',
+    palette: 'blue',
+  })
+})
+
+test('withSiteThemeVariables returns an empty variables object when nothing is set', opts, () => {
+  assert.deepEqual(withSiteThemeVariables({ element: 'x' }, null).variables, {})
+  assert.deepEqual(withSiteThemeVariables({ element: 'x' }, { variables: 'bad' }).variables, {})
+  assert.deepEqual(withSiteThemeVariables(undefined, undefined), { variables: {} })
+})
+
+test('withSiteThemeVariables does not mutate the cached registry entry', opts, () => {
+  const registry = { element: 'x' }
+  withSiteThemeVariables(registry, { variables: { hexCode: '#123456' } })
+  assert.equal(registry.variables, undefined)
+})
 
 // --- formatStructuredOutput ---
 

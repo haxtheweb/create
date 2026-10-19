@@ -1847,7 +1847,10 @@ export async function siteCommandDetected(commandRun) {
 
             if (themes && commandRun.options.theme) {
               if (themes[commandRun.options.theme]){
-                activeHaxsite.manifest.metadata.theme = themes[commandRun.options.theme];
+                activeHaxsite.manifest.metadata.theme = withSiteThemeVariables(
+                  themes[commandRun.options.theme],
+                  activeHaxsite.manifest.metadata.theme
+                );
                 activeHaxsite.manifest.save(false);
               } else if (commandRun.options.theme === "custom-theme") {
                 commandRun.options.name = activeHaxsite.name;
@@ -1862,8 +1865,11 @@ export async function siteCommandDetected(commandRun) {
                   path: "./custom/build/custom.es6.js",
                   name: dashToCamel(commandRun.options.theme),
                 }
-              
-                activeHaxsite.manifest.metadata.theme = themeObj;
+
+                activeHaxsite.manifest.metadata.theme = withSiteThemeVariables(
+                  themeObj,
+                  activeHaxsite.manifest.metadata.theme
+                );
                 activeHaxsite.manifest.save(false);
               } 
             }
@@ -3822,6 +3828,25 @@ export async function siteThemeList(coreOnly = true, directory = null) {
   return items
 }
 
+/**
+ * Build the site-level theme object for a theme switch.
+ * Registry entries describe the theme only; `variables` (icon, hexCode,
+ * cssVariable, image, palette, ...) are the site's own appearance settings,
+ * so they carry over from the previous theme. Values the site already has
+ * win over any defaults the new theme ships. Always returns `variables` so
+ * backends that read `theme.variables.*` never see undefined.
+ * Returns a copy so the cached theme registry is never mutated.
+ */
+export function withSiteThemeVariables(nextTheme, previousTheme) {
+  const next = { ...(nextTheme || {}) };
+  const isObj = (v) => v && typeof v === 'object' && !Array.isArray(v);
+  const themeDefaults = isObj(next.variables) ? next.variables : {};
+  const siteValues =
+    previousTheme && isObj(previousTheme.variables) ? previousTheme.variables : {};
+  next.variables = { ...themeDefaults, ...siteValues };
+  return next;
+}
+
 async function customSiteTheme(commandRun, project) {
   // pass theme name for twig templates
   project.customThemeName = commandRun.options.customThemeName ? commandRun.options.customThemeName : project.customThemeName;
@@ -3909,7 +3934,10 @@ async function customSiteTheme(commandRun, project) {
       name: project.className,
   }
 
-  activeHaxsite.manifest.metadata.theme = themeObj;
+  activeHaxsite.manifest.metadata.theme = withSiteThemeVariables(
+    themeObj,
+    activeHaxsite.manifest.metadata.theme
+  );
   activeHaxsite.manifest.save(false);
 
   // install and build theme dependencies
