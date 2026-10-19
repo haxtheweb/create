@@ -414,6 +414,8 @@
   "siteNewPagePlaceholder": "Trang mới",
   "siteTitleRequired": "Phải đặt tiêu đề (Enter để dùng mặc định)",
   "siteNodeAddFailed": "node:add thất bại: {reason}",
+  "siteExportFailed": "Xuất thất bại: {reason}",
+  "siteImportFailed": "Nhập từ {source} thất bại: {reason}",
   "siteNoApiResponse": "API của site không phản hồi",
   "siteNodeEditNeedsItemId": "node:edit cần {flag} khi chạy không tương tác",
   "siteNodeEditNoPage": "node:edit: không có trang nào với id hoặc slug \"{id}\"",

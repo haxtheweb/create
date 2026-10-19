@@ -414,6 +414,8 @@
   "siteNewPagePlaceholder": "หน้าใหม่",
   "siteTitleRequired": "ต้องระบุชื่อเรื่อง (กด Enter เพื่อใช้ค่าเริ่มต้น)",
   "siteNodeAddFailed": "node:add ล้มเหลว: {reason}",
+  "siteExportFailed": "การส่งออกล้มเหลว: {reason}",
+  "siteImportFailed": "การนำเข้าจาก {source} ล้มเหลว: {reason}",
   "siteNoApiResponse": "ไม่มีการตอบกลับจาก API ของไซต์",
   "siteNodeEditNeedsItemId": "node:edit ต้องใช้ {flag} เมื่อรันแบบไม่โต้ตอบ",
   "siteNodeEditNoPage": "node:edit: ไม่มีหน้าที่มี id หรือ slug \"{id}\"",

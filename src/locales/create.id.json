@@ -414,6 +414,8 @@
   "siteNewPagePlaceholder": "Halaman baru",
   "siteTitleRequired": "Judul wajib diisi (Enter untuk default)",
   "siteNodeAddFailed": "node:add gagal: {reason}",
+  "siteExportFailed": "Ekspor gagal: {reason}",
+  "siteImportFailed": "Impor dari {source} gagal: {reason}",
   "siteNoApiResponse": "tidak ada respons dari API situs",
   "siteNodeEditNeedsItemId": "node:edit memerlukan {flag} saat berjalan non-interaktif",
   "siteNodeEditNoPage": "node:edit: tidak ada halaman dengan id atau slug \"{id}\"",

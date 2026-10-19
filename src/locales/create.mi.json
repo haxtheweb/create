@@ -414,6 +414,8 @@
   "siteNewPagePlaceholder": "Whārangi hou",
   "siteTitleRequired": "Me tautuhi te taitara (pēhia Enter mō te taunoa)",
   "siteNodeAddFailed": "I rahua te node:add: {reason}",
+  "siteExportFailed": "I rahua te kaweake: {reason}",
+  "siteImportFailed": "I rahua te kawemai mai i {source}: {reason}",
   "siteNoApiResponse": "kāore he urupare mai i te API pae",
   "siteNodeEditNeedsItemId": "ka hiahia te node:edit i te {flag} ina whakahaerehia ā-kore-pāhekoheko",
   "siteNodeEditNoPage": "node:edit: kāore he whārangi me te id, slug rānei \"{id}\"",

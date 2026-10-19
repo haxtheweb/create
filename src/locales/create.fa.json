@@ -414,6 +414,8 @@
   "siteNewPagePlaceholder": "صفحه جدید",
   "siteTitleRequired": "عنوان باید تعیین شود (Enter مقدار پیش‌فرض را می‌پذیرد)",
   "siteNodeAddFailed": "node:add ناموفق بود: {reason}",
+  "siteExportFailed": "برون‌بری ناموفق بود: {reason}",
+  "siteImportFailed": "درون‌ریزی از {source} ناموفق بود: {reason}",
   "siteNoApiResponse": "پاسخی از API سایت دریافت نشد",
   "siteNodeEditNeedsItemId": "node:edit در اجرای غیرتعاملی به {flag} نیاز دارد",
   "siteNodeEditNoPage": "node:edit: صفحه‌ای با شناسه یا slug \"{id}\" وجود ندارد",

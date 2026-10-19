@@ -414,6 +414,8 @@
   "siteNewPagePlaceholder": "ਨਵਾਂ ਪੰਨਾ",
   "siteTitleRequired": "ਸਿਰਲੇਖ ਸੈੱਟ ਹੋਣਾ ਲਾਜ਼ਮੀ ਹੈ (Enter ਡਿਫਾਲਟ ਸਵੀਕਾਰ ਕਰਦਾ ਹੈ)",
   "siteNodeAddFailed": "node:add ਅਸਫਲ: {reason}",
+  "siteExportFailed": "ਐਕਸਪੋਰਟ ਅਸਫਲ: {reason}",
+  "siteImportFailed": "{source} ਤੋਂ ਇੰਪੋਰਟ ਅਸਫਲ: {reason}",
   "siteNoApiResponse": "ਸਾਈਟ API ਤੋਂ ਕੋਈ ਜਵਾਬ ਨਹੀਂ",
   "siteNodeEditNeedsItemId": "ਗੈਰ-ਇੰਟਰਐਕਟਿਵ ਚਲਾਉਣ ਵੇਲੇ node:edit ਨੂੰ {flag} ਚਾਹੀਦਾ ਹੈ",
   "siteNodeEditNoPage": "node:edit: id ਜਾਂ slug \"{id}\" ਵਾਲਾ ਕੋਈ ਪੰਨਾ ਨਹੀਂ",

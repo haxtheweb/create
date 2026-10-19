@@ -414,6 +414,8 @@
   "siteNewPagePlaceholder": "Ikhasi elisha",
   "siteTitleRequired": "Isihloko kufanele sisethwe (u-Enter wamukela okuzenzakalelayo)",
   "siteNodeAddFailed": "i-node:add yehlulekile: {reason}",
+  "siteExportFailed": "Ukuthumela kuhlulekile: {reason}",
+  "siteImportFailed": "Ukungenisa kusuka ku-{source} kuhlulekile: {reason}",
   "siteNoApiResponse": "ayikho impendulo evela ku-API yesayithi",
   "siteNodeEditNeedsItemId": "i-node:edit idinga i-{flag} uma kusebenza ngaphandle kokuxhumana",
   "siteNodeEditNoPage": "node:edit: alikho ikhasi elune-id noma i-slug \"{id}\"",

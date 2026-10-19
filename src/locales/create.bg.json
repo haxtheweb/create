@@ -414,6 +414,8 @@
   "siteNewPagePlaceholder": "Нова страница",
   "siteTitleRequired": "Заглавието е задължително (Enter приема стойността по подразбиране)",
   "siteNodeAddFailed": "node:add е неуспешно: {reason}",
+  "siteExportFailed": "Експортирането е неуспешно: {reason}",
+  "siteImportFailed": "Импортирането от {source} е неуспешно: {reason}",
   "siteNoApiResponse": "няма отговор от API на сайта",
   "siteNodeEditNeedsItemId": "node:edit изисква {flag} при неинтерактивно изпълнение",
   "siteNodeEditNoPage": "node:edit: няма страница с id или slug \"{id}\"",

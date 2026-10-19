@@ -414,6 +414,8 @@
   "siteNewPagePlaceholder": "새 페이지",
   "siteTitleRequired": "제목을 입력해야 합니다 (Enter를 누르면 기본값 사용)",
   "siteNodeAddFailed": "node:add 실패: {reason}",
+  "siteExportFailed": "내보내기 실패: {reason}",
+  "siteImportFailed": "{source}에서 가져오기 실패: {reason}",
   "siteNoApiResponse": "사이트 API에서 응답이 없습니다",
   "siteNodeEditNeedsItemId": "비대화형으로 실행할 때 node:edit에는 {flag}가 필요합니다",
   "siteNodeEditNoPage": "node:edit: ID 또는 슬러그가 \"{id}\"인 페이지가 없습니다",

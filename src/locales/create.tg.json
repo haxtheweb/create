@@ -414,6 +414,8 @@
   "siteNewPagePlaceholder": "Саҳифаи нав",
   "siteTitleRequired": "Сарлавҳа бояд муқаррар шавад (Enter пешфарзро қабул мекунад)",
   "siteNodeAddFailed": "node:add ноком шуд: {reason}",
+  "siteExportFailed": "Содирот ноком шуд: {reason}",
+  "siteImportFailed": "Воридот аз {source} ноком шуд: {reason}",
   "siteNoApiResponse": "аз API-и сайт ҷавоб нест",
   "siteNodeEditNeedsItemId": "node:edit ҳангоми иҷрои ғайриинтерактивӣ {flag}-ро талаб мекунад",
   "siteNodeEditNoPage": "node:edit: саҳифа бо id ё slug \"{id}\" нест",

@@ -414,6 +414,8 @@
   "siteNewPagePlaceholder": "نوې پاڼه",
   "siteTitleRequired": "سرلیک باید وټاکل شي (Enter ډیفالټ مني)",
   "siteNodeAddFailed": "node:add ناکام شو: {reason}",
+  "siteExportFailed": "صادرول ناکام شو: {reason}",
+  "siteImportFailed": "له {source} څخه واردول ناکام شو: {reason}",
   "siteNoApiResponse": "د سایټ API څخه هېڅ ځواب نه دی راغلی",
   "siteNodeEditNeedsItemId": "node:edit په غیر تعاملي چلولو کې {flag} ته اړتیا لري",
   "siteNodeEditNoPage": "node:edit: د \"{id}\" id یا slug سره هېڅ پاڼه نشته",

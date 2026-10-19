@@ -414,6 +414,8 @@
   "siteNewPagePlaceholder": "Ojú-ìwé tuntun",
   "siteTitleRequired": "A gbọ́dọ̀ ṣètò àkọlé (Enter gba àìyípadà)",
   "siteNodeAddFailed": "node:add kùnà: {reason}",
+  "siteExportFailed": "Ìkójáde kùnà: {reason}",
+  "siteImportFailed": "Ìkówọlé láti {source} kùnà: {reason}",
   "siteNoApiResponse": "kò sí èsì láti API ojúlé",
   "siteNodeEditNeedsItemId": "node:edit nílò {flag} nígbà tí a bá ń ṣiṣẹ́ láìsí ìbáraẹnisọ̀rọ̀",
   "siteNodeEditNoPage": "node:edit: kò sí ojú-ìwé tó ní id tàbí slug \"{id}\"",

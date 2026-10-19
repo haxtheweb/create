@@ -414,6 +414,8 @@
   "siteNewPagePlaceholder": "Naujas puslapis",
   "siteTitleRequired": "Pavadinimas privalomas (Enter – numatytasis)",
   "siteNodeAddFailed": "node:add nepavyko: {reason}",
+  "siteExportFailed": "Eksportuoti nepavyko: {reason}",
+  "siteImportFailed": "Importuoti iš {source} nepavyko: {reason}",
   "siteNoApiResponse": "svetainės API neatsakė",
   "siteNodeEditNeedsItemId": "neinteraktyviu režimu node:edit reikia {flag}",
   "siteNodeEditNoPage": "node:edit: nėra puslapio su id arba slug „{id}“",

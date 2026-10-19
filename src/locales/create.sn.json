@@ -414,6 +414,8 @@
   "siteNewPagePlaceholder": "Peji itsva",
   "siteTitleRequired": "Musoro unofanira kusetwa (Enter inogamuchira wakatarwa)",
   "siteNodeAddFailed": "node:add yakundikana: {reason}",
+  "siteExportFailed": "Kuburitsa kwakundikana: {reason}",
+  "siteImportFailed": "Kuunza kubva ku {source} kwakundikana: {reason}",
   "siteNoApiResponse": "hapana mhinduro kubva kuAPI yesaiti",
   "siteNodeEditNeedsItemId": "node:edit inoda {flag} kana uchimhanyisa usingapindirane",
   "siteNodeEditNoPage": "node:edit: hapana peji ine id kana slug \"{id}\"",

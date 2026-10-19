@@ -414,6 +414,8 @@
   "siteNewPagePlaceholder": "Νέα σελίδα",
   "siteTitleRequired": "Ο τίτλος πρέπει να οριστεί (το Enter αποδέχεται την προεπιλογή)",
   "siteNodeAddFailed": "Το node:add απέτυχε: {reason}",
+  "siteExportFailed": "Η εξαγωγή απέτυχε: {reason}",
+  "siteImportFailed": "Η εισαγωγή από {source} απέτυχε: {reason}",
   "siteNoApiResponse": "καμία απόκριση από το API του ιστότοπου",
   "siteNodeEditNeedsItemId": "Το node:edit χρειάζεται {flag} σε μη διαδραστική εκτέλεση",
   "siteNodeEditNoPage": "node:edit: δεν υπάρχει σελίδα με id ή slug \"{id}\"",

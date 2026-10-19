@@ -414,6 +414,8 @@
   "siteNewPagePlaceholder": "नयाँ पृष्ठ",
   "siteTitleRequired": "शीर्षक सेट गर्नुपर्छ (Enter ले पूर्वनिर्धारित स्वीकार गर्छ)",
   "siteNodeAddFailed": "node:add असफल भयो: {reason}",
+  "siteExportFailed": "निर्यात असफल भयो: {reason}",
+  "siteImportFailed": "{source} बाट आयात असफल भयो: {reason}",
   "siteNoApiResponse": "साइट API बाट कुनै प्रतिक्रिया आएन",
   "siteNodeEditNeedsItemId": "गैर-अन्तरक्रियात्मक रूपमा चलाउँदा node:edit लाई {flag} चाहिन्छ",
   "siteNodeEditNoPage": "node:edit: id वा slug \"{id}\" भएको कुनै पृष्ठ छैन",

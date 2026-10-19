@@ -414,6 +414,8 @@
   "siteNewPagePlaceholder": "Жаңа бет",
   "siteTitleRequired": "Тақырып көрсетілуі керек (Enter әдепкі мәнді қабылдайды)",
   "siteNodeAddFailed": "node:add сәтсіз: {reason}",
+  "siteExportFailed": "Экспорт сәтсіз: {reason}",
+  "siteImportFailed": "{source} көзінен импорттау сәтсіз: {reason}",
   "siteNoApiResponse": "сайт API-інен жауап жоқ",
   "siteNodeEditNeedsItemId": "Интерактивсіз режимде node:edit үшін {flag} қажет",
   "siteNodeEditNoPage": "node:edit: id немесе slug \"{id}\" бар бет жоқ",

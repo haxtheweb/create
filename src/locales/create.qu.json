@@ -414,6 +414,8 @@
   "siteNewPagePlaceholder": "Musuq raphi",
   "siteTitleRequired": "Titulo kananmi (Enter ñawpaq kaqta chaskin)",
   "siteNodeAddFailed": "node:add pantan: {reason}",
+  "siteExportFailed": "Lluqsichiy pantan: {reason}",
+  "siteImportFailed": "{source} nisqamanta apamuy pantan: {reason}",
   "siteNoApiResponse": "sitio API nisqamanta mana kutichiy kanchu",
   "siteNodeEditNeedsItemId": "Mana rimanakuspa purichiptiykiqa node:edit {flag} nisqata mañakun",
   "siteNodeEditNoPage": "node:edit: mana raphi kanchu id utaq slug \"{id}\" nisqawan",

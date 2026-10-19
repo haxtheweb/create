@@ -414,6 +414,8 @@
   "siteNewPagePlaceholder": "Nýggj síða",
   "siteTitleRequired": "Heiti má setast (Enter góðtekur sjálvvirði)",
   "siteNodeAddFailed": "node:add miseydnaðist: {reason}",
+  "siteExportFailed": "Útflutningur miseydnaðist: {reason}",
+  "siteImportFailed": "Innflutningur frá {source} miseydnaðist: {reason}",
   "siteNoApiResponse": "einki svar frá API'inum hjá síðuni",
   "siteNodeEditNeedsItemId": "node:edit krevur {flag}, tá koyrt verður uttan samvirkni",
   "siteNodeEditNoPage": "node:edit: eingin síða við id ella slug \"{id}\"",

@@ -414,6 +414,8 @@
   "siteNewPagePlaceholder": "Halaman baharu",
   "siteTitleRequired": "Tajuk mesti ditetapkan (Enter menerima lalai)",
   "siteNodeAddFailed": "node:add gagal: {reason}",
+  "siteExportFailed": "Eksport gagal: {reason}",
+  "siteImportFailed": "Import dari {source} gagal: {reason}",
   "siteNoApiResponse": "tiada respons daripada API tapak",
   "siteNodeEditNeedsItemId": "node:edit memerlukan {flag} apabila berjalan secara tidak interaktif",
   "siteNodeEditNoPage": "node:edit: tiada halaman dengan id atau slug \"{id}\"",

@@ -414,6 +414,8 @@
   "siteNewPagePlaceholder": "Ukurasa mpya",
   "siteTitleRequired": "Kichwa lazima kiwekwe (Enter inakubali chaguo-msingi)",
   "siteNodeAddFailed": "node:add imeshindwa: {reason}",
+  "siteExportFailed": "Kuhamisha kumeshindwa: {reason}",
+  "siteImportFailed": "Kuingiza kutoka {source} kumeshindwa: {reason}",
   "siteNoApiResponse": "hakuna jibu kutoka API ya tovuti",
   "siteNodeEditNeedsItemId": "node:edit inahitaji {flag} unapoendesha bila mwingiliano",
   "siteNodeEditNoPage": "node:edit: hakuna ukurasa wenye id au slug \"{id}\"",

@@ -414,6 +414,8 @@
   "siteNewPagePlaceholder": "Nei Säit",
   "siteTitleRequired": "Den Titel muss gesat sinn (Enter iwwerhëlt de Standard)",
   "siteNodeAddFailed": "node:add feelgeschloen: {reason}",
+  "siteExportFailed": "Export feelgeschloen: {reason}",
+  "siteImportFailed": "Import vun {source} feelgeschloen: {reason}",
   "siteNoApiResponse": "keng Äntwert vun der Site-API",
   "siteNodeEditNeedsItemId": "node:edit brauch {flag} am net-interaktive Modus",
   "siteNodeEditNoPage": "node:edit: keng Säit mat ID oder Slug \"{id}\"",

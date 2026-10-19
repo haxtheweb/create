@@ -414,6 +414,8 @@
   "siteNewPagePlaceholder": "Tudalen newydd",
   "siteTitleRequired": "Rhaid gosod teitl (mae Enter yn derbyn y rhagosodiad)",
   "siteNodeAddFailed": "methodd node:add: {reason}",
+  "siteExportFailed": "Methodd allforio: {reason}",
+  "siteImportFailed": "Methodd mewnforio o {source}: {reason}",
   "siteNoApiResponse": "dim ymateb gan API y safle",
   "siteNodeEditNeedsItemId": "mae node:edit angen {flag} wrth redeg yn anrhyngweithiol",
   "siteNodeEditNoPage": "node:edit: dim tudalen gydag id neu slug \"{id}\"",

@@ -414,6 +414,8 @@
   "siteNewPagePlaceholder": "New page",
   "siteTitleRequired": "Title must be set (Enter accepts default)",
   "siteNodeAddFailed": "node:add failed: {reason}",
+  "siteExportFailed": "Export failed: {reason}",
+  "siteImportFailed": "Import from {source} failed: {reason}",
   "siteNoApiResponse": "no response from the site API",
   "siteNodeEditNeedsItemId": "node:edit needs {flag} when running non-interactively",
   "siteNodeEditNoPage": "node:edit: no page with id or slug \"{id}\"",
