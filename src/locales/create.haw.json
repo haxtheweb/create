@@ -414,6 +414,8 @@
   "siteNewPagePlaceholder": "ʻAoʻao hou",
   "siteTitleRequired": "Pono ke poʻo inoa (ʻae ʻo Enter i ka paʻamau)",
   "siteNodeAddFailed": "ua hāʻule ʻo node:add: {reason}",
+  "siteExportFailed": "Ua hāʻule ka hoʻopuka: {reason}",
+  "siteImportFailed": "Ua hāʻule ka hoʻokomo ʻana mai {source} mai: {reason}",
   "siteNoApiResponse": "ʻaʻohe pane mai ka API kahua",
   "siteNodeEditNeedsItemId": "pono ʻo node:edit iā {flag} ke holo me ka launa ʻole",
   "siteNodeEditNoPage": "node:edit: ʻaʻohe ʻaoʻao me ka id a i ʻole slug \"{id}\"",

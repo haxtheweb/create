@@ -414,6 +414,8 @@
   "siteNewPagePlaceholder": "Tsamba latsopano",
   "siteTitleRequired": "Mutu uyenera kukhazikitsidwa (Enter imavomereza wokhazikika)",
   "siteNodeAddFailed": "node:add yalephera: {reason}",
+  "siteExportFailed": "Kutumiza kwalephera: {reason}",
+  "siteImportFailed": "Kulowetsa kuchokera ku {source} kwalephera: {reason}",
   "siteNoApiResponse": "palibe yankho kuchokera ku API ya site",
   "siteNodeEditNeedsItemId": "node:edit ikufuna {flag} poyendetsa popanda kucheza",
   "siteNodeEditNoPage": "node:edit: palibe tsamba lokhala ndi id kapena slug \"{id}\"",

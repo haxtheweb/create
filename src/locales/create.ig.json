@@ -414,6 +414,8 @@
   "siteNewPagePlaceholder": "Peeji ọhụrụ",
   "siteTitleRequired": "A ga-edozi aha isi (Enter na-anabata nke ndabara)",
   "siteNodeAddFailed": "node:add dara: {reason}",
+  "siteExportFailed": "Mbupụ dara: {reason}",
+  "siteImportFailed": "Mbubata site na {source} dara: {reason}",
   "siteNoApiResponse": "ọ dịghị nzaghachi site na API saịtị",
   "siteNodeEditNeedsItemId": "node:edit chọrọ {flag} mgbe a na-agba ya na-enweghị mmekọrịta",
   "siteNodeEditNoPage": "node:edit: ọ dịghị peeji nwere id ma ọ bụ slug \"{id}\"",

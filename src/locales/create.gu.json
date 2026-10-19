@@ -414,6 +414,8 @@
   "siteNewPagePlaceholder": "નવું પેજ",
   "siteTitleRequired": "શીર્ષક સેટ કરવું જરૂરી છે (Enter ડિફૉલ્ટ સ્વીકારે છે)",
   "siteNodeAddFailed": "node:add નિષ્ફળ: {reason}",
+  "siteExportFailed": "નિકાસ નિષ્ફળ: {reason}",
+  "siteImportFailed": "{source} માંથી આયાત નિષ્ફળ: {reason}",
   "siteNoApiResponse": "સાઇટ API તરફથી કોઈ પ્રતિભાવ નથી",
   "siteNodeEditNeedsItemId": "બિન-ઇન્ટરેક્ટિવ રીતે ચલાવતી વખતે node:edit ને {flag} જોઈએ",
   "siteNodeEditNoPage": "node:edit: id અથવા slug \"{id}\" વાળું કોઈ પેજ નથી",

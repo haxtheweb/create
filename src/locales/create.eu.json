@@ -414,6 +414,8 @@
   "siteNewPagePlaceholder": "Orri berria",
   "siteTitleRequired": "Izenburua ezarri behar da (Enter-ek lehenetsia onartzen du)",
   "siteNodeAddFailed": "node:add-ek huts egin du: {reason}",
+  "siteExportFailed": "Esportazioak huts egin du: {reason}",
+  "siteImportFailed": "{source} iturritik inportatzeak huts egin du: {reason}",
   "siteNoApiResponse": "gunearen APIak ez du erantzunik eman",
   "siteNodeEditNeedsItemId": "node:edit-ek {flag} behar du modu ez-interaktiboan exekutatzean",
   "siteNodeEditNoPage": "node:edit: ez dago \"{id}\" id edo slug-a duen orririk",

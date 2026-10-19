@@ -414,6 +414,8 @@
   "siteNewPagePlaceholder": "Ný síða",
   "siteTitleRequired": "Titill verður að vera skilgreindur (Enter samþykkir sjálfgefið)",
   "siteNodeAddFailed": "node:add mistókst: {reason}",
+  "siteExportFailed": "Útflutningur mistókst: {reason}",
+  "siteImportFailed": "Innflutningur frá {source} mistókst: {reason}",
   "siteNoApiResponse": "ekkert svar frá API vefsins",
   "siteNodeEditNeedsItemId": "node:edit þarf {flag} í ógagnvirkri keyrslu",
   "siteNodeEditNoPage": "node:edit: engin síða með auðkenni eða slóðarheiti \"{id}\"",

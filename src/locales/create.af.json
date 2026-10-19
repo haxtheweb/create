@@ -414,6 +414,8 @@
   "siteNewPagePlaceholder": "Nuwe bladsy",
   "siteTitleRequired": "Titel moet gestel word (Enter aanvaar verstek)",
   "siteNodeAddFailed": "node:add het misluk: {reason}",
+  "siteExportFailed": "Uitvoer het misluk: {reason}",
+  "siteImportFailed": "Invoer vanaf {source} het misluk: {reason}",
   "siteNoApiResponse": "geen antwoord van die werf-API nie",
   "siteNodeEditNeedsItemId": "node:edit benodig {flag} wanneer nie-interaktief uitgevoer word",
   "siteNodeEditNoPage": "node:edit: geen bladsy met id of slug \"{id}\" nie",

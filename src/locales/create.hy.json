@@ -414,6 +414,8 @@
   "siteNewPagePlaceholder": "Նոր էջ",
   "siteTitleRequired": "Վերնագիրը պետք է սահմանված լինի (Enter-ը ընդունում է լռելյայնը)",
   "siteNodeAddFailed": "node:add-ը ձախողվեց՝ {reason}",
+  "siteExportFailed": "Արտահանումը ձախողվեց՝ {reason}",
+  "siteImportFailed": "Ներմուծումը {source}-ից ձախողվեց՝ {reason}",
   "siteNoApiResponse": "կայքի API-ից պատասխան չկա",
   "siteNodeEditNeedsItemId": "node:edit-ը ոչ ինտերակտիվ ռեժիմում պահանջում է {flag}",
   "siteNodeEditNoPage": "node:edit՝ \"{id}\" id-ով կամ slug-ով էջ չկա",

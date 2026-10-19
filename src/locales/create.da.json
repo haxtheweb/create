@@ -414,6 +414,8 @@
   "siteNewPagePlaceholder": "Ny side",
   "siteTitleRequired": "Titel skal angives (Enter accepterer standard)",
   "siteNodeAddFailed": "node:add mislykkedes: {reason}",
+  "siteExportFailed": "Eksport mislykkedes: {reason}",
+  "siteImportFailed": "Import fra {source} mislykkedes: {reason}",
   "siteNoApiResponse": "intet svar fra sitets API",
   "siteNodeEditNeedsItemId": "node:edit kræver {flag} ved ikke-interaktiv kørsel",
   "siteNodeEditNoPage": "node:edit: ingen side med id eller slug \"{id}\"",

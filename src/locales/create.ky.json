@@ -414,6 +414,8 @@
   "siteNewPagePlaceholder": "Жаңы барак",
   "siteTitleRequired": "Аталыш коюлушу керек (Enter демейкини кабыл алат)",
   "siteNodeAddFailed": "node:add ишке ашкан жок: {reason}",
+  "siteExportFailed": "Экспорт ишке ашкан жок: {reason}",
+  "siteImportFailed": "{source} булагынан импорттоо ишке ашкан жок: {reason}",
   "siteNoApiResponse": "сайттын API'синен жооп жок",
   "siteNodeEditNeedsItemId": "интерактивдүү эмес режимде node:edit үчүн {flag} керек",
   "siteNodeEditNoPage": "node:edit: \"{id}\" id же slug менен барак жок",

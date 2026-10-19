@@ -137,6 +137,13 @@ export function registerNamespace(name, dir) {
 }
 
 /**
+ * @description Whether a namespace has a locale folder registered
+ */
+export function hasNamespace(name) {
+  return Object.prototype.hasOwnProperty.call(namespaces, name);
+}
+
+/**
  * @description Locale folder of a web component bundled with haxcms-nodejs,
  * e.g. bundledElementLocales('haxcms-elements'). Lets the CLI show the same
  * translations the browser uses (such as backend response messages).
@@ -214,6 +221,34 @@ export function tn(namespace, key, params = null, fallback = null) {
     }
   }
   return interpolate(fallback !== null ? fallback : key, params);
+}
+
+/**
+ * @description A translation in the current language only: null when the
+ * language is English, no file has the key, or a {placeholder} has no value.
+ * Lets callers prefer more specific English text they already have (such as
+ * a server's message) over the generic English for a key.
+ */
+export function translateOnly(namespace, key, params = null) {
+  const values = params || {};
+  for (const lang of chain(getLanguage())) {
+    if (lang === 'en') {
+      return null;
+    }
+    const data = load(namespace, lang);
+    if (data && typeof data[key] === 'string' && data[key] !== '') {
+      let missing = false;
+      const text = data[key].replace(/\{(\w+)\}/g, (match, name) => {
+        if (Object.prototype.hasOwnProperty.call(values, name)) {
+          return String(values[name]);
+        }
+        missing = true;
+        return match;
+      });
+      return missing ? null : text;
+    }
+  }
+  return null;
 }
 
 /**

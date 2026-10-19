@@ -414,6 +414,8 @@
   "siteNewPagePlaceholder": "Nieuwe pagina",
   "siteTitleRequired": "Titel moet zijn ingesteld (Enter accepteert standaard)",
   "siteNodeAddFailed": "node:add mislukt: {reason}",
+  "siteExportFailed": "Exporteren mislukt: {reason}",
+  "siteImportFailed": "Importeren van {source} mislukt: {reason}",
   "siteNoApiResponse": "geen antwoord van de site-API",
   "siteNodeEditNeedsItemId": "node:edit vereist {flag} bij niet-interactief gebruik",
   "siteNodeEditNoPage": "node:edit: geen pagina met id of slug \"{id}\"",

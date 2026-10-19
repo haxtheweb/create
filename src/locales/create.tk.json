@@ -414,6 +414,8 @@
   "siteNewPagePlaceholder": "Täze sahypa",
   "siteTitleRequired": "Sözbaşy bellenmeli (Enter deslapky bahany kabul edýär)",
   "siteNodeAddFailed": "node:add şowsuz: {reason}",
+  "siteExportFailed": "Eksport şowsuz: {reason}",
+  "siteImportFailed": "{source} çeşmesinden import şowsuz: {reason}",
   "siteNoApiResponse": "saýt API-sinden jogap ýok",
   "siteNodeEditNeedsItemId": "Interaktiw däl işledilende node:edit {flag} talap edýär",
   "siteNodeEditNoPage": "node:edit: \"{id}\" id ýa-da slug bilen sahypa ýok",

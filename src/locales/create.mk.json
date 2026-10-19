@@ -414,6 +414,8 @@
   "siteNewPagePlaceholder": "Нова страница",
   "siteTitleRequired": "Насловот мора да биде поставен (Enter го прифаќа стандардниот)",
   "siteNodeAddFailed": "node:add не успеа: {reason}",
+  "siteExportFailed": "Извозот не успеа: {reason}",
+  "siteImportFailed": "Увозот од {source} не успеа: {reason}",
   "siteNoApiResponse": "нема одговор од API на сајтот",
   "siteNodeEditNeedsItemId": "node:edit бара {flag} при неинтерактивно извршување",
   "siteNodeEditNoPage": "node:edit: нема страница со id или slug „{id}“",

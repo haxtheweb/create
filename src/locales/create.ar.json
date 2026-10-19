@@ -414,6 +414,8 @@
   "siteNewPagePlaceholder": "صفحة جديدة",
   "siteTitleRequired": "يجب تعيين العنوان (Enter يقبل القيمة الافتراضية)",
   "siteNodeAddFailed": "فشل node:add: {reason}",
+  "siteExportFailed": "فشل التصدير: {reason}",
+  "siteImportFailed": "فشل الاستيراد من {source}: {reason}",
   "siteNoApiResponse": "لا توجد استجابة من API الموقع",
   "siteNodeEditNeedsItemId": "يتطلب node:edit الخيار {flag} عند التشغيل غير التفاعلي",
   "siteNodeEditNoPage": "node:edit: لا توجد صفحة بالمعرّف أو slug \"{id}\"",

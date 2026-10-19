@@ -414,6 +414,8 @@
   "siteNewPagePlaceholder": "Шинэ хуудас",
   "siteTitleRequired": "Гарчиг заавал байх ёстой (Enter дарвал анхдагчийг авна)",
   "siteNodeAddFailed": "node:add амжилтгүй: {reason}",
+  "siteExportFailed": "Экспорт амжилтгүй: {reason}",
+  "siteImportFailed": "{source}-аас импортлох амжилтгүй: {reason}",
   "siteNoApiResponse": "сайтын API-аас хариу ирсэнгүй",
   "siteNodeEditNeedsItemId": "Интерактив бус горимд node:edit-д {flag} шаардлагатай",
   "siteNodeEditNoPage": "node:edit: \"{id}\" id эсвэл slug-тай хуудас алга",

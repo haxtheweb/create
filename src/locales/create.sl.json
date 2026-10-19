@@ -414,6 +414,8 @@
   "siteNewPagePlaceholder": "Nova stran",
   "siteTitleRequired": "Naslov mora biti nastavljen (Enter sprejme privzeto)",
   "siteNodeAddFailed": "node:add ni uspel: {reason}",
+  "siteExportFailed": "Izvoz ni uspel: {reason}",
+  "siteImportFailed": "Uvoz iz {source} ni uspel: {reason}",
   "siteNoApiResponse": "ni odziva API spletišča",
   "siteNodeEditNeedsItemId": "node:edit pri neinteraktivnem izvajanju potrebuje {flag}",
   "siteNodeEditNoPage": "node:edit: ni strani z id ali slug \"{id}\"",

@@ -16,6 +16,7 @@ import { dashToCamel, interactiveExec, exec, findAvailablePort, validateNpmClien
 import { log, structuredOutputEnabled, writeData } from "../logging.js";
 import { isSSRFError, resolveLocalPath, sanitizeIfString } from '../site-security.js';
 import { t } from '../i18n.js';
+import { apiMessage, annotateApiBody } from '../api-messages.js';
 
 // Security (Stream-A): the deprecated @haxtheweb/open-apis npm dependency was
 // removed; converter calls now route in-process through haxcms-nodejs handlers
@@ -142,7 +143,8 @@ class Res {
     return this;
   }
   json(data) {
-    this.data = JSON.parse(JSON.stringify(data));
+    // same message codes the haxcms-nodejs HTTP server adds (issues#3157)
+    this.data = annotateApiBody(JSON.parse(JSON.stringify(data)), this.statusCode === null ? 200 : this.statusCode);
     return this;
   }
   sendStatus(status) {
@@ -1384,7 +1386,7 @@ export async function siteCommandDetected(commandRun) {
               log(created, 'silly');
             }
             if (!created || (created.status && created.status >= 400)) {
-              console.error(t('siteNodeAddFailed', { reason: created && created.data && created.data.message ? created.data.message : t('siteNoApiResponse') }));
+              console.error(t('siteNodeAddFailed', { reason: apiMessage(created, t('siteNoApiResponse')) }));
               process.exitCode = 1;
             }
             else if (!commandRun.options.quiet) {
@@ -2555,7 +2557,7 @@ export async function siteCommandDetected(commandRun) {
                 site: { name: activeHaxsite.name }
               }, 'get');
               if (resp.res.statusCode >= 400) {
-                log(`Export failed: ${typeof resp.res.data === 'string' ? resp.res.data : JSON.stringify(resp.res.data)}`, 'error');
+                console.error(t('siteExportFailed', { reason: apiMessage(resp.res.data, typeof resp.res.data === 'string' ? resp.res.data : JSON.stringify(resp.res.data)) }));
                 break;
               }
               // pdf/docx/epub return a binary buffer; html returns the full
@@ -3452,6 +3454,11 @@ export async function siteProcess(commandRun, project, port = '3000') {    // au
         );
       }
       const importedData = resp && resp.data && resp.data.data ? resp.data.data : null;
+      const importStatus = resp && resp.statusCode ? resp.statusCode : (resp && resp.data && typeof resp.data.status === 'number' ? resp.data.status : 200);
+      if (importStatus >= 400) {
+        // say why instead of silently creating an empty site
+        p.log.warn(t('siteImportFailed', { source: commandRun.options.importSite, reason: apiMessage(resp.data, t('siteNoApiResponse')) }));
+      }
       if (importedData && importedData.items) {
         siteRequest.build.structure = 'import';
         siteRequest.build.items = importedData.items;

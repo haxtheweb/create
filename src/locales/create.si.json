@@ -414,6 +414,8 @@
   "siteNewPagePlaceholder": "නව පිටුව",
   "siteTitleRequired": "මාතෘකාව සැකසිය යුතුය (Enter පෙරනිමිය පිළිගනී)",
   "siteNodeAddFailed": "node:add අසාර්ථකයි: {reason}",
+  "siteExportFailed": "අපනයනය අසාර්ථකයි: {reason}",
+  "siteImportFailed": "{source} වෙතින් ආයාතය අසාර්ථකයි: {reason}",
   "siteNoApiResponse": "අඩවි API වෙතින් ප්‍රතිචාරයක් නැත",
   "siteNodeEditNeedsItemId": "අන්තර්ක්‍රියාකාරී නොවන ලෙස ධාවනය කරන විට node:edit සඳහා {flag} අවශ්‍යයි",
   "siteNodeEditNoPage": "node:edit: id හෝ slug \"{id}\" සහිත පිටුවක් නැත",

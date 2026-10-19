@@ -414,6 +414,8 @@
   "siteNewPagePlaceholder": "Új oldal",
   "siteTitleRequired": "A cím megadása kötelező (Enter: alapértelmezett)",
   "siteNodeAddFailed": "node:add sikertelen: {reason}",
+  "siteExportFailed": "Az exportálás sikertelen: {reason}",
+  "siteImportFailed": "Az importálás sikertelen ({source}): {reason}",
   "siteNoApiResponse": "nincs válasz a webhely API-jától",
   "siteNodeEditNeedsItemId": "nem interaktív futtatáskor a node:edit parancshoz {flag} szükséges",
   "siteNodeEditNoPage": "node:edit: nincs \"{id}\" azonosítójú vagy slugú oldal",

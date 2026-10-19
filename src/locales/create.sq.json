@@ -414,6 +414,8 @@
   "siteNewPagePlaceholder": "Faqe e re",
   "siteTitleRequired": "Titulli duhet vendosur (Enter pranon parazgjedhjen)",
   "siteNodeAddFailed": "node:add dështoi: {reason}",
+  "siteExportFailed": "Eksporti dështoi: {reason}",
+  "siteImportFailed": "Importi nga {source} dështoi: {reason}",
   "siteNoApiResponse": "nuk ka përgjigje nga API i sajtit",
   "siteNodeEditNeedsItemId": "node:edit kërkon {flag} kur ekzekutohet pa ndërveprim",
   "siteNodeEditNoPage": "node:edit: nuk ka faqe me id ose slug \"{id}\"",

@@ -414,6 +414,8 @@
   "siteNewPagePlaceholder": "Pàgina nova",
   "siteTitleRequired": "Cal definir el títol (Retorn accepta el valor per defecte)",
   "siteNodeAddFailed": "node:add ha fallat: {reason}",
+  "siteExportFailed": "L'exportació ha fallat: {reason}",
+  "siteImportFailed": "La importació des de {source} ha fallat: {reason}",
   "siteNoApiResponse": "cap resposta de l'API del lloc",
   "siteNodeEditNeedsItemId": "node:edit necessita {flag} en mode no interactiu",
   "siteNodeEditNoPage": "node:edit: no hi ha cap pàgina amb l'id o slug \"{id}\"",

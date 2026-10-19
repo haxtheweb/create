@@ -414,6 +414,8 @@
   "siteNewPagePlaceholder": "Яңа бит",
   "siteTitleRequired": "Исем куелырга тиеш (Enter килешенгәнне кабул итә)",
   "siteNodeAddFailed": "node:add уңышсыз: {reason}",
+  "siteExportFailed": "Экспорт уңышсыз: {reason}",
+  "siteImportFailed": "{source} чыганагыннан импорт уңышсыз: {reason}",
   "siteNoApiResponse": "сайт API сыннан җавап юк",
   "siteNodeEditNeedsItemId": "Интерактив булмаган режимда node:edit өчен {flag} кирәк",
   "siteNodeEditNoPage": "node:edit: \"{id}\" id яки slug лы бит юк",

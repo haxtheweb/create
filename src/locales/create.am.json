@@ -414,6 +414,8 @@
   "siteNewPagePlaceholder": "አዲስ ገጽ",
   "siteTitleRequired": "ርዕስ መዘጋጀት አለበት (Enter ነባሪውን ይቀበላል)",
   "siteNodeAddFailed": "node:add አልተሳካም፦ {reason}",
+  "siteExportFailed": "መላክ አልተሳካም፦ {reason}",
+  "siteImportFailed": "ከ{source} ማስመጣት አልተሳካም፦ {reason}",
   "siteNoApiResponse": "ከሳይቱ API ምንም ምላሽ የለም",
   "siteNodeEditNeedsItemId": "ያለ መስተጋብር ሲሄድ node:edit {flag} ይፈልጋል",
   "siteNodeEditNoPage": "node:edit፦ መለያው ወይም slug \"{id}\" የሆነ ገጽ የለም",

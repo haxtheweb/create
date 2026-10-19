@@ -414,6 +414,8 @@
   "siteNewPagePlaceholder": "ໜ້າໃໝ່",
   "siteTitleRequired": "ຕ້ອງຕັ້ງຫົວຂໍ້ (Enter ເພື່ອໃຊ້ຄ່າເລີ່ມຕົ້ນ)",
   "siteNodeAddFailed": "node:add ລົ້ມເຫຼວ: {reason}",
+  "siteExportFailed": "ການສົ່ງອອກລົ້ມເຫຼວ: {reason}",
+  "siteImportFailed": "ການນຳເຂົ້າຈາກ {source} ລົ້ມເຫຼວ: {reason}",
   "siteNoApiResponse": "ບໍ່ມີການຕອບກັບຈາກ API ຂອງເວັບໄຊ",
   "siteNodeEditNeedsItemId": "node:edit ຕ້ອງການ {flag} ເມື່ອແລ່ນແບບບໍ່ໂຕ້ຕອບ",
   "siteNodeEditNoPage": "node:edit: ບໍ່ມີໜ້າທີ່ມີ id ຫຼື slug \"{id}\"",

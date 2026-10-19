@@ -414,6 +414,8 @@
   "siteNewPagePlaceholder": "Новая старонка",
   "siteTitleRequired": "Назва абавязковая (Enter — значэнне па змаўчанні)",
   "siteNodeAddFailed": "памылка node:add: {reason}",
+  "siteExportFailed": "Памылка экспарту: {reason}",
+  "siteImportFailed": "Памылка імпарту з {source}: {reason}",
   "siteNoApiResponse": "няма адказу ад API сайта",
   "siteNodeEditNeedsItemId": "пры неінтэрактыўным запуску node:edit патрабуе {flag}",
   "siteNodeEditNoPage": "node:edit: няма старонкі з id або slug \"{id}\"",

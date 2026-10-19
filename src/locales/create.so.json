@@ -414,6 +414,8 @@
   "siteNewPagePlaceholder": "Bog cusub",
   "siteTitleRequired": "Cinwaanka waa in la dejiyaa (Enter wuxuu aqbalaa kan caadiga ah)",
   "siteNodeAddFailed": "node:add waa fashilmay: {reason}",
+  "siteExportFailed": "Dhoofintu way fashilantay: {reason}",
+  "siteImportFailed": "Soo dejinta {source} way fashilantay: {reason}",
   "siteNoApiResponse": "jawaab kama iman API-ga goobta",
   "siteNodeEditNeedsItemId": "node:edit wuxuu u baahan yahay {flag} marka si aan wada-hadal lahayn loo socodsiiyo",
   "siteNodeEditNoPage": "node:edit: ma jiro bog leh aqoonsi ama slug \"{id}\"",

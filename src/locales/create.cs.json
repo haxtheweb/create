@@ -414,6 +414,8 @@
   "siteNewPagePlaceholder": "Nová stránka",
   "siteTitleRequired": "Název musí být zadán (Enter přijme výchozí)",
   "siteNodeAddFailed": "node:add selhalo: {reason}",
+  "siteExportFailed": "Export selhal: {reason}",
+  "siteImportFailed": "Import z {source} selhal: {reason}",
   "siteNoApiResponse": "žádná odpověď od API webu",
   "siteNodeEditNeedsItemId": "node:edit vyžaduje v neinteraktivním režimu {flag}",
   "siteNodeEditNoPage": "node:edit: žádná stránka s ID nebo slugem „{id}“",

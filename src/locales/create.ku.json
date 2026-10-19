@@ -414,6 +414,8 @@
   "siteNewPagePlaceholder": "Rûpela nû",
   "siteTitleRequired": "Divê sernav were danîn (Enter ya standard qebûl dike)",
   "siteNodeAddFailed": "node:add têk çû: {reason}",
+  "siteExportFailed": "Derxistin têk çû: {reason}",
+  "siteImportFailed": "Îthalkirin ji {source} têk çû: {reason}",
   "siteNoApiResponse": "ji API ya malperê bersiv nehat",
   "siteNodeEditNeedsItemId": "dema ne-înteraktîf dixebite node:edit {flag} dixwaze",
   "siteNodeEditNoPage": "node:edit: rûpeleke bi id an slug \"{id}\" tune ye",

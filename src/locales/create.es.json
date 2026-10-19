@@ -414,6 +414,8 @@
   "siteNewPagePlaceholder": "Página nueva",
   "siteTitleRequired": "Debe indicar un título (Enter acepta el valor predeterminado)",
   "siteNodeAddFailed": "node:add falló: {reason}",
+  "siteExportFailed": "La exportación falló: {reason}",
+  "siteImportFailed": "La importación desde {source} falló: {reason}",
   "siteNoApiResponse": "sin respuesta de la API del sitio",
   "siteNodeEditNeedsItemId": "node:edit necesita {flag} en modo no interactivo",
   "siteNodeEditNoPage": "node:edit: no hay ninguna página con id o slug \"{id}\"",

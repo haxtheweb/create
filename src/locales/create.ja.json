@@ -414,6 +414,8 @@
   "siteNewPagePlaceholder": "新しいページ",
   "siteTitleRequired": "タイトルを設定してください（Enter で既定値を使用）",
   "siteNodeAddFailed": "node:add に失敗しました: {reason}",
+  "siteExportFailed": "エクスポートに失敗しました: {reason}",
+  "siteImportFailed": "{source} からのインポートに失敗しました: {reason}",
   "siteNoApiResponse": "サイト API から応答がありません",
   "siteNodeEditNeedsItemId": "非対話モードで node:edit を実行するには {flag} が必要です",
   "siteNodeEditNoPage": "node:edit: ID またはスラッグが \"{id}\" のページはありません",

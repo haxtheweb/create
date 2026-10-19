@@ -414,6 +414,8 @@
   "siteNewPagePlaceholder": "പുതിയ പേജ്",
   "siteTitleRequired": "തലക്കെട്ട് നൽകണം (Enter ഡിഫോൾട്ട് സ്വീകരിക്കും)",
   "siteNodeAddFailed": "node:add പരാജയപ്പെട്ടു: {reason}",
+  "siteExportFailed": "എക്സ്പോർട്ട് പരാജയപ്പെട്ടു: {reason}",
+  "siteImportFailed": "{source}-ൽ നിന്നുള്ള ഇമ്പോർട്ട് പരാജയപ്പെട്ടു: {reason}",
   "siteNoApiResponse": "സൈറ്റ് API-യിൽ നിന്ന് പ്രതികരണമില്ല",
   "siteNodeEditNeedsItemId": "നോൺ-ഇന്ററാക്ടീവായി പ്രവർത്തിപ്പിക്കുമ്പോൾ node:edit-ന് {flag} ആവശ്യമാണ്",
   "siteNodeEditNoPage": "node:edit: \"{id}\" എന്ന id അല്ലെങ്കിൽ slug ഉള്ള പേജ് ഇല്ല",

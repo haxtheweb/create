@@ -414,6 +414,8 @@
   "siteNewPagePlaceholder": "ಹೊಸ ಪುಟ",
   "siteTitleRequired": "ಶೀರ್ಷಿಕೆ ಹೊಂದಿಸಬೇಕು (Enter ಡೀಫಾಲ್ಟ್ ಸ್ವೀಕರಿಸುತ್ತದೆ)",
   "siteNodeAddFailed": "node:add ವಿಫಲವಾಗಿದೆ: {reason}",
+  "siteExportFailed": "ರಫ್ತು ವಿಫಲವಾಗಿದೆ: {reason}",
+  "siteImportFailed": "{source} ನಿಂದ ಆಮದು ವಿಫಲವಾಗಿದೆ: {reason}",
   "siteNoApiResponse": "ಸೈಟ್ API ಯಿಂದ ಪ್ರತಿಕ್ರಿಯೆ ಇಲ್ಲ",
   "siteNodeEditNeedsItemId": "ಸಂವಾದರಹಿತವಾಗಿ ಚಲಾಯಿಸುವಾಗ node:edit ಗೆ {flag} ಅಗತ್ಯವಿದೆ",
   "siteNodeEditNoPage": "node:edit: \"{id}\" id ಅಥವಾ slug ಇರುವ ಪುಟವಿಲ್ಲ",

@@ -414,6 +414,8 @@
   "siteNewPagePlaceholder": "נײַער בלאַט",
   "siteTitleRequired": "אַ טיטל מוז זײַן געשטעלט (Enter נעמט אָן די פֿאַרויסשטעלונג)",
   "siteNodeAddFailed": "node:add דורכגעפֿאַלן: {reason}",
+  "siteExportFailed": "עקספּאָרט דורכגעפֿאַלן: {reason}",
+  "siteImportFailed": "אימפּאָרט פֿון {source} דורכגעפֿאַלן: {reason}",
   "siteNoApiResponse": "קיין ענטפֿער פֿונעם זײַטל־API",
   "siteNodeEditNeedsItemId": "node:edit פֿאָדערט {flag} ווען מע לויפֿט אָן אינטעראַקציע",
   "siteNodeEditNoPage": "node:edit: קיין בלאַט מיט id אָדער slug \"{id}\"",

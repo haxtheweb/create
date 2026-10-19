@@ -414,6 +414,8 @@
   "siteNewPagePlaceholder": "Pagină nouă",
   "siteTitleRequired": "Titlul trebuie setat (Enter acceptă valoarea implicită)",
   "siteNodeAddFailed": "node:add a eșuat: {reason}",
+  "siteExportFailed": "Exportul a eșuat: {reason}",
+  "siteImportFailed": "Importul din {source} a eșuat: {reason}",
   "siteNoApiResponse": "niciun răspuns de la API-ul site-ului",
   "siteNodeEditNeedsItemId": "node:edit necesită {flag} în modul neinteractiv",
   "siteNodeEditNoPage": "node:edit: nicio pagină cu id-ul sau slug-ul „{id}”",

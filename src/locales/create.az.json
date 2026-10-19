@@ -414,6 +414,8 @@
   "siteNewPagePlaceholder": "Yeni səhifə",
   "siteTitleRequired": "Başlıq təyin edilməlidir (Enter standartı qəbul edir)",
   "siteNodeAddFailed": "node:add alınmadı: {reason}",
+  "siteExportFailed": "İxrac alınmadı: {reason}",
+  "siteImportFailed": "{source} mənbəyindən idxal alınmadı: {reason}",
   "siteNoApiResponse": "sayt API-sindən cavab yoxdur",
   "siteNodeEditNeedsItemId": "qeyri-interaktiv rejimdə node:edit {flag} tələb edir",
   "siteNodeEditNoPage": "node:edit: \"{id}\" id və ya slug-ı olan səhifə yoxdur",

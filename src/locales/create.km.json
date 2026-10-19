@@ -414,6 +414,8 @@
   "siteNewPagePlaceholder": "ទំព័រថ្មី",
   "siteTitleRequired": "ត្រូវតែកំណត់ចំណងជើង (Enter ទទួលយកលំនាំដើម)",
   "siteNodeAddFailed": "node:add បរាជ័យ: {reason}",
+  "siteExportFailed": "ការនាំចេញបរាជ័យ: {reason}",
+  "siteImportFailed": "ការនាំចូលពី {source} បរាជ័យ: {reason}",
   "siteNoApiResponse": "គ្មានការឆ្លើយតបពី API គេហទំព័រ",
   "siteNodeEditNeedsItemId": "node:edit ត្រូវការ {flag} នៅពេលដំណើរការដោយមិនមានអន្តរកម្ម",
   "siteNodeEditNoPage": "node:edit: គ្មានទំព័រដែលមាន id ឬ slug \"{id}\" ទេ",
