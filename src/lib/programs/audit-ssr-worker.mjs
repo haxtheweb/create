@@ -6,10 +6,11 @@
  * ESM-only @lit-labs/ssr and element modules.
  *
  * Protocol: one JSON document on stdin
- *   { root, timeout, items: [{ tag, specifier, demo }] }
+ *   { root, timeout, shim, items: [{ tag, specifier, demo }] }  (shim: false skips the inert DOM)
  * and one JSON document per line on stdout:
  *   { fatal: "<code>", message }        the audit cannot run at all
- *   { tag, file, ok, html }             rendered (ok: true) or failed
+ *   { tag, file, ok, html, progressive? }  rendered (ok: true) or failed; progressive is the
+ *                                       progressive-enhancement markup the element supplies
  *   { tag, file, ok: false, phase, error, warnings }   phase: import | render | async | timeout
  *   { fallback: { specifier, parent } }   an extensionless import was resolved by the fallback
  *   { done: true }
@@ -22,6 +23,7 @@ import { register } from "node:module";
 import path from "node:path";
 import { pathToFileURL, fileURLToPath } from "node:url";
 import { MessageChannel } from "node:worker_threads";
+import { installInertDom } from "./audit-ssr-env.mjs";
 
 const out = (doc, done) =>
   process.stdout.write(JSON.stringify(doc) + "\n", done);
@@ -64,7 +66,9 @@ function monorepoPackageDir(root, name) {
   const short = name.split("/").pop();
   const dir = path.join(root, "elements", short);
   try {
-    const pkg = JSON.parse(readFileSync(path.join(dir, "package.json"), "utf8"));
+    const pkg = JSON.parse(
+      readFileSync(path.join(dir, "package.json"), "utf8"),
+    );
     return pkg.name === name ? dir : null;
   } catch {
     return null;
@@ -196,14 +200,41 @@ function originOf(error, root) {
   return null;
 }
 
+/**
+ * The element's own lightweight rendition: the haxHooks progressiveEnhancement
+ * hook returns markup meant for the element's slot (RSS, bots, no JavaScript).
+ * It runs against an instance with the demo properties applied. Returns null
+ * for the many elements without the hook, or when it yields nothing.
+ */
+async function progressiveFallback(tag, demo) {
+  try {
+    const Element = globalThis.customElements.get(tag);
+    if (!Element) {
+      return null;
+    }
+    const el = new Element();
+    const hooks = typeof el.haxHooks === "function" ? el.haxHooks() : null;
+    const name = hooks && hooks.progressiveEnhancement;
+    if (!name || typeof el[name] !== "function") {
+      return null;
+    }
+    Object.assign(el, (demo && demo.properties) || {});
+    const markup = await el[name](el);
+    return typeof markup === "string" && markup.trim() ? markup : null;
+  } catch {
+    return null;
+  }
+}
+
 async function main() {
-  const { root, items, timeout } = await readStdin();
+  const { root, items, timeout, shim } = await readStdin();
   const cliDir = path.dirname(fileURLToPath(import.meta.url));
   const ssrDir = findPackageDir("@lit-labs/ssr", [root, cliDir]);
   if (!ssrDir) {
     out({
       fatal: "missing-ssr",
-      message: "@lit-labs/ssr is not installed in the project or next to the hax CLI",
+      message:
+        "@lit-labs/ssr is not installed in the project or next to the hax CLI",
     });
     return;
   }
@@ -216,6 +247,9 @@ async function main() {
   const load = (file) => import(pathToFileURL(file).href);
   // the shim has to exist before any element module is evaluated
   await load(path.join(ssrDir, "lib", "install-global-dom-shim.js"));
+  if (shim !== false) {
+    installInertDom();
+  }
   const { render } = await load(path.join(ssrDir, "lib", "render.js"));
   const { collectResult } = await load(
     path.join(ssrDir, "lib", "render-result.js"),
@@ -233,11 +267,13 @@ async function main() {
   };
   process.on("uncaughtException", asyncFailure);
   process.on("unhandledRejection", asyncFailure);
-  const quiet = (level) => (...args) => {
-    if (level !== "log" && warnings.length < 5) {
-      warnings.push(`${level}: ${args.map(String).join(" ").slice(0, 200)}`);
-    }
-  };
+  const quiet =
+    (level) =>
+    (...args) => {
+      if (level !== "log" && warnings.length < 5) {
+        warnings.push(`${level}: ${args.map(String).join(" ").slice(0, 200)}`);
+      }
+    };
   console.log = quiet("log");
   console.info = quiet("log");
   console.debug = quiet("log");
@@ -293,7 +329,13 @@ async function main() {
         });
         continue;
       }
-      out({ ...base, ok: true, html: result, warnings });
+      out({
+        ...base,
+        ok: true,
+        html: result,
+        progressive: await progressiveFallback(item.tag, item.demo),
+        warnings,
+      });
     } catch (error) {
       out({
         ...base,
@@ -301,6 +343,7 @@ async function main() {
         phase: "render",
         error: firstLine(error),
         origin: originOf(error, root),
+        progressive: await progressiveFallback(item.tag, item.demo),
         warnings,
       });
     } finally {

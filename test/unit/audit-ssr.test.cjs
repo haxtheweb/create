@@ -33,6 +33,7 @@ const {
   errorHints,
   errorSignature,
   summarizeSsr,
+  analyzeFallback,
   auditSsrCommand,
   SSR_STATUSES,
 } = require("../../src/lib/programs/audit-ssr.js");
@@ -88,13 +89,17 @@ test("analyzeSsrOutput buckets output", () => {
     analyzeSsrOutput(shadow("<style>a{b:c}</style><div></div>"), "x-a").status,
     "shell",
   );
-  assert.equal(analyzeSsrOutput(shadow("<slot></slot>"), "x-a").status, "shell");
+  assert.equal(
+    analyzeSsrOutput(shadow("<slot></slot>"), "x-a").status,
+    "shell",
+  );
   assert.equal(
     analyzeSsrOutput(shadow("<div>Hello</div>"), "x-a").status,
     "rendered",
   );
   assert.equal(
-    analyzeSsrOutput(shadow('<svg><circle r="1"></circle></svg>'), "x-a").status,
+    analyzeSsrOutput(shadow('<svg><circle r="1"></circle></svg>'), "x-a")
+      .status,
     "rendered",
   );
 });
@@ -109,22 +114,52 @@ test("analyzeSsrOutput measures styles apart from content", () => {
 
 test("errorHints and errorSignature group the usual causes", () => {
   assert.ok(
-    errorHints("TypeError: Cannot read properties of undefined (reading 'x')").includes(
-      "undefined-dependency",
-    ),
+    errorHints(
+      "TypeError: Cannot read properties of undefined (reading 'x')",
+    ).includes("undefined-dependency"),
   );
-  assert.ok(errorHints("render did not finish within 1000ms").includes("timeout"));
+  assert.ok(
+    errorHints("render did not finish within 1000ms").includes("timeout"),
+  );
   assert.equal(
-    errorSignature("TypeError: Cannot read properties of undefined (reading 'x')"),
-    errorSignature("TypeError: Cannot read properties of undefined (reading 'x')"),
+    errorSignature(
+      "TypeError: Cannot read properties of undefined (reading 'x')",
+    ),
+    errorSignature(
+      "TypeError: Cannot read properties of undefined (reading 'x')",
+    ),
   );
 });
 
 test("summarizeSsr counts every status and groups failures by cause", () => {
   const summary = summarizeSsr([
-    { tag: "a", status: "rendered", demo: "bare", bytes: 10, styleBytes: 2, uniqueStyleBytes: 2, styleRules: {} },
-    { tag: "b", status: "threw", demo: "bare", phase: "render", error: "TypeError: boom", origin: "x.js:1", hints: [] },
-    { tag: "c", status: "threw", demo: "demoSchema", phase: "render", error: "TypeError: boom", origin: "x.js:1", hints: [] },
+    {
+      tag: "a",
+      status: "rendered",
+      demo: "bare",
+      bytes: 10,
+      styleBytes: 2,
+      uniqueStyleBytes: 2,
+      styleRules: {},
+    },
+    {
+      tag: "b",
+      status: "threw",
+      demo: "bare",
+      phase: "render",
+      error: "TypeError: boom",
+      origin: "x.js:1",
+      hints: [],
+    },
+    {
+      tag: "c",
+      status: "threw",
+      demo: "demoSchema",
+      phase: "render",
+      error: "TypeError: boom",
+      origin: "x.js:1",
+      hints: [],
+    },
   ]);
   for (const status of SSR_STATUSES) {
     assert.ok(status in summary.counts);
@@ -134,22 +169,25 @@ test("summarizeSsr counts every status and groups failures by cause", () => {
 });
 
 test("auditSsrCommand reports and never fails on render failures", async () => {
-  const root = project({ "wc-registry.json": { "x-a": "pkg/a.js", "x-b": "pkg/b.js" } });
+  const root = project({
+    "wc-registry.json": { "x-a": "pkg/a.js", "x-b": "pkg/b.js" },
+  });
   let out = "";
-  const result = await auditSsrCommand(
-    { options: { format: "json" } },
-    root,
-    {
-      write: (s) => (out += s),
-      runWorker: async () => ({
-        results: [
-          { tag: "x-a", ok: true, file: path.join(root, "a.js"), html: shadow("<p>Hi</p>") },
-          { tag: "x-b", ok: false, phase: "render", error: "TypeError: boom" },
-        ],
-        fallbacks: [],
-      }),
-    },
-  );
+  const result = await auditSsrCommand({ options: { format: "json" } }, root, {
+    write: (s) => (out += s),
+    runWorker: async () => ({
+      results: [
+        {
+          tag: "x-a",
+          ok: true,
+          file: path.join(root, "a.js"),
+          html: shadow("<p>Hi</p>"),
+        },
+        { tag: "x-b", ok: false, phase: "render", error: "TypeError: boom" },
+      ],
+      fallbacks: [],
+    }),
+  });
   assert.equal(result.passed, true);
   const doc = JSON.parse(out);
   assert.equal(doc.summary.counts.rendered, 1);
@@ -157,9 +195,13 @@ test("auditSsrCommand reports and never fails on render failures", async () => {
 });
 
 test("auditSsrCommand fails only when the audit cannot run", async () => {
-  const none = await auditSsrCommand({ options: { format: "json" } }, project({}), {
-    write: () => {},
-  });
+  const none = await auditSsrCommand(
+    { options: { format: "json" } },
+    project({}),
+    {
+      write: () => {},
+    },
+  );
   assert.equal(none.passed, false);
   assert.equal(none.fatal.code, "no-registry");
   const root = project({ "wc-registry.json": { "x-a": "pkg/a.js" } });
@@ -171,7 +213,9 @@ test("auditSsrCommand fails only when the audit cannot run", async () => {
 });
 
 test("--only limits the audited tags", async () => {
-  const root = project({ "wc-registry.json": { "x-a": "pkg/a.js", "x-b": "pkg/b.js" } });
+  const root = project({
+    "wc-registry.json": { "x-a": "pkg/a.js", "x-b": "pkg/b.js" },
+  });
   let seen;
   await auditSsrCommand({ options: { format: "json", only: "x-b" } }, root, {
     write: () => {},
@@ -181,4 +225,120 @@ test("--only limits the audited tags", async () => {
     },
   });
   assert.deepEqual(seen, ["x-b"]);
+});
+
+test("analyzeFallback measures the markup an element supplies for bots", () => {
+  const a = analyzeFallback('<div>Hello</div><img src="x.png" alt="">');
+  assert.equal(a.textChars, 5);
+  assert.equal(a.media, 1);
+  assert.deepEqual(analyzeFallback(""), {
+    bytes: 0,
+    textChars: 0,
+    media: 0,
+    elements: 0,
+  });
+});
+
+test("summarizeSsr reports which elements a fallback rescues", () => {
+  const summary = summarizeSsr([
+    {
+      tag: "a",
+      status: "shell",
+      demo: "bare",
+      bytes: 1,
+      styleBytes: 0,
+      uniqueStyleBytes: 0,
+      styleRules: {},
+      fallback: { textChars: 5, media: 0 },
+    },
+    {
+      tag: "b",
+      status: "rendered",
+      demo: "bare",
+      bytes: 1,
+      styleBytes: 0,
+      uniqueStyleBytes: 0,
+      styleRules: {},
+      fallback: { textChars: 5, media: 0 },
+    },
+    {
+      tag: "c",
+      status: "threw",
+      demo: "bare",
+      phase: "render",
+      error: "boom",
+      hints: [],
+      fallback: { textChars: 0, media: 0 },
+    },
+  ]);
+  assert.equal(summary.fallback.withHook, 3);
+  assert.equal(summary.fallback.useful, 2);
+  assert.deepEqual(summary.fallback.recovered, [{ tag: "a", from: "shell" }]);
+  assert.ok(summary.primitiveStyles.bytes > 0);
+});
+
+test("the inert DOM environment is on unless --no-shim, and is reported", async () => {
+  const root = project({ "wc-registry.json": { "x-a": "pkg/a.js" } });
+  const seen = [];
+  const run = async (options) => {
+    let out = "";
+    await auditSsrCommand({ options: { format: "json", ...options } }, root, {
+      write: (text) => (out += text),
+      runWorker: async (payload) => {
+        seen.push(payload.shim);
+        return { results: [], fallbacks: [] };
+      },
+    });
+    return JSON.parse(out).summary.env;
+  };
+  assert.equal(await run({}), "inert-dom");
+  assert.equal(await run({ shim: false }), "bare");
+  assert.deepEqual(seen, [true, false]);
+});
+
+test("--save-html also writes the primitive stylesheet and fallbacks", async () => {
+  const root = project({ "wc-registry.json": { "x-a": "pkg/a.js" } });
+  const dir = path.join(root, "out");
+  await auditSsrCommand({ options: { format: "json", saveHtml: dir } }, root, {
+    write: () => {},
+    runWorker: async () => ({
+      results: [
+        {
+          tag: "x-a",
+          ok: true,
+          html: shadow("<p>Hi</p>"),
+          progressive: "<p>Hi</p>",
+        },
+      ],
+      fallbacks: [],
+    }),
+  });
+  assert.ok(fs.existsSync(path.join(dir, "_primitives.css")));
+  assert.equal(
+    fs.readFileSync(path.join(dir, "x-a.fallback.html"), "utf8"),
+    "<p>Hi</p>",
+  );
+});
+
+test("installInertDom fills in the missing browser surface and leaves existing APIs alone", async () => {
+  const { installInertDom } = await import(
+    "../../src/lib/programs/audit-ssr-env.mjs"
+  );
+  class FakeElement {}
+  const target = {
+    HTMLElement: FakeElement,
+    document: { querySelector: () => "kept" },
+  };
+  installInertDom(target);
+  assert.equal(target.window, target);
+  assert.equal(typeof target.addEventListener, "function");
+  assert.equal(target.matchMedia("x").matches, false);
+  assert.equal(target.document.querySelector(), "kept");
+  assert.equal(target.document.body, undefined);
+  const el = new FakeElement();
+  assert.equal(el.querySelector("a"), null);
+  assert.deepEqual([...el.children], []);
+  el.classList.add("x");
+  el.style.setProperty("--a", "b");
+  el.style = "ignored";
 });

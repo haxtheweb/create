@@ -360,6 +360,7 @@ async function main() {
     .option("--only <char>", t("cliOptAuditOnly"))
     .option("--timeout <char>", t("cliOptAuditTimeout"))
     .option("--save-html <char>", t("cliOptAuditSaveHtml"))
+    .option("--no-shim", t("cliOptAuditNoShim"))
     .version(packageJson.version);
 
   program

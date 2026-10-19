@@ -36,6 +36,8 @@ import { t } from "../i18n.js";
  * apart as demo: "bare".
  */
 
+import { SSR_PRIMITIVE_CSS } from "./audit-ssr-primitives.js";
+
 export const SSR_STATUSES = [
   "rendered",
   "shell",
@@ -251,7 +253,10 @@ export function analyzeSsrOutput(markup, tag) {
   if (inner === null) {
     return result;
   }
-  const body = inner.replace(COMMENTS, "").replace(STYLES, "").replace(SCRIPTS, "");
+  const body = inner
+    .replace(COMMENTS, "")
+    .replace(STYLES, "")
+    .replace(SCRIPTS, "");
   const text = body
     .replace(/<[^>]*>/g, " ")
     .replace(/&[a-z]+;|&#\d+;/gi, " ")
@@ -274,6 +279,28 @@ export function analyzeSsrOutput(markup, tag) {
     result.status = "rendered";
   }
   return result;
+}
+
+/**
+ * @description Measure an element's progressive-enhancement fallback markup
+ * (the light DOM it supplies for bots and no-JS readers).
+ * @returns {{bytes: number, textChars: number, media: number, elements: number}}
+ */
+export function analyzeFallback(markup) {
+  const text = String(markup || "")
+    .replace(COMMENTS, "")
+    .replace(STYLES, "")
+    .replace(SCRIPTS, "")
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&[a-z]+;|&#\d+;/gi, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  return {
+    bytes: Buffer.byteLength(markup || ""),
+    textChars: text.length,
+    media: (String(markup || "").match(MEDIA) || []).length,
+    elements: (String(markup || "").match(/<([a-z][\w:-]*)/gi) || []).length,
+  };
 }
 
 // error text -> short codes for the usual causes (see issue #3161)
@@ -321,7 +348,9 @@ export function errorSignature(message) {
  */
 export function sourceHints(source) {
   const hints = [];
-  if (/createRenderRoot\s*\(\s*\)\s*\{[^}]{0,120}return\s+this\b/.test(source)) {
+  if (
+    /createRenderRoot\s*\(\s*\)\s*\{[^}]{0,120}return\s+this\b/.test(source)
+  ) {
     hints.push("light-dom");
   }
   if (/\bfetch\s*\(|XMLHttpRequest|\.json\s*\(\s*\)/.test(source)) {
@@ -353,6 +382,8 @@ export function summarizeSsr(results) {
   };
   const causes = new Map();
   const hinted = new Map();
+  // elements that supply their own progressive-enhancement markup
+  const fallback = { withHook: 0, useful: 0, recovered: [] };
   const sizes = [];
   let bytes = 0;
   let styleBytes = 0;
@@ -362,6 +393,15 @@ export function summarizeSsr(results) {
   for (const r of results) {
     counts[r.status] += 1;
     byDemo[r.demo][r.status] += 1;
+    if (r.fallback) {
+      fallback.withHook += 1;
+      const useful = r.fallback.textChars > 0 || r.fallback.media > 0;
+      fallback.useful += useful ? 1 : 0;
+      // the shadow render gave nothing usable, the element's own fallback does
+      if (useful && r.status !== "rendered") {
+        fallback.recovered.push({ tag: r.tag, from: r.status });
+      }
+    }
     if (r.status === "threw") {
       const signature = errorSignature(r.error);
       const cause = causes.get(signature) || {
@@ -416,6 +456,8 @@ export function summarizeSsr(results) {
       }))
       .sort((a, b) => b.count - a.count),
     hints: [...hinted.values()].sort((a, b) => b.tags.length - a.tags.length),
+    fallback,
+    primitiveStyles: { bytes: Buffer.byteLength(SSR_PRIMITIVE_CSS) },
     size: {
       measured: rendered,
       bytes,
@@ -550,7 +592,11 @@ export async function runSsrWorker(payload, deps = {}) {
     const done = new Set(results.map((r) => r.tag));
     pending = pending.filter((item) => !done.has(item.tag));
     if (attempt.fatal) {
-      return { fatal: attempt.fatal, results, fallbacks: [...fallbacks.values()] };
+      return {
+        fatal: attempt.fatal,
+        results,
+        fallbacks: [...fallbacks.values()],
+      };
     }
     if (attempt.complete || !pending.length) {
       break;
@@ -599,7 +645,10 @@ export async function auditSsrCommand(commandRun, root = null, deps = {}) {
   const timeout = parseInt(options.timeout, 10) || DEFAULT_TIMEOUT;
   const fail = (code, message) => {
     if (asJson) {
-      out(JSON.stringify({ passed: false, fatal: { code, message } }, null, 2) + "\n");
+      out(
+        JSON.stringify({ passed: false, fatal: { code, message } }, null, 2) +
+          "\n",
+      );
     } else {
       p.log.error(message);
     }
@@ -616,7 +665,12 @@ export async function auditSsrCommand(commandRun, root = null, deps = {}) {
   }
   const demos = discoverSsrDemos(projectRoot);
   const only = options.only
-    ? new Set(String(options.only).split(",").map((s) => s.trim()).filter(Boolean))
+    ? new Set(
+        String(options.only)
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean),
+      )
     : null;
   const items = Object.entries(registry)
     .filter(([tag]) => !only || only.has(tag))
@@ -635,7 +689,12 @@ export async function auditSsrCommand(commandRun, root = null, deps = {}) {
     p.log.info(t("auditSsrRendering", { count: items.length }));
   }
   const run = deps.runWorker || runSsrWorker;
-  const outcome = await run({ root: projectRoot, timeout, items });
+  const outcome = await run({
+    root: projectRoot,
+    timeout,
+    shim: options.shim !== false,
+    items,
+  });
   if (outcome.fatal) {
     const message =
       outcome.fatal.code === "missing-ssr"
@@ -649,6 +708,17 @@ export async function auditSsrCommand(commandRun, root = null, deps = {}) {
   const saveDir = options.saveHtml ? path.resolve(options.saveHtml) : null;
   if (saveDir) {
     mkdirSync(saveDir, { recursive: true });
+  }
+  if (saveDir) {
+    writeFileSync(path.join(saveDir, "_primitives.css"), SSR_PRIMITIVE_CSS);
+    for (const doc of outcome.results) {
+      if (doc.progressive) {
+        writeFileSync(
+          path.join(saveDir, `${doc.tag}.fallback.html`),
+          doc.progressive,
+        );
+      }
+    }
   }
   const results = outcome.results.map((doc) => {
     const base = {
@@ -665,6 +735,7 @@ export async function auditSsrCommand(commandRun, root = null, deps = {}) {
         error: doc.error,
         origin: doc.origin || null,
         hints: errorHints(doc.error),
+        fallback: doc.progressive ? analyzeFallback(doc.progressive) : null,
         warnings,
       };
     }
@@ -689,11 +760,13 @@ export async function auditSsrCommand(commandRun, root = null, deps = {}) {
       uniqueStyleBytes: a.uniqueStyleBytes,
       styleRules: a.styleRules,
       hints,
+      fallback: doc.progressive ? analyzeFallback(doc.progressive) : null,
       warnings,
     };
   });
   const summary = summarizeSsr(results);
   const fallbacks = outcome.fallbacks || [];
+  summary.env = options.shim === false ? "bare" : "inert-dom";
   summary.resolverFallbacks = {
     count: fallbacks.length,
     examples: fallbacks.slice(0, 5).map((f) => ({
@@ -779,6 +852,19 @@ export async function auditSsrCommand(commandRun, root = null, deps = {}) {
         sharedShare: Math.round(summary.shared.share * 100),
       }),
     );
+  }
+  if (summary.fallback.withHook) {
+    p.log.info(
+      t("auditSsrFallback", {
+        count: summary.fallback.withHook,
+        recovered: summary.fallback.recovered.length,
+        list: summary.fallback.recovered.map((r) => r.tag).join(", ") || "-",
+        css: kb(summary.primitiveStyles.bytes),
+      }),
+    );
+  }
+  if (summary.env === "bare") {
+    p.log.info(t("auditSsrEnvBare"));
   }
   if (fallbacks.length) {
     p.log.info(t("auditSsrResolver", { count: fallbacks.length }));
