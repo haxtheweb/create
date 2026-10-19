@@ -265,11 +265,13 @@ export async function webcomponentProcess(commandRun, project, port = "8000") {
   // scaffolds so agents find it next to AGENTS.md (copied after ejs rendering
   // so the skill text is never treated as a template)
   if (!commandRun.options.isMonorepo && fs.existsSync(`${project.path}/${project.name}/AGENTS.md`)) {
-    const skillSource = path.resolve(__dirname, '../../skills/hax-webcomponent-dev/SKILL.md');
-    if (fs.existsSync(skillSource)) {
+    // copy the whole skill folder (SKILL.md plus references/) so what SKILL.md
+    // points at ships with it
+    const skillSource = path.resolve(__dirname, '../../skills/hax-webcomponent-dev');
+    if (fs.existsSync(`${skillSource}/SKILL.md`)) {
       const skillDest = `${project.path}/${project.name}/.agents/skills/hax-webcomponent-dev`;
       fs.mkdirSync(skillDest, { recursive: true });
-      fs.copyFileSync(skillSource, `${skillDest}/SKILL.md`);
+      fs.cpSync(skillSource, skillDest, { recursive: true });
     }
   }
   if (project.gitRepo && !commandRun.options.isMonorepo) {

@@ -227,6 +227,29 @@ test('non-interactive default extras install and commit but never launch', opts,
   }
 })
 
+test('standalone scaffold ships the whole hax-webcomponent-dev skill, references included', opts, async () => {
+  const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'hax-wc-skill-'))
+  const originalCopy = haxcmsLib.HAXCMS.recurseCopy
+  haxcmsLib.HAXCMS.recurseCopy = async (src, dest) => {
+    await originalCopy(src, dest)
+    fs.writeFileSync(path.join(dest, 'AGENTS.md'), '# agents\n')
+  }
+  try {
+    const commandRun = makeCommandRun({ extras: false, npmClient: 'npm', quiet: true })
+    await webcomponentProcess(commandRun, { name: 'skill-el', type: 'webcomponent', path: projectRoot, author: 'tester' })
+    const skillDir = path.join(projectRoot, 'skill-el', '.agents', 'skills', 'hax-webcomponent-dev')
+    assert.ok(fs.existsSync(path.join(skillDir, 'SKILL.md')), 'SKILL.md copied')
+    const skill = fs.readFileSync(path.join(skillDir, 'SKILL.md'), 'utf8')
+    const refs = [...skill.matchAll(/`(references\/[\w.-]+\.md)`/g)].map((m) => m[1])
+    assert.ok(refs.length > 0, 'SKILL.md points at at least one reference file')
+    for (const ref of new Set(refs)) {
+      assert.ok(fs.existsSync(path.join(skillDir, ref)), `${ref} is shipped next to SKILL.md`)
+    }
+  } finally {
+    haxcmsLib.HAXCMS.recurseCopy = originalCopy
+  }
+})
+
 test('--quiet runs the scaffold without starting any progress spinner', opts, async () => {
   const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'hax-wc-quiet-'))
   try {
