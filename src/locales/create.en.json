@@ -173,6 +173,7 @@
   "wcCatalogUnavailable": "elements catalog unavailable ({reason}); searching {source}",
   "wcSearchNoMatch": "No existing elements match \"{query}\".",
   "wcSearchMatching": "Existing elements matching \"{query}\" ({source}):",
+  "wcSearchPartial": "No element matches every word in \"{query}\". Closest partial matches, most matching words first ({source}):",
   "wcSearchUseFor": "use for: {useFor}",
   "skillsActionList": "List bundled agent skills",
   "skillsActionInstall": "Install bundled skills into {path}",

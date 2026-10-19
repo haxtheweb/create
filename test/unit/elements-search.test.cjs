@@ -14,7 +14,7 @@ const assert = require('node:assert/strict')
 
 const { probeModule } = require('../_helpers/module-canary.cjs')
 const { available, skipReason, module: wcModule } = probeModule('src/lib/programs/webcomponent.js')
-const { searchElementsCatalog, loadElementsCatalog } = available ? wcModule : {}
+const { searchElementsCatalog, searchElementsCatalogPartial, elementsSearchCommand, loadElementsCatalog } = available ? wcModule : {}
 
 const opts = { skip: skipReason, timeout: 15000 }
 
@@ -60,5 +60,50 @@ test('loadElementsCatalog reads HAX_ELEMENTS_CATALOG and falls back to the bundl
     } else {
       process.env.HAX_ELEMENTS_CATALOG = previous
     }
+  }
+})
+
+test('searchElementsCatalogPartial matches any term and ranks more matched terms first', opts, () => {
+  // strict search finds nothing for a descriptive phrase...
+  assert.deepEqual(searchElementsCatalog(CATALOG, 'tooltip steps'), [])
+  // ...partial still surfaces the nearest elements
+  const results = searchElementsCatalogPartial(CATALOG, 'tooltip steps')
+  assert.deepEqual(results.map((r) => r.tag).sort(), ['ddd-steps-list', 'simple-tooltip'])
+  assert.ok(results.every((r) => r.matchedTerms === 1))
+  const ranked = searchElementsCatalogPartial(CATALOG, 'inputs validation list')
+  assert.equal(ranked[0].tag, 'simple-fields-field', 'two matched terms outrank one')
+  assert.equal(ranked[0].matchedTerms, 2)
+  assert.deepEqual(searchElementsCatalogPartial(CATALOG, ''), [])
+  assert.deepEqual(searchElementsCatalogPartial(CATALOG, 'zzzz qqqq'), [])
+})
+
+test('hax wc --search falls back to labeled partial matches for multi-word queries only', opts, async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'hax-search-partial-'))
+  const file = path.join(dir, 'catalog.json')
+  fs.writeFileSync(file, JSON.stringify(CATALOG))
+  const previous = process.env.HAX_ELEMENTS_CATALOG
+  process.env.HAX_ELEMENTS_CATALOG = file
+  const lines = []
+  const originalLog = console.log
+  console.log = (...args) => lines.push(args.join(' '))
+  try {
+    const partial = await elementsSearchCommand({ options: { search: 'tooltip steps', quiet: true } })
+    assert.deepEqual(partial.map((r) => r.tag).sort(), ['ddd-steps-list', 'simple-tooltip'])
+    assert.match(lines.join('\n'), /No element matches every word in "tooltip steps"/)
+
+    lines.length = 0
+    const single = await elementsSearchCommand({ options: { search: 'zzzz', quiet: true } })
+    assert.deepEqual(single, [], 'single-word queries are not widened')
+    assert.match(lines.join('\n'), /No existing elements match "zzzz"/)
+
+    lines.length = 0
+    const strict = await elementsSearchCommand({ options: { search: 'steps list', quiet: true } })
+    assert.deepEqual(strict.map((r) => r.tag), ['ddd-steps-list'])
+    assert.match(lines.join('\n'), /Existing elements matching "steps list"/, 'strict hits keep the normal heading')
+  } finally {
+    console.log = originalLog
+    if (previous === undefined) delete process.env.HAX_ELEMENTS_CATALOG
+    else process.env.HAX_ELEMENTS_CATALOG = previous
+    fs.rmSync(dir, { recursive: true, force: true })
   }
 })
