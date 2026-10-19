@@ -1,5 +1,5 @@
-import { existsSync, readFileSync } from 'node:fs';
-import path from 'node:path';
+import { existsSync, readFileSync } from "node:fs";
+import path from "node:path";
 
 /**
  * Translations for the hax CLI.
@@ -18,17 +18,17 @@ import path from 'node:path';
  * scripts and agents keep working; only what people read is translated.
  */
 
-const LOCALES_DIR = path.resolve(__dirname, '../locales');
+const LOCALES_DIR = path.resolve(__dirname, "../locales");
 // code people's systems report -> code our locale files use
 const LANGUAGE_ALIASES = {
-  fil: 'tl', // Filipino -> Tagalog
-  nn: 'nb', // Norwegian Nynorsk -> Bokmal (closest we have)
-  iw: 'he', // legacy Hebrew
-  in: 'id', // legacy Indonesian
-  ji: 'yi', // legacy Yiddish
-  jw: 'jv', // legacy Javanese
+  fil: "tl", // Filipino -> Tagalog
+  nn: "nb", // Norwegian Nynorsk -> Bokmal (closest we have)
+  iw: "he", // legacy Hebrew
+  in: "id", // legacy Indonesian
+  ji: "yi", // legacy Yiddish
+  jw: "jv", // legacy Javanese
 };
-const NAMESPACE = 'create';
+const NAMESPACE = "create";
 
 // namespace -> directory holding <namespace>.<lang>.json
 const namespaces = { [NAMESPACE]: LOCALES_DIR };
@@ -42,15 +42,15 @@ let current = null;
  * @returns normalized code, or null
  */
 export function normalizeLanguage(value) {
-  if (!value || typeof value !== 'string') {
+  if (!value || typeof value !== "string") {
     return null;
   }
-  let code = value.split('.')[0].split('@')[0].replace(/_/g, '-').trim();
+  let code = value.split(".")[0].split("@")[0].replace(/_/g, "-").trim();
   if (!code || /^(c|posix)$/i.test(code)) {
     return null;
   }
-  const parts = code.split('-').filter(Boolean);
-  if (!/^[a-z]{2,3}$/i.test(parts[0] || '')) {
+  const parts = code.split("-").filter(Boolean);
+  if (!/^[a-z]{2,3}$/i.test(parts[0] || "")) {
     return null;
   }
   let lang = parts[0].toLowerCase();
@@ -67,15 +67,19 @@ export function normalizeLanguage(value) {
  * @param env environment variables
  * @param osLocale the OS locale, e.g. from Intl
  */
-export function detectLanguage(argv = process.argv, env = process.env, osLocale = null) {
+export function detectLanguage(
+  argv = process.argv,
+  env = process.env,
+  osLocale = null,
+) {
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
-    if (arg === '--lang' && argv[i + 1]) {
+    if (arg === "--lang" && argv[i + 1]) {
       const code = normalizeLanguage(argv[i + 1]);
       if (code) {
         return code;
       }
-    } else if (typeof arg === 'string' && arg.startsWith('--lang=')) {
+    } else if (typeof arg === "string" && arg.startsWith("--lang=")) {
       const code = normalizeLanguage(arg.substring(7));
       if (code) {
         return code;
@@ -88,19 +92,19 @@ export function detectLanguage(argv = process.argv, env = process.env, osLocale 
   }
   // POSIX: the first of LC_ALL, LC_MESSAGES, LANG that is set decides, so
   // LC_ALL=C (common in scripts) means English even if LANG says otherwise
-  for (const name of ['LC_ALL', 'LC_MESSAGES', 'LANG']) {
-    if (typeof env[name] === 'string' && env[name].trim() !== '') {
-      return normalizeLanguage(env[name]) || 'en';
+  for (const name of ["LC_ALL", "LC_MESSAGES", "LANG"]) {
+    if (typeof env[name] === "string" && env[name].trim() !== "") {
+      return normalizeLanguage(env[name]) || "en";
     }
   }
   if (osLocale === null) {
     try {
       osLocale = Intl.DateTimeFormat().resolvedOptions().locale;
     } catch (e) {
-      osLocale = '';
+      osLocale = "";
     }
   }
-  return normalizeLanguage(osLocale) || 'en';
+  return normalizeLanguage(osLocale) || "en";
 }
 
 /**
@@ -117,7 +121,7 @@ export function getLanguage() {
  * @description Force a language, e.g. for tests; null re-detects on next use
  */
 export function setLanguage(code) {
-  current = code === null ? null : normalizeLanguage(code) || 'en';
+  current = code === null ? null : normalizeLanguage(code) || "en";
 }
 
 /**
@@ -153,8 +157,18 @@ export function hasNamespace(name) {
  */
 export function bundledElementLocales(pkg, resolve = require.resolve) {
   try {
-    const root = path.dirname(resolve('@haxtheweb/haxcms-nodejs/package.json'));
-    const dir = path.join(root, 'dist', 'public', 'build', 'es6', 'node_modules', '@haxtheweb', pkg, 'locales');
+    const root = path.dirname(resolve("@haxtheweb/haxcms-nodejs/package.json"));
+    const dir = path.join(
+      root,
+      "dist",
+      "public",
+      "build",
+      "es6",
+      "node_modules",
+      "@haxtheweb",
+      pkg,
+      "locales",
+    );
     return existsSync(dir) ? dir : null;
   } catch (e) {
     return null;
@@ -169,7 +183,7 @@ function load(namespace, lang) {
     let data = null;
     if (file && existsSync(file)) {
       try {
-        data = JSON.parse(readFileSync(file, 'utf8'));
+        data = JSON.parse(readFileSync(file, "utf8"));
       } catch (e) {
         data = null;
       }
@@ -182,12 +196,12 @@ function load(namespace, lang) {
 // pt-BR -> pt-BR, pt, en
 function chain(lang) {
   const out = [lang];
-  const base = lang.split('-')[0];
+  const base = lang.split("-")[0];
   if (base !== lang) {
     out.push(base);
   }
-  if (!out.includes('en')) {
-    out.push('en');
+  if (!out.includes("en")) {
+    out.push("en");
   }
   return out;
 }
@@ -196,13 +210,15 @@ function chain(lang) {
  * @description Fill {placeholders}; values are inserted as-is
  */
 export function interpolate(text, params) {
-  if (!params || typeof text !== 'string') {
+  if (!params || typeof text !== "string") {
     return text;
   }
   // a param that is passed but empty renders like a template literal would
   // ("undefined"), so output matches what the CLI printed before translation
   return text.replace(/\{(\w+)\}/g, (match, name) =>
-    Object.prototype.hasOwnProperty.call(params, name) ? String(params[name]) : match,
+    Object.prototype.hasOwnProperty.call(params, name)
+      ? String(params[name])
+      : match,
   );
 }
 
@@ -216,7 +232,7 @@ export function interpolate(text, params) {
 export function tn(namespace, key, params = null, fallback = null) {
   for (const lang of chain(getLanguage())) {
     const data = load(namespace, lang);
-    if (data && typeof data[key] === 'string' && data[key] !== '') {
+    if (data && typeof data[key] === "string" && data[key] !== "") {
       return interpolate(data[key], params);
     }
   }
@@ -232,11 +248,11 @@ export function tn(namespace, key, params = null, fallback = null) {
 export function translateOnly(namespace, key, params = null) {
   const values = params || {};
   for (const lang of chain(getLanguage())) {
-    if (lang === 'en') {
+    if (lang === "en") {
       return null;
     }
     const data = load(namespace, lang);
-    if (data && typeof data[key] === 'string' && data[key] !== '') {
+    if (data && typeof data[key] === "string" && data[key] !== "") {
       let missing = false;
       const text = data[key].replace(/\{(\w+)\}/g, (match, name) => {
         if (Object.prototype.hasOwnProperty.call(values, name)) {

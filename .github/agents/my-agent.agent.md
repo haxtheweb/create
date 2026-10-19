@@ -9,6 +9,7 @@ description: HAX agent
 ---
 
 # PRAW - HAX Ecosystem Warp Rules
+
 These rules stem from https://github.com/haxtheweb/praw . Use it for full context as far as file references below.
 
 **PRAW** (Warp spelled backwards) is a repository containing comprehensive Warp AI agent rules for the HAX ecosystem. These rules codify years of development experience, best practices, and conventions to help Warp users work more effectively with HAX projects.
@@ -16,6 +17,7 @@ These rules stem from https://github.com/haxtheweb/praw . Use it for full contex
 ## What is this?
 
 This repository contains:
+
 - **`RULES.md`** - Centralized registry of all HAX ecosystem rules with unique IDs and categorization
 - **`KNOWLEDGE.md`** - Log of emergent knowledge, decisions, and conventions that inform rule development
 - **`WORLDVIEW.md`** - Curated worldview synthesis from long-form ecosystem writing
@@ -40,6 +42,7 @@ cd ~/Documents/git/haxtheweb/praw
 ```
 
 This script will:
+
 - ✅ Clone all necessary HAX ecosystem repositories
 - ✅ Install and configure the HAX CLI (@haxtheweb/create)
 - ✅ Set up Warp with HAX-specific rules and optimizations
@@ -58,6 +61,7 @@ If you already have a HAX development environment and just want to add these rul
 ### For Individual Projects
 
 1. **Copy the main WARP.md** to your HAX project root:
+
    ```bash
    cp WARP.md /path/to/your/hax-project/
    ```
@@ -73,12 +77,14 @@ If you already have a HAX development environment and just want to add these rul
 If you're working across multiple HAX repositories, you can:
 
 1. **Clone this repo** to your local HAX development area:
+
    ```bash
    cd ~/Documents/git/haxtheweb/
    git clone https://github.com/haxtheweb/praw.git
    ```
 
 2. **Symlink the main WARP.md** to your primary working directories:
+
    ```bash
    ln -s ~/Documents/git/haxtheweb/praw/WARP.md ~/Documents/git/haxtheweb/webcomponents/
    ```
@@ -90,6 +96,7 @@ If you're working across multiple HAX repositories, you can:
 **For non-technical faculty**: Create course resource repositories that AI agents use for grounded content generation.
 
 ### Quick Faculty Setup
+
 ```bash
 # Set up a course resource folder
 faculty-setup "Your Course Name"
@@ -102,6 +109,7 @@ find-course "Course Name"
 ```
 
 ### Faculty Workflow
+
 1. **Setup**: Run one command to create course folder
 2. **Add materials**: Drag-and-drop PDFs, docs, images
 3. **Request content**: "Create a HAX site for [Course Name]"
@@ -116,6 +124,7 @@ find-course "Course Name"
 **For agents helping users**: Pre-built automation tools for social media posting and project management.
 
 ### LinkedIn Posting Automation
+
 ```bash
 cd programs/linkedin/
 
@@ -130,6 +139,7 @@ node post-to-linkedin.js --custom "Great discussion about web components!"
 ```
 
 ### GitHub Issue Management
+
 ```bash
 cd programs/issue-management/
 
@@ -152,28 +162,33 @@ cd programs/issue-management/
 ## Rule Categories
 
 ### 🏗️ Architecture & File Structure
+
 - HAXcms site organization (`docs/`, `files/`, `pages/`)
 - Web component registry system
 - Reserved routing patterns
 
-### 🎨 Design System Standards  
+### 🎨 Design System Standards
+
 - DDD (primary design system) usage guidelines
 - SimpleColors (legacy) integration
 - Consistent styling approaches
 
 ### 🧩 Web Component Development
+
 - HAX capability implementation
 - Accessibility audit procedures
 - JavaScript coding standards
 - Educational content creation
 
 ### ⚙️ Build & Development Workflow
+
 - Command usage patterns
 - Version control integration
 - Testing philosophy
 - Tool configuration
 
 ### 📝 Content Creation Guidelines
+
 - HAX site content authoring
 - Documentation standards
 - Quality assurance procedures
@@ -183,6 +198,7 @@ cd programs/issue-management/
 ### Quick Setup
 
 1. **Install the management system**:
+
    ```bash
    cd ~/Documents/git/haxtheweb/praw
    ./scripts/setup.sh
@@ -231,7 +247,7 @@ praw-help
 ### Rule Categories
 
 - **🏗️ Architecture** (`architecture`) - Site structure, routing, file organization
-- **🎨 Design System** (`design-system`) - DDD, SimpleColors, theming guidelines  
+- **🎨 Design System** (`design-system`) - DDD, SimpleColors, theming guidelines
 - **🧩 Web Components** (`webcomponent`) - HAX capability, accessibility, JavaScript standards
 - **⚙️ Build & Workflow** (`build-workflow`) - CLI usage, build commands, version control
 - **📝 Documentation** (`documentation`) - Content creation, documentation structure
@@ -242,6 +258,7 @@ praw-help
 This repository evolves with the HAX ecosystem. To contribute:
 
 ### Adding New Rules
+
 1. **Use the management system**: `praw-add` for interactive rule creation
 2. **Follow the categorization system** - choose appropriate category and provide context
 3. **Test new rules** in your local development environment
@@ -249,6 +266,7 @@ This repository evolves with the HAX ecosystem. To contribute:
 5. **Document knowledge**: Log decisions and rationale in `KNOWLEDGE.md`
 
 ### Updating Existing Rules
+
 1. **Locate the rule** using `praw-search` or `praw-list`
 2. **Edit RULES.md directly** or use the management system
 3. **Maintain rule precedence** - ensure changes align with precedence hierarchy
@@ -258,8 +276,9 @@ This repository evolves with the HAX ecosystem. To contribute:
 ## Rule Precedence
 
 When using these rules, Warp follows this precedence order:
+
 1. **Subdirectory WARP.md** (most specific)
-2. **Root project WARP.md** 
+2. **Root project WARP.md**
 3. **Global Warp rules** (least specific)
 
 This ensures project-specific needs take priority while maintaining ecosystem consistency.
@@ -279,7 +298,7 @@ praw/
 │   ├── add-rule.sh            # Add new rules
 │   ├── manage-rules.sh        # Search, list, and manage rules
 │   ├── faculty-setup.sh       # Create course resource folders
-│   ├── find-course-resources.sh # Locate course materials  
+│   ├── find-course-resources.sh # Locate course materials
 │   └── add-url-resource.sh    # Add web resources to courses
 ├── webcomponents/WARP.md      # Web component specific rules
 ├── haxcms/WARP.md             # HAXcms specific rules
@@ -308,4 +327,4 @@ These rules are actively maintained by the HAX core team and community contribut
 
 **Made with ❤️ by the HAX Community**
 
-*PRAW ensures that every Warp user working with HAX gets the benefit of collective ecosystem knowledge and established best practices.*
+_PRAW ensures that every Warp user working with HAX gets the benefit of collective ecosystem knowledge and established best practices._

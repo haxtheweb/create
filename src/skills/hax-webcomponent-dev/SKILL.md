@@ -30,7 +30,7 @@ Develop HAX-capable web components using LitElement, DDD design system, and HAXS
 Answer these before writing code. They are the corrections reviewers most often have to make.
 
 1. **Does an element already exist?** Run `hax wc --search "<words>"` (add `--format json` for machine-readable results). It searches every element in the monorepo by tag, title, description and tags and flags the preferred building blocks. Compose existing elements (inputs, tooltips, icons, cards, collapses) instead of rebuilding them.
-2. **Leaf or parent?** A leaf renders its own content. A parent that HAX authors drop other elements into is a *grid* element: its haxProperties use `"type": "grid"` and its children are slotted elements. Decide this up front; it changes the haxProperties and the editing experience. A condensed, offline walk-through of the parent/child pattern is in `references/grid-parent-child.md`, next to this file.
+2. **Leaf or parent?** A leaf renders its own content. A parent that HAX authors drop other elements into is a _grid_ element: its haxProperties use `"type": "grid"` and its children are slotted elements. Decide this up front; it changes the haxProperties and the editing experience. A condensed, offline walk-through of the parent/child pattern is in `references/grid-parent-child.md`, next to this file.
 3. **Dark mode.** Every color must come from a `--ddd-theme-*` token or `currentColor`. When light and dark need different values, use `light-dark()` with tokens. Plan this now; retrofitting it is where hard-coded fills slip through.
 4. **Which fields are essential?** Anything the element cannot render without is `"required": true` in haxProperties.
 
@@ -78,7 +78,9 @@ All in <https://github.com/haxtheweb/webcomponents/tree/master/elements>:
     var(--ddd-theme-default-coalyGray)
   );
 }
-svg { fill: currentColor; }
+svg {
+  fill: currentColor;
+}
 ```
 
 - No hex, `rgb()`, or named colors in `color`, `background`, `fill`, `stroke`, or SVG `fill="..."` attributes.

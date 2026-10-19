@@ -12,6 +12,7 @@
 [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/haxtheweb/create)
 
 # HAX The CLI
+
 Rapidly build web components for the Web that work with HAX. HAX The Web's CLI tools empower you to rapidly..
 
 ## Onboarding
@@ -35,9 +36,10 @@ hax start
 # Commands
 
 ## Default / global / new context
+
 - `hax start` - fun ascii art and interactive CLI (via [clack](https://www.clack.cc/) )
 - `hax webcomponent my-element --y` - Make a new HAX capable, i18n wired, Design system (DDD) driven web component
-  -  if in a monorepo root, will place in correct location / inherit settings
+  - if in a monorepo root, will place in correct location / inherit settings
 - `hax site mysite --y` - create a new HAXsite (HAXcms, single site)
   - in scripts and agents use `hax site mysite --y --no-i` so nothing prompts or launches a dev server (implied automatically when there is no TTY or `CI` is set)
 - `hax site mysite --skeleton-machine-name clean-one --y` - create a new HAXsite from an installed skeleton template
@@ -57,12 +59,14 @@ hax start
 This CLI ships interface skills in `src/skills/` (compiled to `dist/skills/`) that teach agents how to use the `hax` CLI. These are version-locked to the CLI — when a command or flag ships, the matching skill updates in the same release.
 
 **Bundled skills**:
+
 - `hax-site-building` — HAXcms site creation, JOS, site.json, page management
 - `hax-claudehax` — ClaudeHAX plugin, `/hax` slash command, CLI operation
 - `hax-webcomponent-dev` — `hax webcomponent`, HAXSchema, component scaffolding
 - `hax-ecosystem-onboarding` — environment setup, first scaffold, repo cloning
 
 Install them for your agents:
+
 ```bash
 hax skills install --all          # all interface skills → ~/.agents/skills/
 hax skills install hax-site-building  # specific skill
@@ -85,11 +89,13 @@ hax skills install --all
 ```
 
 The PRAW marketplace ships three Claude Code plugins:
+
 - **`hax-onboarding`** — golden-path slash commands plus an auto-install hook that ensures the `hax` CLI is present
 - **`hax-site-ops`** — the site-operations skill and reference docs (the renamed ClaudeHAX plugin, which resolves the old name collision)
 - **`openstax2hax`** — OpenStax-to-HAX conversion, folded in unchanged
 
 Golden path from zero to a running site:
+
 ```bash
 hax site my-hax-site --y --no-i
 cd my-hax-site && hax serve
@@ -108,7 +114,9 @@ cd my-hax-site && hax serve
 See the AI integration page on the [HAX documentation site](https://haxtheweb.org/) for the full guide.
 
 ## --help
+
 Run `hax help` or `hax webcomponent --help` or `hax site --help` for up-to-date listing
+
 ```
 Usage: hax [options] [command]
 
@@ -194,8 +202,11 @@ Commands:
   help [command]                      display help for command
 
 ```
+
 ## Examples
+
 For a detailed list of example commands that you can perform with `hax` see [examples](examples.md).
+
 ## Manual
 
 ### Linux / macOS
@@ -217,6 +228,7 @@ npm run hax -- --name my-element --y
 ```
 
 ## Windows problems?
+
 Try setting a different cache path to load from `npm config set cache C:\tmp\nodejs\npm-cache --global`
 
 If you wish to use PowerShell over Command Prompt, you may need to change your execution policy to allow scripts using the `Set-ExecutionPolicy` command with the `-ExecutionPolicy` and `-Scope` parameters. You should **not** need to do this if you are using Command Prompt.
@@ -233,6 +245,7 @@ Follow the prompts and let's HAX the Web together!
 ## Web component
 
 Step through answering basic install questions to build a HAX capable web component that works anywhere! Features:
+
 - LitElement based
 - DDDSuper class which adds our design system in
 - Common conventions used to demonstrate and work with property binding
@@ -241,6 +254,7 @@ Step through answering basic install questions to build a HAX capable web compon
 ## HAX Site
 
 Build a HAX site that can be published and transported anywhere. Your users might love it on the front end, now you get the simplicity of building on the CLI.
+
 - Same HAX sites you can create via front end
 - Templated files that work just like any HAX site
 - End points baked in to do CLI commands for common endpoint operations like adding pages, deleting and editing.
@@ -251,7 +265,9 @@ Build a HAX site that can be published and transported anywhere. Your users migh
 - Primed to publish to gh-pages, vercel and more
 
 ## HAX Audit
+
 Audits your HAX based web components to suggest improvements to better align with DDD, the design system built into HAX components.
+
 - Use `.dddignore` file to instruct audit program what files should be ignored. Each component generated comes with a `.dddignore` file in its root directory.
 - `hax audit i18n` skips `test`, `demo`, `locales` and build folders. Mark intentional English (brand names, code samples) with an `i18n-ignore` comment on that line or the line above, `i18n-ignore-file` anywhere in a file, or list paths in a `.i18nignore` file (same format as `.dddignore`).
 - Run command from root of the component project.
@@ -272,7 +288,7 @@ Audits your HAX based web components to suggest improvements to better align wit
 /public # ignored by program regardless of presence in .dddignore
 /node_modules # ignored by program regardless of presence in .dddignore
 
-# Files 
+# Files
 # (Must include filename and extension, as seen below)
 LICENSE
 .dddignore
@@ -299,17 +315,20 @@ rollup.config.js
 ```
 
 # Get Help / Issues / Support
+
 - Discord Channel - https://discord.gg/aCGxmRHEJP
 - Unified issue queue - https://github.com/haxtheweb/issues/issues
 - DDD Documentation - https://haxtheweb.org/documentation/ddd
 - Using Merlin directly in any HAX spaces and type "Issue" to jump start a report!
 
 ## Watch and Learn more about HAX here:
+
 - Try Hax: https://hax.cloud
 - HAXCellence https://haxtheweb.org/what-is-hax
 - Youtube channel - https://www.youtube.com/@haxtheweb
 
 # Related links and tech
+
 - [NPM Package list](https://www.npmjs.com/org/haxtheweb)
 - [HAXcms (NodeJS)](https://github.com/haxtheweb/haxcms-nodejs)
 - [HAXcms (PHP)](https://github.com/haxtheweb/haxcms-php)
@@ -317,6 +336,5 @@ rollup.config.js
 - [HAX [dot] PSU](https://hax.psu.edu)
 - [HAX doc site](https://haxtheweb.org/)
 - [HAX + 11ty](https://github.com/haxtheweb/hax11ty)
-
 
 ![HAX Traveler: World Changer](https://raw.githubusercontent.com/haxtheweb/art/refs/heads/main/haxtheweb/hax-traveler-world-changer.jpg)

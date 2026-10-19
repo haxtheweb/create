@@ -18,17 +18,20 @@ The `haxtheweb/webcomponents` monorepo is committed to ensuring that all web com
 ## What We're Doing
 
 ### Automated Testing
+
 - **121 test files** use axe-based a11ySuite testing, running in CI via `yarn test:all`
 - **311 reference a11y patterns** across the codebase
 - All elements tested automatically on every PR
 
 ### Design System
+
 - **DDD (Design, Develop, Destroy) design system** provides contrast tooling and tokens targeting WCAG 2.0 AA
-- **a11y-* element family** (a11y-collapse, a11y-tabs, a11y-details, a11y-figure...) makes accessibility a first-class surface
+- **a11y-\* element family** (a11y-collapse, a11y-tabs, a11y-details, a11y-figure...) makes accessibility a first-class surface
 - Components built on **W3C web components standards** (custom elements, shadow DOM)
 - **HAXSchema (haxProperties)** provides documented authoring-interoperability standard
 
 ### Contribution Requirements
+
 - `hax audit` **required** before submitting theme or component changes
 - DDD tokens for fonts, colors, padding, spacing, margins
 - Inherit from `DDDSuper` class for automatic DDD integration
@@ -64,6 +67,6 @@ We are honest about areas where accessibility can be improved:
 
 ---
 
-*This statement reflects our current status and commitments. As an evolving open source project, we acknowledge there is always more work to do to ensure accessibility for all users. We appreciate your partnership in making the HAX ecosystem more accessible.*
+_This statement reflects our current status and commitments. As an evolving open source project, we acknowledge there is always more work to do to ensure accessibility for all users. We appreciate your partnership in making the HAX ecosystem more accessible._
 
-*Scored with the Higher Education Open Source Assessment Tool (HEOSAT), rubric version "2026.07 enhanced guidance edition". Accessibility is one of our four core project pillars: Accessible, Free and Open, OER 5Rs, Platform Agnostic, and Sustainable.*
+_Scored with the Higher Education Open Source Assessment Tool (HEOSAT), rubric version "2026.07 enhanced guidance edition". Accessibility is one of our four core project pillars: Accessible, Free and Open, OER 5Rs, Platform Agnostic, and Sustainable._

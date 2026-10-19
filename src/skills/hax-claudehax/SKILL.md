@@ -9,7 +9,8 @@ version: 1.1.0
 license: Apache-2.0
 metadata:
   author: haxtheweb
-  tags: [hax, claudehax, claude-code, plugin, site-operations, content, assessments]
+  tags:
+    [hax, claudehax, claude-code, plugin, site-operations, content, assessments]
   source: create
 ---
 
@@ -58,6 +59,7 @@ Inside Claude Code:
    Should show `hax-site-ops` in the list.
 
 To update the plugin when a new version is released:
+
 ```
 /plugin update hax-site-ops
 ```
@@ -106,6 +108,7 @@ When operating outside the `/hax` slash command, use the HAX CLI directly:
 - `hax update` — Update HAX CLI
 
 **Automation flags** (always use when scripting to prevent interruptions):
+
 - `--y` or `--auto` — Auto-accept all prompts
 - `--no-i` — Prevent interactive sub-processes
 - `--skip` — Skip animations
@@ -141,6 +144,7 @@ Before changing anything:
 5. Identify available content.
 
 Look for files such as:
+
 - `site.json`
 - `package.json`
 - `haxcms.json`

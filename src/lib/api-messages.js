@@ -1,4 +1,9 @@
-import { bundledElementLocales, hasNamespace, registerNamespace, translateOnly } from './i18n.js';
+import {
+  bundledElementLocales,
+  hasNamespace,
+  registerNamespace,
+  translateOnly,
+} from "./i18n.js";
 
 /**
  * Backend messages in the CLI's language (haxtheweb/issues#3157).
@@ -9,7 +14,7 @@ import { bundledElementLocales, hasNamespace, registerNamespace, translateOnly }
  * haxcms-nodejs, so the CLI and the browser say the same thing.
  */
 
-const NAMESPACE = 'haxcms-api';
+const NAMESPACE = "haxcms-api";
 let namespaceReady = false;
 let annotate;
 
@@ -19,7 +24,7 @@ function ensureNamespace() {
     if (hasNamespace(NAMESPACE)) {
       return;
     }
-    const dir = bundledElementLocales('haxcms-elements');
+    const dir = bundledElementLocales("haxcms-elements");
     if (dir) {
       registerNamespace(NAMESPACE, dir);
     }
@@ -27,17 +32,17 @@ function ensureNamespace() {
 }
 
 function isObject(value) {
-  return !!value && typeof value === 'object' && !Array.isArray(value);
+  return !!value && typeof value === "object" && !Array.isArray(value);
 }
 
 function textOf(holder) {
-  if (typeof holder.message === 'string' && holder.message.trim() !== '') {
+  if (typeof holder.message === "string" && holder.message.trim() !== "") {
     return holder.message.trim();
   }
-  if (typeof holder.error === 'string' && holder.error.trim() !== '') {
+  if (typeof holder.error === "string" && holder.error.trim() !== "") {
     return holder.error.trim();
   }
-  return '';
+  return "";
 }
 
 /**
@@ -46,8 +51,8 @@ function textOf(holder) {
  * @returns {{code: string, params: object, message: string}}
  */
 export function apiMessageParts(body) {
-  const found = { code: '', params: {}, message: '' };
-  if (typeof body === 'string') {
+  const found = { code: "", params: {}, message: "" };
+  if (typeof body === "string") {
     found.message = body.trim();
     return found;
   }
@@ -59,7 +64,7 @@ export function apiMessageParts(body) {
       continue;
     }
     const message = textOf(holder);
-    if (!found.code && typeof holder.code === 'string' && holder.code) {
+    if (!found.code && typeof holder.code === "string" && holder.code) {
       found.code = holder.code;
       found.params = isObject(holder.params) ? holder.params : {};
       if (message) {
@@ -83,7 +88,7 @@ export function apiMessageParts(body) {
  * @param body response body (or message string)
  * @param fallback text when there is no message
  */
-export function apiMessage(body, fallback = '') {
+export function apiMessage(body, fallback = "") {
   const parts = apiMessageParts(body);
   if (parts.code) {
     ensureNamespace();
@@ -104,12 +109,16 @@ export function apiMessage(body, fallback = '') {
 export function annotateApiBody(body, status, resolve = require) {
   if (annotate === undefined) {
     try {
-      annotate = resolve('@haxtheweb/haxcms-nodejs/dist/lib/apiMessageCodes.js').annotateApiResponse;
+      annotate = resolve(
+        // optional peer: older/absent haxcms-nodejs is handled by the catch
+        // eslint-disable-next-line n/no-missing-require
+        "@haxtheweb/haxcms-nodejs/dist/lib/apiMessageCodes.js",
+      ).annotateApiResponse;
     } catch (e) {
       annotate = null;
     }
   }
-  if (typeof annotate !== 'function') {
+  if (typeof annotate !== "function") {
     return body;
   }
   try {
@@ -124,4 +133,3 @@ export function _resetApiMessages() {
   namespaceReady = false;
   annotate = undefined;
 }
-

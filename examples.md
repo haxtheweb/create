@@ -1,277 +1,418 @@
 Video using these commands: https://www.youtube.com/watch?v=Woo-mjKKe7k
 These commands work after installing the `hax` cli globally
+
 ```bash
 npm install --global @haxtheweb/create
 ```
+
 # commands
+
 Interactive program to step through options
+
 ```bash
 hax start
 ```
+
 Create a new web component or interact with an existing one
+
 ```bash
 hax webcomponent
 ```
+
 Create a new site or interact with an existing one
+
 ```bash
 hax site
 ```
+
 Audit HAX Web components
+
 ```bash
 hax audit
 ```
+
 Print Help information for options and arguments
+
 ```bash
 hax help
 ```
 
 # webcomponent - new
+
 Create a new webcomponent, prompt for details
+
 ```bash
 hax webcomponent
 ```
+
 Create a new webcomponent called `x-button`, accept defaults and launch
+
 ```bash
 hax webcomponent x-button --y
 ```
+
 # webcomponent - existing
+
 - you already made a webcomponent called `x-button`, you want to work on it again
+
 ```bash
 cd x-button
 npm start
 ```
+
 or
+
 ```bash
 cd x-button
 hax webcomponent
 ```
+
 # site - new
+
 Create a new site, prompt for details
+
 ```bash
 hax site
 ```
+
 Create a new site called `zombocom`, prompt for theme and opening
+
 ```bash
 hax site zombocom
 ```
+
 Create a new site called `zombocom`, set theme to `polaris-flex-theme` and open the site to start working
+
 ```bash
 hax site zombocom --theme "polaris-flex-theme" --y
 ```
+
 Same, but for scripts, CI and AI agents: no prompts and no dev server launch (`--no-i` is implied automatically when there is no TTY)
+
 ```bash
 hax site zombocom --theme "polaris-flex-theme" --y --no-i
 ```
+
 Create a new site called `zombocom` from an installed skeleton template
+
 ```bash
 hax site zombocom --skeleton-machine-name clean-one --y
 ```
+
 Create a new site called `zombocom` from a local skeleton JSON file
+
 ```bash
 hax site zombocom --skeleton-file ./my-site-template.json --y
 ```
+
 Create a new site called `zombocom`, that has a custom theme called `custom-zombocom-theme` using the `base` template to get started
+
 ```bash
 hax site zombocom --theme "custom-theme" --custom-theme-name "custom-zombocom-theme" --custom-theme-template "base" --y
 ```
+
 # site - existing site
+
 `--root ./zombocom` - implies to run the command as if it was executed from the `./zombocom` folder
+
 ## site node operations
+
 ### node:add
+
 Add a page, setting `root` so that the call can be executed from a different directory than where the site lives
+
 ```bash
 hax site --root ./zombocom node:add --title "My summer vacation" --content "<p>This is an awesome blog post I am writing about my vacation.</p>" --y
 ```
+
 Add a page from a file (HTML, or Markdown by `.md` extension), scripted. Without `--order` the page goes after its last sibling.
+
 ```bash
 hax site node:add --title "Lesson 1" --slug lesson-1 --content ./lesson-1.md --y --no-i
 ```
+
 Inline content in a specific format uses `--content-format` (`html`, `md`, `json`, `yaml`)
+
 ```bash
 hax site node:add --title "Lesson 2" --content "# Lesson 2" --content-format md --y --no-i
 ```
+
 ### node:stats
+
 Show data or content of a node, interactively
+
 ```bash
 hax site node:stats
 ```
+
 ## node:edit
+
 Edit a detail about a node, interactively
+
 ```bash
 hax site node:edit
 ```
+
 Edit several fields of a node at once, scripted (no `--node-op` needed). `--item-id` accepts an id or a slug, and `--content` accepts a file path, a URL, or inline HTML. Fields: `--title`, `--slug`, `--content`, `--description`, `--tags`, `--parent`, `--order`, `--published`, `--hide-in-menu`, `--theme`
+
 ```bash
 hax site node:edit --item-id lesson-1 --title "Lesson 1: Basics" --content ./lesson-1.html --order 0 --y --no-i
 ```
+
 Edit the title of a specific node, scripted.
+
 ```bash
 hax site node:edit --item-id item-ac247e47-5dcf-4a98-814a-03f2e70151c8 --node-op title --title "my new title"
 ```
+
 Edit the content of a specific node, scripted
+
 ```bash
 hax site node:edit --item-id item-ac247e47-5dcf-4a98-814a-03f2e70151c8 --node-op content --content "<p>This is the new content</p><stop-note></stop-note>"
 ```
+
 Edit the parent of a specific node, interactive selection
+
 ```bash
 hax site node:edit --item-id item-ac247e47-5dcf-4a98-814a-03f2e70151c8 --node-op parent
 ```
+
 ## node:delete
+
 Delete a node, interactively
+
 ```bash
 hax site node:delete
 ```
+
 Delete a specific node, skip confirmation
+
 ```bash
 hax site node:delete --item-id item-ac247e47-5dcf-4a98-814a-03f2e70151c8 --y
 ```
+
 ## site operations
+
 List stats for the current site
+
 ```bash
 hax site site:stats
 ```
+
 List items (nodes) for the current site and write them to a file called export-items.json
+
 ```bash
 hax site site:items --to-file export-items.json
 ```
+
 Import items (nodes) for the current site from a file called export-items.json
+
 ```bash
 hax site site:items-import --items-import export-items.json
 ```
+
 List files uploaded to the site
+
 ```bash
 hax site site:list-files
 ```
+
 Search site text content across default fields (title, slug, description, tags, content)
+
 ```bash
 hax site site:search --search "lesson"
 ```
+
 Search site content with selector mode for HTML queries
+
 ```bash
 hax site site:search --search "video-player[src]" --search-selector
 ```
+
 Change theme, interactively
+
 ```bash
 hax site site:theme
 ```
+
 Change theme to clean-two, scripted
+
 ```bash
 hax site site:theme --theme "clean-two" --y
 ```
+
 Output the entire site as HTML with `<h1>` for title, redirected to file `output.html`
+
 ```bash
 hax site site:html --to-file output.html
 ```
+
 Output the entire site as MD with `#` for title, redirected to file `output.md`
+
 ```bash
 hax site site:md --to-file output.md
 ```
+
 Output the entire site as HAXSchema (vdom) with `h1` for title, redirected to file `schema.json`
+
 ```bash
 hax site site:schema --to-file schema.json
 ```
+
 Export current site as a reusable skeleton template JSON file
+
 ```bash
 hax site site:skeleton-export --to-file ./my-site-template.json
 ```
+
 Install current site as a local skeleton template
+
 ```bash
 hax site site:skeleton-install
 ```
+
 Install a skeleton template from a local JSON file
+
 ```bash
 hax site site:skeleton-install --skeleton-file ./my-site-template.json
 ```
+
 Install a skeleton template from a local JSON file and rename machine name on install
+
 ```bash
 hax site site:skeleton-install --skeleton-file ./my-site-template.json --skeleton-machine-name course-template
 ```
+
 Sync git repo for the site, if hooked up to a remote
+
 ```bash
 hax site site:sync
 ```
+
 Publish site to surge.sh, interactively
+
 ```bash
 hax site site:surge
 ```
+
 Publish site to surge.sh, setting the domain to be `my-cool-blog.surge.sh`
+
 ```bash
 hax site site:surge --domain my-cool-blog.surge.sh
 ```
+
 Publish site to surge.sh, automated deployment (republishes to the domain remembered in the site's CNAME file, otherwise `haxcli-<site-name>.surge.sh`)
+
 ```bash
 hax site site:surge --y --no-i
 ```
+
 Publish site to Netlify, interactively
+
 ```bash
 hax site site:netlify
 ```
+
 Publish site to Netlify, automated deployment
+
 ```bash
 hax site site:netlify --y
 ```
+
 Publish site to Netlify, setting the site ID to deploy to an existing site
+
 ```bash
 hax site site:netlify --domain my-site-id --y
 ```
+
 Publish site to Vercel, interactively
+
 ```bash
 hax site site:vercel
 ```
+
 Publish site to Vercel, automated deployment
+
 ```bash
 hax site site:vercel --y
 ```
+
 Publish site to Vercel, setting the project name
+
 ```bash
 hax site site:vercel --domain my-project-name --y
 ```
+
 Setup GitHub Actions deployment workflow (deploys automatically on git push)
+
 ```bash
 hax site setup:github-actions
 ```
+
 Setup GitHub Actions deployment workflow, overwrite existing file
+
 ```bash
 hax site setup:github-actions --y
 ```
+
 Setup GitLab CI deployment pipeline (deploys automatically on git push)
+
 ```bash
 hax site setup:gitlab-ci
 ```
+
 Setup GitLab CI deployment pipeline, overwrite existing file
+
 ```bash
 hax site setup:gitlab-ci --y
 ```
+
 # audit
+
 Audit HAX web component
+
 ```bash
 hax audit
 ```
+
 Audit HAX component while also printing all gathered .dddignore contents to console (for testing purposes)
+
 ```bash
 hax --debug audit
 ```
+
 Validate HAX schema documents in the current folder: site.json, skeletons, haxProperties (+ demoSchema and locale overlays), appstore.json and Merlin commands in JS source
+
 ```bash
 hax audit schema
 ```
+
 Fail on schema warnings too, and print them
+
 ```bash
 hax audit schema --strict
 ```
+
 Machine-readable schema report (for agents and CI)
+
 ```bash
 hax audit schema --format json
 ```
+
 Find English hardcoded in Lit templates that should come from `this.t` (exits 1 when any is found, so it works in CI)
+
 ```bash
 hax audit i18n
 ```
+
 Machine-readable list of hardcoded strings
+
 ```bash
 hax audit i18n --format json
 ```
+
 Run the DDD, schema and i18n audits together
+
 ```bash
 hax audit all
 ```

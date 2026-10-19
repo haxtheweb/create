@@ -37,21 +37,25 @@ src/
 Tests verify behavior through public interfaces, not internals. Seams are pre-agreed boundaries where testing effort lands.
 
 ### Seam A — pure functions (unit, no I/O)
+
 **Location:** `src/lib/utils.js`, `src/lib/site-security.js`, pure helpers in `programs/*`.
 **Tests:** `test/unit/utils.test.cjs`, `test/unit/site-security.test.cjs`, `test/unit/audit-helpers.test.cjs`, `test/unit/webcomponent-helpers.test.cjs`, `test/unit/skills-helpers.test.cjs`.
 **How:** `require()` src via `@babel/register`; expected values from known-good literals / worked examples / DDD token spec. No mocking.
 
 ### Seam B — fs-walking functions (unit, real I/O against temp fixtures)
+
 **Location:** `dddignoreInterpreter` (audit.js), `cleanupSiteForPublish`/`fixLegacyIgnoreFile`/`prepareSiteForStaticPublish`/`restoreSiteAfterStaticPublish` (site.js), `copySkillDir`/`listBundledSkills`/`installSkills` (skills.js), skeleton helpers (site.js).
 **Tests:** `test/unit/audit-dddignore.test.cjs`, `test/unit/site-fs.test.cjs`, `test/unit/site-skeleton.test.cjs`.
 **How:** build fixture trees in `os.tmpdir()`, assert fs results. Gated by `test/_helpers/site-canary.cjs` (skip-not-error when haxcms-nodejs dep is missing).
 
 ### Seam C — CLI public interface (subprocess smoke)
+
 **Location:** `dist/create.js` (the built CLI).
 **Tests:** `test/smoke/cli.smoke.test.cjs`.
 **How:** `spawnSync(process.execPath, [CLI, ...args])` with isolated `HOME`; assert exit code + stdout shape. Gated by a load canary (skip if dist not built or CLI can't load).
 
 ### Deferred — *CommandDetected / *Process orchestration (Tier 3)
+
 `process.exit()` inline + `@clack/prompts` blocking on stdin + `exec()` to network. Cover via Seam C subprocess after haxcms-nodejs publish, not unit DI.
 
 ## Test conventions

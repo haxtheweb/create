@@ -51,6 +51,7 @@ Onboard new developers to the HAX ecosystem by cloning repositories, installing 
 ## CLI Options for Automation
 
 When scripting HAX commands, always use these flags to prevent interruptions:
+
 - `--y` or `--auto` — Auto-accept all prompts
 - `--no-i` — Prevent interactive sub-processes
 - `--skip` — Skip animations for faster execution
@@ -59,6 +60,7 @@ When scripting HAX commands, always use these flags to prevent interruptions:
 ## Quick Verification
 
 After setup, verify the environment:
+
 1. Run `hax --version` to confirm CLI installation
 2. Run `hax webcomponent test-element --y` to verify scaffolding works
 3. Run `hax site test-site --y --no-i` to verify site creation works

@@ -51,6 +51,7 @@ To mark a page draft/private (e.g. verbatim transcripts), set `metadata.publishe
 ## Educational Content Standards
 
 When creating educational content:
+
 - Apply OER Schema metadata parameters for semantic structure and interoperability
 - Structure content to support pedagogical objectives
 - Include proper learning resource identification

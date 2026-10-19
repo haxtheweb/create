@@ -17,7 +17,16 @@ version: 1.0.0
 license: Apache-2.0
 metadata:
   author: haxtheweb
-  tags: [hax, webcomponents, documentation, readme, custom-elements-json, haxProperties, diataxis]
+  tags:
+    [
+      hax,
+      webcomponents,
+      documentation,
+      readme,
+      custom-elements-json,
+      haxProperties,
+      diataxis,
+    ]
   source: create
 ---
 
@@ -132,7 +141,7 @@ report shape.
 
 ## Boundaries with sibling skills
 
-- `hax-webcomponent-dev` owns *building* elements (haxProperties/demoSchema
+- `hax-webcomponent-dev` owns _building_ elements (haxProperties/demoSchema
   implementation, DDD, a11y, build). "Make this HAX-capable" / "add a property"
   / "fix the build" → that skill. "Document this element" → this skill.
 - `hax-ecosystem-onboarding` is itself a Tutorial artifact; this skill may

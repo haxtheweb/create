@@ -19,6 +19,7 @@
   },
   "homepage": "https://hax.psu.edu/",
   "scripts": {
+    "prepare": "husky install",
     "build": "rm -rf dist && babel src --out-dir dist --copy-files --include-dotfiles && chmod 774 dist/create.js",
     "start": "npm run build && node ./dist/create.js && chmod 774 dist/create.js",
     "release": "npm run build && commit-and-tag-version && git push --follow-tags origin main && npm publish",
@@ -26,6 +27,10 @@
     "dev": "nodemon --watch src",
     "haxcms-nodejs": "haxcms-nodejs",
     "local": "npm run build && npm link",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "test": "node --require ./test/_helpers/english.cjs --test test/unit/**/*.test.cjs test/smoke/**/*.test.cjs",
     "test:unit": "node --require ./test/_helpers/english.cjs --test test/unit/**/*.test.cjs",
     "test:smoke": "node --require ./test/_helpers/english.cjs --test test/smoke/**/*.test.cjs"
@@ -75,8 +80,27 @@
     "@babel/preset-env": "7.29.5",
     "@babel/register": "7.29.3",
     "@custom-elements-manifest/analyzer": "0.10.4",
+    "@eslint/js": "9.39.5",
     "babel-plugin-transform-dynamic-import": "2.1.0",
     "commit-and-tag-version": "12.7.3",
-    "nodemon": "3.1.14"
+    "eslint": "9.39.5",
+    "eslint-config-prettier": "10.1.8",
+    "eslint-plugin-n": "18.5.0",
+    "globals": "17.13.0",
+    "husky": "7.0.4",
+    "lint-staged": "^15.5.2",
+    "nodemon": "3.1.14",
+    "prettier": "3.2.5"
+  },
+  "lint-staged": {
+    "*.js": [
+      "eslint --fix",
+      "prettier --write"
+    ]
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
   }
 }

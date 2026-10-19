@@ -1,17 +1,11 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": [
-    "config:recommended"
-  ],
+  "extends": ["config:recommended"],
   "commitMessageLowerCase": "never",
-  "labels": [
-    "dependencies"
-  ],
+  "labels": ["dependencies"],
   "prConcurrentLimit": 3,
   "prHourlyLimit": 2,
-  "schedule": [
-    "* 0-7 * * 1"
-  ],
+  "schedule": ["* 0-7 * * 1"],
   "packageRules": [
     {
       "groupName": "HAXTheWeb Dependencies",

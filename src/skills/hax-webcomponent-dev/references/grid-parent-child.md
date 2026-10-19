@@ -35,7 +35,13 @@ Scaffold the parent with `hax wc my-list --y --no-i`. The scaffold gives you a l
   },
   "settings": {
     "configure": [
-      { "property": "title", "title": "Title", "description": "Heading for the list", "inputMethod": "textfield", "required": true }
+      {
+        "property": "title",
+        "title": "Title",
+        "description": "Heading for the list",
+        "inputMethod": "textfield",
+        "required": true
+      }
     ]
   },
   "saveOptions": { "wipeSlot": false, "unsetAttributes": [] },

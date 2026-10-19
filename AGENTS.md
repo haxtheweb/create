@@ -1,6 +1,7 @@
 # AGENTS.md
 
 > **Agents start here**
+>
 > - Inside a HAX site, read `llms.txt` and `.well-known/agent-skills/index.json` first, then run `hax site` for an orientation of the site and its scriptable commands.
 > - Always pass `--y --no-i` when scripting. With no TTY (sandboxes, CI) the CLI implies `--no-i` automatically.
 > - Use the global `hax` command, never `npx hax` (a different npm package).
@@ -42,6 +43,7 @@ The HAX ecosystem consists of multiple interconnected repositories, each serving
 HAX is built on a foundation of community pillars that guide all development decisions and community interactions. These are not just technical specifications but ethical commitments:
 
 #### Core Pillars
+
 - **Accessible**: HAX maximizes accessibility while removing the knowledge required to maintain accessibility standards. Components adhere to WCAG 2.0 AA standards, with automated color contrast ratios and expert-audited implementations.
 - **Extensible**: Built for sustainable extension through web standards, microservices, and modular architecture that grows with user needs.
 - **Free and Open**: Open community welcoming all (Penn State and beyond), embracing the 5Rs of OER (Retain, Reuse, Revise, Remix, Redistribute) for content and code.
@@ -51,6 +53,7 @@ HAX is built on a foundation of community pillars that guide all development dec
 - **Sustainable**: Environmental (less data, lower battery usage), technological (web standards-based longevity), and community (inclusive, collaborative governance) sustainability.
 
 #### Technical Emphasis
+
 - **Rapid Development**: Scaffolding tools and design systems accelerate creation
 - **Unbundled Delivery**: Pure JavaScript, HTML, CSS approach without compilation steps
 - **Modularity**: Components work independently and compose together seamlessly
@@ -75,6 +78,7 @@ cd my-hax-site && hax serve
 > **Codex users**: AGENTS.md is read natively by Codex, so the steps above are your onboarding path — no extra plugin required.
 >
 > **Claude Code users**: you can also install the HAX onboarding plugin for golden-path slash commands:
+>
 > ```
 > /plugin marketplace add haxtheweb/praw
 > /plugin install hax-onboarding@haxtheweb
@@ -83,7 +87,9 @@ cd my-hax-site && hax serve
 ## Development Environment Setup
 
 ### Issue Management
+
 Before starting any work, check the unified issue queue:
+
 - All HAX ecosystem issues are tracked at `haxtheweb/issues`
 - Use GitHub CLI to check issues: `gh issue list`
 - Reference existing issues when making contributions
@@ -153,6 +159,7 @@ Before starting any work, check the unified issue queue:
 ## Code Style & Standards
 
 ### JavaScript-Only Architecture
+
 - **Language**: Pure JavaScript with LitElement for web components
 - **NO TypeScript**: HAX strictly avoids TypeScript to eliminate compilation requirements
 - **Unbundled Approach**: Components ship as native JS/HTML/CSS for maximum compatibility
@@ -160,6 +167,7 @@ Before starting any work, check the unified issue queue:
 - **External Dependencies**: Leverage libraries like `vaadin-upload`, `shoelace-carousel`, etc. but always use their JS builds
 
 ### JavaScript Standards
+
 - **Global References**: Use `globalThis` instead of `window` for consistency across environments
 - **Formatting**:
   - Use single quotes (`'`)
@@ -170,6 +178,7 @@ Before starting any work, check the unified issue queue:
 - **Modern JavaScript**: Leverage ES2018+ features while maintaining browser compatibility
 
 ### Design System Integration
+
 - **DDD System**: All components MUST adhere to the DDD (Design, Develop, Destroy) design system
   - Location: `elements/d-d-d` in the webcomponents repository
   - Use DDD for fonts, colors, padding, spacing, margins, and other design tokens
@@ -177,6 +186,7 @@ Before starting any work, check the unified issue queue:
   - Reference `.dddignore` file to exclude irrelevant files during audits
 
 ### Component Architecture
+
 - **HAX Properties**: Include `haxProperties` in web components for HAX compatibility (use `--writeHaxProperties` flag)
 - **Theme Development**: HAXcms themes should extend `HAXCMSLitElement` class
 - **File Structure**:
@@ -185,35 +195,42 @@ Before starting any work, check the unified issue queue:
   - Monorepo: Each component gets its own directory in `elements/`
 
 ### Naming Conventions
+
 - **Web Components**: Use hyphenated names (e.g., `my-element`)
 - **Package Names**: Match component/site name in `package.json`
 - **CSS Classes**: Follow BEM methodology when not using DDD tokens
 
 ### Internationalization (i18n)
+
 - Use provided i18n wiring for web components (automatically included with `hax webcomponent`)
 - Support multiple languages from the start
 
 ## Build System & Testing
 
 ### Build Process Understanding
+
 The HAX ecosystem uses a sophisticated build pipeline optimized for unbundled JavaScript delivery:
 
 1. **Gulp**: Handles asset compilation and processing
-2. **Prettier**: Ensures consistent code formatting  
+2. **Prettier**: Ensures consistent code formatting
 3. **CEM (Custom Elements Manifest)**: Generates `custom-elements.json` for component metadata
 4. **Lerna**: Manages monorepo dependencies and publishing
 5. **No TypeScript Compilation**: Pure JavaScript workflow eliminates build complexity
 
 ### Build Commands
+
 - **Standard build** (from component root):
+
   ```bash
   yarn run build
   ```
+
   - Compiles assets, formats code, generates custom-elements.json
   - **CRITICAL**: Always run this after changes to HAXCMSLitElement themes
   - Do NOT manually edit `custom-elements.json` - it's auto-generated
 
 - **Development build with watching**:
+
   ```bash
   yarn run dev
   ```
@@ -227,6 +244,7 @@ The HAX ecosystem uses a sophisticated build pipeline optimized for unbundled Ja
 ### Testing Instructions
 
 - **Run tests** (from project or component root):
+
   ```bash
   npm test
   ```
@@ -239,6 +257,7 @@ The HAX ecosystem uses a sophisticated build pipeline optimized for unbundled Ja
   - Use Lerna for more complex filtering
 
 ### DDD Compliance Auditing
+
 - **Audit web components for DDD compliance**:
   ```bash
   hax audit
@@ -255,10 +274,13 @@ The HAX ecosystem uses a sophisticated build pipeline optimized for unbundled Ja
   - **Required** before submitting theme components
 
 ### Code Quality
+
 - **Linting**:
+
   ```bash
   npm run lint
   ```
+
   - Ensures code style compliance before committing
   - Uses ESLint, Prettier, and Stylelint
 
@@ -268,6 +290,7 @@ The HAX ecosystem uses a sophisticated build pipeline optimized for unbundled Ja
   ```
 
 ### Example `.dddignore` Template
+
 ```plaintext
 /node_modules
 /dist
@@ -308,6 +331,7 @@ LICENSE
 ## CLI Command Options
 
 The HAX CLI supports various options for fine-tuned control. Use `hax help`, `hax webcomponent --help`, or `hax site --help` for details. Key options include:
+
 - `--v`: Verbose output.
 - `--debug`: Developer-focused output.
 - `--format <char>`: Output format (json, yaml; default: json).
@@ -333,6 +357,7 @@ The HAX CLI supports various options for fine-tuned control. Use `hax help`, `ha
 ## HAX Theme Development
 
 ### Theme Architecture
+
 - **Base Class**: HAXcms themes extend `HAXCMSLitElement` class
 - **Design Integration**: Themes inherit DDD design system automatically
 - **Template Options**: Choose from `base`, `polaris-flex`, `polaris-sidebar`
@@ -340,20 +365,25 @@ The HAX CLI supports various options for fine-tuned control. Use `hax help`, `ha
 - **Pure JavaScript**: All theme code written in JavaScript, HTML, CSS only
 
 ### Theme Creation Workflow
+
 1. **Create custom theme**:
+
    ```bash
    hax site --custom-theme-name my-theme --custom-theme-template base
    ```
 
 2. **Modify theme files** in the generated theme directory
+
    - Edit JavaScript files directly (no TypeScript compilation needed)
    - Use standard HTML templates
    - Apply CSS with DDD tokens
 
 3. **Build theme** (CRITICAL STEP):
+
    ```bash
    yarn run build
    ```
+
    - Generates `custom-elements.json`
    - Compiles styles and assets
    - Updates component metadata
@@ -364,6 +394,7 @@ The HAX CLI supports various options for fine-tuned control. Use `hax help`, `ha
    ```
 
 ### Theme Best Practices
+
 - Use DDD tokens for consistent styling
 - Import external libraries from their JavaScript distributions
 - Implement responsive design patterns
@@ -374,6 +405,7 @@ The HAX CLI supports various options for fine-tuned control. Use `hax help`, `ha
 ## Monorepo Navigation & Management
 
 ### Repository Structure
+
 ```
 ~/Documents/git/haxtheweb/
 ├── webcomponents/           # Component library & themes
@@ -383,7 +415,7 @@ The HAX CLI supports various options for fine-tuned control. Use `hax help`, `ha
 │       └── [250+ more]/   # All other components
 ├── create/                 # HAX CLI tool
 ├── haxcms-php/            # PHP backend
-├── haxcms-nodejs/         # Node.js backend  
+├── haxcms-nodejs/         # Node.js backend
 ├── desktop/               # Electron app
 ├── hax11ty/              # 11ty integration
 ├── json-outline-schema/   # Content schemas
@@ -403,6 +435,7 @@ The HAX CLI supports various options for fine-tuned control. Use `hax help`, `ha
 ```
 
 ### Working Across Repositories
+
 - **Component Development**: Work in `webcomponents/elements/[component-name]/`
 - **CLI Development**: Work in `create/`
 - **Backend Development**: Choose `haxcms-php/` or `haxcms-nodejs/`
@@ -412,6 +445,7 @@ The HAX CLI supports various options for fine-tuned control. Use `hax help`, `ha
 - **Issues**: Always check `issues/` first
 
 ### Lerna Management (webcomponents repo)
+
 ```bash
 # Run command across all components
 lerna run build
@@ -426,11 +460,11 @@ lerna add package-name --scope=@haxtheweb/component-name
 ## Advanced HAX Patterns
 
 ### Content Import & Migration
+
 - **Import from external sources**:
   ```bash
   hax site --import-site https://example.com --import-structure htmlToSite
   ```
-  
 - **Supported import methods**:
   - `pressbooksToSite` - Academic textbook platform
   - `elmslnToSite` - ELMS Learning Network
@@ -442,23 +476,25 @@ lerna add package-name --scope=@haxtheweb/component-name
   - `docxToSite` - Microsoft Word documents
 
 ### Site Management
+
 - **Add pages programmatically**:
   ```bash
   hax site --title "New Page" --content "<p>Content</p>" --slug "new-page"
   ```
-  
 - **Advanced page options**:
   ```bash
   hax site --title "Page" --parent "parent-slug" --order 3 --theme "custom-theme" --hide-in-menu
   ```
 
 ### GitHub CLI Integration
+
 - **Check issues**: `gh issue list`
 - **Create issues**: `gh issue create`
 - **Review PRs**: `gh pr review`
 - **CLI is pre-installed** - use directly without verification
 
 ### External Library Integration
+
 - **Vaadin Components**: Import from `@vaadin/[component]/[component].js`
 - **Shoelace Components**: Import from `@shoelace-style/shoelace/dist/components/[component]/[component].js`
 - **Other Libraries**: Always use the `/dist/` or compiled JavaScript version
@@ -470,13 +506,16 @@ lerna add package-name --scope=@haxtheweb/component-name
 ## HAX Cloud Infrastructure
 
 ### HAX.cloud Services
+
 HAX leverages cloud infrastructure at https://hax.cloud for:
+
 - **CDN**: Content delivery network for component libraries
 - **AI Services**: Content analysis and processing capabilities
 - **Documentation**: Centralized documentation and community resources
 - **Open Infrastructure**: Publicly available APIs and services
 
 ### Microservice Architecture
+
 - **open-apis.hax.cloud**: Conversion, analysis, and processing services
 - **Stateless Design**: Services designed for scalability and reliability
 - **REST APIs**: Standard HTTP interfaces for integration
@@ -485,6 +524,7 @@ HAX leverages cloud infrastructure at https://hax.cloud for:
 ## Ecosystem-Specific Guidance
 
 ### Development Workflows
+
 - **Monorepo Support**: Place additional `AGENTS.md` files in subproject folders for component-specific instructions
 - **Schema Evolution**: Changes to JSON schemas require coordination across repositories
 - **Component Dependencies**: Use `@haxtheweb/` scope for internal dependencies
@@ -493,12 +533,14 @@ HAX leverages cloud infrastructure at https://hax.cloud for:
 - **API Development**: Express endpoints in `open-apis/` deploy automatically to Vercel at https://open-apis.hax.cloud/
 
 ### Documentation Standards
+
 - **HAXcms Format**: Documentation sites use HAXcms structure (site.json + pages/ + files/)
 - **JSON Outline Schema**: All content structure follows standardized schema
 - **Semantic HTML**: Content authored in semantic HTML for maximum portability
 - **Asset Management**: Media files organized in files/ directory with proper metadata
 
 ### Community Governance
+
 - **Pillar-Driven Development**: All decisions evaluated against community pillars
 - **Inclusive Decision Making**: Community input welcomed on major changes
 - **Issue-Driven Development**: Work organized through GitHub issues with pillar labels
@@ -509,29 +551,35 @@ HAX leverages cloud infrastructure at https://hax.cloud for:
 HAX has deep roots in educational technology, evolving from over a decade of work in online learning:
 
 ### Educational Heritage
+
 - **ELMS:LN Legacy**: HAX evolved from ELMS Learning Network (2012-2022), a Next Generation Digital Learning Environment (NGDLE) that powered hundreds of online courses at Penn State and beyond
 - **OER Commitment**: Embraces the 5Rs of Open Educational Resources (Retain, Reuse, Revise, Remix, Redistribute)
 - **Instructional Design Focus**: Built-in support for pedagogical patterns through specialized components
 
 ### Educational Components
+
 HAX includes purpose-built components for learning:
+
 - **Question Types**: Multiple choice, fill-in-the-blanks, drag-and-drop, true/false, short answer, sorting, tagging
 - **Instructional Tools**: Self-check activities, stop notes, timelines, math notation (MathML/LaTeX)
 - **Assessment Features**: Immediate feedback, progressive disclosure, formative assessment patterns
 - **Accessibility in Learning**: Screen reader compatibility, keyboard navigation, high contrast support
 
 ### Pedagogical Patterns
+
 - **Chunked Content**: Break complex topics into digestible components
 - **Active Learning**: Interactive elements encourage engagement over passive consumption
 - **Universal Design for Learning**: Multiple means of representation, engagement, and expression
 - **Evidence-Based Design**: Components based on learning science research
 
 ### Related Educational Projects
+
 - **ELMS:LN**: Legacy platform still maintained but effectively replaced by HAX
 - **Course Design Templates**: Pre-built pedagogical frameworks for common course structures
 - **Learning Analytics**: Integration points for tracking learner engagement and progress
 
 ### Community & Support
+
 - **HAX Community**: Run `hax party` for involvement opportunities
 - **Discord**: https://discord.gg/aCGxmRHEJP
 - **Issue Reporting**: Use `haxtheweb/issues` or GitHub interface
@@ -552,26 +600,30 @@ HAX includes purpose-built components for learning:
 ## Troubleshooting Common Issues
 
 ### Build Failures
+
 - **Missing custom-elements.json**: Run `yarn run build` from component root
 - **DDD Audit Failures**: Check `.dddignore` and fix CSS token usage
 - **Lerna Issues**: Run `lerna clean && lerna bootstrap`
 
 ### Development Environment
+
 - **Wrong Directory**: Always work from `haxtheweb/`
 - **CLI Not Found**: Ensure `@haxtheweb/create` is globally installed
 - **Permission Errors**: Check file permissions and ownership
 
 ### Component Issues
+
 - **Theme Not Loading**: Verify HAXCMSLitElement inheritance and build process
 - **DDD Tokens Missing**: Import DDD properly and use CSS custom properties
 - **HAX Integration**: Ensure `haxProperties` are defined correctly
 - **Library Import Errors**: Verify you're importing JavaScript distributions, not TypeScript sources
 
 ### Performance Issues
+
 - **Slow Loading**: Check for unnecessary dependencies or large imports
 - **Bundle Size**: HAX's unbundled approach should keep individual files small
 - **Memory Usage**: Monitor component lifecycle and cleanup
 
 ---
 
-*This AGENTS.md file is maintained across all HAX ecosystem repositories to ensure consistent development experience regardless of entry point.*
+_This AGENTS.md file is maintained across all HAX ecosystem repositories to ensure consistent development experience regardless of entry point._

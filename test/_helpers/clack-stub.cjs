@@ -1,4 +1,4 @@
-'use strict'
+"use strict";
 
 // Patchable stand-in for @clack/prompts.
 //
@@ -26,24 +26,24 @@
 // break content assertions. NO_COLOR forces colors off regardless of
 // TTY/FORCE_COLOR/CI, and must be set before picocolors is first required
 // because it decides at module load time.
-process.env.NO_COLOR = '1'
+process.env.NO_COLOR = "1";
 
-const Module = require('node:module')
-const path = require('node:path')
+const Module = require("node:module");
+const path = require("node:path");
 
 // a cache key that will never collide with a real file
-const STUB_KEY = path.join(__dirname, '__clack-prompt-stub__.js')
+const STUB_KEY = path.join(__dirname, "__clack-prompt-stub__.js");
 
 function installClackStub() {
   if (globalThis.__haxClackStub) {
-    return globalThis.__haxClackStub
+    return globalThis.__haxClackStub;
   }
   // load the real module BEFORE installing the redirect, so the stub copies
   // the genuine exports
-  const real = require('@clack/prompts')
-  const stub = { __esModule: true }
+  const real = require("@clack/prompts");
+  const stub = { __esModule: true };
   for (const key of Object.keys(real)) {
-    stub[key] = real[key]
+    stub[key] = real[key];
   }
   // seed the loader cache so the (nonexistent) stub file path is never read
   require.cache[STUB_KEY] = {
@@ -51,16 +51,16 @@ function installClackStub() {
     filename: STUB_KEY,
     loaded: true,
     exports: stub,
-  }
-  const originalResolveFilename = Module._resolveFilename
+  };
+  const originalResolveFilename = Module._resolveFilename;
   Module._resolveFilename = function (request, ...args) {
-    if (request === '@clack/prompts') {
-      return STUB_KEY
+    if (request === "@clack/prompts") {
+      return STUB_KEY;
     }
-    return originalResolveFilename.call(this, request, ...args)
-  }
-  globalThis.__haxClackStub = stub
-  return stub
+    return originalResolveFilename.call(this, request, ...args);
+  };
+  globalThis.__haxClackStub = stub;
+  return stub;
 }
 
-module.exports = { installClackStub }
+module.exports = { installClackStub };

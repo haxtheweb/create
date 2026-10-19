@@ -36,6 +36,10 @@ jobs:
             ${{ runner.os }}-node-${{ matrix.node-version }}-yarn-
       - name: Install
         run: yarn install
+      - name: Lint
+        run: yarn lint
+      - name: Format check
+        run: yarn format:check
       - name: Build
         run: yarn run build
       - name: Test
@@ -53,11 +57,15 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Install
         run: yarn install
+      - name: Lint
+        run: yarn lint
+      - name: Format check
+        run: yarn format:check
       - name: Build
         run: yarn run build
       - name: Smoke tests
         env:
-          CI: 'true'
-          GIT_CONFIG_NOSYSTEM: '1'
+          CI: "true"
+          GIT_CONFIG_NOSYSTEM: "1"
           GIT_CONFIG_GLOBAL: /dev/null
         run: yarn test:smoke

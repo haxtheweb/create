@@ -24,41 +24,50 @@ Reporting issues? Our unified issue queue is a good place for this: https://gith
 Need to discuss something via chat? Our [Discord can be joined here](https://discord.gg/aCGxmRHEJP).
 
 ## Setting up a Development Environment
+
 HAX provides several options to make onboarding accessible for new contributors.
+
 1. Use our [Dev Container](https://containers.dev/) for a ready-made environment powered by Docker
 2. Use the built-in `hax party` module to develop from your local device, leveraging your existing `haxtheweb/create` install
 
 Either way, we'll get you up and running with tooling, repositories, and the community.
 
 ### Dev Container
-* Install Docker (or another container runtime)
-    * [Windows](https://docs.docker.com/desktop/setup/install/windows-install/)
-        * Ensure that you select the **WSL 2 Backend** option
-        * Restart after install
-        * Certain Windows editions are bundled with an old WSL 2 version. If Docker Desktop warns that WSL 2 is outdated, please update through the [Windows Store](https://aka.ms/wslstorepage) or run `wsl --update` in **PowerShell**.
-    * [macOS](https://docs.docker.com/desktop/setup/install/mac-install/)
-    * [Linux](https://docs.docker.com/desktop/setup/install/linux/)
-    * [Dev Containers](https://containers.dev/) are broadly supported across OCI-compliant runtimes like Docker, Podman, and OrbStack.
 
-After this step you're ready to go! 
+- Install Docker (or another container runtime)
+  - [Windows](https://docs.docker.com/desktop/setup/install/windows-install/)
+    - Ensure that you select the **WSL 2 Backend** option
+    - Restart after install
+    - Certain Windows editions are bundled with an old WSL 2 version. If Docker Desktop warns that WSL 2 is outdated, please update through the [Windows Store](https://aka.ms/wslstorepage) or run `wsl --update` in **PowerShell**.
+  - [macOS](https://docs.docker.com/desktop/setup/install/mac-install/)
+  - [Linux](https://docs.docker.com/desktop/setup/install/linux/)
+  - [Dev Containers](https://containers.dev/) are broadly supported across OCI-compliant runtimes like Docker, Podman, and OrbStack.
+
+After this step you're ready to go!
+
 1. Clone the project with [Git](https://git-scm.com/install/) or [GitHub Desktop](https://desktop.github.com/download/)
 2. Select **Open in VS Code**
-3. Select **Install Recommended Extensions** 
+3. Select **Install Recommended Extensions**
 4. Select **Reopen in Container**!
 
 ### Local
+
 #### System dependencies
-* [git](https://git-scm.com/)
-* [gh](https://cli.github.com/) (optional)
-* [yarn](https://yarnpkg.com/)
+
+- [git](https://git-scm.com/)
+- [gh](https://cli.github.com/) (optional)
+- [yarn](https://yarnpkg.com/)
 
 `hax party` works great with just `git`, but contributors can get some extra convenience with GitHub's own `gh` utility. (You can fork repos directly from the CLI, rather than visiting the browser every time!)
 
 #### Node.js configuration
+
 For a local development environment, the official release of HAX may already be installed through `npm install -g @haxtheweb/create`. You'll need to give this project precedence over the global Node.js install.
-* Run `npm link` in the root of the repository
+
+- Run `npm link` in the root of the repository
 
 This overrides the global install, so that every `hax` command references your changes to the project. The typical workflow includes two terminal windows:
+
 1. Run `npm run dev` in the first terminal to watch for changes, then rebuild
 2. Use the second terminal interactively with `hax`, inspecting and testing your work
 
@@ -72,6 +81,7 @@ Pull requests are often called a "PR".
 HAX generally follows the standard [github pull request](https://help.github.com/articles/about-pull-requests/) process.
 
 Common new contributor PR issues are:
+
 - Not referencing the issue that the PR resolves
 - Not describing the scope of the solution effectively
 - Include mentions (like @person) and [keywords](https://help.github.com/en/articles/closing-issues-using-keywords) which could close the issue (like fixes #xxxx) in commit messages.
@@ -94,15 +104,15 @@ Note: if your pull request isn't getting enough attention, you can use our [Disc
 ## Best practices
 
 - Write clear and meaningful git commit messages.
-- If the PR will *completely* fix a specific issue, include `fixes #123` in the PR body (where 123 is the specific issue number the PR will fix. This will automatically close the issue when the PR is merged.
+- If the PR will _completely_ fix a specific issue, include `fixes #123` in the PR body (where 123 is the specific issue number the PR will fix. This will automatically close the issue when the PR is merged.
 - Make sure you don't include `@mentions` or `fixes` keywords in your git commit messages. These should be included in the PR body instead.
 - When you make a PR for small change (such as fixing a typo, style change, or grammar fix), please squash your commits so that we can maintain a cleaner git history.
 - Make sure you include a clear and detailed PR description explaining the reasons for the changes, and ensuring there is sufficient information for the reviewer to understand your PR.
-- Additional Readings: 
-    - [chris.beams.io/posts/git-commit/](https://chris.beams.io/posts/git-commit/)
-    - [github.com/blog/1506-closing-issues-via-pull-requests ](https://github.com/blog/1506-closing-issues-via-pull-requests)
-    - [davidwalsh.name/squash-commits-git ](https://davidwalsh.name/squash-commits-git)
-    - [https://mtlynch.io/code-review-love/](https://mtlynch.io/code-review-love/)
+- Additional Readings:
+  - [chris.beams.io/posts/git-commit/](https://chris.beams.io/posts/git-commit/)
+  - [github.com/blog/1506-closing-issues-via-pull-requests ](https://github.com/blog/1506-closing-issues-via-pull-requests)
+  - [davidwalsh.name/squash-commits-git ](https://davidwalsh.name/squash-commits-git)
+  - [https://mtlynch.io/code-review-love/](https://mtlynch.io/code-review-love/)
 
 ## Testing
 

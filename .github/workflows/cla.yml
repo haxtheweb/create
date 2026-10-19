@@ -23,10 +23,10 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PERSONAL_ACCESS_TOKEN: ${{ secrets.CLA_ACCESS_TOKEN }}
         with:
-          path-to-signatures: 'signatures/version1/cla.json'
-          path-to-document: 'https://github.com/haxtheweb/cla/blob/main/CLA.md'
+          path-to-signatures: "signatures/version1/cla.json"
+          path-to-document: "https://github.com/haxtheweb/cla/blob/main/CLA.md"
           # branch should not be protected
-          branch: 'main'
+          branch: "main"
           # claude is the GitHub account behind commits authored as
           # Claude <noreply@anthropic.com> (Claude Code) and Copilot /
           # copilot-swe-agent[bot] are GitHub Copilot agents. Changes they
@@ -34,9 +34,9 @@ jobs:
           # *[bot] cover the remaining automation accounts.
           allowlist: "*[bot],bot*,claude,copilot-swe-agent[bot],Copilot"
           # the followings are the optional inputs - If the optional inputs are not given, then default values will be taken
-          remote-organization-name: 'haxtheweb'
-          remote-repository-name: 'cla'
-          create-file-commit-message: 'Creating file for storing CLA Signatures'
-          signed-commit-message: 'CLA signed by $contributorName'
+          remote-organization-name: "haxtheweb"
+          remote-repository-name: "cla"
+          create-file-commit-message: "Creating file for storing CLA Signatures"
+          signed-commit-message: "CLA signed by $contributorName"
           custom-notsigned-prcomment: 'Thank you for your contribution! Before we can merge your PR, we need you to sign our Contributor License Agreement (CLA). Please comment **"I have read the CLA Document and I hereby sign the CLA"** to agree to the [CLA terms](https://github.com/haxtheweb/cla/blob/main/CLA.md).'
-          custom-allsigned-prcomment: 'All contributors have signed the CLA. Thank you!'
+          custom-allsigned-prcomment: "All contributors have signed the CLA. Thank you!"

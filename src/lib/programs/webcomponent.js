@@ -1,23 +1,30 @@
 #!/usr/bin/env node
 
-import * as fs from 'node:fs';
-import * as path from 'node:path';
-import { setTimeout } from 'node:timers/promises';
+import * as fs from "node:fs";
+import * as path from "node:path";
+import { setTimeout } from "node:timers/promises";
 import * as ejs from "ejs";
-import * as p from '@clack/prompts';
-import color from 'picocolors';
-import { dump } from 'js-yaml';
+import * as p from "@clack/prompts";
+import color from "picocolors";
+import { dump } from "js-yaml";
 
 import { merlinSays } from "../statements.js";
-import { t } from '../i18n.js';
+import { t } from "../i18n.js";
 import { log, writeData } from "../logging.js";
 
-import { dashToCamel, readAllFiles, exec, validateWebcomponentName, validateNpmClient, gitIdentityFallbackArgs } from '../utils.js';
+import {
+  dashToCamel,
+  readAllFiles,
+  exec,
+  validateWebcomponentName,
+  validateNpmClient,
+  gitIdentityFallbackArgs,
+} from "../utils.js";
 import * as haxcmsLib from "@haxtheweb/haxcms-nodejs/dist/lib/HAXCMS.js";
 const HAXCMS = haxcmsLib.HAXCMS;
 
 let sysGit = true;
-exec('which git', error => {
+exec("which git", (error) => {
   if (error) {
     sysGit = false;
   }
@@ -157,66 +164,65 @@ export async function webcomponentProcess(commandRun, project, port = "8000") {
   // is interpolated into exec() shell strings. create.js validates earlier,
   // but the site/webcomponent subcommand option paths can bypass that check.
   if (commandRun.options.npmClient) {
-    commandRun.options.npmClient = validateNpmClient(commandRun.options.npmClient);
+    commandRun.options.npmClient = validateNpmClient(
+      commandRun.options.npmClient,
+    );
   }
   // auto select operations to perform if requested
   if (!project.extras) {
     if (commandRun.options.extras === false) {
       project.extras = [];
-    }
-    else {
-      let extras = ['launch', 'install', 'git'];
+    } else {
+      let extras = ["launch", "install", "git"];
       if (!sysGit || project.isMonorepo) {
         extras.pop();
       }
       // haxtheweb/issues#3119: never start the dev server (a process that does
       // not return) when nobody is there to use it; still install + commit
       if (commandRun.options.i === false) {
-        extras = extras.filter((extra) => extra !== 'launch');
+        extras = extras.filter((extra) => extra !== "launch");
       }
-      project.extras = extras;  
+      project.extras = extras;
     }
   }
   // values not set by user but used in templating
   project.className = dashToCamel(project.name);
   // option to build github repo link for the user
-  if (project.extras && project.extras.includes('git')) {
-      // @todo need to support git@ and https methods
-      if (commandRun.options.auto || commandRun.options.i === false) {
-        project.gitRepo = `https://github.com/${project.author}/${project.name}.git`;
-      }
-      else  {
-        project.gitRepo = await p.text({
-          message: t('wcGitRepoLocation'),
-          placeholder: `https://github.com/${project.author}/${project.name}.git`,
-          initialValue: `https://github.com/${project.author}/${project.name}.git`,
-        });  
-      }
-      // if they supplied one and it has github in it, build a link automatically for ejs index
-      if (project.gitRepo && project.gitRepo.includes('github.com')) {
-        project.githubLink = project.gitRepo.replace('git@github.com:', 'https://github.com/').replace('.git', '');
-      }
-      else {
-        project.githubLink = null;
-      }
-  }
-  else {
+  if (project.extras && project.extras.includes("git")) {
+    // @todo need to support git@ and https methods
+    if (commandRun.options.auto || commandRun.options.i === false) {
+      project.gitRepo = `https://github.com/${project.author}/${project.name}.git`;
+    } else {
+      project.gitRepo = await p.text({
+        message: t("wcGitRepoLocation"),
+        placeholder: `https://github.com/${project.author}/${project.name}.git`,
+        initialValue: `https://github.com/${project.author}/${project.name}.git`,
+      });
+    }
+    // if they supplied one and it has github in it, build a link automatically for ejs index
+    if (project.gitRepo && project.gitRepo.includes("github.com")) {
+      project.githubLink = project.gitRepo
+        .replace("git@github.com:", "https://github.com/")
+        .replace(".git", "");
+    } else {
+      project.githubLink = null;
+    }
+  } else {
     project.githubLink = null;
   }
   // if we have an org, add a / at the end so file name is written correctly
   if (project.org) {
-    project.org += '/';
-  }
-  else {
-    project.org = '';
+    project.org += "/";
+  } else {
+    project.org = "";
   }
   let s = quietAwareSpinner(commandRun);
-  s.start(merlinSays(t('wcCopyingProjectFiles')));
+  s.start(merlinSays(t("wcCopyingProjectFiles")));
   // leverage this little helper from HAXcms
-  let templateDir = project.template || 'compliant';
+  let templateDir = project.template || "compliant";
   await HAXCMS.recurseCopy(
     `${process.mainModule.path}/templates/${project.type}/${templateDir}/`,
-    `${project.path}/${project.name}`
+    `${project.path}/${project.name}`,
   );
   // rename gitignore to improve copy cross platform compat
   const renameIfExists = (src, dest) => {
@@ -224,35 +230,76 @@ export async function webcomponentProcess(commandRun, project, port = "8000") {
       fs.renameSync(src, dest);
     }
   };
-  renameIfExists(`${project.path}/${project.name}/_github`, `${project.path}/${project.name}/.github`);
-  renameIfExists(`${project.path}/${project.name}/_vscode`, `${project.path}/${project.name}/.vscode`);
-  renameIfExists(`${project.path}/${project.name}/_dddignore`, `${project.path}/${project.name}/.dddignore`);
-  renameIfExists(`${project.path}/${project.name}/_editorconfig`, `${project.path}/${project.name}/.editorconfig`);
-  renameIfExists(`${project.path}/${project.name}/_gitignore`, `${project.path}/${project.name}/.gitignore`);
-  renameIfExists(`${project.path}/${project.name}/_nojekyll`, `${project.path}/${project.name}/.nojekyll`);
-  renameIfExists(`${project.path}/${project.name}/_npmignore`, `${project.path}/${project.name}/.npmignore`);
-  renameIfExists(`${project.path}/${project.name}/_surgeignore`, `${project.path}/${project.name}/.surgeignore`);
-  renameIfExists(`${project.path}/${project.name}/_travis.yml`, `${project.path}/${project.name}/.travis.yml`);
+  renameIfExists(
+    `${project.path}/${project.name}/_github`,
+    `${project.path}/${project.name}/.github`,
+  );
+  renameIfExists(
+    `${project.path}/${project.name}/_vscode`,
+    `${project.path}/${project.name}/.vscode`,
+  );
+  renameIfExists(
+    `${project.path}/${project.name}/_dddignore`,
+    `${project.path}/${project.name}/.dddignore`,
+  );
+  renameIfExists(
+    `${project.path}/${project.name}/_editorconfig`,
+    `${project.path}/${project.name}/.editorconfig`,
+  );
+  renameIfExists(
+    `${project.path}/${project.name}/_gitignore`,
+    `${project.path}/${project.name}/.gitignore`,
+  );
+  renameIfExists(
+    `${project.path}/${project.name}/_nojekyll`,
+    `${project.path}/${project.name}/.nojekyll`,
+  );
+  renameIfExists(
+    `${project.path}/${project.name}/_npmignore`,
+    `${project.path}/${project.name}/.npmignore`,
+  );
+  renameIfExists(
+    `${project.path}/${project.name}/_surgeignore`,
+    `${project.path}/${project.name}/.surgeignore`,
+  );
+  renameIfExists(
+    `${project.path}/${project.name}/_travis.yml`,
+    `${project.path}/${project.name}/.travis.yml`,
+  );
   // rename paths that are of the element name in question
-  renameIfExists(`${project.path}/${project.name}/lib/webcomponent.haxProperties.json`, `${project.path}/${project.name}/lib/${project.name}.haxProperties.json`);
+  renameIfExists(
+    `${project.path}/${project.name}/lib/webcomponent.haxProperties.json`,
+    `${project.path}/${project.name}/lib/${project.name}.haxProperties.json`,
+  );
   // loop through and rename all the localization files
   if (fs.existsSync(`${project.path}/${project.name}/locales/`)) {
-    fs.readdirSync(`${project.path}/${project.name}/locales/`).forEach(async function (file, index) {
-      fs.renameSync(`${project.path}/${project.name}/locales/${file}`, `${project.path}/${project.name}/locales/${file.replace('webcomponent', project.name)}`);
-    });
+    fs.readdirSync(`${project.path}/${project.name}/locales/`).forEach(
+      async function (file, index) {
+        fs.renameSync(
+          `${project.path}/${project.name}/locales/${file}`,
+          `${project.path}/${project.name}/locales/${file.replace("webcomponent", project.name)}`,
+        );
+      },
+    );
   }
-  renameIfExists(`${project.path}/${project.name}/webcomponent.js`, `${project.path}/${project.name}/${project.name}.js`);
-  renameIfExists(`${project.path}/${project.name}/test/webcomponent.test.js`, `${project.path}/${project.name}/test/${project.name}.test.js`);
-  s.stop(merlinSays(t('wcFilesCopied')));
+  renameIfExists(
+    `${project.path}/${project.name}/webcomponent.js`,
+    `${project.path}/${project.name}/${project.name}.js`,
+  );
+  renameIfExists(
+    `${project.path}/${project.name}/test/webcomponent.test.js`,
+    `${project.path}/${project.name}/test/${project.name}.test.js`,
+  );
+  s.stop(merlinSays(t("wcFilesCopied")));
   await setTimeout(500);
-  s.start(merlinSays(t('wcMakingFilesAwesome')));
+  s.start(merlinSays(t("wcMakingFilesAwesome")));
   for (const filePath of readAllFiles(`${project.path}/${project.name}`)) {
     try {
       // ensure we don't try to pattern rewrite image files
-      if (!filePath.endsWith('.jpg') && !filePath.endsWith('.png')) {
-        const ejsString = ejs.fileLoader(filePath, 'utf8');
+      if (!filePath.endsWith(".jpg") && !filePath.endsWith(".png")) {
+        const ejsString = ejs.fileLoader(filePath, "utf8");
         let content = ejs.render(ejsString, project);
-        // file written successfully  
+        // file written successfully
         fs.writeFileSync(filePath, content);
       }
     } catch (err) {
@@ -260,93 +307,123 @@ export async function webcomponentProcess(commandRun, project, port = "8000") {
       console.error(err);
     }
   }
-  s.stop(t('wcFilesAwesome'));
+  s.stop(t("wcFilesAwesome"));
   // haxtheweb/issues#3119: ship the web component skill inside standalone
   // scaffolds so agents find it next to AGENTS.md (copied after ejs rendering
   // so the skill text is never treated as a template)
-  if (!commandRun.options.isMonorepo && fs.existsSync(`${project.path}/${project.name}/AGENTS.md`)) {
+  if (
+    !commandRun.options.isMonorepo &&
+    fs.existsSync(`${project.path}/${project.name}/AGENTS.md`)
+  ) {
     // copy the whole skill folder (SKILL.md plus references/) so what SKILL.md
     // points at ships with it
-    const skillSource = path.resolve(__dirname, '../../skills/hax-webcomponent-dev');
+    const skillSource = path.resolve(
+      __dirname,
+      "../../skills/hax-webcomponent-dev",
+    );
     if (fs.existsSync(`${skillSource}/SKILL.md`)) {
       const skillDest = `${project.path}/${project.name}/.agents/skills/hax-webcomponent-dev`;
       fs.mkdirSync(skillDest, { recursive: true });
+      // fs.cpSync is stable since Node 22.3 but works unflagged on our Node 18 floor
+      // eslint-disable-next-line n/no-unsupported-features/node-builtins
       fs.cpSync(skillSource, skillDest, { recursive: true });
     }
   }
   if (project.gitRepo && !commandRun.options.isMonorepo) {
     try {
-    // haxtheweb/issues#3119: with no git identity (fresh containers / CI) the
-    // commit failed silently, leaving staged files and no commit
-    const identity = await gitIdentityFallbackArgs(`${project.path}/${project.name}`);
-    await exec(`cd ${project.path}/${project.name} && git init && git add -A && git ${identity}commit -m "first commit" && git branch -M main${project.gitRepo ? ` && git remote add origin ${project.gitRepo}` : ''}`);    
-    }
-    catch(e) {        
+      // haxtheweb/issues#3119: with no git identity (fresh containers / CI) the
+      // commit failed silently, leaving staged files and no commit
+      const identity = await gitIdentityFallbackArgs(
+        `${project.path}/${project.name}`,
+      );
+      await exec(
+        `cd ${project.path}/${project.name} && git init && git add -A && git ${identity}commit -m "first commit" && git branch -M main${project.gitRepo ? ` && git remote add origin ${project.gitRepo}` : ""}`,
+      );
+    } catch (e) {
+      // non-fatal: scaffold still succeeds without a local git history
     }
   }
   // options for install, git and other extras
   // can't launch if we didn't install first so launch implies installation
-  if (project.extras && (project.extras.includes('launch') || project.extras.includes('install'))) {
-      s.start(merlinSays(t('wcInstallationMagic', { command: `${commandRun.options.npmClient} install` })));
-      try {
-        // monorepos install from top but then still need to launch from local location
-        if (!commandRun.options.isMonorepo) {
-          await exec(`cd ${project.path}/${project.name} && ${commandRun.options.npmClient} install`);
-        }
+  if (
+    project.extras &&
+    (project.extras.includes("launch") || project.extras.includes("install"))
+  ) {
+    s.start(
+      merlinSays(
+        t("wcInstallationMagic", {
+          command: `${commandRun.options.npmClient} install`,
+        }),
+      ),
+    );
+    try {
+      // monorepos install from top but then still need to launch from local location
+      if (!commandRun.options.isMonorepo) {
+        await exec(
+          `cd ${project.path}/${project.name} && ${commandRun.options.npmClient} install`,
+        );
       }
-      catch(e) {
-        console.warn(e);
-      }
-      s.stop(merlinSays(t('wcEverythingInstalled')));
+    } catch (e) {
+      console.warn(e);
+    }
+    s.stop(merlinSays(t("wcEverythingInstalled")));
   }
   // autolaunch if default was selected
-  if (project.extras && project.extras.includes('launch')) {
+  if (project.extras && project.extras.includes("launch")) {
     let optionPath = `${project.path}/${project.name}`;
     let command = `${commandRun.options.npmClient} start`;
-    p.note(`${merlinSays(t('wcSummonedDaemon'))}
+    p.note(`${merlinSays(t("wcSummonedDaemon"))}
 
-🚀  ${t('wcRunningYour', { type: color.bold(project.type), name: color.bold(project.name) })}
+🚀  ${t("wcRunningYour", { type: color.bold(project.type), name: color.bold(project.name) })}
 ${color.underline(color.cyan(`http://localhost:${port}`))}
 
-🏠  ${t('wcLaunchedLabel')} ${color.underline(color.bold(color.yellow(color.bgBlack(`${optionPath}`))))}
-💻  ${t('wcFolderLabel')} ${color.bold(color.yellow(color.bgBlack(`cd ${optionPath}`)))}
-📂  ${t('wcOpenFolderLabel')} ${color.bold(color.yellow(color.bgBlack(`open ${optionPath}`)))}
-📘  ${t('wcVsCodeProjectLabel')} ${color.bold(color.yellow(color.bgBlack(`code ${optionPath}`)))}
-🚧  ${t('wcLaunchLaterLabel')} ${color.bold(color.yellow(color.bgBlack(`${command}`)))}
+🏠  ${t("wcLaunchedLabel")} ${color.underline(color.bold(color.yellow(color.bgBlack(`${optionPath}`))))}
+💻  ${t("wcFolderLabel")} ${color.bold(color.yellow(color.bgBlack(`cd ${optionPath}`)))}
+📂  ${t("wcOpenFolderLabel")} ${color.bold(color.yellow(color.bgBlack(`open ${optionPath}`)))}
+📘  ${t("wcVsCodeProjectLabel")} ${color.bold(color.yellow(color.bgBlack(`code ${optionPath}`)))}
+🚧  ${t("wcLaunchLaterLabel")} ${color.bold(color.yellow(color.bgBlack(`${command}`)))}
 
-⌨️  ${t('wcToResumeMerlinPress', { merlin: '🧙 Merlin' })} ${color.bold(color.black(color.bgRed(` ${t('wcCtrlCOrBreak')} `)))}
+⌨️  ${t("wcToResumeMerlinPress", { merlin: "🧙 Merlin" })} ${color.bold(color.black(color.bgRed(` ${t("wcCtrlCOrBreak")} `)))}
 `);
     // at least a second to see the message print at all
     await setTimeout(1000);
     try {
-      await exec(`cd ${optionPath} && ${command} && ${commandRun.options.npmClient} run analyze`);
+      await exec(
+        `cd ${optionPath} && ${command} && ${commandRun.options.npmClient} run analyze`,
+      );
+    } catch (e) {
+      // don't log bc output is weird
     }
-    catch(e) {
-    // don't log bc output is weird
-    }
-  }
-  else if (!commandRun.options.quiet) {
-    let nextSteps = `cd ${project.path}/${project.name} && ${project.extras.includes('install') ? '' : `${commandRun.options.npmClient} install && `}${commandRun.options.npmClient} start`;
-    p.note(t('wcReadyToGo', { name: project.name }));
+  } else if (!commandRun.options.quiet) {
+    let nextSteps = `cd ${project.path}/${project.name} && ${project.extras.includes("install") ? "" : `${commandRun.options.npmClient} install && `}${commandRun.options.npmClient} start`;
+    p.note(t("wcReadyToGo", { name: project.name }));
     p.outro(nextSteps);
   }
 }
 
-export function webcomponentActions(){
+export function webcomponentActions() {
   return [
-    { value: 'start', label: t('wcActionLaunchProject')},
-    { value: 'wc:stats', label: t('wcActionCheckStatus')},
-    { value: 'wc:element', label: t('wcActionAddElement')},
-    { value: 'wc:haxproperties', label: t('wcActionWriteHaxProperties')},
-    { value: 'wc:rename', label: t('wcActionRename')},
+    { value: "start", label: t("wcActionLaunchProject") },
+    { value: "wc:stats", label: t("wcActionCheckStatus") },
+    { value: "wc:element", label: t("wcActionAddElement") },
+    { value: "wc:haxproperties", label: t("wcActionWriteHaxProperties") },
+    { value: "wc:rename", label: t("wcActionRename") },
   ];
 }
 
 // autodetect webcomponent
-export async function webcomponentCommandDetected(commandRun, packageData = {}, port = "8000") {
+export async function webcomponentCommandDetected(
+  commandRun,
+  packageData = {},
+  port = "8000",
+) {
   if (!commandRun.options.quiet) {
-    p.intro(`${color.bgBlack(color.white(` HAXTheWeb : ${t('wcDetected')} `))}`);
-    p.intro(`${color.bgBlue(color.white(` ${t('wcComponentNameLabel', { name: packageData.name })} `))}`);  
+    p.intro(
+      `${color.bgBlack(color.white(` HAXTheWeb : ${t("wcDetected")} `))}`,
+    );
+    p.intro(
+      `${color.bgBlue(color.white(` ${t("wcComponentNameLabel", { name: packageData.name })} `))}`,
+    );
   }
 
   let actions = webcomponentActions();
@@ -355,32 +432,32 @@ export async function webcomponentCommandDetected(commandRun, packageData = {}, 
   // default to status unless already set so we don't issue a create in a create
   if (!commandRun.arguments.action) {
     actionAssigned = true;
-    commandRun.arguments.action = 'wc:status';
+    commandRun.arguments.action = "wc:status";
   }
 
   commandRun.command = "webcomponent";
 
   let operation = {
     ...commandRun.arguments,
-    ...commandRun.options
+    ...commandRun.options,
   };
 
-  actions.push({ value: 'quit', label: `🚪 ${t('wcActionQuit')}`});
+  actions.push({ value: "quit", label: `🚪 ${t("wcActionQuit")}` });
 
-  while (operation.action !== 'quit') {
+  while (operation.action !== "quit") {
     if (!operation.action) {
       commandRun = {
         command: null,
         arguments: {},
-        options: { 
-          npmClient: `${operation.npmClient}`
-        }
-      }
+        options: {
+          npmClient: `${operation.npmClient}`,
+        },
+      };
       operation = await p.group(
         {
           action: ({ results }) =>
             p.select({
-              message: t('wcActionsYouCanTake'),
+              message: t("wcActionsYouCanTake"),
               defaultValue: actions[0],
               initialValue: actions[0],
               options: actions,
@@ -389,11 +466,12 @@ export async function webcomponentCommandDetected(commandRun, packageData = {}, 
         {
           onCancel: () => {
             if (!commandRun.options.quiet) {
-              p.cancel(`🧙 Merlin: ${t('wcCancelingCli')} 🪄`);
+              p.cancel(`🧙 Merlin: ${t("wcCancelingCli")} 🪄`);
             }
             process.exit(0);
           },
-        });
+        },
+      );
     }
     if (operation.action) {
       p.intro(`hax wc ${color.bold(operation.action)}`);
@@ -402,59 +480,66 @@ export async function webcomponentCommandDetected(commandRun, packageData = {}, 
       case "start":
         if (!commandRun.options.quiet) {
           // Multi-line clack spacing
-          p.note(`${merlinSays(t('wcSummonedDaemon'))}
+          p.note(`${merlinSays(t("wcSummonedDaemon"))}
 
-🚀  ${t('wcRunningYour', { type: color.bold('webcomponent'), name: color.bold(packageData.name) })}
+🚀  ${t("wcRunningYour", { type: color.bold("webcomponent"), name: color.bold(packageData.name) })}
       ${color.underline(color.cyan(`http://localhost:${port}`))}
 
-🏠  ${t('wcLaunchedLabel')} ${color.underline(color.bold(color.yellow(color.bgBlack(`${process.cwd()}`))))}
-💻  ${t('wcFolderLabel')} ${color.bold(color.yellow(color.bgBlack(`cd ${process.cwd()}`)))}
-📂  ${t('wcOpenFolderLabel')} ${color.bold(color.yellow(color.bgBlack(`open ${process.cwd()}`)))}
-📘  ${t('wcVsCodeProjectLabel')} ${color.bold(color.yellow(color.bgBlack(`code ${process.cwd()}`)))}
-🚧  ${t('wcLaunchLaterLabel')} ${color.bold(color.yellow(color.bgBlack(`${commandRun.options.npmClient} start`)))}
+🏠  ${t("wcLaunchedLabel")} ${color.underline(color.bold(color.yellow(color.bgBlack(`${process.cwd()}`))))}
+💻  ${t("wcFolderLabel")} ${color.bold(color.yellow(color.bgBlack(`cd ${process.cwd()}`)))}
+📂  ${t("wcOpenFolderLabel")} ${color.bold(color.yellow(color.bgBlack(`open ${process.cwd()}`)))}
+📘  ${t("wcVsCodeProjectLabel")} ${color.bold(color.yellow(color.bgBlack(`code ${process.cwd()}`)))}
+🚧  ${t("wcLaunchLaterLabel")} ${color.bold(color.yellow(color.bgBlack(`${commandRun.options.npmClient} start`)))}
 
-⌨️  ${t('wcToExitMerlinPress', { merlin: '🧙 Merlin' })} ${color.bold(color.black(color.bgRed(` ${t('wcCtrlCOrBreak')} `)))}
+⌨️  ${t("wcToExitMerlinPress", { merlin: "🧙 Merlin" })} ${color.bold(color.black(color.bgRed(` ${t("wcCtrlCOrBreak")} `)))}
           `);
         }
         try {
           // ensure it's installed first, unless it's a monorepo. basic check for node_modules
           // folder as far as if already installed so we don't double install needlessly
-          if (!commandRun.options.isMonorepo && !fs.existsSync("./node_modules")) {
+          if (
+            !commandRun.options.isMonorepo &&
+            !fs.existsSync("./node_modules")
+          ) {
             if (!commandRun.options.quiet) {
               let s = p.spinner();
-              s.start(merlinSays(t('wcInstallationMagic', { command: `${commandRun.options.npmClient} install` })));
+              s.start(
+                merlinSays(
+                  t("wcInstallationMagic", {
+                    command: `${commandRun.options.npmClient} install`,
+                  }),
+                ),
+              );
               await exec(`${commandRun.options.npmClient} install`);
-              s.stop(merlinSays(t('wcEverythingInstalled')));
-            }
-            else {
+              s.stop(merlinSays(t("wcEverythingInstalled")));
+            } else {
               await exec(`${commandRun.options.npmClient} install`);
             }
           }
           await exec(`${commandRun.options.npmClient} start`);
-        }
-        catch(e) {
+        } catch (e) {
           // don't log bc output is odd
         }
-      break;
+        break;
       case "serve":
         try {
           if (!commandRun.options.quiet) {
-            p.intro(`${t('wcLaunchingDevServer')} `);
+            p.intro(`${t("wcLaunchingDevServer")} `);
           }
-          if (packageData.scripts.serve){
+          if (packageData.scripts.serve) {
             if (!commandRun.options.quiet) {
-            p.note(`${merlinSays(t('wcProjectLaunchedDevMode'))}
+              p.note(`${merlinSays(t("wcProjectLaunchedDevMode"))}
 
-🚀  ${t('wcRunningYour', { type: color.bold('webcomponent'), name: color.bold(packageData.name) })}
+🚀  ${t("wcRunningYour", { type: color.bold("webcomponent"), name: color.bold(packageData.name) })}
       ${color.underline(color.cyan(`http://localhost:${port}`))}
 
-🏠  ${t('wcLaunchedLabel')} ${color.underline(color.bold(color.yellow(color.bgBlack(`${process.cwd()}`))))}
-💻  ${t('wcFolderLabel')} ${color.bold(color.yellow(color.bgBlack(`cd ${process.cwd()}`)))}
-📂  ${t('wcOpenFolderLabel')} ${color.bold(color.yellow(color.bgBlack(`open ${process.cwd()}`)))}
-📘  ${t('wcVsCodeProjectLabel')} ${color.bold(color.yellow(color.bgBlack(`code ${process.cwd()}`)))}
-🚧  ${t('wcLaunchLaterLabel')} ${color.bold(color.yellow(color.bgBlack(`${commandRun.options.npmClient} serve`)))}
+🏠  ${t("wcLaunchedLabel")} ${color.underline(color.bold(color.yellow(color.bgBlack(`${process.cwd()}`))))}
+💻  ${t("wcFolderLabel")} ${color.bold(color.yellow(color.bgBlack(`cd ${process.cwd()}`)))}
+📂  ${t("wcOpenFolderLabel")} ${color.bold(color.yellow(color.bgBlack(`open ${process.cwd()}`)))}
+📘  ${t("wcVsCodeProjectLabel")} ${color.bold(color.yellow(color.bgBlack(`code ${process.cwd()}`)))}
+🚧  ${t("wcLaunchLaterLabel")} ${color.bold(color.yellow(color.bgBlack(`${commandRun.options.npmClient} serve`)))}
 
-⌨️  ${t('wcToExitMerlinPress', { merlin: '🧙 Merlin' })} ${color.bold(color.black(color.bgRed(` ${t('wcCtrlCOrBreak')} `)))}
+⌨️  ${t("wcToExitMerlinPress", { merlin: "🧙 Merlin" })} ${color.bold(color.black(color.bgRed(` ${t("wcCtrlCOrBreak")} `)))}
           `);
             }
 
@@ -462,80 +547,99 @@ export async function webcomponentCommandDetected(commandRun, packageData = {}, 
           } else {
             // if no serve script, run start instead
             if (!commandRun.options.quiet) {
-            p.note(`${merlinSays(t('wcNoServeScript', { script: color.bold('serve'), command: color.bold(`${commandRun.options.npmClient} start`) }))}
+              p.note(`${merlinSays(t("wcNoServeScript", { script: color.bold("serve"), command: color.bold(`${commandRun.options.npmClient} start`) }))}
 
-🚀  ${t('wcRunningYour', { type: color.bold('webcomponent'), name: color.bold(packageData.name) })}
+🚀  ${t("wcRunningYour", { type: color.bold("webcomponent"), name: color.bold(packageData.name) })}
       ${color.underline(color.cyan(`http://localhost:${port}`))}
 
-🏠  ${t('wcLaunchedLabel')} ${color.underline(color.bold(color.yellow(color.bgBlack(`${process.cwd()}`))))}
-💻  ${t('wcFolderLabel')} ${color.bold(color.yellow(color.bgBlack(`cd ${process.cwd()}`)))}
-📂  ${t('wcOpenFolderLabel')} ${color.bold(color.yellow(color.bgBlack(`open ${process.cwd()}`)))}
-📘  ${t('wcVsCodeProjectLabel')} ${color.bold(color.yellow(color.bgBlack(`code ${process.cwd()}`)))}
-🚧  ${t('wcLaunchLaterLabel')} ${color.bold(color.yellow(color.bgBlack(`${commandRun.options.npmClient} start`)))}
+🏠  ${t("wcLaunchedLabel")} ${color.underline(color.bold(color.yellow(color.bgBlack(`${process.cwd()}`))))}
+💻  ${t("wcFolderLabel")} ${color.bold(color.yellow(color.bgBlack(`cd ${process.cwd()}`)))}
+📂  ${t("wcOpenFolderLabel")} ${color.bold(color.yellow(color.bgBlack(`open ${process.cwd()}`)))}
+📘  ${t("wcVsCodeProjectLabel")} ${color.bold(color.yellow(color.bgBlack(`code ${process.cwd()}`)))}
+🚧  ${t("wcLaunchLaterLabel")} ${color.bold(color.yellow(color.bgBlack(`${commandRun.options.npmClient} start`)))}
 
-⌨️  ${t('wcToExitMerlinPress', { merlin: '🧙 Merlin' })} ${color.bold(color.black(color.bgRed(` ${t('wcCtrlCOrBreak')} `)))}
+⌨️  ${t("wcToExitMerlinPress", { merlin: "🧙 Merlin" })} ${color.bold(color.black(color.bgRed(` ${t("wcCtrlCOrBreak")} `)))}
           `);
             }
 
             await exec(`${commandRun.options.npmClient} start`);
           }
-        }
-        catch(e) {
+        } catch (e) {
           // don't log bc output is odd
           console.log("error", e);
         }
-      break;
+        break;
       case "wc:status":
       case "wc:stats":
       case "webcomponent:status":
       case "webcomponent:stats":
         try {
           let webcomponentStats = {};
-          if(packageData){
+          if (packageData) {
             webcomponentStats.title = packageData.name;
-            webcomponentStats.description = packageData.description
+            webcomponentStats.description = packageData.description;
             webcomponentStats.git = packageData.repository.url;
           }
           webcomponentStats.modules = [];
           webcomponentStats.superclasses = [];
-          if(fs.existsSync(`${process.cwd()}/custom-elements.json`)){
-                let components = JSON.parse(fs.readFileSync(`${process.cwd()
-                  }/custom-elements.json`, 'utf8')).modules;
-                
-                for (var i in components){
-                  webcomponentStats.modules.push(`${components[i].path}`)
-                  if (components[i].declarations[0].superclass && !webcomponentStats.superclasses.includes(components[i].declarations[0].superclass.name)) {
-                    webcomponentStats.superclasses.push(`${components[i].declarations[0].superclass.name}`);
-                  }
-                }
-              }
+          if (fs.existsSync(`${process.cwd()}/custom-elements.json`)) {
+            let components = JSON.parse(
+              fs.readFileSync(`${process.cwd()}/custom-elements.json`, "utf8"),
+            ).modules;
 
-          if (!commandRun.options.format && !commandRun.options.quiet) {
-            p.intro(`${color.bgBlue(color.white(` ${t('wcStatsTitle', { title: String(webcomponentStats.title) })} `))}`);
-            p.intro(`${color.bgBlue(color.white(` ${t('wcStatsDescription', { description: String(webcomponentStats.description) })} `))}`);
-            if(webcomponentStats.git){
-              p.intro(`${color.bgBlue(color.white(` ${t('wcStatsGit', { git: webcomponentStats.git })} `))}`);
-            }
-            if(webcomponentStats.modules.length !== 0){
-              p.intro(`${color.bgBlue(color.white(` ${t('wcStatsModules', { modules: webcomponentStats.modules })} `))}`);  
-              p.intro(`${color.bgBlue(color.white(` ${t('wcStatsModuleCount', { count: webcomponentStats.modules.length })} `))}`);
-            }
-            if(webcomponentStats.superclasses.length !== 0){
-              p.intro(`${color.bgBlue(color.white(` ${t('wcStatsSuperclasses', { superclasses: webcomponentStats.superclasses })} `))}`);
+            for (let i in components) {
+              webcomponentStats.modules.push(`${components[i].path}`);
+              if (
+                components[i].declarations[0].superclass &&
+                !webcomponentStats.superclasses.includes(
+                  components[i].declarations[0].superclass.name,
+                )
+              ) {
+                webcomponentStats.superclasses.push(
+                  `${components[i].declarations[0].superclass.name}`,
+                );
+              }
             }
           }
-        } catch(e) {
-          log(e.stderr)
+
+          if (!commandRun.options.format && !commandRun.options.quiet) {
+            p.intro(
+              `${color.bgBlue(color.white(` ${t("wcStatsTitle", { title: String(webcomponentStats.title) })} `))}`,
+            );
+            p.intro(
+              `${color.bgBlue(color.white(` ${t("wcStatsDescription", { description: String(webcomponentStats.description) })} `))}`,
+            );
+            if (webcomponentStats.git) {
+              p.intro(
+                `${color.bgBlue(color.white(` ${t("wcStatsGit", { git: webcomponentStats.git })} `))}`,
+              );
+            }
+            if (webcomponentStats.modules.length !== 0) {
+              p.intro(
+                `${color.bgBlue(color.white(` ${t("wcStatsModules", { modules: webcomponentStats.modules })} `))}`,
+              );
+              p.intro(
+                `${color.bgBlue(color.white(` ${t("wcStatsModuleCount", { count: webcomponentStats.modules.length })} `))}`,
+              );
+            }
+            if (webcomponentStats.superclasses.length !== 0) {
+              p.intro(
+                `${color.bgBlue(color.white(` ${t("wcStatsSuperclasses", { superclasses: webcomponentStats.superclasses })} `))}`,
+              );
+            }
+          }
+        } catch (e) {
+          log(e.stderr);
         }
-      break;
+        break;
       case "wc:element":
       case "webcomponent:element":
         try {
-          if(!commandRun.options.name){
-              commandRun.options.name = await p.text({
-              message: t('wcComponentNamePrompt'),
-              placeholder: 'my-component',
-              initialValue: 'my-component',
+          if (!commandRun.options.name) {
+            commandRun.options.name = await p.text({
+              message: t("wcComponentNamePrompt"),
+              placeholder: "my-component",
+              initialValue: "my-component",
               required: true,
               validate: (value) => {
                 let joint = process.cwd();
@@ -545,84 +649,86 @@ export async function webcomponentCommandDetected(commandRun, packageData = {}, 
                 return validateWebcomponentName(value, {
                   force: commandRun.options.force,
                   joint: joint,
-                  checkExists: true
+                  checkExists: true,
                 });
-              }
+              },
             });
           } else {
-              let value = commandRun.options.name;
-              let joint = process.cwd();
-              if (commandRun.options.path) {
-                joint = commandRun.options.path;
-              }
-              const error = validateWebcomponentName(value, {
-                force: commandRun.options.force,
-                joint: joint,
-                checkExists: true
-              });
-              if (error) {
-                console.error(color.red(error));
-                process.exit(1);
-              }
+            let value = commandRun.options.name;
+            let joint = process.cwd();
+            if (commandRun.options.path) {
+              joint = commandRun.options.path;
+            }
+            const error = validateWebcomponentName(value, {
+              force: commandRun.options.force,
+              joint: joint,
+              checkExists: true,
+            });
+            if (error) {
+              console.error(color.red(error));
+              process.exit(1);
+            }
           }
 
           const project = {
-              name: commandRun.options.name,
-              mainModule: packageData.name,
-              path: process.cwd(),
-              className: dashToCamel(commandRun.options.name),
-              year: new Date().getFullYear(),
-          }
-          if(packageData.author){
+            name: commandRun.options.name,
+            mainModule: packageData.name,
+            path: process.cwd(),
+            className: dashToCamel(commandRun.options.name),
+            year: new Date().getFullYear(),
+          };
+          if (packageData.author) {
             project.author = packageData.author.name;
           }
-          
-          const filePath = `${project.path}/${project.name}.js`
-          await fs.copyFileSync(`${process.mainModule.path}/templates/generic/webcomponent.js`, filePath)
 
-        
-          const ejsString = ejs.fileLoader(filePath, 'utf8');
+          const filePath = `${project.path}/${project.name}.js`;
+          await fs.copyFileSync(
+            `${process.mainModule.path}/templates/generic/webcomponent.js`,
+            filePath,
+          );
+
+          const ejsString = ejs.fileLoader(filePath, "utf8");
           let content = ejs.render(ejsString, project);
-          // file written successfully  
+          // file written successfully
           fs.writeFileSync(filePath, content);
 
-          p.note(`🧙  ${t('wcAddToWebComponent')} ${color.underline(color.bold(color.yellow(color.bgBlack(`import ./${project.name}.js`))))}
-💻  ${t('wcAddToHtmlFile')} ${color.bold(color.yellow(color.bgBlack(`<script type="module" src="${project.name}"></script>`)))}`);
-              // at least a second to see the message print at all
+          p.note(`🧙  ${t("wcAddToWebComponent")} ${color.underline(color.bold(color.yellow(color.bgBlack(`import ./${project.name}.js`))))}
+💻  ${t("wcAddToHtmlFile")} ${color.bold(color.yellow(color.bgBlack(`<script type="module" src="${project.name}"></script>`)))}`);
+          // at least a second to see the message print at all
           await setTimeout(1000);
-        } catch(e) {
-          log(e.stderr)
+        } catch (e) {
+          log(e.stderr);
           // Original ejs.render error checking
           console.error(color.red(process.cwd()));
           console.error(color.red(e));
         }
 
-      break;
+        break;
       case "wc:haxproperties":
       case "webcomponent:haxproperties":
-        try{
+        try {
           if (packageData.customElements) {
             await webcomponentGenerateHAXSchema(commandRun, packageData);
           }
-        } catch(e) {
-          log(e.stderr)
+        } catch (e) {
+          log(e.stderr);
         }
-      break;
+        break;
       case "rename":
       case "wc:rename":
       case "webcomponent:rename":
         try {
           await webcomponentRename(commandRun, packageData);
-        } catch(e) {
-          log(e.stderr)
+        } catch (e) {
+          log(e.stderr);
         }
-      break;
+        break;
       case "quit":
         // quit
         process.exit(0);
-      break;
+        break;
     }
-      // y or noi need to act like it ran and finish instead of looping options
+    // y or noi need to act like it ran and finish instead of looping options
     if (commandRun.options.y || !commandRun.options.i || !actionAssigned) {
       process.exit(0);
     }
@@ -630,30 +736,34 @@ export async function webcomponentCommandDetected(commandRun, packageData = {}, 
   }
 }
 
-// merge the web component factory libraries the user has installed 
+// merge the web component factory libraries the user has installed
 export async function webcomponentGenerateHAXSchema(commandRun, packageData) {
   // run analyzer automatically if we have it so that it's up to date
   if (packageData.scripts.analyze) {
     await exec(`${commandRun.options.npmClient} run analyze`);
   }
   if (fs.existsSync(`${process.cwd()}/${packageData.customElements}`)) {
-    const ceFileData = fs.readFileSync(`${process.cwd()}/${packageData.customElements}`,'utf8', (error, data) => {
-      if(error){
-        console.warn(error);
-        return;
-      }
-      return data;
-    });
+    const ceFileData = fs.readFileSync(
+      `${process.cwd()}/${packageData.customElements}`,
+      "utf8",
+      (error, data) => {
+        if (error) {
+          console.warn(error);
+          return;
+        }
+        return data;
+      },
+    );
     let wiring = new HAXWiring();
     if (commandRun.options.debug) {
-      log(ceFileData, 'debug');
+      log(ceFileData, "debug");
     }
     if (ceFileData) {
       let ce = JSON.parse(ceFileData);
       await ce.modules.forEach(async (modules) => {
         await modules.declarations.forEach(async (declarations) => {
           let props = wiring.prototypeHaxProperties();
-          props.gizmo.title = declarations.tagName.replace('-', ' ');
+          props.gizmo.title = declarations.tagName.replace("-", " ");
           props.gizmo.tags = ["Other"];
           props.gizmo.handles = [];
           props.gizmo.meta.author = "HAXTheWeb core team";
@@ -664,18 +774,17 @@ export async function webcomponentGenerateHAXSchema(commandRun, packageData) {
           props.settings.advanced = [];
           props.documentation = {
             howTo: null,
-            purpose: null
+            purpose: null,
           };
           props.saveOptions = {
-            unsetAttributes: []
+            unsetAttributes: [],
           };
           props.demoSchema = [
             {
               tag: declarations.tagName,
               content: "",
-              properties: {
-              }
-            }
+              properties: {},
+            },
           ];
           let propData = [];
           if (declarations.attributes) {
@@ -683,10 +792,13 @@ export async function webcomponentGenerateHAXSchema(commandRun, packageData) {
           }
           // loop through and if props are things we can map then do it
           await propData.forEach(async (prop) => {
-            if (["t","colors",'_haxState',"elementVisible"].includes(prop.fieldName)) {
+            if (
+              ["t", "colors", "_haxState", "elementVisible"].includes(
+                prop.fieldName,
+              )
+            ) {
               props.saveOptions.unsetAttributes.push(prop.fieldName);
-            }
-            else {
+            } else {
               let type = "textfield";
               if (prop.type && prop.type.text) {
                 type = getInputMethodFromType(prop.type.text);
@@ -706,10 +818,15 @@ export async function webcomponentGenerateHAXSchema(commandRun, packageData) {
             }
           });
           if (commandRun.options.v) {
-            log(JSON.stringify(props, null, 2), 'silly');
+            log(JSON.stringify(props, null, 2), "silly");
           }
-          fs.writeFileSync(`./lib/${declarations.tagName}.haxProperties.json`, JSON.stringify(props, null, 2));
-          log(`schema written to: ./lib/${declarations.tagName}.haxProperties.json`)
+          fs.writeFileSync(
+            `./lib/${declarations.tagName}.haxProperties.json`,
+            JSON.stringify(props, null, 2),
+          );
+          log(
+            `schema written to: ./lib/${declarations.tagName}.haxProperties.json`,
+          );
         });
       });
     }
@@ -735,17 +852,17 @@ export async function webcomponentRename(commandRun, packageData) {
 
   // monorepo guard: prevent renaming from the monorepo root
   if (packageData && packageData.workspaces) {
-    console.error(color.red(t('wcRenameMonorepoRoot')));
+    console.error(color.red(t("wcRenameMonorepoRoot")));
     process.exit(1);
   }
 
   // derive old name and scope from package.json or directory name
   let oldName = oldDirName;
-  let scope = '';
+  let scope = "";
   if (packageData && packageData.name) {
-    const parts = packageData.name.split('/');
+    const parts = packageData.name.split("/");
     if (parts.length > 1) {
-      scope = parts[0] + '/';
+      scope = parts[0] + "/";
       oldName = parts[1];
     } else {
       oldName = parts[0];
@@ -755,32 +872,38 @@ export async function webcomponentRename(commandRun, packageData) {
   // load wc-registry for collision checking
   let wcReg = {};
   try {
-    const regPath = path.join(__dirname, '../../lib/wc-registry.json');
+    const regPath = path.join(__dirname, "../../lib/wc-registry.json");
     if (fs.existsSync(regPath)) {
-      wcReg = JSON.parse(fs.readFileSync(regPath, 'utf8'));
+      wcReg = JSON.parse(fs.readFileSync(regPath, "utf8"));
     }
-  } catch(e) {
+  } catch (e) {
     // ignore missing registry
   }
 
   let newName;
   if (!commandRun.options.name) {
-    if (commandRun.options.i === false || commandRun.options.y || commandRun.options.auto) {
-      console.error(color.red(t('wcRenameNameRequired', { flag: '--name <value>' })));
+    if (
+      commandRun.options.i === false ||
+      commandRun.options.y ||
+      commandRun.options.auto
+    ) {
+      console.error(
+        color.red(t("wcRenameNameRequired", { flag: "--name <value>" })),
+      );
       process.exit(1);
     }
     newName = await p.text({
-      message: t('wcNewComponentNamePrompt'),
-      placeholder: 'my-new-element',
+      message: t("wcNewComponentNamePrompt"),
+      placeholder: "my-new-element",
       required: true,
       validate: (value) => {
         return validateWebcomponentName(value, {
           wcReg,
           force: commandRun.options.force,
           joint: parentDir,
-          checkExists: true
+          checkExists: true,
         });
-      }
+      },
     });
   } else {
     newName = commandRun.options.name;
@@ -788,7 +911,7 @@ export async function webcomponentRename(commandRun, packageData) {
       wcReg,
       force: commandRun.options.force,
       joint: parentDir,
-      checkExists: true
+      checkExists: true,
     });
     if (error) {
       console.error(color.red(error));
@@ -802,32 +925,44 @@ export async function webcomponentRename(commandRun, packageData) {
   const newDir = path.join(parentDir, newName);
 
   let s = quietAwareSpinner(commandRun);
-  s.start(merlinSays(t('wcRenaming', { oldName, newName })));
+  s.start(merlinSays(t("wcRenaming", { oldName, newName })));
 
   // rewrite file contents
   for (const filePath of readAllFiles(oldCwd)) {
     // skip binary and generated directories
-    if (filePath.includes('/node_modules/') || filePath.includes('/dist/') || filePath.includes('/public/')) {
+    if (
+      filePath.includes("/node_modules/") ||
+      filePath.includes("/dist/") ||
+      filePath.includes("/public/")
+    ) {
       continue;
     }
-    if (filePath.endsWith('.jpg') || filePath.endsWith('.png')) {
+    if (filePath.endsWith(".jpg") || filePath.endsWith(".png")) {
       continue;
     }
     try {
-      let content = fs.readFileSync(filePath, 'utf8');
+      let content = fs.readFileSync(filePath, "utf8");
       // replace class name first, then tag name
       content = content.replaceAll(oldClassName, newClassName);
       content = content.replaceAll(oldName, newName);
       fs.writeFileSync(filePath, content);
     } catch (err) {
-      console.warn(color.yellow(t('wcCouldNotRewrite', { file: filePath, error: err.message })));
+      console.warn(
+        color.yellow(
+          t("wcCouldNotRewrite", { file: filePath, error: err.message }),
+        ),
+      );
     }
   }
 
   // rename files that contain the old name in their basename
   const filesToRename = [];
   for (const filePath of readAllFiles(oldCwd)) {
-    if (filePath.includes('/node_modules/') || filePath.includes('/dist/') || filePath.includes('/public/')) {
+    if (
+      filePath.includes("/node_modules/") ||
+      filePath.includes("/dist/") ||
+      filePath.includes("/public/")
+    ) {
       continue;
     }
     const basename = path.basename(filePath);
@@ -846,9 +981,9 @@ export async function webcomponentRename(commandRun, packageData) {
   }
 
   // explicitly rewrite package.json to ensure scope and fields are correct
-  const packageJsonPath = path.join(oldCwd, 'package.json');
+  const packageJsonPath = path.join(oldCwd, "package.json");
   if (fs.existsSync(packageJsonPath)) {
-    const pkg = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
+    const pkg = JSON.parse(fs.readFileSync(packageJsonPath, "utf8"));
     pkg.name = newScopedName;
     if (pkg.main) {
       pkg.main = pkg.main.replaceAll(oldName, newName);
@@ -859,42 +994,56 @@ export async function webcomponentRename(commandRun, packageData) {
     if (pkg.repository && pkg.repository.url) {
       pkg.repository.url = pkg.repository.url.replaceAll(oldName, newName);
     }
-    fs.writeFileSync(packageJsonPath, JSON.stringify(pkg, null, 2) + '\n');
+    fs.writeFileSync(packageJsonPath, JSON.stringify(pkg, null, 2) + "\n");
   }
 
   // delete stale custom-elements.json
-  const ceJsonPath = path.join(oldCwd, 'custom-elements.json');
+  const ceJsonPath = path.join(oldCwd, "custom-elements.json");
   if (fs.existsSync(ceJsonPath)) {
     fs.unlinkSync(ceJsonPath);
   }
 
   // delete stale package-lock.json to avoid confusion
-  const lockPath = path.join(oldCwd, 'package-lock.json');
+  const lockPath = path.join(oldCwd, "package-lock.json");
   if (fs.existsSync(lockPath)) {
     fs.unlinkSync(lockPath);
   }
 
-  s.stop(merlinSays(t('wcFilesRewritten')));
+  s.stop(merlinSays(t("wcFilesRewritten")));
 
   // rename parent directory
   fs.renameSync(oldCwd, newDir);
 
   if (!commandRun.options.quiet) {
-    p.note(`${t('wcRenamedTo', { oldName: color.bold(oldName), newName: color.bold(newName) })}\n\n🏠  ${t('wcNewFolderLabel')} ${color.bold(color.yellow(color.bgBlack(newDir)))}\n📘  ${t('wcPackageNameLabel')} ${color.bold(color.yellow(color.bgBlack(newScopedName)))}`);
+    p.note(
+      `${t("wcRenamedTo", { oldName: color.bold(oldName), newName: color.bold(newName) })}\n\n🏠  ${t("wcNewFolderLabel")} ${color.bold(color.yellow(color.bgBlack(newDir)))}\n📘  ${t("wcPackageNameLabel")} ${color.bold(color.yellow(color.bgBlack(newScopedName)))}`,
+    );
   }
 
   // regenerate custom-elements.json
   let s2 = quietAwareSpinner(commandRun);
-  s2.start(merlinSays(t('wcRegeneratingCem', { file: 'custom-elements.json' })));
+  s2.start(
+    merlinSays(t("wcRegeneratingCem", { file: "custom-elements.json" })),
+  );
   try {
-    await exec(`cd ${newDir} && ${commandRun.options.npmClient || 'npm'} run analyze`);
-    s2.stop(merlinSays(t('wcCemRegenerated', { file: 'custom-elements.json' })));
+    await exec(
+      `cd ${newDir} && ${commandRun.options.npmClient || "npm"} run analyze`,
+    );
+    s2.stop(
+      merlinSays(t("wcCemRegenerated", { file: "custom-elements.json" })),
+    );
   } catch (e) {
     // Stopping the spinner is required even on failure: an un-stopped
     // @clack/prompts spinner keeps stdin/stdout handles open, which hangs
     // the process indefinitely instead of exiting normally.
-    s2.stop(color.yellow(t('wcCemRegenerateFailed', { file: 'custom-elements.json' })));
-    console.warn(color.yellow(t('wcRunManually', { command: '`npm run analyze`' })));
+    s2.stop(
+      color.yellow(
+        t("wcCemRegenerateFailed", { file: "custom-elements.json" }),
+      ),
+    );
+    console.warn(
+      color.yellow(t("wcRunManually", { command: "`npm run analyze`" })),
+    );
   }
 }
 
@@ -902,47 +1051,69 @@ export async function webcomponentRename(commandRun, packageData) {
 // The catalog is generated in haxtheweb/webcomponents by
 // scripts/build-elements-catalog.mjs. Override the source with the
 // HAX_ELEMENTS_CATALOG env var (a file path or URL).
-export const ELEMENTS_CATALOG_URL = 'https://raw.githubusercontent.com/haxtheweb/webcomponents/master/elements-catalog.json';
+export const ELEMENTS_CATALOG_URL =
+  "https://raw.githubusercontent.com/haxtheweb/webcomponents/master/elements-catalog.json";
 
 export async function loadElementsCatalog() {
   const source = process.env.HAX_ELEMENTS_CATALOG || ELEMENTS_CATALOG_URL;
   try {
-    if (!source.startsWith('http://') && !source.startsWith('https://')) {
-      return { catalog: JSON.parse(fs.readFileSync(source, 'utf8')), source };
+    if (!source.startsWith("http://") && !source.startsWith("https://")) {
+      return { catalog: JSON.parse(fs.readFileSync(source, "utf8")), source };
     }
+    // global fetch has been available (unflagged) since Node 18, which is
+    // this package's actual engines floor; the plugin's data conservatively
+    // marks it experimental until Node 21.
+    // eslint-disable-next-line n/no-unsupported-features/node-builtins
     const resp = await fetch(source, { signal: AbortSignal.timeout(8000) });
     if (!resp.ok) {
       throw new Error(`HTTP ${resp.status}`);
     }
     return { catalog: await resp.json(), source };
-  }
-  catch (e) {
+  } catch (e) {
     // offline / unreachable: fall back to tag names from the bundled registry
     let elements = [];
     try {
-      const registry = JSON.parse(fs.readFileSync(path.join(__dirname, '../../lib/wc-registry.json'), 'utf8'));
-      elements = Object.keys(registry).map((tag) => ({ tag, title: '', description: '', import: registry[tag], type: 'element', tags: [] }));
-    }
-    catch (err) {
+      const registry = JSON.parse(
+        fs.readFileSync(
+          path.join(__dirname, "../../lib/wc-registry.json"),
+          "utf8",
+        ),
+      );
+      elements = Object.keys(registry).map((tag) => ({
+        tag,
+        title: "",
+        description: "",
+        import: registry[tag],
+        type: "element",
+        tags: [],
+      }));
+    } catch (err) {
       elements = [];
     }
-    return { catalog: { preferred: [], elements }, source: 'bundled wc-registry.json (tag names only)', fallbackReason: e.message };
+    return {
+      catalog: { preferred: [], elements },
+      source: "bundled wc-registry.json (tag names only)",
+      fallbackReason: e.message,
+    };
   }
 }
 
 function searchTerms(query) {
-  return String(query || '').toLowerCase().split(/[\s,]+/).filter(Boolean);
+  return String(query || "")
+    .toLowerCase()
+    .split(/[\s,]+/)
+    .filter(Boolean);
 }
 
 // score one element against the terms: how many terms hit, and the weighted
 // total of the hits (tag > title > gizmo tags / preferred use > description)
 function scoreElement(el, terms, preferred) {
   const fields = [
-    [String(el.tag || '').toLowerCase(), 5],
-    [String(el.title || '').toLowerCase(), 4],
-    [(el.tags || []).join(' ').toLowerCase(), 3],
-    [String(preferred[el.tag] || '').toLowerCase(), 3],
-    [String(el.description || '').toLowerCase(), 1],
+    [String(el.tag || "").toLowerCase(), 5],
+    [String(el.title || "").toLowerCase(), 4],
+    [(el.tags || []).join(" ").toLowerCase(), 3],
+    [String(preferred[el.tag] || "").toLowerCase(), 3],
+    [String(el.description || "").toLowerCase(), 1],
   ];
   let score = 0;
   let matched = 0;
@@ -980,7 +1151,11 @@ export function searchElementsCatalog(catalog, query, limit = 15) {
   for (const el of catalog.elements || []) {
     const { score, matched } = scoreElement(el, terms, preferred);
     if (matched === terms.length) {
-      results.push({ ...el, preferred: preferred[el.tag] || null, score: score + (preferred[el.tag] ? 10 : 0) });
+      results.push({
+        ...el,
+        preferred: preferred[el.tag] || null,
+        score: score + (preferred[el.tag] ? 10 : 0),
+      });
     }
   }
   results.sort((a, b) => b.score - a.score || a.tag.localeCompare(b.tag));
@@ -1000,10 +1175,20 @@ export function searchElementsCatalogPartial(catalog, query, limit = 15) {
   for (const el of catalog.elements || []) {
     const { score, matched } = scoreElement(el, terms, preferred);
     if (matched > 0) {
-      results.push({ ...el, preferred: preferred[el.tag] || null, score: score + (preferred[el.tag] ? 10 : 0), matchedTerms: matched });
+      results.push({
+        ...el,
+        preferred: preferred[el.tag] || null,
+        score: score + (preferred[el.tag] ? 10 : 0),
+        matchedTerms: matched,
+      });
     }
   }
-  results.sort((a, b) => b.matchedTerms - a.matchedTerms || b.score - a.score || a.tag.localeCompare(b.tag));
+  results.sort(
+    (a, b) =>
+      b.matchedTerms - a.matchedTerms ||
+      b.score - a.score ||
+      a.tag.localeCompare(b.tag),
+  );
   return results.slice(0, limit);
 }
 
@@ -1018,23 +1203,44 @@ export async function elementsSearchCommand(commandRun) {
     partial = results.length > 0;
   }
   if (fallbackReason && !commandRun.options.quiet) {
-    process.stderr.write(`hax: ${t('wcCatalogUnavailable', { reason: fallbackReason, source })}\n`);
+    process.stderr.write(
+      `hax: ${t("wcCatalogUnavailable", { reason: fallbackReason, source })}\n`,
+    );
   }
-  if (commandRun.options.format === 'json' || commandRun.options.format === 'yaml') {
-    const out = results.map(({ score, ...rest }) => (partial ? { ...rest, partial: true } : rest));
-    writeData(commandRun.options.format === 'yaml' ? dump(out) : JSON.stringify(out, null, 2));
+  if (
+    commandRun.options.format === "json" ||
+    commandRun.options.format === "yaml"
+  ) {
+    const out = results.map(({ score, ...rest }) =>
+      partial ? { ...rest, partial: true } : rest,
+    );
+    writeData(
+      commandRun.options.format === "yaml"
+        ? dump(out)
+        : JSON.stringify(out, null, 2),
+    );
     return results;
   }
   if (results.length === 0) {
-    console.log(t('wcSearchNoMatch', { query }));
+    console.log(t("wcSearchNoMatch", { query }));
     return results;
   }
-  console.log(`${t(partial ? 'wcSearchPartial' : 'wcSearchMatching', { query, source })}\n`);
+  console.log(
+    `${t(partial ? "wcSearchPartial" : "wcSearchMatching", { query, source })}\n`,
+  );
   for (const el of results) {
-    const badges = [el.preferred ? 'preferred' : '', el.type === 'grid' ? 'grid' : '', el.haxCapable ? 'HAX' : ''].filter(Boolean).join(', ');
-    console.log(`${el.tag}${el.title ? ` (${el.title})` : ''}${badges ? `  [${badges}]` : ''}`);
+    const badges = [
+      el.preferred ? "preferred" : "",
+      el.type === "grid" ? "grid" : "",
+      el.haxCapable ? "HAX" : "",
+    ]
+      .filter(Boolean)
+      .join(", ");
+    console.log(
+      `${el.tag}${el.title ? ` (${el.title})` : ""}${badges ? `  [${badges}]` : ""}`,
+    );
     if (el.preferred) {
-      console.log(`  ${t('wcSearchUseFor', { useFor: el.preferred })}`);
+      console.log(`  ${t("wcSearchUseFor", { useFor: el.preferred })}`);
     }
     if (el.description) {
       console.log(`  ${el.description}`);
@@ -1042,7 +1248,7 @@ export async function elementsSearchCommand(commandRun) {
     if (el.import) {
       console.log(`  import "${el.import}";`);
     }
-    console.log('');
+    console.log("");
   }
   return results;
 }

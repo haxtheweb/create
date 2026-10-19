@@ -10,15 +10,15 @@ HAX components support **all evergreen browsers** with auto-update enabled. We d
 
 ## Supported Browsers
 
-| Browser | Platform | Version Support | Testing |
-|---------|----------|----------------|---------|
-| **Chrome** | Desktop (Windows, macOS, Linux) | Latest -1 version | Automated (CI) + Manual |
-| **Chrome** | Mobile (Android) | Latest version | Responsive testing |
+| Browser     | Platform                        | Version Support   | Testing                 |
+| ----------- | ------------------------------- | ----------------- | ----------------------- |
+| **Chrome**  | Desktop (Windows, macOS, Linux) | Latest -1 version | Automated (CI) + Manual |
+| **Chrome**  | Mobile (Android)                | Latest version    | Responsive testing      |
 | **Firefox** | Desktop (Windows, macOS, Linux) | Latest -1 version | Automated (CI) + Manual |
-| **Firefox** | Mobile (Android) | Latest version | Responsive testing |
-| **Safari** | Desktop (macOS) | Latest version | Manual |
-| **Safari** | Mobile (iOS/iPadOS) | Latest version | Responsive testing |
-| **Edge** | Desktop (Windows) | Latest -1 version | Automated (CI) + Manual |
+| **Firefox** | Mobile (Android)                | Latest version    | Responsive testing      |
+| **Safari**  | Desktop (macOS)                 | Latest version    | Manual                  |
+| **Safari**  | Mobile (iOS/iPadOS)             | Latest version    | Responsive testing      |
+| **Edge**    | Desktop (Windows)               | Latest -1 version | Automated (CI) + Manual |
 
 ## Testing Methodology
 
@@ -44,8 +44,9 @@ The following are **not supported** and not tested:
 ## Declaration
 
 > **HAX components are designed for evergreen browsers with auto-update enabled.**
-> 
+>
 > We intentionally do not support legacy browsers to:
+>
 > - Maximize accessibility through modern web standards
 > - Reduce security vulnerabilities from outdated browser versions
 > - Minimize maintenance burden, allowing faster feature delivery
@@ -54,6 +55,7 @@ The following are **not supported** and not tested:
 ## How to Request Legacy Browser Support
 
 If your institution requires support for a specific legacy browser version, please:
+
 1. **Open a GitHub Issue** at `haxtheweb/issues` with label `browser-support`
 2. **Describe the use case** and which component(s) are affected
 3. **Note** that adding legacy support will increase maintenance overhead and may impact accessibility roadmap priorities
@@ -66,6 +68,6 @@ If your institution requires support for a specific legacy browser version, plea
 
 ---
 
-*This matrix is intentionally concise — we support evergreen browsers only. For institutional legacy browser requirements, see the "How to Request Legacy Browser Support" section above.*
+_This matrix is intentionally concise — we support evergreen browsers only. For institutional legacy browser requirements, see the "How to Request Legacy Browser Support" section above._
 
-*Aligned with HEOSAT AS5 recommendations and our project pillar: Platform Agnostic.*
+_Aligned with HEOSAT AS5 recommendations and our project pillar: Platform Agnostic._

@@ -1,0 +1,10 @@
+dist
+node_modules
+coverage
+package-lock.json
+
+# EJS scaffolding templates (contain `<%= %>` placeholders, not valid JS/JSON
+# on their own) and their matching test fixtures. Mirrors babel.config.js's
+# own `ignore` entry for the same directory.
+src/templates
+test/unit/templates
