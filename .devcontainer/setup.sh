@@ -1,5 +1,5 @@
 #!/bin/bash
-npm install
+npm ci
 npm link
 
 printf "\033[34mhaxtheweb/create Next Steps:\033[0m\n"
