@@ -31,6 +31,8 @@
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
+    "precheck": "node scripts/precheck.mjs",
+    "precheck:fix": "node scripts/precheck.mjs --fix",
     "test": "node --require ./test/_helpers/english.cjs --test test/unit/**/*.test.cjs test/smoke/**/*.test.cjs",
     "test:unit": "node --require ./test/_helpers/english.cjs --test test/unit/**/*.test.cjs",
     "test:smoke": "node --require ./test/_helpers/english.cjs --test test/smoke/**/*.test.cjs"
