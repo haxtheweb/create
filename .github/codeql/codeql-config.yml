@@ -1,0 +1,6 @@
+name: "haxtheweb/create CodeQL config"
+
+# Tests assert on CLI output text (URLs, shell-ish strings) and are not
+# shipped; scanning them only produces false positives.
+paths-ignore:
+  - test/**

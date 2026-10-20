@@ -204,6 +204,33 @@ export function validateNpmClient(client) {
   return client;
 }
 
+/**
+ * Turn a git remote (https or git@ form) into a browsable GitHub link, or
+ * null when the remote is not hosted on github.com. The host is parsed rather
+ * than substring-matched, so "https://evil.example/github.com" is rejected.
+ * @param {string} gitRepo
+ * @returns {string|null}
+ */
+export function githubRepoLink(gitRepo) {
+  if (typeof gitRepo !== "string") {
+    return null;
+  }
+  const ssh = /^git@github\.com:(.+)$/.exec(gitRepo);
+  const candidate = ssh ? `https://github.com/${ssh[1]}` : gitRepo;
+  try {
+    const url = new URL(candidate);
+    if (
+      (url.protocol !== "https:" && url.protocol !== "http:") ||
+      url.hostname !== "github.com"
+    ) {
+      return null;
+    }
+  } catch (e) {
+    return null;
+  }
+  return candidate.replace(/\.git$/, "");
+}
+
 // Security (M-1): characters that are dangerous when a value is interpolated
 // into an exec() shell string. Rejecting these at the option boundary closes
 // the command-injection vector at every exec(...${opt}...) call site without

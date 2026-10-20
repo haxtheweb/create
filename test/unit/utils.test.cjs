@@ -19,6 +19,7 @@ const {
   generateUUID,
   gitIdentityFallbackArgs,
   rejectLeadingDash,
+  githubRepoLink,
   hasNameSpecialCharacters,
   isValidGithubOwner,
   isValidGithubRepo,
@@ -367,4 +368,30 @@ test("initGitRepo works in a directory whose name contains shell syntax (R2-H-2)
     delete process.env.GIT_COMMITTER_EMAIL;
     fs.rmSync(base, { recursive: true, force: true });
   }
+});
+
+// --- githubRepoLink: host is parsed, not substring-matched ---
+
+test("githubRepoLink builds a link for github.com remotes", () => {
+  assert.equal(
+    githubRepoLink("https://github.com/haxtheweb/create.git"),
+    "https://github.com/haxtheweb/create",
+  );
+  assert.equal(
+    githubRepoLink("git@github.com:haxtheweb/create.git"),
+    "https://github.com/haxtheweb/create",
+  );
+  assert.equal(
+    githubRepoLink("https://github.com/haxtheweb/create"),
+    "https://github.com/haxtheweb/create",
+  );
+});
+
+test("githubRepoLink rejects non-github hosts and bad input", () => {
+  assert.equal(githubRepoLink("https://evil.example/github.com/x/y.git"), null);
+  assert.equal(githubRepoLink("https://github.com.evil.example/x/y"), null);
+  assert.equal(githubRepoLink("git@gitlab.com:x/y.git"), null);
+  assert.equal(githubRepoLink("ssh://github.com/x/y.git"), null);
+  assert.equal(githubRepoLink(""), null);
+  assert.equal(githubRepoLink(undefined), null);
 });

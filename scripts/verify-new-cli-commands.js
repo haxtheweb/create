@@ -11,7 +11,7 @@
  * the temporary site on exit.
  */
 
-import { execSync } from "node:child_process";
+import { execFileSync } from "node:child_process";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import * as os from "node:os";
@@ -21,16 +21,49 @@ const TMP_DIR = fs.mkdtempSync(path.join(os.tmpdir(), "hax-cli-verify-"));
 const SITE_NAME = "cli-verify-site";
 const SITE_DIR = path.join(TMP_DIR, SITE_NAME);
 
+// Split a command string into argv entries, honouring double quotes, so the
+// CLI is spawned with an argument array instead of through a shell.
+function splitArgs(str) {
+  const out = [];
+  let cur = "";
+  let inQuote = false;
+  let started = false;
+  for (const ch of str) {
+    if (ch === '"') {
+      inQuote = !inQuote;
+      started = true;
+    } else if (!inQuote && /\s/.test(ch)) {
+      if (started) {
+        out.push(cur);
+        cur = "";
+        started = false;
+      }
+    } else {
+      cur += ch;
+      started = true;
+    }
+  }
+  if (started) out.push(cur);
+  return out;
+}
+
+function runCli(args, opts) {
+  return execFileSync(process.execPath, [CREATE_BIN, ...args], {
+    encoding: "utf8",
+    ...opts,
+  });
+}
+
 function run(cmd, opts = {}) {
   const cwd = opts.cwd || SITE_DIR;
-  const fullCmd = `node ${CREATE_BIN} ${cmd} --y --no-i --quiet --root ${cwd}`;
+  const args = [...splitArgs(cmd), "--y", "--no-i", "--quiet", "--root", cwd];
   try {
-    return execSync(fullCmd, { encoding: "utf8", cwd, ...opts });
+    return runCli(args, { cwd, ...opts });
   } catch (e) {
     if (opts.expectError) {
       return e.stderr || e.stdout || "";
     }
-    console.error(`Command failed: ${fullCmd}`);
+    console.error(`Command failed: ${args.join(" ")}`);
     console.error(e.stderr || e.message);
     throw e;
   }
@@ -77,13 +110,9 @@ console.log(`\nTemp workspace: ${TMP_DIR}\n`);
 // ── Setup ───────────────────────────────────────────────────────────
 console.log("Creating temporary site...");
 try {
-  execSync(
-    `node ${CREATE_BIN} site ${SITE_NAME} --y --no-i --quiet --root ${TMP_DIR}`,
-    {
-      encoding: "utf8",
-      cwd: TMP_DIR,
-    },
-  );
+  runCli(["site", SITE_NAME, "--y", "--no-i", "--quiet", "--root", TMP_DIR], {
+    cwd: TMP_DIR,
+  });
 } catch (e) {
   console.error("Failed to create test site:", e.stderr || e.message);
   process.exit(1);
