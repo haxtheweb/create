@@ -1,0 +1,72 @@
+name: dependency-audit
+# haxtheweb/issues#3092: dependency audit for the create (HAX CLI) package.
+#
+# REPORTING ONLY for now. The audit step never fails the job, and this is a
+# separate workflow from `build`, so it cannot break existing CI. Findings
+# are written to the job summary. Once the current findings are triaged the
+# maintainers can remove `continue-on-error` and/or add a severity threshold.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    # Weekly, so newly published advisories surface without a code change.
+    - cron: "17 6 * * 1"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  dependency-audit:
+    name: "Dependency audit (reporting only)"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+      # yarn.lock is what the `build` workflow installs from, so it is audited
+      # first. package-lock.json is also tracked (and is what `npm install` in
+      # AGENTS.md produces), so it is audited second. Both audits only read the
+      # lockfiles and need no `install`. Only production dependencies are
+      # audited: devDependencies are not shipped in the published package.
+      - name: Dependency audit
+        continue-on-error: true
+        env:
+          NO_COLOR: "1"
+          FORCE_COLOR: "0"
+        run: |
+          set +e
+          rc=0
+          out="${RUNNER_TEMP:-/tmp}"
+          {
+            echo "## Dependency audit (reporting only)"
+            echo
+            echo "Production dependencies only. This does not fail the build."
+            echo
+            echo "### yarn audit (yarn.lock, the lockfile CI installs from)"
+            echo '```text'
+          } >> "$GITHUB_STEP_SUMMARY"
+          yarn audit --groups dependencies 2>&1 | tee "$out/yarn-audit.txt"
+          yarn_rc=${PIPESTATUS[0]}
+          cat "$out/yarn-audit.txt" >> "$GITHUB_STEP_SUMMARY"
+          {
+            echo '```'
+            echo
+            echo "### npm audit (package-lock.json)"
+            echo '```text'
+          } >> "$GITHUB_STEP_SUMMARY"
+          npm audit --package-lock-only --omit=dev 2>&1 | tee "$out/npm-audit.txt"
+          npm_rc=${PIPESTATUS[0]}
+          cat "$out/npm-audit.txt" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          echo "yarn audit exit code: $yarn_rc (bitmask, 0 = none found)"
+          echo "npm audit exit code: $npm_rc (0 = none found)"
+          if [ "$yarn_rc" -ne 0 ] || [ "$npm_rc" -ne 0 ]; then
+            echo "::warning title=Dependency audit::Advisories reported. See the job summary. Reporting only, not failing the build."
+            rc=1
+          fi
+          exit $rc
