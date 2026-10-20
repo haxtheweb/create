@@ -48,7 +48,6 @@ import {
   validateDomain,
 } from "./lib/utils.js";
 import * as haxcmsLib from "@haxtheweb/haxcms-nodejs/dist/lib/HAXCMS.js";
-const HAXCMS = haxcmsLib.HAXCMS;
 const systemStructureContext = haxcmsLib.systemStructureContext;
 // `hax audit [ddd|schema|i18n|ssr|all]`; the DDD audit itself lives in audit.js
 const runAuditCommand = (commandRun, dddPath, schemaRoot) =>
@@ -84,7 +83,7 @@ async function main() {
   if (fs.existsSync(regPath)) {
     try {
       wcReg = JSON.parse(fs.readFileSync(regPath));
-    } catch (e) {
+    } catch {
       // no registry for testing, probably busted package
     }
   }
@@ -514,7 +513,7 @@ async function main() {
   try {
     let value = await exec(`git config user.name`);
     author = value.stdout.trim();
-  } catch (e) {
+  } catch {
     log(
       `
       git user name not configured. Run the following to do this:\n
@@ -757,7 +756,7 @@ async function main() {
             }),
           );
         }
-      } catch (e) {
+      } catch {
         // offline or registry unreachable; silently skip the update notice
       }
     }
@@ -798,7 +797,7 @@ async function main() {
         ];
         project = await p.group(
           {
-            type: ({ results }) =>
+            type: () =>
               p.select({
                 message: !activeProject
                   ? t("cliWhatToBuild")
@@ -852,8 +851,8 @@ async function main() {
 
         project = await p.group(
           {
-            type: ({ results }) => {
-              return new Promise((resolve, reject) => {
+            type: () => {
+              return new Promise((resolve) => {
                 resolve(activeProject);
               });
             },
@@ -1096,7 +1095,7 @@ async function main() {
                 });
               }
             },
-            author: ({ results }) => {
+            author: () => {
               if (
                 !commandRun.options.author &&
                 !commandRun.options.auto &&
@@ -1478,7 +1477,7 @@ export async function testForUpdates(commandRun) {
     execOut = await exec(`npm view @haxtheweb/create version`, {
       timeout: 3000,
     });
-  } catch (e) {
+  } catch {
     if (!commandRun.options.quiet) {
       p.intro(
         `${color.bgBlack(color.white(` ${t("cliUpdateCheckFailed")} `))}`,
@@ -1498,7 +1497,7 @@ export async function testForUpdates(commandRun) {
     if (!commandRun.options.y) {
       runUpdates = await p.group(
         {
-          answer: ({ results }) =>
+          answer: () =>
             p.confirm({
               message: t("cliUpdateConfirm", { version: latest }),
               initialValue: true,

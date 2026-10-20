@@ -27,13 +27,13 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 
 // silence prompt output; nothing here should prompt, but be safe
-stub.intro = (msg) => {
+stub.intro = () => {
   /* quiet */
 };
-stub.note = (msg) => {
+stub.note = () => {
   /* quiet */
 };
-stub.outro = (msg) => {
+stub.outro = () => {
   /* quiet */
 };
 

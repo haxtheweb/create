@@ -294,7 +294,7 @@ export function i18nignoreInterpreter(root) {
     let stats;
     try {
       stats = statSync(full);
-    } catch (e) {
+    } catch {
       continue;
     }
     if (stats.isDirectory()) {
@@ -357,7 +357,7 @@ export function discoverI18nTargets(
     let stats;
     try {
       stats = statSync(full);
-    } catch (e) {
+    } catch {
       continue;
     }
     if (stats.isDirectory()) {

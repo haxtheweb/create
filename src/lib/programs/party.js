@@ -125,7 +125,7 @@ export async function partyCommandDetected(commandRun) {
       };
       operation = await p.group(
         {
-          action: ({ results }) =>
+          action: () =>
             p.select({
               message: t("partyActionsPrompt"),
               defaultValue: actions[0],
@@ -291,7 +291,7 @@ export async function partyCommandDetected(commandRun) {
             commandRun.options.repos = options.map((item) => item.value);
           }
           await cloneHAXRepositories(commandRun);
-        } catch (e) {
+        } catch {
           // non-fatal: user may have cancelled the repo selection prompt
         }
         break;
@@ -320,7 +320,7 @@ async function cloneHAXRepositories(commandRun) {
 
   if (!sysGh) {
     try {
-      const { stdout, stderr } = await exec("ssh -T git@github.com");
+      await exec("ssh -T git@github.com");
     } catch (error) {
       // The GitHub SSH test always returns as stderr
       if (!error.stderr.includes("successfully authenticated")) {
@@ -355,7 +355,7 @@ ${t("partyGhSelectOptions", { sshOption: color.cyan(`Generate a new SSH key`), b
 
   try {
     await exec(`yarn --version`);
-  } catch (e) {
+  } catch {
     await exec(`npm install -g yarn`);
   }
 
@@ -375,7 +375,7 @@ ${t("partyGhSelectOptions", { sshOption: color.cyan(`Generate a new SSH key`), b
       if (stdout && stdout.trim()) {
         githubOwner = stdout.trim();
       }
-    } catch (e) {
+    } catch {
       // fall back to --author
     }
   }

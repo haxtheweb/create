@@ -24,14 +24,13 @@ const intros = [];
 stub.intro = (msg) => {
   intros.push(String(msg));
 };
-stub.note = (msg) => {
+stub.note = () => {
   /* quiet */
 };
-stub.outro = (msg) => {
+stub.outro = () => {
   /* quiet */
 };
 const tableCalls = [];
-const originalTable = console.table;
 console.table = (data) => {
   tableCalls.push(data);
 };

@@ -122,7 +122,7 @@ export function discoverSchemaTargets(root) {
     let entries = [];
     try {
       entries = readdirSync(dir);
-    } catch (e) {
+    } catch {
       return;
     }
     for (const name of entries) {
@@ -130,7 +130,7 @@ export function discoverSchemaTargets(root) {
       let stat;
       try {
         stat = statSync(full);
-      } catch (e) {
+      } catch {
         continue;
       }
       if (stat.isDirectory()) {
@@ -170,7 +170,7 @@ export function discoverSchemaTargets(root) {
 function fileMentions(file, needle) {
   try {
     return readFileSync(file, "utf8").includes(needle);
-  } catch (e) {
+  } catch {
     return false;
   }
 }
@@ -192,7 +192,7 @@ export function resolveLocalValidator(pkg, bin, searchFrom = []) {
       if (binRel) {
         return path.join(path.dirname(pkgJsonPath), binRel);
       }
-    } catch (e) {
+    } catch {
       // not installed relative to this location
     }
   }
@@ -236,7 +236,7 @@ export function runValidator(
       via,
       reports: Array.isArray(reports) ? reports : [reports],
     };
-  } catch (e) {
+  } catch {
     if (!local) {
       return {
         ok: false,

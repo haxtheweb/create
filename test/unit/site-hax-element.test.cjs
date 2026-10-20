@@ -153,7 +153,7 @@ test(
     globalThis.HaxStore = {
       instance: {
         _isSandboxed: true,
-        async getHAXSlot(node) {
+        async getHAXSlot() {
           return "slot content from store";
         },
       },

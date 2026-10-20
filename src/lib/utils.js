@@ -69,7 +69,7 @@ export function writeConfigFile(filename, data) {
   try {
     fs.writeFileSync(filePath, data);
     return filePath;
-  } catch (error) {
+  } catch {
     return null;
   }
 }
@@ -84,7 +84,7 @@ export function readConfigFile(filename) {
   try {
     let file = fs.readFileSync(filePath, "utf8");
     return file;
-  } catch (error) {
+  } catch {
     return null;
   }
 }
@@ -225,7 +225,7 @@ export function githubRepoLink(gitRepo) {
     ) {
       return null;
     }
-  } catch (e) {
+  } catch {
     return null;
   }
   return candidate.replace(/\.git$/, "");
@@ -397,7 +397,7 @@ export async function gitIdentityFallbackArgs(cwd = process.cwd()) {
         cwd: fs.existsSync(cwd) ? cwd : process.cwd(),
       });
       return stdout.trim();
-    } catch (e) {
+    } catch {
       return "";
     }
   };

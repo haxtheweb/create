@@ -29,11 +29,10 @@ const notes = [];
 stub.note = (msg) => {
   notes.push(String(msg));
 };
-stub.outro = (msg) => {
+stub.outro = () => {
   /* quiet */
 };
 const tableCalls = [];
-const originalTable = console.table;
 console.table = (data) => {
   tableCalls.push(data);
 };

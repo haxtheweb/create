@@ -33,10 +33,10 @@ const notes = [];
 stub.note = (msg) => {
   notes.push(String(msg));
 };
-stub.outro = (msg) => {
+stub.outro = () => {
   /* quiet */
 };
-stub.cancel = (msg) => {
+stub.cancel = () => {
   /* quiet */
 };
 const spinnerMessages = [];
@@ -44,7 +44,7 @@ stub.spinner = () => ({
   start(msg) {
     spinnerMessages.push(String(msg));
   },
-  stop(msg) {
+  stop() {
     /* quiet */
   },
 });

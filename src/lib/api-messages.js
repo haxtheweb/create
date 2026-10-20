@@ -114,7 +114,7 @@ export function annotateApiBody(body, status, resolve = require) {
         // eslint-disable-next-line n/no-missing-require
         "@haxtheweb/haxcms-nodejs/dist/lib/apiMessageCodes.js",
       ).annotateApiResponse;
-    } catch (e) {
+    } catch {
       annotate = null;
     }
   }
@@ -123,7 +123,7 @@ export function annotateApiBody(body, status, resolve = require) {
   }
   try {
     return annotate(body, status);
-  } catch (e) {
+  } catch {
     return body;
   }
 }
