@@ -343,7 +343,7 @@ test("installInertDom fills in the missing browser surface and leaves existing A
     document: { querySelector: () => "kept" },
   };
   installInertDom(target);
-  assert.equal(target.window, target);
+  assert.equal(target["window"], target);
   assert.equal(typeof target.addEventListener, "function");
   assert.equal(target.matchMedia("x").matches, false);
   assert.equal(target.document.querySelector(), "kept");

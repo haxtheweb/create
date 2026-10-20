@@ -93,7 +93,7 @@ export function loadSsrRegistry(root) {
   try {
     const registry = JSON.parse(readFileSync(file, "utf8"));
     return registry && typeof registry === "object" ? registry : null;
-  } catch (e) {
+  } catch {
     return null;
   }
 }
@@ -110,7 +110,7 @@ export function discoverSsrDemos(root) {
     let entries = [];
     try {
       entries = readdirSync(dir).sort();
-    } catch (e) {
+    } catch {
       return;
     }
     for (const name of entries) {
@@ -118,7 +118,7 @@ export function discoverSsrDemos(root) {
       let stat;
       try {
         stat = statSync(full);
-      } catch (e) {
+      } catch {
         continue;
       }
       if (stat.isDirectory()) {
@@ -133,7 +133,7 @@ export function discoverSsrDemos(root) {
               demos[demo.tag] = demo;
             }
           }
-        } catch (e) {
+        } catch {
           // malformed schemas are reported by `hax audit schema`
         }
       }
@@ -545,7 +545,7 @@ export async function runSsrWorker(payload, deps = {}) {
         let doc;
         try {
           doc = JSON.parse(line);
-        } catch (e) {
+        } catch {
           return;
         }
         if (doc.fatal) {
@@ -630,7 +630,7 @@ export async function runSsrWorker(payload, deps = {}) {
 function readSource(file) {
   try {
     return readFileSync(file, "utf8").slice(0, 2 * 1024 * 1024);
-  } catch (e) {
+  } catch {
     return "";
   }
 }
@@ -788,7 +788,7 @@ export async function auditSsrCommand(commandRun, root = null, deps = {}) {
     })),
   };
   // the per-block detail only feeds the summary
-  const publicResults = results.map(({ styleRules, ...rest }) => rest);
+  const publicResults = results.map(({ styleRules: _styleRules, ...rest }) => rest);
   if (asJson) {
     out(
       JSON.stringify(
