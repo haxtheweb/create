@@ -788,7 +788,9 @@ export async function auditSsrCommand(commandRun, root = null, deps = {}) {
     })),
   };
   // the per-block detail only feeds the summary
-  const publicResults = results.map(({ styleRules: _styleRules, ...rest }) => rest);
+  const publicResults = results.map(
+    ({ styleRules: _styleRules, ...rest }) => rest,
+  );
   if (asJson) {
     out(
       JSON.stringify(
