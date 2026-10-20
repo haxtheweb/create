@@ -9,7 +9,7 @@
  *   { root, timeout, shim, items: [{ tag, specifier, demo }] }  (shim: false skips the inert DOM)
  * and one JSON document per line on stdout:
  *   { fatal: "<code>", message }        the audit cannot run at all
- *   { tag, file, ok, html, progressive? }  rendered (ok: true) or failed; progressive is the
+ *   { tag, file, ok, html, truncated, progressive? }  rendered (ok: true) or failed; truncated: output was cut at 8 MB; progressive is the
  *                                       progressive-enhancement markup the element supplies
  *   { tag, file, ok: false, phase, error, warnings }   phase: import | render | async | timeout
  *   { fallback: { specifier, parent } }   an extensionless import was resolved by the fallback
@@ -24,6 +24,28 @@ import path from "node:path";
 import { pathToFileURL, fileURLToPath } from "node:url";
 import { MessageChannel } from "node:worker_threads";
 import { installInertDom } from "./audit-ssr-env.mjs";
+
+// Some elements render pages of documentation (d-d-docs is ~70 MB: every
+// nested element repeats its shadow-root styles). Collect at most this much
+// and stop rendering, so one element cannot exhaust memory or stall the
+// stdout pipe; the row is marked truncated and its sizes are lower bounds.
+const MAX_HTML_BYTES = 8 * 1024 * 1024;
+
+/**
+ * Collect a render result into a string, stopping at MAX_HTML_BYTES.
+ * @returns {Promise<{html: string, truncated: boolean}>}
+ */
+async function collectCapped(result) {
+  let html = "";
+  // for await also resolves the promises a RenderResult can contain
+  for await (const chunk of result) {
+    html += chunk;
+    if (html.length > MAX_HTML_BYTES) {
+      return { html, truncated: true };
+    }
+  }
+  return { html, truncated: false };
+}
 
 const out = (doc, done) =>
   process.stdout.write(JSON.stringify(doc) + "\n", done);
@@ -168,13 +190,18 @@ function buildTemplate(html, tag, demo) {
   return html(strings, ...values);
 }
 
-const firstLine = (error) =>
-  String((error && (error.stack || error.message)) || error)
+const firstLine = (error) => {
+  const lines = String((error && (error.stack || error.message)) || error)
     .split("\n")
-    .filter((line) => line.trim() && !/^\s+at /.test(line))
-    .slice(0, 1)
-    .join("")
-    .slice(0, 300);
+    .map((line) => line.trim())
+    .filter((line) => line && !/^at /.test(line));
+  // a multi-line message starts "Error: " with the text on the next line
+  // (Lit SSR does this); keep the text so the failure is not reported blank
+  if (lines.length > 1 && /^[\w$.]*(Error|Exception):?$/.test(lines[0])) {
+    return `${lines[0]} ${lines[1]}`.slice(0, 300);
+  }
+  return (lines[0] || "").slice(0, 300);
+};
 
 /**
  * Where an error came from: the first stack frame that is not the renderer
@@ -251,9 +278,6 @@ async function main() {
     installInertDom();
   }
   const { render } = await load(path.join(ssrDir, "lib", "render.js"));
-  const { collectResult } = await load(
-    path.join(ssrDir, "lib", "render-result.js"),
-  );
   const { html } = await load(path.join(litDir, "index.js"));
 
   // anything an element logs or throws asynchronously is attributed to the
@@ -310,7 +334,7 @@ async function main() {
         });
         continue;
       }
-      const rendering = collectResult(
+      const rendering = collectCapped(
         render(buildTemplate(html, item.tag, item.demo)),
       );
       const result = await Promise.race([
@@ -332,7 +356,8 @@ async function main() {
       out({
         ...base,
         ok: true,
-        html: result,
+        html: result.html,
+        truncated: result.truncated,
         progressive: await progressiveFallback(item.tag, item.demo),
         warnings,
       });

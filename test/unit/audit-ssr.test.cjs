@@ -194,6 +194,29 @@ test("auditSsrCommand reports and never fails on render failures", async () => {
   assert.equal(doc.summary.counts.threw, 1);
 });
 
+test("auditSsrCommand carries the worker's truncated flag onto the row", async () => {
+  const root = project({ "wc-registry.json": { "x-a": "pkg/a.js" } });
+  let out = "";
+  await auditSsrCommand({ options: { format: "json" } }, root, {
+    write: (s) => (out += s),
+    runWorker: async () => ({
+      results: [
+        {
+          tag: "x-a",
+          ok: true,
+          truncated: true,
+          file: path.join(root, "a.js"),
+          html: shadow("<p>Hi</p>"),
+        },
+      ],
+      fallbacks: [],
+    }),
+  });
+  const row = JSON.parse(out).results[0];
+  assert.equal(row.status, "rendered");
+  assert.equal(row.truncated, true);
+});
+
 test("auditSsrCommand fails only when the audit cannot run", async () => {
   const none = await auditSsrCommand(
     { options: { format: "json" } },
