@@ -20,6 +20,7 @@ export const YARN_PACKAGE = "yarn@^1.22.22";
 const osPathCmd = process.platform === "win32" ? "where.exe" : "which";
 
 let sysGit = true;
+// eslint-disable-next-line no-restricted-syntax -- osPathCmd is a constant (which/where.exe)
 exec(`${osPathCmd} git`, (error) => {
   if (error) {
     sysGit = false;
@@ -27,6 +28,7 @@ exec(`${osPathCmd} git`, (error) => {
 });
 
 let sysGh = true;
+// eslint-disable-next-line no-restricted-syntax -- osPathCmd is a constant (which/where.exe)
 exec(`${osPathCmd} gh`, (error) => {
   if (error) {
     sysGh = false;
@@ -323,7 +325,7 @@ async function cloneHAXRepositories(commandRun) {
 
   if (!sysGh) {
     try {
-      await exec("ssh -T git@github.com");
+      await runCommand("ssh", ["-T", "git@github.com"]);
     } catch (error) {
       // The GitHub SSH test always returns as stderr
       if (!error.stderr.includes("successfully authenticated")) {
@@ -340,7 +342,7 @@ async function cloneHAXRepositories(commandRun) {
   } else {
     // gh cli can make new ssh keys and push them to GitHub
     try {
-      await exec("gh auth status");
+      await runCommand("gh", ["auth", "status"]);
     } catch {
       console.log(`${color.red(t("partyGhNotAuthenticated"))}
 ${t("partyGhGuidedLogin", { command: color.bold("hax party") })}
