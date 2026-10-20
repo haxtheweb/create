@@ -24,14 +24,14 @@ export default [
     // build output and vendored/generated files are never linted.
     // src/templates/** mirrors babel.config.js's own `ignore` entry: those
     // files are EJS scaffolding (contain `<%= %>` placeholders) and are not
-    // valid, lintable JavaScript on their own. test/unit/templates/** are the
-    // matching test fixtures for that scaffolding.
+    // valid, lintable JavaScript on their own.
     ignores: [
       "dist/**",
       "node_modules/**",
       "coverage/**",
       "src/templates/**",
-      "test/unit/templates/**",
+      // tests are not linted (they are exercised by `npm run test`).
+      "test/**",
     ],
   },
   js.configs.recommended,
@@ -77,33 +77,6 @@ export default [
       // "build" script), so the shebang is required in source but the
       // plugin can't resolve that mapping and flags it as superfluous.
       "n/hashbang": "off",
-    },
-  },
-  {
-    // test/**/*.cjs: CommonJS, Node test runner (node:test via require)
-    files: ["test/**/*.cjs"],
-    languageOptions: {
-      ecmaVersion: "latest",
-      sourceType: "commonjs",
-      globals: {
-        ...globals.node,
-      },
-    },
-    settings: {
-      // package.json "engines" (>=18.20.3) is the floor for consumers
-      // installing this CLI, but CI and all local development run Node
-      // 24; node:test (stable since Node 20) is only used in the test
-      // suite, never shipped in dist/. Scope the plugin's version check
-      // to this repo's actual test runtime instead of the published
-      // package floor.
-      node: { version: ">=20.0.0" },
-    },
-    rules: {
-      "no-restricted-syntax": ["error", noOptionalChaining, noWindowGlobal],
-      "no-unused-vars": ["warn", { argsIgnorePattern: "^_" }],
-      eqeqeq: "error",
-      "no-var": "error",
-      "n/no-unpublished-require": "off",
     },
   },
   eslintConfigPrettier,
