@@ -36,13 +36,12 @@ import { t } from "../i18n.js";
  * apart as demo: "bare".
  */
 
-import { SSR_PRIMITIVE_CSS } from "./audit-ssr-primitives.js";
-
 export const SSR_STATUSES = [
   "rendered",
   "shell",
   "empty",
   "no-shadow-root",
+  "skipped",
   "threw",
 ];
 
@@ -384,7 +383,7 @@ const percentile = (sorted, fraction) =>
 /**
  * @description Roll results up into counts, failure causes and size figures.
  */
-export function summarizeSsr(results) {
+export function summarizeSsr(results, extras = {}) {
   const counts = Object.fromEntries(SSR_STATUSES.map((s) => [s, 0]));
   const byDemo = {
     demoSchema: Object.fromEntries(SSR_STATUSES.map((s) => [s, 0])),
@@ -467,7 +466,7 @@ export function summarizeSsr(results) {
       .sort((a, b) => b.count - a.count),
     hints: [...hinted.values()].sort((a, b) => b.tags.length - a.tags.length),
     fallback,
-    primitiveStyles: { bytes: Buffer.byteLength(SSR_PRIMITIVE_CSS) },
+    primitiveStyles: { bytes: Buffer.byteLength(extras.primitiveCss || "") },
     size: {
       measured: rendered,
       bytes,
@@ -501,7 +500,7 @@ export function summarizeSsr(results) {
  * element that hung or crashed it, so one bad element can't end the audit.
  * @param payload {root, timeout, items}
  * @param deps injectable { spawn, workerPath } for tests
- * @returns {Promise<{fatal?: {code: string, message: string}, results: object[], fallbacks: object[]}>}
+ * @returns {Promise<{fatal?: {code: string, message: string}, results: object[], fallbacks: object[], primitives: string}>}
  */
 export async function runSsrWorker(payload, deps = {}) {
   const spawn = deps.spawn || nodeSpawn;
@@ -511,6 +510,7 @@ export async function runSsrWorker(payload, deps = {}) {
   const results = [];
   // extensionless imports the worker had to resolve through its fallback
   const fallbacks = new Map();
+  let primitives = "";
   let pending = payload.items.slice();
   while (pending.length) {
     const attempt = await new Promise((resolve) => {
@@ -580,6 +580,10 @@ export async function runSsrWorker(payload, deps = {}) {
     });
     // asyncOnly lines are late errors from an element that already finished
     for (const doc of attempt.got) {
+      if (typeof doc.primitives === "string") {
+        primitives = doc.primitives;
+        continue;
+      }
       if (doc.fallback) {
         fallbacks.set(
           `${doc.fallback.specifier}|${doc.fallback.parent}`,
@@ -606,6 +610,7 @@ export async function runSsrWorker(payload, deps = {}) {
         fatal: attempt.fatal,
         results,
         fallbacks: [...fallbacks.values()],
+        primitives,
       };
     }
     if (attempt.complete || !pending.length) {
@@ -624,7 +629,7 @@ export async function runSsrWorker(payload, deps = {}) {
       warnings: [],
     });
   }
-  return { results, fallbacks: [...fallbacks.values()] };
+  return { results, fallbacks: [...fallbacks.values()], primitives };
 }
 
 function readSource(file) {
@@ -709,7 +714,11 @@ export async function auditSsrCommand(commandRun, root = null, deps = {}) {
     const message =
       outcome.fatal.code === "missing-ssr"
         ? t("auditSsrMissingSsr", { command: "npm i -D @lit-labs/ssr" })
-        : t("auditSsrWorkerFailed", { error: outcome.fatal.message });
+        : outcome.fatal.code === "missing-ssr-kit"
+          ? t("auditSsrMissingKit", {
+              command: "npm i @haxtheweb/haxcms-nodejs",
+            })
+          : t("auditSsrWorkerFailed", { error: outcome.fatal.message });
     return fail(outcome.fatal.code, message);
   }
   const demoOf = Object.fromEntries(
@@ -720,7 +729,10 @@ export async function auditSsrCommand(commandRun, root = null, deps = {}) {
     mkdirSync(saveDir, { recursive: true });
   }
   if (saveDir) {
-    writeFileSync(path.join(saveDir, "_primitives.css"), SSR_PRIMITIVE_CSS);
+    writeFileSync(
+      path.join(saveDir, "_primitives.css"),
+      outcome.primitives || "",
+    );
     for (const doc of outcome.results) {
       if (doc.progressive) {
         writeFileSync(
@@ -749,6 +761,9 @@ export async function auditSsrCommand(commandRun, root = null, deps = {}) {
         warnings,
       };
     }
+    if (doc.skipped) {
+      return { ...base, status: "skipped", skipReason: doc.skipped, warnings };
+    }
     if (saveDir) {
       writeFileSync(path.join(saveDir, `${doc.tag}.html`), doc.html);
     }
@@ -775,7 +790,7 @@ export async function auditSsrCommand(commandRun, root = null, deps = {}) {
       warnings,
     };
   });
-  const summary = summarizeSsr(results);
+  const summary = summarizeSsr(results, { primitiveCss: outcome.primitives });
   const fallbacks = outcome.fallbacks || [];
   summary.env = options.shim === false ? "bare" : "inert-dom";
   summary.resolverFallbacks = {
@@ -817,6 +832,7 @@ export async function auditSsrCommand(commandRun, root = null, deps = {}) {
     shell: [color.yellow, t("auditSsrStatusShell")],
     empty: [color.yellow, t("auditSsrStatusEmpty")],
     "no-shadow-root": [color.yellow, t("auditSsrStatusNoShadow")],
+    skipped: [color.dim, t("auditSsrStatusSkipped")],
     threw: [color.red, t("auditSsrStatusThrew")],
   };
   for (const status of SSR_STATUSES) {
