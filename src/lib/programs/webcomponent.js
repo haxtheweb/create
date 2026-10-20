@@ -1064,11 +1064,49 @@ export async function webcomponentRename(commandRun, packageData) {
 export const ELEMENTS_CATALOG_URL =
   "https://raw.githubusercontent.com/haxtheweb/webcomponents/master/elements-catalog.json";
 
+// Security: the catalog is untrusted input (remote URL or env-supplied
+// path), so check its shape before the search code touches it.
+export function validateElementsCatalog(catalog) {
+  const isObject = (v) => v !== null && typeof v === "object";
+  if (!isObject(catalog) || Array.isArray(catalog)) {
+    throw new Error("invalid catalog: expected a JSON object");
+  }
+  if (!Array.isArray(catalog.elements)) {
+    throw new Error("invalid catalog: `elements` must be an array");
+  }
+  for (const el of catalog.elements) {
+    if (!isObject(el) || typeof el.tag !== "string" || !el.tag) {
+      throw new Error("invalid catalog: each element needs a string `tag`");
+    }
+    if (el.tags !== undefined && !Array.isArray(el.tags)) {
+      throw new Error("invalid catalog: element `tags` must be an array");
+    }
+  }
+  if (catalog.preferred !== undefined) {
+    if (
+      !Array.isArray(catalog.preferred) ||
+      !catalog.preferred.every((p) => isObject(p) && typeof p.tag === "string")
+    ) {
+      throw new Error("invalid catalog: `preferred` must be an array of tags");
+    }
+  }
+  return catalog;
+}
+
 export async function loadElementsCatalog() {
   const source = process.env.HAX_ELEMENTS_CATALOG || ELEMENTS_CATALOG_URL;
   try {
-    if (!source.startsWith("http://") && !source.startsWith("https://")) {
-      return { catalog: JSON.parse(fs.readFileSync(source, "utf8")), source };
+    if (source.startsWith("http://")) {
+      // plaintext transport lets anyone on the path alter the catalog
+      throw new Error("insecure http:// catalog URL rejected; use https://");
+    }
+    if (!source.startsWith("https://")) {
+      return {
+        catalog: validateElementsCatalog(
+          JSON.parse(fs.readFileSync(source, "utf8")),
+        ),
+        source,
+      };
     }
     // global fetch has been available (unflagged) since Node 18, which is
     // this package's actual engines floor; the plugin's data conservatively
@@ -1078,7 +1116,7 @@ export async function loadElementsCatalog() {
     if (!resp.ok) {
       throw new Error(`HTTP ${resp.status}`);
     }
-    return { catalog: await resp.json(), source };
+    return { catalog: validateElementsCatalog(await resp.json()), source };
   } catch (e) {
     // offline / unreachable: fall back to tag names from the bundled registry
     let elements = [];
