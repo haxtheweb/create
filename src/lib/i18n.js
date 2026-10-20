@@ -100,7 +100,7 @@ export function detectLanguage(
   if (osLocale === null) {
     try {
       osLocale = Intl.DateTimeFormat().resolvedOptions().locale;
-    } catch (e) {
+    } catch {
       osLocale = "";
     }
   }
@@ -170,7 +170,7 @@ export function bundledElementLocales(pkg, resolve = require.resolve) {
       "locales",
     );
     return existsSync(dir) ? dir : null;
-  } catch (e) {
+  } catch {
     return null;
   }
 }
@@ -184,7 +184,7 @@ function load(namespace, lang) {
     if (file && existsSync(file)) {
       try {
         data = JSON.parse(readFileSync(file, "utf8"));
-      } catch (e) {
+      } catch {
         data = null;
       }
     }

@@ -29,7 +29,7 @@ stub.spinner = () => ({
   start(msg) {
     spinnerStarts.push(String(msg));
   },
-  stop(msg) {
+  stop() {
     /* quiet */
   },
 });
@@ -41,10 +41,10 @@ const outros = [];
 stub.outro = (msg) => {
   outros.push(String(msg));
 };
-stub.intro = (msg) => {
+stub.intro = () => {
   /* quiet */
 };
-stub.text = async (msg) => "https://github.com/tester/my-cool-el.git";
+stub.text = async () => "https://github.com/tester/my-cool-el.git";
 
 // no real git/npm subprocesses
 const utils = require("../../src/lib/utils.js");
@@ -269,7 +269,6 @@ test(
       };
       await webcomponentProcess(commandRun, project);
 
-      const scaffold = path.join(projectRoot, "versioned-el");
       const gitInit = execCalls.find((c) => c.includes("git init"));
       assert.ok(gitInit, "git init executed");
       assert.ok(

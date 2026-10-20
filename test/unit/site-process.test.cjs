@@ -31,7 +31,7 @@ require("@babel/register");
 const test = require("node:test");
 const assert = require("node:assert/strict");
 
-stub.intro = (msg) => {
+stub.intro = () => {
   /* quiet */
 };
 const notes = [];

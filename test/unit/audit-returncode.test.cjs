@@ -19,17 +19,16 @@ const path = require("node:path");
 const test = require("node:test");
 const assert = require("node:assert/strict");
 
-stub.intro = (msg) => {
+stub.intro = () => {
   /* quiet */
 };
-stub.note = (msg) => {
+stub.note = () => {
   /* quiet */
 };
-stub.outro = (msg) => {
+stub.outro = () => {
   /* quiet */
 };
 const tableCalls = [];
-const originalTable = console.table;
 console.table = (data) => {
   tableCalls.push(data);
 };

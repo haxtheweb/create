@@ -281,7 +281,7 @@ export async function webcomponentProcess(commandRun, project, port = "8000") {
   // loop through and rename all the localization files
   if (fs.existsSync(`${project.path}/${project.name}/locales/`)) {
     fs.readdirSync(`${project.path}/${project.name}/locales/`).forEach(
-      async function (file, index) {
+      async function (file) {
         fs.renameSync(
           `${project.path}/${project.name}/locales/${file}`,
           `${project.path}/${project.name}/locales/${file.replace("webcomponent", project.name)}`,
@@ -342,7 +342,7 @@ export async function webcomponentProcess(commandRun, project, port = "8000") {
       // commit failed silently, leaving staged files and no commit.
       // Security (R2-L-1): no shell string around the path / remote URL.
       await initGitRepo(path.join(project.path, project.name), project.gitRepo);
-    } catch (e) {
+    } catch {
       // non-fatal: scaffold still succeeds without a local git history
     }
   }
@@ -398,7 +398,7 @@ ${color.underline(color.cyan(`http://localhost:${port}`))}
       await runCommand(commandRun.options.npmClient, ["run", "analyze"], {
         cwd: optionPath,
       });
-    } catch (e) {
+    } catch {
       // don't log bc output is weird
     }
   } else if (!commandRun.options.quiet) {
@@ -462,7 +462,7 @@ export async function webcomponentCommandDetected(
       };
       operation = await p.group(
         {
-          action: ({ results }) =>
+          action: () =>
             p.select({
               message: t("wcActionsYouCanTake"),
               defaultValue: actions[0],
@@ -524,7 +524,7 @@ export async function webcomponentCommandDetected(
             }
           }
           await runCommand(commandRun.options.npmClient, ["start"]);
-        } catch (e) {
+        } catch {
           // don't log bc output is odd
         }
         break;
@@ -883,7 +883,7 @@ export async function webcomponentRename(commandRun, packageData) {
     if (fs.existsSync(regPath)) {
       wcReg = JSON.parse(fs.readFileSync(regPath, "utf8"));
     }
-  } catch (e) {
+  } catch {
     // ignore missing registry
   }
 
@@ -1042,7 +1042,7 @@ export async function webcomponentRename(commandRun, packageData) {
     s2.stop(
       merlinSays(t("wcCemRegenerated", { file: "custom-elements.json" })),
     );
-  } catch (e) {
+  } catch {
     // Stopping the spinner is required even on failure: an un-stopped
     // @clack/prompts spinner keeps stdin/stdout handles open, which hangs
     // the process indefinitely instead of exiting normally.
@@ -1097,7 +1097,7 @@ export async function loadElementsCatalog() {
         type: "element",
         tags: [],
       }));
-    } catch (err) {
+    } catch {
       elements = [];
     }
     return {
@@ -1221,7 +1221,7 @@ export async function elementsSearchCommand(commandRun) {
     commandRun.options.format === "json" ||
     commandRun.options.format === "yaml"
   ) {
-    const out = results.map(({ score, ...rest }) =>
+    const out = results.map(({ score: _score, ...rest }) =>
       partial ? { ...rest, partial: true } : rest,
     );
     writeData(

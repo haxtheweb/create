@@ -42,10 +42,10 @@ const notes = [];
 stub.note = (msg) => {
   notes.push(String(msg));
 };
-stub.outro = (msg) => {
+stub.outro = () => {
   /* quiet */
 };
-stub.cancel = (msg) => {
+stub.cancel = () => {
   /* quiet */
 };
 stub.spinner = () => ({ start() {}, stop() {} });
@@ -127,7 +127,7 @@ const fakeHaxsite = {
   loadNode(id) {
     return fakePages[id];
   },
-  async getPageContent(page) {
+  async getPageContent() {
     return '<p>hello world</p><my-widget title="w">deep content</my-widget>';
   },
   async addPage(

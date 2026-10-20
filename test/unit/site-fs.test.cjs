@@ -94,7 +94,7 @@ test(
       let stillPresent = false;
       try {
         stillPresent = fs.lstatSync(nmBroken).isSymbolicLink();
-      } catch (e) {
+      } catch {
         stillPresent = false;
       }
       assert.ok(

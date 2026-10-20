@@ -485,7 +485,7 @@ if (!identitySkip) {
       identitySkip =
         "installed @haxtheweb/haxcms-nodejs predates the git identity fallback (haxtheweb/issues#3116)";
     }
-  } catch (e) {
+  } catch {
     identitySkip = "could not read installed @haxtheweb/haxcms-nodejs";
   }
 }

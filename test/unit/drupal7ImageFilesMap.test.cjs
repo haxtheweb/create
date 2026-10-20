@@ -46,7 +46,7 @@ test(
   "strips the leading slash from each absolute-path img src key",
   opts,
   async () => {
-    const { files, skipped } = await buildDrupalImageFilesMap(
+    const { files } = await buildDrupalImageFilesMap(
       DRUPAL_HTML,
       "https://drupal.example.org",
       { assertUrlNotSSRF: async () => {} },
@@ -88,7 +88,7 @@ test(
   "skips protocol-relative // img srcs (they are not absolute-path)",
   opts,
   async () => {
-    const { files, skipped } = await buildDrupalImageFilesMap(
+    const { files } = await buildDrupalImageFilesMap(
       DRUPAL_HTML,
       "https://drupal.example.org",
       { assertUrlNotSSRF: async () => {} },

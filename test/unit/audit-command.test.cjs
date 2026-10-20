@@ -33,7 +33,6 @@ stub.outro = (msg) => {
   outros.push(String(msg));
 };
 const tableCalls = [];
-const originalTable = console.table;
 console.table = (data) => {
   tableCalls.push(data);
 };

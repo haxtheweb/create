@@ -44,7 +44,7 @@ const outros = [];
 stub.outro = (msg) => {
   outros.push(String(msg));
 };
-stub.cancel = (msg) => {
+stub.cancel = () => {
   /* quiet */
 };
 stub.spinner = () => ({ start() {}, stop() {} });
@@ -201,7 +201,7 @@ const fakeHaxsite = {
       },
     };
   },
-  async getPageContent(page) {
+  async getPageContent() {
     return '<p>hello world</p><my-widget title="w">deep content</my-widget>';
   },
   async updateNode(page) {

@@ -158,7 +158,7 @@ export function ensureTwigConstantFunction() {
         return null;
       });
     }
-  } catch (e) {
+  } catch {
     // non-fatal: Twig constant() helper simply won't be available
   }
 }
@@ -299,7 +299,7 @@ export async function buildDrupalImageFilesMap(
     if (typeof assertUrlNotSSRF === "function") {
       try {
         await assertUrlNotSSRF(imgUrl);
-      } catch (e) {
+      } catch {
         skipped.push(imgUrl);
         continue;
       }
@@ -365,7 +365,7 @@ export function formatErrorForLogging(error) {
     if (serializedError && serializedError !== "{}") {
       return serializedError;
     }
-  } catch (e) {
+  } catch {
     // best-effort serialization attempt failed; fall through to the generic message
   }
   return "Unknown error";
@@ -382,7 +382,7 @@ export function formatErrorForLogging(error) {
 export function resolveHaxcmsNodejsBin() {
   try {
     return require.resolve("@haxtheweb/haxcms-nodejs/dist/local.js");
-  } catch (e) {
+  } catch {
     return null;
   }
 }
@@ -407,7 +407,7 @@ export function spawnHaxcmsNodejs(cwd, env) {
       env,
       stdio: "inherit",
     });
-    child.on("error", (err) => {
+    child.on("error", () => {
       if (settled) {
         return;
       }
@@ -416,7 +416,7 @@ export function spawnHaxcmsNodejs(cwd, env) {
       // reason (permissions, corrupted install, etc); fall back to npx.
       execNpxHaxcmsNodejsFallback(cwd, env).then(resolve, reject);
     });
-    child.on("exit", (code, signal) => {
+    child.on("exit", (code) => {
       if (settled) {
         return;
       }
@@ -460,7 +460,7 @@ export function readSurgeCnameDomain(siteDirectory) {
         return domain;
       }
     }
-  } catch (e) {
+  } catch {
     // best-effort read; publish without a remembered domain
   }
   return null;
@@ -477,7 +477,7 @@ export function cleanupSiteForPublish(siteDirectory) {
       let items = [];
       try {
         items = fs.readdirSync(dir);
-      } catch (e) {
+      } catch {
         return;
       }
       for (const item of items) {
@@ -485,18 +485,18 @@ export function cleanupSiteForPublish(siteDirectory) {
         let lstat;
         try {
           lstat = fs.lstatSync(itemPath);
-        } catch (e) {
+        } catch {
           continue;
         }
         if (lstat.isSymbolicLink()) {
           try {
             fs.statSync(itemPath);
-          } catch (e) {
+          } catch {
             // Broken symlink: statSync fails but lstatSync succeeded
             brokenSymlinks.push(itemPath);
             try {
               fs.unlinkSync(itemPath);
-            } catch (e2) {
+            } catch {
               // Ignore unlink errors
             }
           }
@@ -510,7 +510,7 @@ export function cleanupSiteForPublish(siteDirectory) {
       }
     }
     scanDir(siteDirectory);
-  } catch (e) {
+  } catch {
     // Silent failure; cleanup is best-effort
   }
   return brokenSymlinks;
@@ -626,7 +626,7 @@ yarn-error.log*
         return true;
       }
     }
-  } catch (e) {
+  } catch {
     // Silent failure; fix is best-effort
   }
   return false;
@@ -702,7 +702,7 @@ export function buildStaticLlmsFull(siteDirectory) {
     manifest = JSON.parse(
       fs.readFileSync(path.join(siteDirectory, "site.json"), "utf8"),
     );
-  } catch (e) {
+  } catch {
     return null;
   }
   if (!manifest || typeof manifest !== "object") {
@@ -724,7 +724,7 @@ export function buildStaticLlmsFull(siteDirectory) {
     const jos = new JSONOutlineSchema();
     jos.items = items;
     items = jos.orderTree(items);
-  } catch (e) {
+  } catch {
     // keep site.json order
   }
   const domain =
@@ -816,7 +816,7 @@ export function writeStaticLlmsFull(siteDirectory) {
     fs.writeFileSync(target, markdown);
     llmsFullWrittenFor.add(path.resolve(siteDirectory));
     return true;
-  } catch (e) {
+  } catch {
     // best-effort; never block a publish
     return false;
   }
@@ -834,7 +834,7 @@ export function removeStaticLlmsFull(siteDirectory) {
   try {
     fs.unlinkSync(path.join(siteDirectory, "llms-full.txt"));
     return true;
-  } catch (e) {
+  } catch {
     return false;
   }
 }
@@ -866,14 +866,14 @@ export function prepareSiteForStaticPublish(siteDirectory) {
     if (fs.existsSync(buildDir)) {
       try {
         fs.rmSync(buildDir, { recursive: true, force: true });
-      } catch (e) {
+      } catch {
         // best-effort removal
       }
     }
     if (fs.existsSync(wcRegistryPath)) {
       try {
         fs.unlinkSync(wcRegistryPath);
-      } catch (e) {
+      } catch {
         // best-effort removal
       }
     }
@@ -888,10 +888,10 @@ export function prepareSiteForStaticPublish(siteDirectory) {
           }
         }
       }
-    } catch (e) {
+    } catch {
       // best-effort removal
     }
-  } catch (e) {
+  } catch {
     // Silent failure; prep is best-effort
   }
   return prepared;
@@ -911,7 +911,7 @@ export function restoreSiteAfterStaticPublish(siteDirectory) {
       fs.unlinkSync(backupPath);
       return true;
     }
-  } catch (e) {
+  } catch {
     // Silent failure; restore is best-effort
   }
   return false;
@@ -1126,7 +1126,7 @@ export async function siteCommandDetected(commandRun) {
       activeHaxsite = await systemStructureContext();
       operation = await p.group(
         {
-          action: ({ results }) =>
+          action: () =>
             p.select({
               message: t("siteActionsPrompt"),
               options: actions,
@@ -1267,7 +1267,6 @@ export async function siteCommandDetected(commandRun) {
         if (commandRun.options.itemsImport) {
           let location = commandRun.options.itemsImport;
           let josImport = new JSONOutlineSchema();
-          let itemsImport = [];
           // support for address, as in import from some place else
           if (
             location.startsWith("https://") ||
@@ -1312,12 +1311,6 @@ export async function siteCommandDetected(commandRun) {
             } else if (location.endsWith(".yaml")) {
               josImport.items = await load(fileContents);
             }
-          }
-          // allows for filtering
-          if (commandRun.options.itemId) {
-            itemsImport = josImport.findBranch(commandRun.options.itemId);
-          } else {
-            itemsImport = josImport.items;
           }
           for (let i in josImport.items) {
             if (josImport.items[i].location && !josImport.items[i].content) {
@@ -2367,7 +2360,7 @@ export async function siteCommandDetected(commandRun) {
             try {
               let value = await exec(`git config user.name`);
               project.author = value.stdout.trim();
-            } catch (e) {
+            } catch {
               log(
                 `
                    git user name not configured. Run the following to do this:\n
@@ -2472,7 +2465,7 @@ export async function siteCommandDetected(commandRun) {
                   "info",
                 );
               }
-            } catch (e) {
+            } catch {
               if (!commandRun.options.quiet) {
                 log(
                   `Ignoring invalid domain in CNAME (${rememberedDomain}); pass --domain to publish somewhere specific.`,
@@ -3163,7 +3156,7 @@ export async function siteCommandDetected(commandRun) {
                   );
                   try {
                     fs.unlinkSync(tmpFile);
-                  } catch (e) {
+                  } catch {
                     /* best-effort cleanup */
                   }
                   if (resp.res.data && resp.res.data.status === 200) {
@@ -3198,7 +3191,7 @@ export async function siteCommandDetected(commandRun) {
               );
               try {
                 fs.unlinkSync(tmpFile);
-              } catch (e) {
+              } catch {
                 /* best-effort cleanup */
               }
               logStructuredOutput(commandRun, resp.res.data);
@@ -3571,7 +3564,7 @@ export async function resolveNodeContent(commandRun) {
   ) {
     try {
       isFile = fs.existsSync(content) && fs.statSync(content).isFile();
-    } catch (e) {
+    } catch {
       isFile = false;
     }
   }
@@ -4327,7 +4320,7 @@ export async function siteProcess(commandRun, project, port = "3000") {
       // Security (R2-H-2): no shell string, so the site name / path can't
       // inject commands
       await initGitRepo(path.join(project.path, project.name), project.gitRepo);
-    } catch (e) {
+    } catch {
       // best-effort: a failed git init/commit shouldn't block site creation
     }
   }
@@ -4399,7 +4392,7 @@ ${color.underline(color.cyan(`http://localhost:${port}`))}
         ...process.env,
         HAXCMS_DISABLE_JWT_CHECKS: "true",
       });
-    } catch (e) {
+    } catch {
       // don't log bc output is weird
     }
   } else if (!commandRun.options.quiet) {
@@ -4560,7 +4553,7 @@ export async function siteThemeList(coreOnly = true, directory = null) {
             }
           }
         }
-      } catch (e) {
+      } catch {
         // best-effort: custom-elements.json parse failures just skip the extra theme options
       }
     }
@@ -4654,7 +4647,7 @@ async function customSiteTheme(commandRun, project) {
     try {
       let value = await exec(`git config user.name`);
       project.author = value.stdout.trim();
-    } catch (e) {
+    } catch {
       log(
         `
           git user name not configured. Run the following to do this:\n
