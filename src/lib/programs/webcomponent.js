@@ -20,6 +20,7 @@ import {
   validateWebcomponentName,
   validateNpmClient,
   initGitRepo,
+  githubRepoLink,
   rejectShellMetacharacters,
   rejectLeadingDash,
 } from "../utils.js";
@@ -212,13 +213,7 @@ export async function webcomponentProcess(commandRun, project, port = "8000") {
       });
     }
     // if they supplied one and it has github in it, build a link automatically for ejs index
-    if (project.gitRepo && project.gitRepo.includes("github.com")) {
-      project.githubLink = project.gitRepo
-        .replace("git@github.com:", "https://github.com/")
-        .replace(".git", "");
-    } else {
-      project.githubLink = null;
-    }
+    project.githubLink = githubRepoLink(project.gitRepo);
   } else {
     project.githubLink = null;
   }
