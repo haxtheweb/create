@@ -1,0 +1,49 @@
+name: sbom
+# haxtheweb/issues#3092: CycloneDX SBOM for the create (HAX CLI) package.
+#
+# Generates a CycloneDX 1.6 JSON SBOM of the production dependencies and
+# uploads it as the `create-sbom.cdx.json` workflow artifact. This is an
+# informational artifact only: nothing is published, signed, or attached to
+# a release, and the existing `build` workflow is untouched.
+#
+# The SBOM is generated from package-lock.json (--package-lock-only), so it
+# needs no `install` and runs no package lifecycle scripts. cyclonedx-npm
+# reads npm lockfiles only; it cannot read yarn.lock. See the PR description
+# for the yarn.lock / package-lock.json divergence this implies.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  sbom:
+    name: "Generate CycloneDX SBOM"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+      - name: Generate SBOM
+        run: >
+          npx --yes @cyclonedx/cyclonedx-npm@6.0.1
+          --package-lock-only
+          --omit dev
+          --mc-type application
+          --spec-version 1.6
+          --output-format JSON
+          --output-file "$RUNNER_TEMP/create-sbom.cdx.json"
+          --validate
+      - name: Upload SBOM
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: create-sbom.cdx.json
+          path: ${{ runner.temp }}/create-sbom.cdx.json
+          if-no-files-found: error
+          retention-days: 90
