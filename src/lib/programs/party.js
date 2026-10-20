@@ -14,6 +14,9 @@ import color from "picocolors";
 import { merlinSays } from "../statements.js";
 import { t } from "../i18n.js";
 
+// yarn classic (v1), matching the lockfile format used by the HAX repositories
+export const YARN_PACKAGE = "yarn@^1.22.22";
+
 const osPathCmd = process.platform === "win32" ? "where.exe" : "which";
 
 let sysGit = true;
@@ -356,7 +359,21 @@ ${t("partyGhSelectOptions", { sshOption: color.cyan(`Generate a new SSH key`), b
   try {
     await exec(`yarn --version`);
   } catch {
-    await exec(`npm install -g yarn`);
+    // Security: a global install runs registry code, so pin to the yarn
+    // classic range this repo's yarn.lock targets and ask first (--y skips).
+    if (!commandRun.options.y) {
+      const approved = await p.confirm({
+        message: t("partyYarnInstallConfirm", {
+          command: `npm install --global ${YARN_PACKAGE}`,
+        }),
+        initialValue: true,
+      });
+      if (p.isCancel(approved) || !approved) {
+        p.cancel(t("partyYarnInstallDeclined"));
+        process.exit(1);
+      }
+    }
+    await runCommand("npm", ["install", "--global", YARN_PACKAGE]);
   }
 
   // Security (R2-L-2): the clone owner must be a GitHub username, not the
