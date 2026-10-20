@@ -190,13 +190,18 @@ function buildTemplate(html, tag, demo) {
   return html(strings, ...values);
 }
 
-const firstLine = (error) =>
-  String((error && (error.stack || error.message)) || error)
+const firstLine = (error) => {
+  const lines = String((error && (error.stack || error.message)) || error)
     .split("\n")
-    .filter((line) => line.trim() && !/^\s+at /.test(line))
-    .slice(0, 1)
-    .join("")
-    .slice(0, 300);
+    .map((line) => line.trim())
+    .filter((line) => line && !/^at /.test(line));
+  // a multi-line message starts "Error: " with the text on the next line
+  // (Lit SSR does this); keep the text so the failure is not reported blank
+  if (lines.length > 1 && /^[\w$.]*(Error|Exception):?$/.test(lines[0])) {
+    return `${lines[0]} ${lines[1]}`.slice(0, 300);
+  }
+  return (lines[0] || "").slice(0, 300);
+};
 
 /**
  * Where an error came from: the first stack frame that is not the renderer
