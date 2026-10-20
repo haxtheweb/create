@@ -113,9 +113,11 @@ test(
   opts,
   async () => {
     execCalls.length = 0;
-    await execNpxHaxcmsNodejsFallback("/some/cwd", { PORT: "8080" });
+    await execNpxHaxcmsNodejsFallback("/some/cwd", { PORT: "8080" }, true);
     assert.equal(execCalls.length, 1);
-    assert.equal(execCalls[0].cmd, "npx @haxtheweb/haxcms-nodejs");
+    const range =
+      require("../../package.json").dependencies["@haxtheweb/haxcms-nodejs"];
+    assert.equal(execCalls[0].cmd, `npx @haxtheweb/haxcms-nodejs@${range}`);
     assert.deepEqual(execCalls[0].opts, {
       cwd: "/some/cwd",
       env: { PORT: "8080" },
@@ -187,7 +189,7 @@ test(
     });
     await promise;
     assert.equal(execCalls.length, 1);
-    assert.equal(execCalls[0].cmd, "npx @haxtheweb/haxcms-nodejs");
+    assert.match(execCalls[0].cmd, /^npx @haxtheweb\/haxcms-nodejs@\^?\d/);
     assert.equal(execCalls[0].opts.cwd, "/site/cwd");
   },
 );
@@ -209,7 +211,7 @@ test(
       await spawnHaxcmsNodejs("/site/cwd", { PORT: "3002" });
       assert.equal(spawnCalls.length, 0, "no direct spawn attempted");
       assert.equal(execCalls.length, 1);
-      assert.equal(execCalls[0].cmd, "npx @haxtheweb/haxcms-nodejs");
+      assert.match(execCalls[0].cmd, /^npx @haxtheweb\/haxcms-nodejs@\^?\d/);
     } finally {
       Module._resolveFilename = originalResolveFilename;
     }
