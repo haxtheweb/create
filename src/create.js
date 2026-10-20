@@ -50,7 +50,7 @@ import {
 import * as haxcmsLib from "@haxtheweb/haxcms-nodejs/dist/lib/HAXCMS.js";
 const HAXCMS = haxcmsLib.HAXCMS;
 const systemStructureContext = haxcmsLib.systemStructureContext;
-// `hax audit [ddd|schema|i18n|all]`; the DDD audit itself lives in audit.js
+// `hax audit [ddd|schema|i18n|ssr|all]`; the DDD audit itself lives in audit.js
 const runAuditCommand = (commandRun, dddPath, schemaRoot) =>
   runAuditCommandWith(commandRun, dddPath, schemaRoot, {
     auditDDD: auditCommandDetected,
@@ -343,6 +343,9 @@ async function main() {
         "i18n - " +
         t("cliArgAuditI18n") +
         "\n\r" +
+        "ssr - " +
+        t("cliArgAuditSsr") +
+        "\n\r" +
         "all - " +
         t("cliArgAuditAll"),
     )
@@ -356,6 +359,10 @@ async function main() {
     .option("--debug", t("cliOptDebug"))
     .option("--strict", t("cliOptStrict"))
     .option("--format <char>", t("cliOptAuditFormat"))
+    .option("--only <char>", t("cliOptAuditOnly"))
+    .option("--timeout <char>", t("cliOptAuditTimeout"))
+    .option("--save-html <char>", t("cliOptAuditSaveHtml"))
+    .option("--no-shim", t("cliOptAuditNoShim"))
     .version(packageJson.version);
 
   program

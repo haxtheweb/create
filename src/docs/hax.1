@@ -138,6 +138,9 @@ Actions to perform on web component include:
 .B schema
 \- site.json, skeletons, haxProperties, demoSchema, appstore.json and Merlin commands against the HAX schemas (\-\-strict fails on warnings, \-\-format json for a report)
 .br
+.B ssr
+\- report\-only: server\-render every wc\-registry.json element with @lit\-labs/ssr and bucket the result (never fails, not part of all; \-\-only, \-\-timeout, \-\-save\-html, \-\-no\-shim, \-\-format json)
+.br
 .B all
 \- ddd and schema
 .RE
@@ -393,6 +396,10 @@ Audit web components for compliance with DDD (HAX design system) with debug outp
 .TP
 .B hax audit schema \--strict
 Validate HAX schema documents in the current folder and fail on warnings
+.TP
+.B hax audit ssr \--only rpg-character,d-d-d
+.br
+Report how selected elements server-render
 .TP
 .B hax party \--repos haxtheweb/webcomponents
 Join the HAX community by cloning specific repositories
