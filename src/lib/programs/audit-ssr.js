@@ -171,9 +171,25 @@ export function splitCssRules(css) {
 }
 
 const escapeRegExp = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-const COMMENTS = /<!--[\s\S]*?-->/g;
-const STYLES = /<style\b[^>]*>([\s\S]*?)<\/style>/gi;
-const SCRIPTS = /<script\b[^>]*>[\s\S]*?<\/script>/gi;
+const COMMENTS = /<!--[\s\S]*?--!?>/g;
+const STYLES = /<style\b[^>]*>([\s\S]*?)<\/style\b[^>]*>/gi;
+const SCRIPTS = /<script\b[^>]*>[\s\S]*?<\/script\b[^>]*>/gi;
+
+/**
+ * @description Remove comments, <style> and <script> blocks, repeating until
+ * nothing changes so a block rebuilt from the pieces of another is removed
+ * too. The result is only measured (text length, media count), never
+ * rendered or served.
+ */
+function stripBlocks(markup) {
+  let out = String(markup || "");
+  let prev;
+  do {
+    prev = out;
+    out = out.replace(COMMENTS, "").replace(STYLES, "").replace(SCRIPTS, "");
+  } while (out !== prev);
+  return out;
+}
 const MEDIA = /<(?:img|svg|canvas|video|audio|picture|iframe|object|embed)\b/gi;
 
 /**
@@ -253,10 +269,7 @@ export function analyzeSsrOutput(markup, tag) {
   if (inner === null) {
     return result;
   }
-  const body = inner
-    .replace(COMMENTS, "")
-    .replace(STYLES, "")
-    .replace(SCRIPTS, "");
+  const body = stripBlocks(inner);
   const text = body
     .replace(/<[^>]*>/g, " ")
     .replace(/&[a-z]+;|&#\d+;/gi, " ")
@@ -287,10 +300,7 @@ export function analyzeSsrOutput(markup, tag) {
  * @returns {{bytes: number, textChars: number, media: number, elements: number}}
  */
 export function analyzeFallback(markup) {
-  const text = String(markup || "")
-    .replace(COMMENTS, "")
-    .replace(STYLES, "")
-    .replace(SCRIPTS, "")
+  const text = stripBlocks(markup)
     .replace(/<[^>]*>/g, " ")
     .replace(/&[a-z]+;|&#\d+;/gi, " ")
     .replace(/\s+/g, " ")

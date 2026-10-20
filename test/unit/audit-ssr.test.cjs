@@ -227,6 +227,19 @@ test("--only limits the audited tags", async () => {
   assert.deepEqual(seen, ["x-b"]);
 });
 
+test("analyzeFallback drops script/style/comment blocks with odd end tags", () => {
+  for (const hidden of [
+    "<script>alert(1)</script >",
+    "<style>p{}</style\t\n bar>",
+    "<!-- note --!>",
+    "<scr<script></script>ipt>alert(1)</script>",
+    "<!<!-- -->-- x -->",
+  ]) {
+    const a = analyzeFallback(`<p>kept</p>${hidden}`);
+    assert.equal(a.textChars, 4, hidden);
+  }
+});
+
 test("analyzeFallback measures the markup an element supplies for bots", () => {
   const a = analyzeFallback('<div>Hello</div><img src="x.png" alt="">');
   assert.equal(a.textChars, 5);
