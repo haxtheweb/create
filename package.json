@@ -101,10 +101,5 @@
       "eslint --fix --no-warn-ignored",
       "prettier --write"
     ]
-  },
-  "husky": {
-    "hooks": {
-      "pre-commit": "lint-staged"
-    }
   }
 }
