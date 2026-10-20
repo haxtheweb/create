@@ -1,0 +1,34 @@
+# Configuration for GitHub's "Generate release notes" button / `gh release
+# create --generate-notes` (haxtheweb/issues#3092). It only shapes the notes;
+# it does not create releases, tags, or publish anything.
+#
+# Labels used below ("skip changelog" is already applied by renovate.json;
+# the others are the common GitHub defaults) are assumptions: maintainers can
+# rename them to match the labels this repository actually uses. Merged PRs
+# with no matching label still appear under "Other changes".
+changelog:
+  exclude:
+    labels:
+      - skip changelog
+    authors:
+      - renovate[bot]
+  categories:
+    - title: Breaking changes
+      labels:
+        - breaking-change
+    - title: New features
+      labels:
+        - enhancement
+        - feature
+    - title: Bug fixes
+      labels:
+        - bug
+    - title: Dependency updates
+      labels:
+        - dependencies
+    - title: Documentation
+      labels:
+        - documentation
+    - title: Other changes
+      labels:
+        - "*"
