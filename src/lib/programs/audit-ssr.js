@@ -770,6 +770,7 @@ export async function auditSsrCommand(commandRun, root = null, deps = {}) {
       uniqueStyleBytes: a.uniqueStyleBytes,
       styleRules: a.styleRules,
       hints,
+      truncated: Boolean(doc.truncated),
       fallback: doc.progressive ? analyzeFallback(doc.progressive) : null,
       warnings,
     };
