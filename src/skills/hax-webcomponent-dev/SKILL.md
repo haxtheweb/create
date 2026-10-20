@@ -107,6 +107,16 @@ Multi-line CSS values are not inspected, so keep color declarations on one line 
 
 Check ARIA attributes, keyboard navigation (every interactive control reachable and operable), visible focus, semantic HTML, and color contrast in both color schemes.
 
+## Server-side rendering (SSR)
+
+When creating or working on a component or theme, audit it for SSR without assuming issues exist. `hax audit` does not check this, so review by hand against the "SSR Safety & Enhancement Audit" rule in the ecosystem rules (linked below). The short version:
+
+- No browser globals (`globalThis.window`, `document`, `navigator`, `location`, storage, `matchMedia`, observers) at module top level, in the constructor, or in `render()`.
+- Do browser-only work in `connectedCallback`, `firstUpdated` or `updated`, guarded with `globalThis` checks.
+- Keep `render()` deterministic (no `Math.random()`, `Date.now()` or generated ids) so server and client markup match.
+- Make the first render meaningful without JavaScript: default text, slotted content, `static styles`, and fallbacks.
+- For themes, keep the skip link and named regions in the server-rendered template and avoid import-time `document.body` access.
+
 ## References
 
 - HAX CLI: `hax webcomponent --help`, `hax audit`, `hax audit schema`, `hax audit i18n`
