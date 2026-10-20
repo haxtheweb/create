@@ -10,6 +10,11 @@ import color from "picocolors";
 import { haxIntro, communityStatement } from "./lib/statements.js";
 import { t } from "./lib/i18n.js";
 import {
+  getAllLanguageOptions,
+  getSiteLanguagePromptOptions,
+  normalizeSiteLanguage,
+} from "./lib/language-registry.js";
+import {
   log,
   consoleTransport,
   logger,
@@ -104,6 +109,7 @@ async function main() {
     .option("--no-extras", t("cliOptNoExtras"))
     .option("--root <char>", t("cliOptRoot"))
     .option("--lang <char>", t("cliOptLang"))
+    .option("--site-lang <char>", t("cliOptSiteLang"))
 
     // options for webcomponent
     .option("--org <char>", t("cliOptOrg"))
@@ -1349,6 +1355,51 @@ async function main() {
                   initialValue: `${results.theme}`,
                 });
               }
+            },
+            siteLang: async ({ results }) => {
+              if (
+                results.type !== "site" ||
+                results.siteCreationMode === "template"
+              ) {
+                return;
+              }
+              if (commandRun.options.siteLang) {
+                const code = normalizeSiteLanguage(commandRun.options.siteLang);
+                if (!code) {
+                  program.error(
+                    color.red(
+                      t("cliSiteLangInvalid", {
+                        value: commandRun.options.siteLang,
+                      }),
+                    ),
+                  );
+                  process.exit(1);
+                }
+                commandRun.options.siteLang = code;
+                return;
+              }
+              if (
+                commandRun.options.auto ||
+                commandRun.options.skip ||
+                !commandRun.options.i
+              ) {
+                return;
+              }
+              // the ten most common languages first so the majority of
+              // people pick in one keystroke; the rest sit behind "More"
+              let picked = await p.select({
+                message: t("cliSiteLangPrompt"),
+                options: getSiteLanguagePromptOptions(t("cliSiteLangMore")),
+                initialValue: "en",
+              });
+              if (picked === "__more__" && !p.isCancel(picked)) {
+                picked = await p.select({
+                  message: t("cliSiteLangPrompt"),
+                  options: getAllLanguageOptions(),
+                  initialValue: "en",
+                });
+              }
+              return picked;
             },
             extras: ({ results }) => {
               if (!commandRun.options.auto && commandRun.options.i) {

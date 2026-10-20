@@ -1,5 +1,6 @@
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
+import { resolveLanguageAlias } from "./language-registry.js";
 
 /**
  * Translations for the hax CLI.
@@ -19,15 +20,6 @@ import path from "node:path";
  */
 
 const LOCALES_DIR = path.resolve(__dirname, "../locales");
-// code people's systems report -> code our locale files use
-const LANGUAGE_ALIASES = {
-  fil: "tl", // Filipino -> Tagalog
-  nn: "nb", // Norwegian Nynorsk -> Bokmal (closest we have)
-  iw: "he", // legacy Hebrew
-  in: "id", // legacy Indonesian
-  ji: "yi", // legacy Yiddish
-  jw: "jv", // legacy Javanese
-};
 const NAMESPACE = "create";
 
 // namespace -> directory holding <namespace>.<lang>.json
@@ -55,7 +47,11 @@ export function normalizeLanguage(value) {
   }
   let lang = parts[0].toLowerCase();
   // older or alternate codes for languages we ship under another code
-  lang = LANGUAGE_ALIASES[lang] || lang;
+  // (iw -> he, fil -> tl, nn / no -> nb): the registry owns the alias table
+  const aliased = resolveLanguageAlias(lang);
+  if (aliased) {
+    lang = aliased.split("-")[0];
+  }
   // keep a region (2 letters or 3 digits), drop scripts like Hans / Latn
   const region = parts.slice(1).find((p) => /^([a-z]{2}|\d{3})$/i.test(p));
   return region ? `${lang}-${region.toUpperCase()}` : lang;

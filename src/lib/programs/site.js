@@ -33,6 +33,7 @@ import {
   sanitizeIfString,
 } from "../site-security.js";
 import { t } from "../i18n.js";
+import { normalizeSiteLanguage } from "../language-registry.js";
 import { apiMessage, annotateApiBody } from "../api-messages.js";
 
 // Security (Stream-A): the deprecated @haxtheweb/open-apis npm dependency was
@@ -3984,6 +3985,45 @@ export function installSkeletonFile(
   };
 }
 // process site creation
+/**
+ * Set the language of a site that was just created (--site-lang, or the
+ * language prompt). Nothing is written when no language was chosen, or when
+ * English was picked from the prompt, so the backend default (English) stays
+ * as it was. --site-lang en is explicit and is written.
+ * @returns the language written, or null
+ */
+export async function applySiteLanguage(commandRun, project) {
+  const explicit = commandRun.options.siteLang;
+  const chosen = explicit || project.siteLang;
+  if (!chosen) {
+    return null;
+  }
+  const lang = normalizeSiteLanguage(chosen);
+  if (!lang || (!explicit && lang === "en")) {
+    return null;
+  }
+  try {
+    const sitePath = path.join(project.path, project.name);
+    const created = await systemStructureContext(sitePath);
+    const manifest = created.manifest;
+    if (!manifest.metadata) {
+      manifest.metadata = {};
+    }
+    if (!manifest.metadata.site) {
+      manifest.metadata.site = {};
+    }
+    if (!manifest.metadata.site.settings) {
+      manifest.metadata.site.settings = {};
+    }
+    manifest.metadata.site.settings.lang = lang;
+    manifest.save(false);
+    return lang;
+  } catch (e) {
+    log(formatErrorForLogging(e), "error");
+    return null;
+  }
+}
+
 export async function siteProcess(commandRun, project, port = "3000") {
   // auto select operations to perform if requested
   // Security (M-2): defense-in-depth re-check of --npm-client at the point it
@@ -4277,6 +4317,7 @@ export async function siteProcess(commandRun, project, port = "3000") {
     commandRun.arguments.action = project.name;
   }
   commandRun.options.theme = project.theme;
+  await applySiteLanguage(commandRun, project);
   if (commandRun.options.v) {
     logStructuredOutput(commandRun, res.data, "silly");
   }
