@@ -88,6 +88,7 @@
     "babel-plugin-transform-dynamic-import": "2.1.0",
     "commit-and-tag-version": "12.7.3",
     "eslint": "9.39.5",
+    "fast-check": "4.10.2",
     "eslint-config-prettier": "10.1.8",
     "eslint-plugin-n": "18.5.0",
     "globals": "17.13.0",
