@@ -2359,7 +2359,7 @@ export async function siteCommandDetected(commandRun) {
 
           if (!project.author) {
             try {
-              let value = await exec(`git config user.name`);
+              let value = await runCommand("git", ["config", "user.name"]);
               project.author = value.stdout.trim();
             } catch {
               log(
@@ -4686,7 +4686,7 @@ async function customSiteTheme(commandRun, project) {
 
   if (!project.author) {
     try {
-      let value = await exec(`git config user.name`);
+      let value = await runCommand("git", ["config", "user.name"]);
       project.author = value.stdout.trim();
     } catch {
       log(

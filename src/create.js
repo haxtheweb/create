@@ -42,6 +42,7 @@ import { skillsCommandDetected, skillsActions } from "./lib/programs/skills.js";
 import {
   camelToDash,
   exec,
+  runCommand,
   interactiveExec,
   writeConfigFile,
   readConfigFile,
@@ -517,7 +518,7 @@ async function main() {
   let author = "";
   // should be able to grab if not predefined
   try {
-    let value = await exec(`git config user.name`);
+    let value = await runCommand("git", ["config", "user.name"]);
     author = value.stdout.trim();
   } catch {
     log(
@@ -746,9 +747,13 @@ async function main() {
       // failure (network unreachable, timeout, non-zero exit) is swallowed
       // and simply skips the "updates available" notice.
       try {
-        let execOut = await exec(`npm view @haxtheweb/create version`, {
-          timeout: 3000,
-        });
+        let execOut = await runCommand(
+          "npm",
+          ["view", "@haxtheweb/create", "version"],
+          {
+            timeout: 3000,
+          },
+        );
         let updateCheck = execOut.stdout.trim();
         if (updateCheck !== packageJson.version && !commandRun.options.quiet) {
           p.intro(
@@ -1525,9 +1530,13 @@ export async function testForUpdates(commandRun) {
   // with a timeout and report a friendly message instead of crashing.
   let execOut;
   try {
-    execOut = await exec(`npm view @haxtheweb/create version`, {
-      timeout: 3000,
-    });
+    execOut = await runCommand(
+      "npm",
+      ["view", "@haxtheweb/create", "version"],
+      {
+        timeout: 3000,
+      },
+    );
   } catch {
     if (!commandRun.options.quiet) {
       p.intro(
