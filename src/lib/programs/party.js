@@ -14,9 +14,13 @@ import color from "picocolors";
 import { merlinSays } from "../statements.js";
 import { t } from "../i18n.js";
 
+// yarn classic (v1), matching the lockfile format used by the HAX repositories
+export const YARN_PACKAGE = "yarn@^1.22.22";
+
 const osPathCmd = process.platform === "win32" ? "where.exe" : "which";
 
 let sysGit = true;
+// eslint-disable-next-line no-restricted-syntax -- osPathCmd is a constant (which/where.exe)
 exec(`${osPathCmd} git`, (error) => {
   if (error) {
     sysGit = false;
@@ -24,6 +28,7 @@ exec(`${osPathCmd} git`, (error) => {
 });
 
 let sysGh = true;
+// eslint-disable-next-line no-restricted-syntax -- osPathCmd is a constant (which/where.exe)
 exec(`${osPathCmd} gh`, (error) => {
   if (error) {
     sysGh = false;
@@ -320,7 +325,7 @@ async function cloneHAXRepositories(commandRun) {
 
   if (!sysGh) {
     try {
-      await exec("ssh -T git@github.com");
+      await runCommand("ssh", ["-T", "git@github.com"]);
     } catch (error) {
       // The GitHub SSH test always returns as stderr
       if (!error.stderr.includes("successfully authenticated")) {
@@ -337,7 +342,7 @@ async function cloneHAXRepositories(commandRun) {
   } else {
     // gh cli can make new ssh keys and push them to GitHub
     try {
-      await exec("gh auth status");
+      await runCommand("gh", ["auth", "status"]);
     } catch {
       console.log(`${color.red(t("partyGhNotAuthenticated"))}
 ${t("partyGhGuidedLogin", { command: color.bold("hax party") })}
@@ -356,7 +361,21 @@ ${t("partyGhSelectOptions", { sshOption: color.cyan(`Generate a new SSH key`), b
   try {
     await exec(`yarn --version`);
   } catch {
-    await exec(`npm install -g yarn`);
+    // Security: a global install runs registry code, so pin to the yarn
+    // classic range this repo's yarn.lock targets and ask first (--y skips).
+    if (!commandRun.options.y) {
+      const approved = await p.confirm({
+        message: t("partyYarnInstallConfirm", {
+          command: `npm install --global ${YARN_PACKAGE}`,
+        }),
+        initialValue: true,
+      });
+      if (p.isCancel(approved) || !approved) {
+        p.cancel(t("partyYarnInstallDeclined"));
+        process.exit(1);
+      }
+    }
+    await runCommand("npm", ["install", "--global", YARN_PACKAGE]);
   }
 
   // Security (R2-L-2): the clone owner must be a GitHub username, not the

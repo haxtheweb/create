@@ -19,6 +19,15 @@ const noWindowGlobal = {
   message: "Use `globalThis` instead of `window` for global-scope references.",
 };
 
+// Security: shell-string exec() with interpolated values is a command
+// injection risk. Use runCommand(cmd, [args]) (src/lib/utils.js) instead.
+const noInterpolatedExec = {
+  selector:
+    "CallExpression[callee.name='exec'] > TemplateLiteral[expressions.length>0]",
+  message:
+    "Do not interpolate values into exec() shell strings; use runCommand(command, [args]) from lib/utils.js.",
+};
+
 export default [
   {
     // build output and vendored/generated files are never linted.
@@ -60,7 +69,12 @@ export default [
       },
     },
     rules: {
-      "no-restricted-syntax": ["error", noOptionalChaining, noWindowGlobal],
+      "no-restricted-syntax": [
+        "error",
+        noOptionalChaining,
+        noWindowGlobal,
+        noInterpolatedExec,
+      ],
       "no-unused-vars": ["warn", { argsIgnorePattern: "^_" }],
       eqeqeq: "error",
       "no-var": "error",

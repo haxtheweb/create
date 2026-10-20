@@ -40,6 +40,7 @@ import { apiMessage, annotateApiBody } from "../api-messages.js";
 // removed; converter calls now route in-process through haxcms-nodejs handlers
 // via invokeRoute() (same pattern as download-skeleton below), so no cloud
 // (open-apis.hax.cloud) URLs are referenced and the xlsx advisory is gone.
+import packageJson from "../../../package.json" with { type: "json" };
 import * as haxcmsLib from "@haxtheweb/haxcms-nodejs/dist/lib/HAXCMS.js";
 import * as allRoutesLib from "@haxtheweb/haxcms-nodejs/dist/lib/allRoutes.js";
 import * as josfile from "@haxtheweb/haxcms-nodejs/dist/lib/JSONOutlineSchema.js";
@@ -388,18 +389,35 @@ export function resolveHaxcmsNodejsBin() {
   }
 }
 
-export function execNpxHaxcmsNodejsFallback(cwd, env) {
-  return exec(`npx @haxtheweb/haxcms-nodejs`, { cwd, env });
+// Security: the npx fallback downloads and runs code from the registry, so it
+// is pinned to the same semver range this package depends on rather than
+// whatever "latest" is, and the user is asked first (skipped with --y or when
+// there is no TTY to answer, where npx's own install gating applies).
+export const HAXCMS_NODEJS_FALLBACK_SPEC = `@haxtheweb/haxcms-nodejs@${packageJson.dependencies["@haxtheweb/haxcms-nodejs"]}`;
+
+export async function execNpxHaxcmsNodejsFallback(cwd, env, assumeYes) {
+  if (!assumeYes && process.stdin.isTTY) {
+    const approved = await p.confirm({
+      message: t("siteNpxFallbackConfirm", {
+        command: `npx ${HAXCMS_NODEJS_FALLBACK_SPEC}`,
+      }),
+      initialValue: true,
+    });
+    if (p.isCancel(approved) || !approved) {
+      throw new Error(t("siteNpxFallbackDeclined"));
+    }
+  }
+  return exec(`npx ${HAXCMS_NODEJS_FALLBACK_SPEC}`, { cwd, env });
 }
 
 // Launches the local HAXcms server for site:start/site:serve/site creation's
 // launch-on-create flow. Prefers spawning the already-installed dependency
 // in-process (no network required); only falls back to `npx` if that isn't
 // possible.
-export function spawnHaxcmsNodejs(cwd, env) {
+export function spawnHaxcmsNodejs(cwd, env, assumeYes) {
   const resolvedBin = resolveHaxcmsNodejsBin();
   if (!resolvedBin) {
-    return execNpxHaxcmsNodejsFallback(cwd, env);
+    return execNpxHaxcmsNodejsFallback(cwd, env, assumeYes);
   }
   return new Promise((resolve, reject) => {
     let settled = false;
@@ -415,7 +433,7 @@ export function spawnHaxcmsNodejs(cwd, env) {
       settled = true;
       // local resolution succeeded but spawning node directly failed for some
       // reason (permissions, corrupted install, etc); fall back to npx.
-      execNpxHaxcmsNodejsFallback(cwd, env).then(resolve, reject);
+      execNpxHaxcmsNodejsFallback(cwd, env, assumeYes).then(resolve, reject);
     });
     child.on("exit", (code) => {
       if (settled) {
@@ -1398,11 +1416,15 @@ export async function siteCommandDetected(commandRun) {
           // Issue #2993: spawn the locally-resolved haxcms-nodejs bin
           // directly (no npx/network round-trip); falls back to npx only
           // if local resolution fails.
-          await spawnHaxcmsNodejs(activeHaxsite.directory, {
-            ...process.env,
-            PORT: `${port}`,
-            HAXCMS_DISABLE_JWT_CHECKS: "true",
-          });
+          await spawnHaxcmsNodejs(
+            activeHaxsite.directory,
+            {
+              ...process.env,
+              PORT: `${port}`,
+              HAXCMS_DISABLE_JWT_CHECKS: "true",
+            },
+            commandRun.options.y,
+          );
         } catch (e) {
           log(formatErrorForLogging(e), "error");
         }
@@ -1418,12 +1440,16 @@ export async function siteCommandDetected(commandRun) {
           }
           // Security (M-4 / R2-H-1): same loopback-only, scoped JWT-disable as start.
           // Issue #2993: same in-process spawn (with npx fallback) as start.
-          await spawnHaxcmsNodejs(activeHaxsite.directory, {
-            ...process.env,
-            PORT: `${port}`,
-            HAXCMS_DISABLE_JWT_CHECKS: "true",
-            NODE_ENV: "development",
-          });
+          await spawnHaxcmsNodejs(
+            activeHaxsite.directory,
+            {
+              ...process.env,
+              PORT: `${port}`,
+              HAXCMS_DISABLE_JWT_CHECKS: "true",
+              NODE_ENV: "development",
+            },
+            commandRun.options.y,
+          );
         } catch (e) {
           log(formatErrorForLogging(e), "error");
         }
@@ -2359,7 +2385,7 @@ export async function siteCommandDetected(commandRun) {
 
           if (!project.author) {
             try {
-              let value = await exec(`git config user.name`);
+              let value = await runCommand("git", ["config", "user.name"]);
               project.author = value.stdout.trim();
             } catch {
               log(
@@ -4429,10 +4455,14 @@ ${color.underline(color.cyan(`http://localhost:${port}`))}
       // Issue #2993: spawn the locally-resolved haxcms-nodejs bin directly
       // (no npx/network round-trip); falls back to npx only if local
       // resolution fails.
-      await spawnHaxcmsNodejs(optionPath, {
-        ...process.env,
-        HAXCMS_DISABLE_JWT_CHECKS: "true",
-      });
+      await spawnHaxcmsNodejs(
+        optionPath,
+        {
+          ...process.env,
+          HAXCMS_DISABLE_JWT_CHECKS: "true",
+        },
+        commandRun.options.y,
+      );
     } catch {
       // don't log bc output is weird
     }
@@ -4686,7 +4716,7 @@ async function customSiteTheme(commandRun, project) {
 
   if (!project.author) {
     try {
-      let value = await exec(`git config user.name`);
+      let value = await runCommand("git", ["config", "user.name"]);
       project.author = value.stdout.trim();
     } catch {
       log(
