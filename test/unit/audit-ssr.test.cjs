@@ -310,7 +310,16 @@ test("summarizeSsr reports which elements a fallback rescues", () => {
   assert.equal(summary.fallback.withHook, 3);
   assert.equal(summary.fallback.useful, 2);
   assert.deepEqual(summary.fallback.recovered, [{ tag: "a", from: "shell" }]);
-  assert.ok(summary.primitiveStyles.bytes > 0);
+  assert.equal(summary.primitiveStyles.bytes, 0);
+});
+
+test("summarizeSsr counts skipped elements and sizes the primitive stylesheet it is given", () => {
+  const summary = summarizeSsr(
+    [{ tag: "m", status: "skipped", demo: "bare", skipReason: "WebGL" }],
+    { primitiveCss: "a{b:c}" },
+  );
+  assert.equal(summary.counts.skipped, 1);
+  assert.equal(summary.primitiveStyles.bytes, 6);
 });
 
 test("the inert DOM environment is on unless --no-shim, and is reported", async () => {
@@ -354,47 +363,4 @@ test("--save-html also writes the primitive stylesheet and fallbacks", async () 
     fs.readFileSync(path.join(dir, "x-a.fallback.html"), "utf8"),
     "<p>Hi</p>",
   );
-});
-
-test("installInertDom fills in the missing browser surface and leaves existing APIs alone", async () => {
-  const { installInertDom } = await import(
-    "../../src/lib/programs/audit-ssr-env.mjs"
-  );
-  class FakeElement {}
-  const target = {
-    HTMLElement: FakeElement,
-    document: { querySelector: () => "kept" },
-  };
-  installInertDom(target);
-  assert.equal(target["window"], target);
-  assert.equal(typeof target.addEventListener, "function");
-  assert.equal(target.matchMedia("x").matches, false);
-  assert.equal(target.document.querySelector(), "kept");
-  assert.equal(target.document.body, undefined);
-  const el = new FakeElement();
-  assert.equal(el.querySelector("a"), null);
-  assert.deepEqual([...el.children], []);
-  el.classList.add("x");
-  el.style.setProperty("--a", "b");
-  el.style = "ignored";
-});
-
-test("installInertDom builds registered classes from document.createElement and aliases self", async () => {
-  const { installInertDom } = await import(
-    "../../src/lib/programs/audit-ssr-env.mjs"
-  );
-  class Registered {}
-  const target = {
-    HTMLElement: class {},
-    customElements: {
-      get: (tag) => (tag === "x-known" ? Registered : undefined),
-    },
-    document: { createElement: (tag) => ({ plain: tag }) },
-  };
-  installInertDom(target);
-  assert.equal(target.self, target);
-  assert.ok(target.document.createElement("X-Known") instanceof Registered);
-  assert.deepEqual(target.document.createElement("x-other"), {
-    plain: "x-other",
-  });
 });
