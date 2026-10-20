@@ -109,7 +109,7 @@ Check ARIA attributes, keyboard navigation (every interactive control reachable 
 
 ## Server-side rendering (SSR)
 
-When creating or working on a component or theme, audit it for SSR without assuming issues exist. `hax audit` does not check this, so review by hand against the "SSR Safety & Enhancement Audit" rule in the ecosystem rules (linked below). The short version:
+When creating or working on a component or theme, audit it for SSR without assuming issues exist. Run `hax audit ssr` (report-only, never fails) to see how it renders under Lit SSR, and review by hand against the "SSR Safety & Enhancement Audit" rule in the ecosystem rules (linked below). The short version:
 
 - No browser globals (`globalThis.window`, `document`, `navigator`, `location`, storage, `matchMedia`, observers) at module top level, in the constructor, or in `render()`.
 - Do browser-only work in `connectedCallback`, `firstUpdated` or `updated`, guarded with `globalThis` checks.
@@ -119,7 +119,7 @@ When creating or working on a component or theme, audit it for SSR without assum
 
 ## References
 
-- HAX CLI: `hax webcomponent --help`, `hax audit`, `hax audit schema`, `hax audit i18n`
+- HAX CLI: `hax webcomponent --help`, `hax audit`, `hax audit schema`, `hax audit i18n`, `hax audit ssr`
 - DDD: `webcomponents/elements/d-d-d`; the `hax-design-system` skill in <https://github.com/haxtheweb/praw/tree/main/skills>
 - HAXSchema reference: `webcomponents/elements/hax-body-behaviors/lib/HAXWiring.js`
 - Ecosystem rules: <https://github.com/haxtheweb/praw/blob/main/RULES.md>

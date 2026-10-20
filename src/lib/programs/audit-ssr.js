@@ -192,6 +192,48 @@ function stripBlocks(markup) {
 }
 const MEDIA = /<(?:img|svg|canvas|video|audio|picture|iframe|object|embed)\b/gi;
 
+// HTML boolean attributes switch on by being present, whatever their value, so
+// a server render of checked="false" still shows the control as checked
+const BOOLEAN_ATTRIBUTES = [
+  "autofocus",
+  "autoplay",
+  "checked",
+  "controls",
+  "disabled",
+  "hidden",
+  "inert",
+  "loop",
+  "multiple",
+  "muted",
+  "novalidate",
+  "open",
+  "readonly",
+  "required",
+  "reversed",
+  "selected",
+];
+const FALSE_BOOLEAN = new RegExp(
+  `\\s(${BOOLEAN_ATTRIBUTES.join("|")})=(?:"false"|'false')`,
+  "gi",
+);
+
+/**
+ * @description HTML boolean attributes that the server render wrote out as
+ * "false". Lit SSR serializes a property binding on a native element
+ * (`.checked=${false}`) as an attribute, and the browser reads the attribute's
+ * presence as true until the element hydrates. The fix is a boolean attribute
+ * binding (`?checked=${value}`), which is omitted when false.
+ * @param markup the string @lit-labs/ssr produced
+ * @returns {string[]} attribute names, sorted, each once
+ */
+export function falseBooleanAttributes(markup) {
+  const names = new Set();
+  for (const m of String(markup || "").matchAll(FALSE_BOOLEAN)) {
+    names.add(m[1].toLowerCase());
+  }
+  return [...names].sort();
+}
+
 /**
  * @description The markup inside the first declarative shadow root of the
  * outer element, or null when the element rendered without one.
@@ -227,7 +269,7 @@ export function shadowRootContent(markup, tag) {
  * @description Measure SSR output and classify it.
  * @param markup the string @lit-labs/ssr produced
  * @param tag the element that was rendered
- * @returns {{status: string, bytes: number, shadowRoots: number, textChars: number, elements: number, slots: number, media: number, styleBytes: number, uniqueStyleBytes: number, styleBlocks: Array<{hash: string, bytes: number}>, styleRules: Object<string, number>}}
+ * @returns {{status: string, bytes: number, shadowRoots: number, textChars: number, elements: number, slots: number, media: number, styleBytes: number, uniqueStyleBytes: number, styleBlocks: Array<{hash: string, bytes: number}>, styleRules: Object<string, number>, falseBooleanAttrs: string[]}}
  */
 export function analyzeSsrOutput(markup, tag) {
   const bytes = Buffer.byteLength(markup);
@@ -265,11 +307,13 @@ export function analyzeSsrOutput(markup, tag) {
     uniqueStyleBytes,
     styleBlocks,
     styleRules: Object.fromEntries(ruleSizes),
+    falseBooleanAttrs: [],
   };
   if (inner === null) {
     return result;
   }
   const body = stripBlocks(inner);
+  result.falseBooleanAttrs = falseBooleanAttributes(body);
   const text = body
     .replace(/<[^>]*>/g, " ")
     .replace(/&[a-z]+;|&#\d+;/gi, " ")
@@ -467,6 +511,10 @@ export function summarizeSsr(results) {
       .sort((a, b) => b.count - a.count),
     hints: [...hinted.values()].sort((a, b) => b.tags.length - a.tags.length),
     fallback,
+    // elements whose server output has boolean attributes written as "false"
+    falseBooleanAttrs: results
+      .filter((r) => r.falseBooleanAttrs && r.falseBooleanAttrs.length)
+      .map((r) => ({ tag: r.tag, attrs: r.falseBooleanAttrs })),
     primitiveStyles: { bytes: Buffer.byteLength(SSR_PRIMITIVE_CSS) },
     size: {
       measured: rendered,
@@ -769,6 +817,7 @@ export async function auditSsrCommand(commandRun, root = null, deps = {}) {
       styleBytes: a.styleBytes,
       uniqueStyleBytes: a.uniqueStyleBytes,
       styleRules: a.styleRules,
+      falseBooleanAttrs: a.falseBooleanAttrs,
       hints,
       truncated: Boolean(doc.truncated),
       fallback: doc.progressive ? analyzeFallback(doc.progressive) : null,
@@ -848,6 +897,18 @@ export async function auditSsrCommand(commandRun, root = null, deps = {}) {
         `${color.bold(status)} (${tags.length}): ${options.debug ? tags.join(", ") : tags.slice(0, 15).join(", ") + (tags.length > 15 ? ", …" : "")}`,
       );
     }
+  }
+  if (summary.falseBooleanAttrs.length) {
+    const list = summary.falseBooleanAttrs
+      .map((r) => `${r.tag} (${r.attrs.join(", ")})`)
+      .slice(0, options.debug ? 100 : 15)
+      .join(", ");
+    p.log.warn(
+      t("auditSsrFalseBoolean", {
+        count: summary.falseBooleanAttrs.length,
+        list,
+      }),
+    );
   }
   if (summary.size.measured) {
     p.log.info(
