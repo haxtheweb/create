@@ -41,6 +41,7 @@ export const SSR_STATUSES = [
   "shell",
   "empty",
   "no-shadow-root",
+  "non-visual",
   "skipped",
   "threw",
 ];
@@ -373,6 +374,35 @@ export function sourceHints(source) {
     hints.push("builds-content-in-lifecycle");
   }
   return hints;
+}
+
+/**
+ * @description Heuristic: does the element's source describe something that
+ * is not meant to draw anything (a registry, store, router, bridge, loader)?
+ * It defines no render(), no styles, and builds no content (lifecycle,
+ * attachShadow, innerHTML, createElement).
+ * Only used to explain an element that rendered nothing, never to excuse a
+ * failure.
+ */
+export function isNonVisual(source) {
+  if (!source) {
+    return false;
+  }
+  if (/^\s*render\s*\(/m.test(source)) {
+    return false;
+  }
+  if (/static\s+(get\s+)?styles\b/.test(source)) {
+    return false;
+  }
+  // vanilla elements that draw into a shadow root themselves, and files
+  // that define no element class at all (they wrap one from a library)
+  if (
+    /attachShadow|\.innerHTML\s*=|createElement\s*\(/.test(source) ||
+    !/\bclass\s+\w+\s+extends\b/.test(source)
+  ) {
+    return false;
+  }
+  return sourceHints(source).every((hint) => hint === "fetches-data");
 }
 
 const percentile = (sorted, fraction) =>
@@ -768,6 +798,13 @@ export async function auditSsrCommand(commandRun, root = null, deps = {}) {
       writeFileSync(path.join(saveDir, `${doc.tag}.html`), doc.html);
     }
     const a = analyzeSsrOutput(doc.html, doc.tag);
+    if (
+      (a.status === "empty" || a.status === "no-shadow-root") &&
+      doc.file &&
+      isNonVisual(readSource(doc.file))
+    ) {
+      a.status = "non-visual";
+    }
     const hints =
       a.status === "rendered" || !doc.file
         ? []
@@ -832,6 +869,7 @@ export async function auditSsrCommand(commandRun, root = null, deps = {}) {
     shell: [color.yellow, t("auditSsrStatusShell")],
     empty: [color.yellow, t("auditSsrStatusEmpty")],
     "no-shadow-root": [color.yellow, t("auditSsrStatusNoShadow")],
+    "non-visual": [color.dim, t("auditSsrStatusNonVisual")],
     skipped: [color.dim, t("auditSsrStatusSkipped")],
     threw: [color.red, t("auditSsrStatusThrew")],
   };
