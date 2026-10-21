@@ -234,6 +234,43 @@ export function falseBooleanAttributes(markup) {
   return [...names].sort();
 }
 
+// native elements whose address is lost when it is bound as a property
+const ADDRESSED_TAGS = [
+  "a",
+  "audio",
+  "embed",
+  "iframe",
+  "img",
+  "link",
+  "object",
+  "source",
+  "track",
+  "video",
+];
+const PROPERTY_ADDRESS = new RegExp(
+  `<(${ADDRESSED_TAGS.join("|")})(?=\\s)(?:[^<>"'$]|"[^"]*"|'[^']*'|\\$\\{[^}]*\\}|\\$)*?\\s\\.(src|href|srcset|data)=["']?\\$\\{`,
+  "gi",
+);
+
+/**
+ * @description Native elements in a Lit template that bind their address as a
+ * property (`<iframe .src=${url}>`). Lit SSR does not write a property binding
+ * on a native element, so the server HTML has the element with no address and
+ * crawlers, RSS and readers without JavaScript get nothing. The fix is an
+ * attribute binding (`src=${url}`, with `ifDefined` when it can be undefined).
+ * Reads the element's own source file, so addresses bound in other files are
+ * not seen.
+ * @param source the element's JavaScript source
+ * @returns {string[]} such as "iframe .src", sorted, each once
+ */
+export function propertyBoundAddresses(source) {
+  const found = new Set();
+  for (const m of String(source || "").matchAll(PROPERTY_ADDRESS)) {
+    found.add(`${m[1].toLowerCase()} .${m[2].toLowerCase()}`);
+  }
+  return [...found].sort();
+}
+
 /**
  * @description The markup inside the first declarative shadow root of the
  * outer element, or null when the element rendered without one.
@@ -515,6 +552,12 @@ export function summarizeSsr(results) {
     falseBooleanAttrs: results
       .filter((r) => r.falseBooleanAttrs && r.falseBooleanAttrs.length)
       .map((r) => ({ tag: r.tag, attrs: r.falseBooleanAttrs })),
+    // elements whose source binds a native element's address as a property
+    propertyBoundAddresses: results
+      .filter(
+        (r) => r.propertyBoundAddresses && r.propertyBoundAddresses.length,
+      )
+      .map((r) => ({ tag: r.tag, bindings: r.propertyBoundAddresses })),
     primitiveStyles: { bytes: Buffer.byteLength(SSR_PRIMITIVE_CSS) },
     size: {
       measured: rendered,
@@ -818,6 +861,9 @@ export async function auditSsrCommand(commandRun, root = null, deps = {}) {
       uniqueStyleBytes: a.uniqueStyleBytes,
       styleRules: a.styleRules,
       falseBooleanAttrs: a.falseBooleanAttrs,
+      propertyBoundAddresses: doc.file
+        ? propertyBoundAddresses(readSource(doc.file))
+        : [],
       hints,
       truncated: Boolean(doc.truncated),
       fallback: doc.progressive ? analyzeFallback(doc.progressive) : null,
@@ -906,6 +952,18 @@ export async function auditSsrCommand(commandRun, root = null, deps = {}) {
     p.log.warn(
       t("auditSsrFalseBoolean", {
         count: summary.falseBooleanAttrs.length,
+        list,
+      }),
+    );
+  }
+  if (summary.propertyBoundAddresses.length) {
+    const list = summary.propertyBoundAddresses
+      .map((r) => `${r.tag} (${r.bindings.join(", ")})`)
+      .slice(0, options.debug ? 100 : 15)
+      .join(", ");
+    p.log.warn(
+      t("auditSsrPropertyAddress", {
+        count: summary.propertyBoundAddresses.length,
         list,
       }),
     );

@@ -114,6 +114,7 @@ When creating or working on a component or theme, audit it for SSR without assum
 - No browser globals (`globalThis.window`, `document`, `navigator`, `location`, storage, `matchMedia`, observers) at module top level, in the constructor, or in `render()`.
 - Do browser-only work in `connectedCallback`, `firstUpdated` or `updated`, guarded with `globalThis` checks.
 - Keep `render()` deterministic (no `Math.random()`, `Date.now()` or generated ids) so server and client markup match.
+- On native elements bind attributes, not properties: `?checked=${v}` and `src=${v}` / `href=${v}` (with `ifDefined` when undefined), never `.checked` or `.src`; Lit SSR writes `.checked=${false}` as `checked="false"` (read as on) and drops `.src` and `.href` entirely.
 - Make the first render meaningful without JavaScript: default text, slotted content, `static styles`, and fallbacks.
 - For themes, keep the skip link and named regions in the server-rendered template and avoid import-time `document.body` access.
 
