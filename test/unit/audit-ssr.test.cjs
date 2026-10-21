@@ -31,6 +31,7 @@ const {
   splitCssRules,
   analyzeSsrOutput,
   falseBooleanAttributes,
+  propertyBoundAddresses,
   errorHints,
   errorSignature,
   summarizeSsr,
@@ -192,6 +193,52 @@ test("summarizeSsr lists elements that wrote boolean attributes as false", () =>
   ]);
   assert.deepEqual(summary.falseBooleanAttrs, [
     { tag: "x-a", attrs: ["checked"] },
+  ]);
+});
+
+test("propertyBoundAddresses finds addresses bound as properties on native tags", () => {
+  const source = `
+    render() {
+      return html\`
+        <iframe
+          loading="lazy"
+          title="\${this.mediaTitle || "Embedded"}"
+          .src="\${(this.data && this.data[0] && this.data[0].src) || undefined}"
+          width="\${this.width}"
+        ></iframe>
+        <img .src=\${this.photo} alt="" />
+        <a class="x" .HREF="\${this.link}">go</a>
+      \`;
+    }`;
+  assert.deepEqual(propertyBoundAddresses(source), [
+    "a .href",
+    "iframe .src",
+    "img .src",
+  ]);
+});
+
+test("propertyBoundAddresses leaves attribute bindings and custom elements alone", () => {
+  const source =
+    'html`<iframe src=${a}></iframe><img src="${b}" /><a href=${c}>x</a>' +
+    "<my-el .src=${d}></my-el><video-player .src=${e}></video-player>" +
+    "<button .src=${f}>x</button><p>.src=${g}</p>`";
+  assert.deepEqual(propertyBoundAddresses(source), []);
+  assert.deepEqual(propertyBoundAddresses(""), []);
+  assert.deepEqual(propertyBoundAddresses(null), []);
+});
+
+test("summarizeSsr lists elements that bind addresses as properties", () => {
+  const summary = summarizeSsr([
+    {
+      tag: "x-a",
+      demo: "demoSchema",
+      status: "rendered",
+      propertyBoundAddresses: ["iframe .src"],
+    },
+    { tag: "x-b", demo: "demoSchema", status: "rendered" },
+  ]);
+  assert.deepEqual(summary.propertyBoundAddresses, [
+    { tag: "x-a", bindings: ["iframe .src"] },
   ]);
 });
 

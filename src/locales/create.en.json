@@ -57,6 +57,7 @@
   "auditSsrResolver": "{count} extensionless import(s) only resolved through a .js or /index.js fallback. The dev server adds those, plain Node ESM does not (--format json lists examples).",
   "auditSsrFallback": "{count} element(s) supply their own progressive-enhancement markup (haxHooks progressiveEnhancement); {recovered} of them would otherwise render nothing usable: {list}. A {css} KB stylesheet for the common HTML tags covers that markup (--save-html writes it as _primitives.css).",
   "auditSsrFalseBoolean": "{count} element(s) wrote HTML boolean attributes as \"false\": {list}. Browsers read the attribute as on until the element hydrates; use ?checked=${value} instead of .checked=${value}.",
+  "auditSsrPropertyAddress": "{count} element(s) bind a native element's address as a property: {list}. Lit SSR does not write property bindings, so the server HTML has no address; use src=${value} (with ifDefined when it can be undefined) instead of .src=${value}.",
   "auditSsrEnvBare": "Ran without the supplemental DOM environment (--no-shim): this is what the elements manage on their own.",
   "auditSsrSaved": "SSR output for each element saved to {dir}",
   "auditSsrOutro": "Coverage report only, nothing failed. Use {debug} to list every element or {json} for a machine-readable report.",
