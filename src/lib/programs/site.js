@@ -269,6 +269,7 @@ export const IMPORT_STRUCTURE_MAP = {
   drupalToSite: { platform: "drupal" },
   openstaxToSite: { platform: "openstax" },
   vitepressToSite: { platform: "vitepress" },
+  quartoToSite: { platform: "quarto" },
   htmlToSite: { platform: "html" },
   docxToSite: { routeKey: "actions/import-docx" },
   xlsxToSite: { routeKey: "actions/import-xlsx" },

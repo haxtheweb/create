@@ -154,6 +154,9 @@ Options:
                                       ploneToSite
                                       wordpressPagesToSite
                                       drupalToSite
+                                      openstaxToSite
+                                      vitepressToSite
+                                      quartoToSite
                                       htmlToSite
                                       docxToSite
   --node-op <char>                    node operation to perform

@@ -49,6 +49,7 @@ test("every platform importer maps to its dispatcher platform", opts, () => {
     drupalToSite: "drupal",
     openstaxToSite: "openstax",
     vitepressToSite: "vitepress",
+    quartoToSite: "quarto",
     htmlToSite: "html",
   });
 });
@@ -62,6 +63,12 @@ test("openstaxToSite reaches the openstax dispatcher case", opts, () => {
 test("vitepressToSite reaches the vitepress dispatcher case", opts, () => {
   assert.deepEqual(IMPORT_STRUCTURE_MAP.vitepressToSite, {
     platform: "vitepress",
+  });
+});
+
+test("quartoToSite reaches the quarto dispatcher case", opts, () => {
+  assert.deepEqual(IMPORT_STRUCTURE_MAP.quartoToSite, {
+    platform: "quarto",
   });
 });
 
