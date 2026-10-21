@@ -30,6 +30,7 @@ const {
   discoverSsrDemos,
   splitCssRules,
   analyzeSsrOutput,
+  falseBooleanAttributes,
   errorHints,
   errorSignature,
   summarizeSsr,
@@ -129,6 +130,69 @@ test("errorHints and errorSignature group the usual causes", () => {
       "TypeError: Cannot read properties of undefined (reading 'x')",
     ),
   );
+});
+
+test("falseBooleanAttributes finds boolean attributes written as false", () => {
+  const markup =
+    '<input type="checkbox" checked="false" /><input type="radio" CHECKED=\'false\' disabled="false">' +
+    '<button aria-expanded="false" aria-pressed="false" data-open="false">x</button>' +
+    '<input checked disabled="" required="true" />';
+  assert.deepEqual(falseBooleanAttributes(markup), ["checked", "disabled"]);
+  assert.deepEqual(falseBooleanAttributes(""), []);
+  assert.deepEqual(falseBooleanAttributes(null), []);
+});
+
+test("analyzeSsrOutput reports boolean attributes written as false", () => {
+  const bad = analyzeSsrOutput(
+    shadow('<label><input type="checkbox" checked="false" />Read</label>'),
+    "x-a",
+  );
+  assert.equal(bad.status, "rendered");
+  assert.deepEqual(bad.falseBooleanAttrs, ["checked"]);
+  const good = analyzeSsrOutput(
+    shadow('<label><input type="checkbox" />Read</label>'),
+    "x-a",
+  );
+  assert.deepEqual(good.falseBooleanAttrs, []);
+  // the host's own attributes are not the element's render output
+  assert.deepEqual(
+    analyzeSsrOutput(
+      '<x-a hidden="false"><template shadowroot="open" shadowrootmode="open"><div>Hi</div></template></x-a>',
+      "x-a",
+    ).falseBooleanAttrs,
+    [],
+  );
+  assert.deepEqual(
+    analyzeSsrOutput("<x-a></x-a>", "x-a").falseBooleanAttrs,
+    [],
+  );
+});
+
+test("summarizeSsr lists elements that wrote boolean attributes as false", () => {
+  const summary = summarizeSsr([
+    {
+      tag: "x-a",
+      demo: "demoSchema",
+      status: "rendered",
+      falseBooleanAttrs: ["checked"],
+    },
+    {
+      tag: "x-b",
+      demo: "demoSchema",
+      status: "rendered",
+      falseBooleanAttrs: [],
+    },
+    {
+      tag: "x-c",
+      demo: "bare",
+      status: "threw",
+      error: "boom",
+      phase: "render",
+    },
+  ]);
+  assert.deepEqual(summary.falseBooleanAttrs, [
+    { tag: "x-a", attrs: ["checked"] },
+  ]);
 });
 
 test("summarizeSsr counts every status and groups failures by cause", () => {

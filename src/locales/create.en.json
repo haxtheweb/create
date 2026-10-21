@@ -56,6 +56,7 @@
   "auditSsrStyles": "Styles are {share}% of all output. {shared} CSS rule(s) that appear in {elements}+ elements make up {sharedShare}% of the style bytes (shared base styles repeated in every shadow root).",
   "auditSsrResolver": "{count} extensionless import(s) only resolved through a .js or /index.js fallback. The dev server adds those, plain Node ESM does not (--format json lists examples).",
   "auditSsrFallback": "{count} element(s) supply their own progressive-enhancement markup (haxHooks progressiveEnhancement); {recovered} of them would otherwise render nothing usable: {list}. A {css} KB stylesheet for the common HTML tags covers that markup (--save-html writes it as _primitives.css).",
+  "auditSsrFalseBoolean": "{count} element(s) wrote HTML boolean attributes as \"false\": {list}. Browsers read the attribute as on until the element hydrates; use ?checked=${value} instead of .checked=${value}.",
   "auditSsrEnvBare": "Ran without the supplemental DOM environment (--no-shim): this is what the elements manage on their own.",
   "auditSsrSaved": "SSR output for each element saved to {dir}",
   "auditSsrOutro": "Coverage report only, nothing failed. Use {debug} to list every element or {json} for a machine-readable report.",
