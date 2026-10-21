@@ -36,6 +36,7 @@ const {
   analyzeFallback,
   auditSsrCommand,
   SSR_STATUSES,
+  isNonVisual,
 } = require("../../src/lib/programs/audit-ssr.js");
 
 function project(files) {
@@ -311,6 +312,36 @@ test("summarizeSsr reports which elements a fallback rescues", () => {
   assert.equal(summary.fallback.useful, 2);
   assert.deepEqual(summary.fallback.recovered, [{ tag: "a", from: "shell" }]);
   assert.equal(summary.primitiveStyles.bytes, 0);
+});
+
+test("isNonVisual recognises elements with nothing to draw", () => {
+  assert.equal(isNonVisual("class A extends HTMLElement { go() {} }"), true);
+  assert.equal(
+    isNonVisual(
+      "class A extends B { async load() { return fetch('/x').then((r) => r.json()); } }",
+    ),
+    true,
+  );
+  assert.equal(
+    isNonVisual("class A {\n  render() {\n    return html``;\n  }\n}"),
+    false,
+  );
+  assert.equal(
+    isNonVisual("class A { static get styles() { return []; } }"),
+    false,
+  );
+  assert.equal(
+    isNonVisual("class A { firstUpdated() { this.innerHTML = '<p></p>'; } }"),
+    false,
+  );
+  assert.equal(
+    isNonVisual(
+      "class A extends HTMLElement { constructor() { super(); this.attachShadow({ mode: 'open' }); } }",
+    ),
+    false,
+  );
+  assert.equal(isNonVisual("customElements.define('x-a', Library);"), false);
+  assert.equal(isNonVisual(""), false);
 });
 
 test("summarizeSsr counts skipped elements and sizes the primitive stylesheet it is given", () => {

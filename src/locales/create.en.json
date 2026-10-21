@@ -50,6 +50,7 @@
   "auditSsrStatusShell": "shell: structure only (slots and wrappers, no text or media)",
   "auditSsrStatusEmpty": "empty: shadow root holds only styles",
   "auditSsrStatusNoShadow": "no-shadow-root: no declarative shadow root in the output",
+  "auditSsrStatusNonVisual": "non-visual: nothing to draw (no render() or styles in its source), so an empty result is expected",
   "auditSsrStatusSkipped": "skipped: known not to render server-side (3D, audio); not imported",
   "auditSsrMissingKit": "The SSR render kit from @haxtheweb/haxcms-nodejs is not installed next to the hax CLI. Install it ({command}) and run again.",
   "auditSsrStatusThrew": "threw: failed to import or render",
