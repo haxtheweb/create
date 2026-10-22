@@ -68,5 +68,5 @@ When creating educational content:
 ## References
 
 - HAX CLI: `hax site --help`
-- PRAW RULES.md: `~/Documents/git/haxtheweb/praw/RULES.md` (canonical ecosystem rules referenced by Rule ID)
+- PRAW RULES.md: `https://github.com/haxtheweb/praw/blob/main/RULES.md` (canonical ecosystem rules referenced by Rule ID)
 - DDD design system: see the `hax-design-system` skill
