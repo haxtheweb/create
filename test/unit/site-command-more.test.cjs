@@ -1358,3 +1358,32 @@ test(
     }
   },
 );
+
+test(
+  "site:files-upload hands a .h5p package to the cliBridge untouched",
+  opts,
+  async () => {
+    resetMocks();
+    const uploadDir = fs.mkdtempSync(
+      path.join(os.tmpdir(), "hax-files-upload-h5p-"),
+    );
+    const source = path.join(uploadDir, "quiz.h5p");
+    // the CLI does not inspect the archive: the haxcms-nodejs v1/files route
+    // owns the extension and content checks (see the .h5p allowlist there)
+    fs.writeFileSync(source, "PK-not-really-a-zip");
+    try {
+      await runSite({
+        command: "site",
+        arguments: { action: "site:files-upload" },
+        options: { quiet: true, i: true, source },
+      });
+      const call = cliBridgeCalls[0];
+      assert.equal(call.route, "v1/files");
+      assert.equal(call.method, "post");
+      assert.equal(call.fileObj.originalname, "quiz.h5p");
+      assert.equal(call.fileObj.size, fs.statSync(source).size);
+    } finally {
+      fs.rmSync(uploadDir, { recursive: true, force: true });
+    }
+  },
+);
