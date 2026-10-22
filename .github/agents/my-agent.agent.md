@@ -36,8 +36,8 @@ These rules ensure consistency, quality, and proper integration across all HAX p
 # Run the onboarding script from anywhere
 curl -fsSL https://raw.githubusercontent.com/haxtheweb/praw/main/hax-onboarding.sh | bash
 
-# Or if you've already cloned this repo:
-cd ~/Documents/git/haxtheweb/praw
+# Or if you've already cloned https://github.com/haxtheweb/praw:
+cd praw
 ./hax-onboarding.sh
 ```
 
@@ -76,17 +76,17 @@ If you already have a HAX development environment and just want to add these rul
 
 If you're working across multiple HAX repositories, you can:
 
-1. **Clone this repo** to your local HAX development area:
+1. **Clone this repo** into the folder where you keep your HAX repositories:
 
    ```bash
-   cd ~/Documents/git/haxtheweb/
+   cd /path/to/your/haxtheweb-workspace
    git clone https://github.com/haxtheweb/praw.git
    ```
 
 2. **Symlink the main WARP.md** to your primary working directories:
 
    ```bash
-   ln -s ~/Documents/git/haxtheweb/praw/WARP.md ~/Documents/git/haxtheweb/webcomponents/
+   ln -s "$(pwd)/praw/WARP.md" webcomponents/
    ```
 
 3. **Let Warp automatically detect** the rules when working in HAX directories
@@ -200,7 +200,7 @@ cd programs/issue-management/
 1. **Install the management system**:
 
    ```bash
-   cd ~/Documents/git/haxtheweb/praw
+   cd praw   # your clone of https://github.com/haxtheweb/praw
    ./scripts/setup.sh
    ```
 
