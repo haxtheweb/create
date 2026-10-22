@@ -170,4 +170,4 @@ If the user is starting from an OpenStax book, use the `hax-openstax2hax` skill 
 - HAX CLI package: `https://www.npmjs.com/package/@haxtheweb/create`
 - HAX Documentation: `https://haxtheweb.org/`
 - HAX web components: `https://github.com/haxtheweb/webcomponents/tree/master/elements`
-- PRAW RULES.md: `~/Documents/git/haxtheweb/praw/RULES.md` (canonical ecosystem rules referenced by Rule ID)
+- PRAW RULES.md: `https://github.com/haxtheweb/praw/blob/main/RULES.md` (canonical ecosystem rules referenced by Rule ID)

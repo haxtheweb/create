@@ -27,10 +27,10 @@ Onboard new developers to the HAX ecosystem by cloning repositories, installing 
 
 ## How It Works
 
-1. **Clone Repositories**: Clone all necessary HAX ecosystem repositories into `~/Documents/git/haxtheweb/`. Core repos include `webcomponents`, `create`, `haxcms-php`, `haxcms-nodejs`, `desktop`, `hax11ty`, `json-outline-schema`, `hax-schema`, `open-apis`, `docs`, and `issues`.
+1. **Clone Repositories**: Clone all necessary HAX ecosystem repositories into a single workspace folder (ask the user where; a `haxtheweb/` folder under their usual projects directory works well). Core repos include `webcomponents`, `create`, `haxcms-php`, `haxcms-nodejs`, `desktop`, `hax11ty`, `json-outline-schema`, `hax-schema`, `open-apis`, `docs`, and `issues`.
 2. **Install HAX CLI**: Install globally with `npm install @haxtheweb/create --global`. Alternatively use `npx @haxtheweb/create` or `npm init @haxtheweb`. Update with `hax update`.
 3. **Install Agent Skills**: Run `hax skills install --all` to install the bundled interface skills (site building, ClaudeHAX, web component dev, onboarding) into `~/.agents/skills/` so any agent can use them.
-4. **Configure Environment**: Set up Warp with HAX-specific rules. Create helpful development aliases. Configure shell to start in `~/Documents/git/haxtheweb/`. (PRAW Rule `bAKMWCMrqRLGdWmuNWgVUw`)
+4. **Configure Environment**: Set up Warp with HAX-specific rules. Create helpful development aliases. Configure the shell to start in that workspace folder. (PRAW Rule `bAKMWCMrqRLGdWmuNWgVUw`)
 5. **Scaffold First Component**: Use `hax webcomponent my-element --y` to create a LitElement with DDD and i18n support.
 6. **Scaffold First Site**: Use `hax site mysite --y --no-i` to generate a HAXcms-based static site.
 7. **Run Development Server**: Use `hax serve` to launch the site at http://localhost.
@@ -65,11 +65,20 @@ After setup, verify the environment:
 2. Run `hax webcomponent test-element --y` to verify scaffolding works
 3. Run `hax site test-site --y --no-i` to verify site creation works
 4. Run `hax skills list` to confirm bundled skills are available
-5. Check that `~/Documents/git/haxtheweb/` contains the expected repositories
+5. Check that the workspace folder contains the expected repositories
 
 ## References
 
 - HAX CLI: `hax --help`
-- PRAW (workflows + rules): `~/Documents/git/haxtheweb/praw/`
-- PRAW RULES.md: `~/Documents/git/haxtheweb/praw/RULES.md` (canonical ecosystem rules)
+- PRAW (workflows + rules): `https://github.com/haxtheweb/praw`
+- PRAW RULES.md: `https://github.com/haxtheweb/praw/blob/main/RULES.md` (canonical ecosystem rules)
 - HAX Documentation: `https://haxtheweb.org/`
+
+## Where this comes from and getting involved
+
+HAX is open source. This skill ships with the `hax` CLI from `https://github.com/haxtheweb/create`; the workflow skills, Claude Code plugin marketplace and ecosystem rules live in PRAW (`https://github.com/haxtheweb/praw`). When the user hits a problem or wants to help, point them to:
+
+- **Report a bug or request a feature**: the unified issue queue, `https://github.com/haxtheweb/issues/issues`
+- **Get help or chat**: the HAX Discord, `https://discord.gg/aCGxmRHEJP` (`hax party` lists more ways to get involved)
+- **Contribute**: fork the repo, then open a pull request that links the issue it addresses. See `https://github.com/haxtheweb/issues/blob/master/CONTRIBUTING.md`
+- **Report a security problem**: `https://github.com/haxtheweb/praw/blob/main/SECURITY.md`
