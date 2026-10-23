@@ -25,17 +25,23 @@ stub.log = {
   info: () => {},
 };
 
+const { pathToFileURL } = require("node:url");
+const { EventEmitter } = require("node:events");
+
 const {
   loadSsrRegistry,
   discoverSsrDemos,
   splitCssRules,
+  shadowRootContent,
   analyzeSsrOutput,
   falseBooleanAttributes,
   propertyBoundAddresses,
+  sourceHints,
   errorHints,
   errorSignature,
   summarizeSsr,
   analyzeFallback,
+  runSsrWorker,
   auditSsrCommand,
   SSR_STATUSES,
 } = require("../../src/lib/programs/audit-ssr.js");
@@ -508,4 +514,411 @@ test("installInertDom builds registered classes from document.createElement and 
   assert.deepEqual(target.document.createElement("x-other"), {
     plain: "x-other",
   });
+});
+
+// A child process stand-in whose stdin.end() plays the scripted worker output,
+// so runSsrWorker's line protocol can be exercised without spawning node.
+function fakeSpawn(scripts) {
+  const children = [];
+  const calls = [];
+  const spawn = (cmd, args, opts) => {
+    calls.push({ cmd, args, opts });
+    const script = scripts[children.length] || {};
+    const child = new EventEmitter();
+    child.stdout = new EventEmitter();
+    child.stderr = new EventEmitter();
+    child.killCalls = [];
+    child.kill = (signal) => {
+      child.killCalls.push(signal);
+      return true;
+    };
+    child.stdinPayloads = [];
+    child.stdin = {
+      on: () => {},
+      end: (payload) => {
+        child.stdinPayloads.push(JSON.parse(payload));
+        for (const line of script.lines || []) {
+          child.stdout.emit("data", Buffer.from(`${line}\n`));
+        }
+        if (script.stderr) {
+          child.stderr.emit("data", Buffer.from(script.stderr));
+        }
+        if (script.then === "close") {
+          child.emit("close", 1);
+        } else if (script.then === "error") {
+          child.emit("error", new Error(script.error || "spawn gone"));
+        }
+      },
+    };
+    children.push(child);
+    return child;
+  };
+  return { spawn, children, calls };
+}
+
+const ssrItem = (tag) => ({ tag, specifier: `pkg/${tag}.js`, demo: null });
+
+test("runSsrWorker parses worker lines, merges async errors and records fallbacks", async () => {
+  const { spawn, children, calls } = fakeSpawn([
+    {
+      lines: [
+        "",
+        "this is not json",
+        JSON.stringify({
+          tag: "x-a",
+          ok: true,
+          file: "/x/a.js",
+          html: shadow("<p>Hi</p>"),
+        }),
+        JSON.stringify({ tag: "x-a", asyncOnly: true, error: "late boom" }),
+        JSON.stringify({
+          fallback: { specifier: "./helper", parent: "file:///x/helper.js" },
+        }),
+        JSON.stringify({ done: true }),
+      ],
+    },
+  ]);
+  const out = await runSsrWorker(
+    { root: "/x", timeout: 1000, shim: true, items: [ssrItem("x-a")] },
+    { spawn, workerPath: "worker.mjs" },
+  );
+  assert.equal(out.fatal, undefined);
+  assert.deepEqual(out.results, [
+    {
+      tag: "x-a",
+      ok: true,
+      file: "/x/a.js",
+      html: shadow("<p>Hi</p>"),
+      warnings: ["async: late boom"],
+    },
+  ]);
+  assert.deepEqual(out.fallbacks, [
+    { specifier: "./helper", parent: "file:///x/helper.js" },
+  ]);
+  assert.equal(children.length, 1);
+  assert.equal(children[0].killCalls.length, 1);
+  assert.deepEqual(children[0].stdinPayloads, [
+    { root: "/x", timeout: 1000, shim: true, items: [ssrItem("x-a")] },
+  ]);
+  assert.equal(calls[0].cmd, process.execPath);
+  assert.deepEqual(calls[0].args, ["worker.mjs"]);
+  assert.deepEqual(calls[0].opts.stdio, ["pipe", "pipe", "pipe"]);
+});
+
+test("runSsrWorker restarts after a crash, blames the stuck element and keeps going", async () => {
+  const { spawn, children, calls } = fakeSpawn([
+    {
+      lines: [
+        JSON.stringify({ tag: "x-a", ok: true, html: shadow("<p>A</p>") }),
+      ],
+      stderr: "boom on import\n",
+      then: "close",
+    },
+    {
+      lines: [
+        JSON.stringify({ tag: "x-c", ok: true, html: shadow("<p>C</p>") }),
+        JSON.stringify({ done: true }),
+      ],
+    },
+  ]);
+  const out = await runSsrWorker(
+    {
+      root: "/x",
+      timeout: 1000,
+      shim: true,
+      items: [ssrItem("x-a"), ssrItem("x-b"), ssrItem("x-c")],
+    },
+    { spawn },
+  );
+  assert.equal(children.length, 2);
+  // the crashed element is blamed, the rest are retried in a fresh worker
+  assert.deepEqual(children[1].stdinPayloads[0].items, [ssrItem("x-c")]);
+  assert.deepEqual(
+    out.results.map((r) => [r.tag, r.ok, r.phase || null]),
+    [
+      ["x-a", true, null],
+      ["x-b", false, "crash"],
+      ["x-c", true, null],
+    ],
+  );
+  assert.ok(
+    out.results[1].error.includes("renderer process exited: boom on import"),
+  );
+  // without an injected path the real worker script is targeted
+  assert.ok(calls[0].args[0].endsWith("audit-ssr-worker.mjs"));
+});
+
+test("runSsrWorker kills a hung worker via the watchdog and retries", async () => {
+  const { spawn, children } = fakeSpawn([
+    {},
+    {
+      lines: [
+        JSON.stringify({ tag: "x-b", ok: true, html: shadow("<p>B</p>") }),
+        JSON.stringify({ done: true }),
+      ],
+    },
+  ]);
+  const out = await runSsrWorker(
+    {
+      root: "/x",
+      timeout: 1,
+      shim: true,
+      items: [ssrItem("x-a"), ssrItem("x-b")],
+    },
+    { spawn },
+  );
+  assert.equal(children[0].killCalls[0], "SIGKILL");
+  assert.deepEqual(
+    out.results.map((r) => [r.tag, r.ok, r.phase || null]),
+    [
+      ["x-a", false, "timeout"],
+      ["x-b", true, null],
+    ],
+  );
+  assert.equal(
+    out.results[0].error,
+    "render blocked the process (no output before the watchdog)",
+  );
+});
+
+test("runSsrWorker surfaces a fatal worker condition and a spawn failure", async () => {
+  const fatal = await runSsrWorker(
+    { root: "/x", timeout: 1000, shim: true, items: [ssrItem("x-a")] },
+    {
+      spawn: fakeSpawn([
+        {
+          lines: [
+            JSON.stringify({
+              fatal: "missing-ssr",
+              message: "@lit-labs/ssr is not installed",
+            }),
+          ],
+          then: "close",
+        },
+      ]).spawn,
+    },
+  );
+  assert.deepEqual(fatal.fatal, {
+    code: "missing-ssr",
+    message: "@lit-labs/ssr is not installed",
+  });
+  assert.deepEqual(fatal.results, []);
+  const broken = await runSsrWorker(
+    { root: "/x", timeout: 1000, shim: true, items: [ssrItem("x-a")] },
+    { spawn: fakeSpawn([{ then: "error", error: "spawn ENOENT" }]).spawn },
+  );
+  assert.equal(broken.fatal.code, "spawn-failed");
+  assert.equal(broken.fatal.message, "spawn ENOENT");
+});
+
+test("runSsrWorker with default deps spawns the real worker once", async () => {
+  const out = await runSsrWorker({
+    root: path.join(os.tmpdir(), "hax-audit-ssr-missing-root"),
+    timeout: 5000,
+    shim: true,
+    items: [{ tag: "x-a", specifier: "./no-such-element.js", demo: null }],
+  });
+  assert.equal(out.fatal, undefined);
+  assert.equal(out.results.length, 1);
+  assert.equal(out.results[0].tag, "x-a");
+  assert.equal(out.results[0].ok, false);
+});
+
+test("the text report prints the status table, causes, hints and debug rows", async () => {
+  const root = project({
+    "wc-registry.json": {
+      "x-a": "pkg/a.js",
+      "x-b": "pkg/b.js",
+      "x-c": "pkg/c.js",
+    },
+    "pkg/b.js":
+      "export class X extends HTMLElement { connectedCallback() { fetch('/api'); } }",
+  });
+  const recorded = { info: [], error: [], message: [], warn: [] };
+  const intros = [];
+  const outros = [];
+  const savedLog = { ...stub.log };
+  const savedIntro = stub.intro;
+  const savedOutro = stub.outro;
+  for (const key of ["info", "error", "message", "warn"]) {
+    stub.log[key] = (text) => recorded[key].push(text);
+  }
+  stub.intro = (text) => intros.push(text);
+  stub.outro = (text) => outros.push(text);
+  try {
+    const result = await auditSsrCommand({ options: { debug: true } }, root, {
+      runWorker: async () => ({
+        results: [
+          {
+            tag: "x-a",
+            ok: true,
+            file: path.join(root, "pkg/a.js"),
+            html: shadow("<div>Hello</div>"),
+          },
+          {
+            tag: "x-b",
+            ok: true,
+            file: path.join(root, "pkg/b.js"),
+            html: shadow("<slot></slot>"),
+          },
+          {
+            tag: "x-c",
+            ok: false,
+            phase: "render",
+            error: "TypeError: boom",
+            origin: "pkg/c.js:9",
+            progressive: "<p>bot</p>",
+          },
+        ],
+        fallbacks: [
+          {
+            specifier: "./helper",
+            parent: pathToFileURL(path.join(root, "pkg/helper.js")).href,
+          },
+        ],
+      }),
+    });
+    assert.equal(result.passed, true);
+    assert.equal(intros.length, 1);
+    // 5 status lines + cause group + thrown-at + 3 debug rows
+    assert.equal(recorded.message.length, 10);
+    assert.equal(recorded.error.length, 1);
+    assert.equal(recorded.warn.length, 1);
+    assert.ok(recorded.warn[0].includes("shell (1): x-b"));
+    assert.ok(
+      recorded.message.some(
+        (line) =>
+          line.includes("thrown at") && line.includes("pkg/c.js:9 (1)"),
+      ),
+    );
+    // x-b is a shell whose source fetches data: the hint explains why
+    assert.ok(recorded.message.some((line) => line.includes("[fetches-data]")));
+    assert.ok(
+      recorded.message.some((line) => line.includes("TypeError: boom")),
+    );
+    // totals, sizes, style share, fallback rescue, resolver fallbacks
+    assert.equal(recorded.info.length, 5);
+    assert.equal(result.summary.resolverFallbacks.examples[0].from, "pkg/helper.js");
+    assert.equal(outros.length, 1);
+  } finally {
+    Object.assign(stub.log, savedLog);
+    stub.intro = savedIntro;
+    stub.outro = savedOutro;
+  }
+});
+
+test("the text report explains a missing registry and a filtered-out selection", async () => {
+  const errors = [];
+  const intros = [];
+  const savedError = stub.log.error;
+  const savedIntro = stub.intro;
+  stub.log.error = (text) => errors.push(text);
+  stub.intro = (text) => intros.push(text);
+  let result;
+  try {
+    result = await auditSsrCommand({ options: {} }, project({}));
+  } finally {
+    stub.log.error = savedError;
+    stub.intro = savedIntro;
+  }
+  assert.equal(result.passed, false);
+  assert.equal(result.fatal.code, "no-registry");
+  assert.equal(errors.length, 1);
+  assert.equal(intros.length, 1);
+
+  const outros = [];
+  const savedOutro = stub.outro;
+  stub.outro = (text) => outros.push(text);
+  try {
+    result = await auditSsrCommand(
+      { options: { only: "nope" } },
+      project({ "wc-registry.json": { "x-a": "pkg/a.js" } }),
+    );
+  } finally {
+    stub.outro = savedOutro;
+  }
+  assert.equal(result.passed, true);
+  assert.deepEqual(result.results, []);
+  assert.equal(outros.length, 1);
+});
+
+test("shadowRootContent tolerates a truncated template", () => {
+  assert.equal(shadowRootContent('<x-a><template shadowroot="open"', "x-a"), null);
+  assert.equal(
+    shadowRootContent(
+      '<x-a><template shadowroot="open" shadowrootmode="open"><p>hi</p>',
+      "x-a",
+    ),
+    "<p>hi</p>",
+  );
+});
+
+test("splitCssRules drops top-level statements like @import", () => {
+  assert.deepEqual(splitCssRules("@import url(x.css);a{b:c}"), ["a{b:c}"]);
+});
+
+test("sourceHints spots light-dom, data fetching and lifecycle-built content", () => {
+  assert.deepEqual(sourceHints("createRenderRoot() { return this; }"), [
+    "light-dom",
+  ]);
+  assert.deepEqual(sourceHints('async load() { await fetch("/api"); }'), [
+    "fetches-data",
+  ]);
+  assert.deepEqual(
+    sourceHints('connectedCallback() { this.innerHTML = "<p>hi</p>"; }'),
+    ["builds-content-in-lifecycle"],
+  );
+  assert.deepEqual(sourceHints("render() { return html`<p>hi</p>`; }"), []);
+});
+
+test("discoverSsrDemos survives unreadable directories and dangling symlinks", () => {
+  const root = project({
+    "ok/x-ok.haxProperties.json": {
+      demoSchema: [{ tag: "x-ok", content: "hi" }],
+    },
+  });
+  const locked = path.join(root, "locked");
+  fs.mkdirSync(locked);
+  fs.symlinkSync(
+    path.join(root, "gone.json"),
+    path.join(root, "dangling.haxProperties.json"),
+  );
+  fs.chmodSync(locked, 0o000);
+  try {
+    assert.deepEqual(Object.keys(discoverSsrDemos(root)), ["x-ok"]);
+    assert.deepEqual(discoverSsrDemos(path.join(root, "missing")), {});
+  } finally {
+    fs.chmodSync(locked, 0o755);
+  }
+});
+
+test("summarizeSsr flags styles shared across elements and groups hints", () => {
+  const shared = { abc123def456: 4 };
+  const results = ["x-1", "x-2", "x-3", "x-4"].map((tag) => ({
+    tag,
+    status: "shell",
+    demo: "bare",
+    bytes: 4,
+    styleBytes: 4,
+    uniqueStyleBytes: 4,
+    styleRules: shared,
+    hints: ["fetches-data"],
+  }));
+  results.push({
+    tag: "x-5",
+    status: "shell",
+    demo: "bare",
+    bytes: 4,
+    styleBytes: 4,
+    uniqueStyleBytes: 4,
+    styleRules: shared,
+  });
+  const summary = summarizeSsr(results);
+  assert.equal(summary.shared.rules, 1);
+  assert.equal(summary.shared.bytes, 20);
+  assert.equal(summary.shared.bytesIfEmittedOnce, 4);
+  assert.equal(summary.shared.share, 1);
+  assert.deepEqual(summary.hints, [
+    { hint: "fetches-data", tags: ["x-1", "x-2", "x-3", "x-4"] },
+  ]);
 });

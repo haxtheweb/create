@@ -147,6 +147,7 @@ fs.mkdirSync(path.join(SITE_DIR, "custom", "src"), { recursive: true });
 
 const updateNodeCalls = [];
 const writeLocationCalls = [];
+const addPageCalls = [];
 const fakeItems = [
   {
     id: "item-1",
@@ -207,6 +208,20 @@ const fakeHaxsite = {
   async updateNode(page) {
     updateNodeCalls.push(JSON.parse(JSON.stringify(page)));
     return { res: { statusCode: 200, data: { status: 200 } } };
+  },
+  // site:items-import calls addPage(parent, title, "html", slug, null,
+  // indent, content, order, metadata) per imported item
+  async addPage(...args) {
+    addPageCalls.push({
+      parent: args[0],
+      title: args[1],
+      slug: args[3],
+      indent: args[5],
+      content: args[6],
+      order: args[7],
+      metadata: args[8],
+    });
+    return { id: `imported-${addPageCalls.length}` };
   },
 };
 const haxcmsLib = require("@haxtheweb/haxcms-nodejs/dist/lib/HAXCMS.js");
@@ -275,6 +290,7 @@ function resetMocks() {
   cliBridgeCalls.length = 0;
   updateNodeCalls.length = 0;
   writeLocationCalls.length = 0;
+  addPageCalls.length = 0;
   groupResponse = { action: "quit" };
   skeletonExportPayload = {
     status: 200,
@@ -1385,5 +1401,195 @@ test(
     } finally {
       fs.rmSync(uploadDir, { recursive: true, force: true });
     }
+  },
+);
+
+// --- node:stats md / export prompts / items-import / directory upload / rsync ---
+
+test(
+  "node:stats md converts the page through the html-to-md route",
+  opts,
+  async () => {
+    resetMocks();
+    const target = path.join(os.tmpdir(), "hax-node-stats-md-test.md");
+    const exitCode = await runSite({
+      command: "site",
+      arguments: { action: "node:stats" },
+      options: {
+        quiet: true,
+        i: true,
+        itemId: "item-1",
+        nodeOp: "md",
+        toFile: target,
+      },
+    });
+    assert.equal(exitCode, 0);
+    const routeCall = calledRoute("html-to-md");
+    assert.ok(routeCall, "html-to-md route invoked");
+    assert.ok(routeCall.body.html.includes("hello world"));
+    assert.equal(fs.readFileSync(target, "utf8"), "# markdown output");
+    fs.rmSync(target, { force: true });
+  },
+);
+
+test(
+  "site:export prompts for the format and follows the descriptor branch",
+  opts,
+  async () => {
+    resetMocks();
+    const previousSelect = stub.select;
+    let selectCalls = 0;
+    stub.select = async () => {
+      selectCalls += 1;
+      return "markdown";
+    };
+    try {
+      const exitCode = await runSite({
+        command: "site",
+        arguments: { action: "site:export" },
+        options: { quiet: true, i: true },
+      });
+      assert.equal(exitCode, 0);
+      assert.ok(selectCalls >= 1, "format prompt shown");
+      assert.equal(cliBridgeCalls[0].route, "v1/site/export/markdown");
+      assert.equal(cliBridgeCalls[0].method, "get");
+    } finally {
+      stub.select = previousSelect;
+    }
+  },
+);
+
+test(
+  "site:export with --y but no format exits without calling the backend",
+  opts,
+  async () => {
+    resetMocks();
+    const exitCode = await runSite({
+      command: "site",
+      arguments: { action: "site:export" },
+      options: { quiet: true, i: true, y: true },
+    });
+    assert.equal(exitCode, 0);
+    assert.equal(cliBridgeCalls.length, 0);
+  },
+);
+
+test(
+  "site:items-import merges a local JSON export into the active site",
+  opts,
+  async () => {
+    resetMocks();
+    const importDir = fs.mkdtempSync(
+      path.join(os.tmpdir(), "hax-items-import-"),
+    );
+    const importFile = path.join(importDir, "items.json");
+    fs.writeFileSync(
+      importFile,
+      JSON.stringify([
+        {
+          id: "new-1",
+          title: "Imported One",
+          slug: "imported-one",
+          parent: null,
+          indent: 0,
+          order: 1,
+          content: "<p>one</p>",
+          metadata: {},
+        },
+        {
+          id: "new-2",
+          title: "Imported Two",
+          slug: "imported-two",
+          parent: "new-1",
+          indent: 1,
+          order: 2,
+          content: "<p>two</p>",
+          metadata: {},
+        },
+      ]),
+    );
+    try {
+      const exitCode = await runSite({
+        command: "site",
+        arguments: { action: "site:items-import" },
+        options: {
+          quiet: true,
+          i: true,
+          itemsImport: importFile,
+          parentId: "item-1",
+        },
+      });
+      assert.equal(exitCode, 0);
+      assert.equal(addPageCalls.length, 2);
+      // top-level item is re-parented onto --parent-id
+      assert.equal(addPageCalls[0].parent, "item-1");
+      assert.equal(addPageCalls[0].title, "Imported One");
+      assert.equal(addPageCalls[0].content, "<p>one</p>");
+      // the child is re-parented through the itemIdMap to the new id
+      assert.equal(addPageCalls[1].parent, "imported-1");
+      assert.equal(addPageCalls[1].title, "Imported Two");
+    } finally {
+      fs.rmSync(importDir, { recursive: true, force: true });
+    }
+  },
+);
+
+test(
+  "site:files-upload uploads every file in a directory source",
+  opts,
+  async () => {
+    resetMocks();
+    const uploadDir = fs.mkdtempSync(
+      path.join(os.tmpdir(), "hax-files-updir-"),
+    );
+    fs.writeFileSync(path.join(uploadDir, "one.png"), "one");
+    fs.writeFileSync(path.join(uploadDir, "two.jpg"), "two");
+    fs.mkdirSync(path.join(uploadDir, "nested"));
+    fs.writeFileSync(path.join(uploadDir, "nested", "skip.txt"), "nested");
+    try {
+      const exitCode = await runSite({
+        command: "site",
+        arguments: { action: "site:files-upload" },
+        options: { quiet: false, i: true, source: uploadDir },
+      });
+      assert.equal(exitCode, 0);
+      assert.equal(cliBridgeCalls.length, 2);
+      assert.ok(
+        cliBridgeCalls.every(
+          (call) => call.route === "v1/files" && call.method === "post",
+        ),
+      );
+      assert.deepEqual(
+        cliBridgeCalls.map((call) => call.fileObj.originalname).sort(),
+        ["one.png", "two.jpg"],
+      );
+      // subdirectories are skipped and temp copies are cleaned up
+      assert.ok(
+        cliBridgeCalls.every((call) => !fs.existsSync(call.fileObj.path)),
+      );
+      assert.ok(outros.length >= 1, "upload count outro recorded");
+    } finally {
+      fs.rmSync(uploadDir, { recursive: true, force: true });
+    }
+  },
+);
+
+test(
+  "site:rsync prompts for destination and runs with the recorded arguments",
+  opts,
+  async () => {
+    resetMocks();
+    const exitCode = await runSite({
+      command: "site",
+      arguments: { action: "site:rsync" },
+      options: { quiet: true, i: true },
+    });
+    assert.equal(exitCode, 0);
+    // stub.text answers the destination and exclude prompts with "placeholder"
+    const rsyncCall = execCalls.find((call) => call.cmd.startsWith("rsync "));
+    assert.ok(rsyncCall, "rsync executed");
+    assert.ok(rsyncCall.cmd.includes("--dry-run"));
+    assert.ok(rsyncCall.cmd.includes("--exclude=placeholder"));
+    assert.ok(rsyncCall.cmd.endsWith(" placeholder"));
   },
 );
