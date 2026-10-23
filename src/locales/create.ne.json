@@ -588,5 +588,11 @@
   "siteReadyToGo": "{name} तयार छ। यससँग काम सुरु गर्न निम्न चलाउनुहोस्:",
   "siteCreateCustomTheme": "कस्टम थिम सिर्जना गर्नुहोस्",
   "siteSearchPlaceholder": "पाठ",
-  "siteExportSkeletonLabel": "स्केलेटन"
+  "siteExportSkeletonLabel": "स्केलेटन",
+  "siteActionSiteLoginLink": "एकपटक प्रयोग हुने लगइन लिंक बनाउनुहोस् (पासवर्ड बिर्सियो)",
+  "cliOptTtl": "site:login-link को अवधि (सेकेन्ड, वा 10m / 1h); पूर्वनिर्धारित 10m",
+  "cliOptUser": "site:login-link का लागि HAXcms खाता (पूर्वनिर्धारित साइट एडमिन)",
+  "loginLinkTitle": "🔑 एकपटक प्रयोग हुने लगइन लिंक",
+  "loginLinkNoBase": "तपाईंको HAXcms सर्भरले जवाफ दिने URL अगाडि थप्नुहोस्, वा --domain your-site.example सहित फेरि चलाउनुहोस्",
+  "loginLinkDetails": "{user} को रूपमा एकपटक साइन इन गर्छ, {expires} सम्म ({minutes} मिनेट)।\nअर्को लिंक बनाउँदा यो रद्द हुन्छ। यो लिंक भएको जो कोहीले साइट सम्पादन गर्न सक्छ, त्यसैले यसलाई च्याट वा टिकटमा नटाँस्नुहोस्।"
 }

@@ -588,5 +588,11 @@
   "siteReadyToGo": "{name} തയ്യാറാണ്. ഇതിൽ പ്രവർത്തിക്കാൻ ഇത് പ്രവർത്തിപ്പിക്കുക:",
   "siteCreateCustomTheme": "കസ്റ്റം തീം സൃഷ്ടിക്കുക",
   "siteSearchPlaceholder": "പാഠം",
-  "siteExportSkeletonLabel": "സ്കെലിറ്റൺ"
+  "siteExportSkeletonLabel": "സ്കെലിറ്റൺ",
+  "siteActionSiteLoginLink": "ഒറ്റത്തവണ ലോഗിൻ ലിങ്ക് സൃഷ്ടിക്കുക (പാസ്‌വേഡ് മറന്നു)",
+  "cliOptTtl": "site:login-link-ന്റെ കാലാവധി (സെക്കൻഡ്, അല്ലെങ്കിൽ 10m / 1h); ഡിഫോൾട്ട് 10m",
+  "cliOptUser": "site:login-link-നുള്ള HAXcms അക്കൗണ്ട് (ഡിഫോൾട്ടായി സൈറ്റ് അഡ്മിൻ)",
+  "loginLinkTitle": "🔑 ഒറ്റത്തവണ ലോഗിൻ ലിങ്ക്",
+  "loginLinkNoBase": "നിങ്ങളുടെ HAXcms സെർവർ പ്രതികരിക്കുന്ന URL മുന്നിൽ ചേർക്കുക, അല്ലെങ്കിൽ --domain your-site.example ഉപയോഗിച്ച് വീണ്ടും പ്രവർത്തിപ്പിക്കുക",
+  "loginLinkDetails": "{expires} വരെ ({minutes} മിനിറ്റ്) {user} ആയി ഒരിക്കൽ ലോഗിൻ ചെയ്യുന്നു.\nമറ്റൊരു ലിങ്ക് സൃഷ്ടിച്ചാൽ ഇത് റദ്ദാകും. ഈ ലിങ്ക് ഉള്ള ആർക്കും സൈറ്റ് എഡിറ്റ് ചെയ്യാം, അതിനാൽ ഇത് ചാറ്റുകളിലോ ടിക്കറ്റുകളിലോ ഒട്ടിക്കരുത്."
 }

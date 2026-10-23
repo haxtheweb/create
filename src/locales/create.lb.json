@@ -588,5 +588,11 @@
   "siteReadyToGo": "{name} ass prett. Féiert Folgendes aus fir domat ze schaffen:",
   "siteCreateCustomTheme": "Personaliséierten Theme erstellen",
   "siteSearchPlaceholder": "Lektioun",
-  "siteExportSkeletonLabel": "Skelett"
+  "siteExportSkeletonLabel": "Skelett",
+  "siteActionSiteLoginLink": "Eemolege Login-Link generéieren (Passwuert vergiess)",
+  "cliOptTtl": "Gëltegkeetsdauer vun engem site:login-link (Sekonnen, oder 10m / 1h); Standard 10m",
+  "cliOptUser": "HAXcms-Kont fir site:login-link (Standard: de Site-Administrateur)",
+  "loginLinkTitle": "🔑 Eemolege Login-Link",
+  "loginLinkNoBase": "Setz d'URL virdrun, op där däin HAXcms-Server äntwert, oder start nach eng Kéier mat --domain your-site.example",
+  "loginLinkDetails": "Mellt sech eemol als {user} un, bis {expires} ({minutes} Min.).\nE neie Link generéieren annuléiert dësen. Jiddereen mat dësem Link kann de Site änneren, also kopéier en net an Chats oder Tickets."
 }

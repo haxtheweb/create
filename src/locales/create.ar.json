@@ -592,5 +592,11 @@
   "siteReadyToGo": "{name} جاهز. شغّل ما يلي لبدء العمل عليه:",
   "siteCreateCustomTheme": "إنشاء سمة مخصصة",
   "siteSearchPlaceholder": "درس",
-  "siteExportSkeletonLabel": "هيكل"
+  "siteExportSkeletonLabel": "هيكل",
+  "siteActionSiteLoginLink": "إنشاء رابط تسجيل دخول لمرة واحدة (نسيت كلمة المرور)",
+  "cliOptTtl": "مدة صلاحية site:login-link (بالثواني، أو 10m / 1h)؛ الافتراضي 10m",
+  "cliOptUser": "حساب HAXcms المستخدم مع site:login-link (الافتراضي هو مسؤول الموقع)",
+  "loginLinkTitle": "🔑 رابط تسجيل دخول لمرة واحدة",
+  "loginLinkNoBase": "أضف في بدايته عنوان URL الذي يستجيب عليه خادم HAXcms، أو أعد التشغيل باستخدام --domain your-site.example",
+  "loginLinkDetails": "يسجّل الدخول باسم {user} مرة واحدة، حتى {expires} ({minutes} دقيقة).\nإنشاء رابط آخر يلغي هذا الرابط. يمكن لأي شخص لديه هذا الرابط تعديل الموقع، لذا لا تلصقه في المحادثات أو التذاكر."
 }

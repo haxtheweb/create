@@ -588,5 +588,11 @@
   "siteReadyToGo": "{name} prest dago. Exekutatu hau harekin lanean hasteko:",
   "siteCreateCustomTheme": "Sortu gai pertsonalizatua",
   "siteSearchPlaceholder": "ikasgaia",
-  "siteExportSkeletonLabel": "Eskeletoa"
+  "siteExportSkeletonLabel": "Eskeletoa",
+  "siteActionSiteLoginLink": "Sortu behin erabiltzeko saio-hasierako esteka (pasahitza ahaztuta)",
+  "cliOptTtl": "site:login-link baten iraupena (segundoak, edo 10m / 1h); lehenetsia 10m",
+  "cliOptUser": "site:login-link-erako HAXcms kontua (lehenetsia: gunearen administratzailea)",
+  "loginLinkTitle": "🔑 Behin erabiltzeko saio-hasierako esteka",
+  "loginLinkNoBase": "Jarri aurretik zure HAXcms zerbitzariak erantzuten duen URLa, edo exekutatu berriro --domain your-site.example erabiliz",
+  "loginLinkDetails": "{user} gisa hasten du saioa behin, {expires} arte ({minutes} min).\nBeste esteka bat sortzeak hau baliogabetzen du. Esteka hau duen edonork edita dezake gunea, beraz ez itsatsi txatetan edo txarteletan."
 }

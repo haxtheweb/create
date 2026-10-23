@@ -588,5 +588,11 @@
   "siteReadyToGo": "{name} está listo. Execute o seguinte para comezar a traballar con el:",
   "siteCreateCustomTheme": "Crear un tema personalizado",
   "siteSearchPlaceholder": "lección",
-  "siteExportSkeletonLabel": "Esqueleto"
+  "siteExportSkeletonLabel": "Esqueleto",
+  "siteActionSiteLoginLink": "Xerar unha ligazón de inicio de sesión dun só uso (contrasinal esquecido)",
+  "cliOptTtl": "duración dunha site:login-link (segundos, ou 10m / 1h); predeterminado 10m",
+  "cliOptUser": "conta de HAXcms para site:login-link (por defecto, o administrador do sitio)",
+  "loginLinkTitle": "🔑 Ligazón de inicio de sesión dun só uso",
+  "loginLinkNoBase": "Antepón o URL no que responde o teu servidor HAXcms ou volve executar con --domain your-site.example",
+  "loginLinkDetails": "Inicia sesión como {user} unha soa vez, ata {expires} ({minutes} min).\nXerar outra ligazón anula esta. Calquera persoa con esta ligazón pode editar o sitio, así que non a pegues en chats nin tickets."
 }

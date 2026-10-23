@@ -32,9 +32,18 @@ import {
   resolveLocalPath,
   sanitizeIfString,
 } from "../site-security.js";
-import { t } from "../i18n.js";
+import { t, getLanguage } from "../i18n.js";
 import { normalizeSiteLanguage } from "../language-registry.js";
 import { apiMessage, annotateApiBody } from "../api-messages.js";
+import {
+  resolveLoginLinkBase,
+  buildLoginLinkUrl,
+  buildLoginLinkPath,
+  loadMagicLinkStore,
+  parseLoginLinkTtl,
+  isPhpInstall,
+  phpInstallError,
+} from "../login-link.js";
 
 // Security (Stream-A): the deprecated @haxtheweb/open-apis npm dependency was
 // removed; converter calls now route in-process through haxcms-nodejs handlers
@@ -1028,6 +1037,7 @@ export function siteActions() {
     { value: "site:surge", label: t("siteActionSiteSurge") },
     { value: "site:netlify", label: t("siteActionSiteNetlify") },
     { value: "site:vercel", label: t("siteActionSiteVercel") },
+    { value: "site:login-link", label: t("siteActionSiteLoginLink") },
     { value: "setup:github-actions", label: t("siteActionSetupGithubActions") },
     { value: "setup:gitlab-ci", label: t("siteActionSetupGitlabCi") },
     { value: "setup:replit", label: t("siteActionSetupReplit") },
@@ -2865,6 +2875,73 @@ export async function siteCommandDetected(commandRun) {
           }
         } catch (e) {
           log(formatErrorForLogging(e), "error");
+        }
+        break;
+      case "site:login-link":
+        // haxtheweb/issues#2854: recover access to a deployed HAXcms by
+        // minting a one-time sign-in link straight into the _config this
+        // site's server reads. Filesystem access to _config is the trust
+        // boundary (it already allows replacing .user), so no password needed.
+        try {
+          // a link minted into a PHP install's _config could never redeem
+          if (isPhpInstall(HAXCMS.configDirectory)) {
+            throw phpInstallError();
+          }
+          const magicLinkStore = await loadMagicLinkStore();
+          const ttlSeconds = parseLoginLinkTtl(commandRun.options.ttl);
+          const issued = magicLinkStore.issueMagicLink(HAXCMS, {
+            user:
+              typeof commandRun.options.user === "string"
+                ? commandRun.options.user
+                : undefined,
+            channel: "cli",
+            ttlSeconds: ttlSeconds,
+          });
+          const manifestDomain =
+            activeHaxsite.manifest &&
+            activeHaxsite.manifest.metadata &&
+            activeHaxsite.manifest.metadata.site
+              ? activeHaxsite.manifest.metadata.site.domain
+              : "";
+          const base = resolveLoginLinkBase(
+            commandRun.options.domain,
+            manifestDomain,
+          );
+          const expires = new Date(issued.expiresAt * 1000);
+          const result = {
+            url: base ? buildLoginLinkUrl(base, issued.token) : null,
+            path: buildLoginLinkPath(issued.token),
+            user: issued.user,
+            expiresAt: expires.toISOString(),
+            ttlSeconds: issued.ttlSeconds,
+            configDirectory: HAXCMS.configDirectory,
+          };
+          // the link IS the output, so it is printed even with --quiet
+          if (structuredOutputEnabled() || commandRun.options.i === false) {
+            logStructuredOutput(commandRun, result);
+          } else {
+            const where = result.url
+              ? color.bold(result.url)
+              : `${color.bold(result.path)}\n${t("loginLinkNoBase")}`;
+            p.note(
+              `${where}\n\n${t("loginLinkDetails", {
+                user: color.bold(issued.user),
+                expires: (() => {
+                  // format in the CLI's language, not just the OS locale
+                  try {
+                    return expires.toLocaleString(getLanguage());
+                  } catch {
+                    return expires.toLocaleString();
+                  }
+                })(),
+                minutes: Math.round(issued.ttlSeconds / 60),
+              })}`,
+              t("loginLinkTitle"),
+            );
+          }
+        } catch (e) {
+          log(formatErrorForLogging(e), "error");
+          process.exitCode = 1;
         }
         break;
       case "site:file-list":

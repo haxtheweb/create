@@ -588,5 +588,11 @@
   "siteReadyToGo": "{name} je pripravená. Na začatie práce spustite:",
   "siteCreateCustomTheme": "Vytvoriť vlastnú tému",
   "siteSearchPlaceholder": "lekcia",
-  "siteExportSkeletonLabel": "Kostra"
+  "siteExportSkeletonLabel": "Kostra",
+  "siteActionSiteLoginLink": "Vygenerovať jednorazový prihlasovací odkaz (zabudnuté heslo)",
+  "cliOptTtl": "platnosť site:login-link (sekundy alebo 10m / 1h); predvolene 10m",
+  "cliOptUser": "účet HAXcms pre site:login-link (predvolene správca stránky)",
+  "loginLinkTitle": "🔑 Jednorazový prihlasovací odkaz",
+  "loginLinkNoBase": "Pridajte pred neho URL, na ktorej odpovedá váš server HAXcms, alebo spustite znova s --domain your-site.example",
+  "loginLinkDetails": "Jednorazovo prihlási ako {user}, do {expires} ({minutes} min).\nVygenerovanie ďalšieho odkazu tento zruší. Ktokoľvek s týmto odkazom môže upravovať stránku, preto ho nevkladajte do chatov ani tiketov."
 }

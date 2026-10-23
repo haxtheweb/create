@@ -588,5 +588,11 @@
   "siteReadyToGo": "{name} ti ṣetán. Ṣiṣẹ́ àwọn wọ̀nyí láti bẹ̀rẹ̀ iṣẹ́ pẹ̀lú rẹ̀:",
   "siteCreateCustomTheme": "Ṣẹ̀dá Àkòrí Àdáni",
   "siteSearchPlaceholder": "ẹ̀kọ́",
-  "siteExportSkeletonLabel": "Egungun"
+  "siteExportSkeletonLabel": "Egungun",
+  "siteActionSiteLoginLink": "Ṣẹ̀dá ìjápọ̀ ìwọlé ẹ̀ẹ̀kan ṣoṣo (ọ̀rọ̀ aṣínà tí o gbàgbé)",
+  "cliOptTtl": "àkókò ìwúlò site:login-link (ìṣẹ́jú-àáyá, tàbí 10m / 1h); àìyípadà 10m",
+  "cliOptUser": "àkáǹtì HAXcms fún site:login-link (àìyípadà ni alábòójútó ojúlé)",
+  "loginLinkTitle": "🔑 Ìjápọ̀ ìwọlé ẹ̀ẹ̀kan ṣoṣo",
+  "loginLinkNoBase": "Fi URL tí olùpèsè HAXcms rẹ ń dáhùn lórí rẹ̀ ṣáájú rẹ̀, tàbí tún un ṣiṣẹ́ pẹ̀lú --domain your-site.example",
+  "loginLinkDetails": "Ó ń wọlé gẹ́gẹ́ bí {user} lẹ́ẹ̀kan, títí di {expires} ({minutes} ìṣẹ́jú).\nṢíṣẹ̀dá ìjápọ̀ míì yóò fagi lé èyí. Ẹnikẹ́ni tó bá ní ìjápọ̀ yìí lè ṣàtúnṣe ojúlé náà, nítorí náà má ṣe lẹ̀ ẹ́ sínú ìjíròrò tàbí tíkẹ́ẹ̀tì."
 }

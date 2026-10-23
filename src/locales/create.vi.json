@@ -588,5 +588,11 @@
   "siteReadyToGo": "{name} đã sẵn sàng. Chạy lệnh sau để bắt đầu làm việc:",
   "siteCreateCustomTheme": "Tạo giao diện tùy chỉnh",
   "siteSearchPlaceholder": "bài học",
-  "siteExportSkeletonLabel": "Skeleton"
+  "siteExportSkeletonLabel": "Skeleton",
+  "siteActionSiteLoginLink": "Tạo liên kết đăng nhập dùng một lần (quên mật khẩu)",
+  "cliOptTtl": "thời hạn của site:login-link (giây, hoặc 10m / 1h); mặc định 10m",
+  "cliOptUser": "tài khoản HAXcms cho site:login-link (mặc định là quản trị viên site)",
+  "loginLinkTitle": "🔑 Liên kết đăng nhập dùng một lần",
+  "loginLinkNoBase": "Thêm vào trước URL mà máy chủ HAXcms của bạn phản hồi, hoặc chạy lại với --domain your-site.example",
+  "loginLinkDetails": "Đăng nhập một lần với tư cách {user}, đến {expires} ({minutes} phút).\nTạo liên kết khác sẽ hủy liên kết này. Bất kỳ ai có liên kết này đều có thể chỉnh sửa site, vì vậy đừng dán nó vào cuộc trò chuyện hay ticket."
 }

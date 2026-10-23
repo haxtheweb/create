@@ -588,5 +588,11 @@
   "siteReadyToGo": "{name} தயார். இதனுடன் வேலை செய்யத் தொடங்க பின்வருவதை இயக்கவும்:",
   "siteCreateCustomTheme": "தனிப்பயன் Theme ஐ உருவாக்கு",
   "siteSearchPlaceholder": "பாடம்",
-  "siteExportSkeletonLabel": "Skeleton"
+  "siteExportSkeletonLabel": "Skeleton",
+  "siteActionSiteLoginLink": "ஒருமுறை உள்நுழைவு இணைப்பை உருவாக்கு (கடவுச்சொல் மறந்தது)",
+  "cliOptTtl": "site:login-link இன் ஆயுட்காலம் (வினாடிகள், அல்லது 10m / 1h); இயல்புநிலை 10m",
+  "cliOptUser": "site:login-link க்கான HAXcms கணக்கு (இயல்புநிலை: தள நிர்வாகி)",
+  "loginLinkTitle": "🔑 ஒருமுறை உள்நுழைவு இணைப்பு",
+  "loginLinkNoBase": "உங்கள் HAXcms சேவையகம் பதிலளிக்கும் URL ஐ முன்னால் சேர்க்கவும், அல்லது --domain your-site.example உடன் மீண்டும் இயக்கவும்",
+  "loginLinkDetails": "{user} ஆக ஒருமுறை உள்நுழையும், {expires} வரை ({minutes} நிமி).\nபுதிய இணைப்பை உருவாக்கினால் இது ரத்தாகும். இந்த இணைப்பு உள்ள எவரும் தளத்தைத் திருத்தலாம், எனவே அதை அரட்டைகளிலோ டிக்கெட்டுகளிலோ ஒட்ட வேண்டாம்."
 }

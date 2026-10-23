@@ -592,5 +592,11 @@
   "siteReadyToGo": "{name} ist bereit. Führen Sie Folgendes aus, um damit zu arbeiten:",
   "siteCreateCustomTheme": "Benutzerdefiniertes Theme erstellen",
   "siteSearchPlaceholder": "Lektion",
-  "siteExportSkeletonLabel": "Skeleton"
+  "siteExportSkeletonLabel": "Skeleton",
+  "siteActionSiteLoginLink": "Einmal-Login-Link erzeugen (Passwort vergessen)",
+  "cliOptTtl": "Gültigkeitsdauer eines site:login-link (Sekunden oder 10m / 1h); Standard 10m",
+  "cliOptUser": "HAXcms-Konto für site:login-link (Standard: Site-Admin)",
+  "loginLinkTitle": "🔑 Einmal-Login-Link",
+  "loginLinkNoBase": "Stellen Sie die URL voran, unter der Ihr HAXcms-Server erreichbar ist, oder führen Sie den Befehl erneut mit --domain your-site.example aus",
+  "loginLinkDetails": "Meldet einmalig als {user} an, gültig bis {expires} ({minutes} Min.).\nEin neuer Link macht diesen ungültig. Jeder mit diesem Link kann die Site bearbeiten – fügen Sie ihn also nicht in Chats oder Tickets ein."
 }

@@ -588,5 +588,11 @@
   "siteReadyToGo": "{name} సిద్ధంగా ఉంది. దానితో పని ప్రారంభించడానికి కింది వాటిని రన్ చేయండి:",
   "siteCreateCustomTheme": "కస్టమ్ థీమ్‌ను సృష్టించండి",
   "siteSearchPlaceholder": "పాఠం",
-  "siteExportSkeletonLabel": "స్కెలిటన్"
+  "siteExportSkeletonLabel": "స్కెలిటన్",
+  "siteActionSiteLoginLink": "ఒకసారి వాడే లాగిన్ లింక్‌ను రూపొందించండి (పాస్‌వర్డ్ మర్చిపోయారా)",
+  "cliOptTtl": "site:login-link జీవితకాలం (సెకన్లు, లేదా 10m / 1h); డిఫాల్ట్ 10m",
+  "cliOptUser": "site:login-link కోసం HAXcms ఖాతా (డిఫాల్ట్‌గా సైట్ నిర్వాహకుడు)",
+  "loginLinkTitle": "🔑 ఒకసారి వాడే లాగిన్ లింక్",
+  "loginLinkNoBase": "మీ HAXcms సర్వర్ స్పందించే URL ను ముందు జోడించండి, లేదా --domain your-site.example తో మళ్ళీ అమలు చేయండి",
+  "loginLinkDetails": "{user} గా ఒకసారి సైన్ ఇన్ చేస్తుంది, {expires} వరకు ({minutes} నిమి).\nమరో లింక్ రూపొందిస్తే ఇది రద్దవుతుంది. ఈ లింక్ ఉన్న ఎవరైనా సైట్‌ను సవరించగలరు, కాబట్టి దీన్ని చాట్‌లలో లేదా టికెట్‌లలో అతికించవద్దు."
 }

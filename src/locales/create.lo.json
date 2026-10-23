@@ -588,5 +588,11 @@
   "siteReadyToGo": "{name} ພ້ອມແລ້ວ. ແລ່ນຄຳສັ່ງຕໍ່ໄປນີ້ເພື່ອເລີ່ມເຮັດວຽກກັບມັນ:",
   "siteCreateCustomTheme": "ສ້າງທີມກຳນົດເອງ",
   "siteSearchPlaceholder": "ບົດຮຽນ",
-  "siteExportSkeletonLabel": "ໂຄງຮ່າງ"
+  "siteExportSkeletonLabel": "ໂຄງຮ່າງ",
+  "siteActionSiteLoginLink": "ສ້າງລິ້ງເຂົ້າສູ່ລະບົບແບບໃຊ້ຄັ້ງດຽວ (ລືມລະຫັດຜ່ານ)",
+  "cliOptTtl": "ອາຍຸຂອງ site:login-link (ວິນາທີ, ຫຼື 10m / 1h); ຄ່າເລີ່ມຕົ້ນ 10m",
+  "cliOptUser": "ບັນຊີ HAXcms ສຳລັບ site:login-link (ຄ່າເລີ່ມຕົ້ນແມ່ນຜູ້ດູແລເວັບໄຊ)",
+  "loginLinkTitle": "🔑 ລິ້ງເຂົ້າສູ່ລະບົບແບບໃຊ້ຄັ້ງດຽວ",
+  "loginLinkNoBase": "ເພີ່ມ URL ທີ່ເຊີບເວີ HAXcms ຂອງທ່ານຕອບສະໜອງໄວ້ທາງໜ້າ, ຫຼື ແລ່ນໃໝ່ດ້ວຍ --domain your-site.example",
+  "loginLinkDetails": "ເຂົ້າສູ່ລະບົບເປັນ {user} ໄດ້ຄັ້ງດຽວ, ຈົນຮອດ {expires} ({minutes} ນາທີ).\nການສ້າງລິ້ງໃໝ່ຈະຍົກເລີກລິ້ງນີ້. ໃຜກໍຕາມທີ່ມີລິ້ງນີ້ສາມາດແກ້ໄຂເວັບໄຊໄດ້, ສະນັ້ນຢ່າວາງມັນໃນແຊັດ ຫຼື ທິກເກັດ."
 }

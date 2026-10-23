@@ -629,5 +629,11 @@
   "siteReadyToGo": "{name} is ready to go. Run the following to start working with it:",
   "siteCreateCustomTheme": "Create Custom Theme",
   "siteSearchPlaceholder": "lesson",
-  "siteExportSkeletonLabel": "Skeleton"
+  "siteExportSkeletonLabel": "Skeleton",
+  "siteActionSiteLoginLink": "Generate a one-time login link (forgot password)",
+  "cliOptTtl": "lifetime of a site:login-link (seconds, or 10m / 1h); default 10m",
+  "cliOptUser": "HAXcms account for site:login-link (defaults to the site admin)",
+  "loginLinkTitle": "🔑 One-time login link",
+  "loginLinkNoBase": "Prefix it with the URL your HAXcms server answers on, or re-run with --domain your-site.example",
+  "loginLinkDetails": "Signs in as {user} once, until {expires} ({minutes} min).\nGenerating another link cancels this one. Anyone with this link can edit the site, so don't paste it into chats or tickets."
 }

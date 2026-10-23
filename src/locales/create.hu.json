@@ -588,5 +588,11 @@
   "siteReadyToGo": "{name} használatra kész. A munka megkezdéséhez futtassa a következőt:",
   "siteCreateCustomTheme": "Egyéni téma létrehozása",
   "siteSearchPlaceholder": "lecke",
-  "siteExportSkeletonLabel": "Váz"
+  "siteExportSkeletonLabel": "Váz",
+  "siteActionSiteLoginLink": "Egyszer használatos bejelentkezési link létrehozása (elfelejtett jelszó)",
+  "cliOptTtl": "a site:login-link érvényessége (másodpercben, vagy 10m / 1h); alapértelmezés: 10m",
+  "cliOptUser": "HAXcms-fiók a site:login-link számára (alapértelmezés: a webhely adminisztrátora)",
+  "loginLinkTitle": "🔑 Egyszer használatos bejelentkezési link",
+  "loginLinkNoBase": "Írd elé azt az URL-t, amelyen a HAXcms-szervered elérhető, vagy futtasd újra a --domain your-site.example kapcsolóval",
+  "loginLinkDetails": "Egyszer jelentkeztet be {user} felhasználóként, eddig: {expires} ({minutes} perc).\nÚj link létrehozása érvényteleníti ezt. Bárki, akinél ez a link van, szerkesztheti a webhelyet, ezért ne másold be csevegésekbe vagy hibajegyekbe."
 }

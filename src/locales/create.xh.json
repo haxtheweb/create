@@ -588,5 +588,11 @@
   "siteReadyToGo": "{name} ilungile. Qhuba oku kulandelayo ukuqala ukusebenza ngayo:",
   "siteCreateCustomTheme": "Dala uMxholo owenziwe ngokwezifiso",
   "siteSearchPlaceholder": "isifundo",
-  "siteExportSkeletonLabel": "Isakhelo"
+  "siteExportSkeletonLabel": "Isakhelo",
+  "siteActionSiteLoginLink": "Yenza ikhonkco lokungena elisetyenziswa kanye (ugqithiso olulibalekileyo)",
+  "cliOptTtl": "ixesha lokuphila kwe-site:login-link (imizuzwana, okanye 10m / 1h); ngokungagqibekanga 10m",
+  "cliOptUser": "iakhawunti ye-HAXcms ye-site:login-link (ngokungagqibekanga ngumlawuli wesayithi)",
+  "loginLinkTitle": "🔑 Ikhonkco lokungena elisetyenziswa kanye",
+  "loginLinkNoBase": "Faka ngaphambili i-URL ephendula kuyo iseva yakho ye-HAXcms, okanye uphinde uqhube nge --domain your-site.example",
+  "loginLinkDetails": "Ingenisa njengo-{user} kanye, kude kube ngu-{expires} ({minutes} min).\nUkwenza elinye ikhonkco kurhoxisa eli. Nabani na onale khonkco angahlela isayithi, ngoko musa ukulincamathisela kwiincoko okanye kumatikiti."
 }

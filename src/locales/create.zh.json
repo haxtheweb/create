@@ -592,5 +592,11 @@
   "siteReadyToGo": "{name} 已准备就绪。运行以下命令开始使用：",
   "siteCreateCustomTheme": "创建自定义主题",
   "siteSearchPlaceholder": "课程",
-  "siteExportSkeletonLabel": "骨架"
+  "siteExportSkeletonLabel": "骨架",
+  "siteActionSiteLoginLink": "生成一次性登录链接（忘记密码）",
+  "cliOptTtl": "site:login-link 的有效期（秒，或 10m / 1h）；默认 10m",
+  "cliOptUser": "site:login-link 使用的 HAXcms 账户（默认为站点管理员）",
+  "loginLinkTitle": "🔑 一次性登录链接",
+  "loginLinkNoBase": "在前面加上 HAXcms 服务器响应的 URL，或使用 --domain your-site.example 重新运行",
+  "loginLinkDetails": "以 {user} 身份登录一次，有效期至 {expires}（{minutes} 分钟）。\n生成新链接会使此链接失效。任何拿到此链接的人都能编辑站点，请勿粘贴到聊天或工单中。"
 }

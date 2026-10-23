@@ -588,5 +588,11 @@
   "siteReadyToGo": "{name} бэлэн боллоо. Ажиллаж эхлэхийн тулд дараахыг ажиллуулна уу:",
   "siteCreateCustomTheme": "Өөрийн загвар үүсгэх",
   "siteSearchPlaceholder": "хичээл",
-  "siteExportSkeletonLabel": "Skeleton"
+  "siteExportSkeletonLabel": "Skeleton",
+  "siteActionSiteLoginLink": "Нэг удаагийн нэвтрэх холбоос үүсгэх (нууц үгээ мартсан)",
+  "cliOptTtl": "site:login-link-ийн хүчинтэй хугацаа (секунд, эсвэл 10m / 1h); анхдагч 10m",
+  "cliOptUser": "site:login-link-д зориулсан HAXcms бүртгэл (анхдагч нь сайтын админ)",
+  "loginLinkTitle": "🔑 Нэг удаагийн нэвтрэх холбоос",
+  "loginLinkNoBase": "Урд нь HAXcms серверийн тань хариулдаг URL-г нэмэх, эсвэл --domain your-site.example-тэй дахин ажиллуулна уу",
+  "loginLinkDetails": "{user} нэрээр нэг удаа нэвтэрнэ, {expires} хүртэл ({minutes} мин).\nӨөр холбоос үүсгэвэл энэ нь хүчингүй болно. Энэ холбоостой хэн ч сайтыг засах боломжтой тул чат эсвэл тикетэд бүү хуулаарай."
 }

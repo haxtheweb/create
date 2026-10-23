@@ -588,5 +588,11 @@
   "siteReadyToGo": "Handa na ang {name}. Patakbuhin ang sumusunod para magsimula:",
   "siteCreateCustomTheme": "Gumawa ng Custom Theme",
   "siteSearchPlaceholder": "aralin",
-  "siteExportSkeletonLabel": "Skeleton"
+  "siteExportSkeletonLabel": "Skeleton",
+  "siteActionSiteLoginLink": "Gumawa ng isang beses na login link (nakalimutan ang password)",
+  "cliOptTtl": "tagal ng bisa ng site:login-link (segundo, o 10m / 1h); default 10m",
+  "cliOptUser": "HAXcms account para sa site:login-link (default ang admin ng site)",
+  "loginLinkTitle": "🔑 Isang beses na login link",
+  "loginLinkNoBase": "Lagyan ito sa unahan ng URL kung saan sumasagot ang iyong HAXcms server, o patakbuhin muli gamit ang --domain your-site.example",
+  "loginLinkDetails": "Magla-log in bilang {user} nang isang beses, hanggang {expires} ({minutes} min).\nKapag gumawa ng panibagong link, makakansela ito. Sinumang may link na ito ay makakapag-edit ng site, kaya huwag itong i-paste sa mga chat o ticket."
 }

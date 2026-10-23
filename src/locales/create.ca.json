@@ -588,5 +588,11 @@
   "siteReadyToGo": "{name} està a punt. Executeu el següent per començar a treballar-hi:",
   "siteCreateCustomTheme": "Crea un tema personalitzat",
   "siteSearchPlaceholder": "lliçó",
-  "siteExportSkeletonLabel": "Esquelet"
+  "siteExportSkeletonLabel": "Esquelet",
+  "siteActionSiteLoginLink": "Genera un enllaç d'inici de sessió d'un sol ús (contrasenya oblidada)",
+  "cliOptTtl": "durada d'un site:login-link (segons, o 10m / 1h); per defecte 10m",
+  "cliOptUser": "compte HAXcms per a site:login-link (per defecte, l'administrador del lloc)",
+  "loginLinkTitle": "🔑 Enllaç d'inici de sessió d'un sol ús",
+  "loginLinkNoBase": "Afegiu-hi al davant l'URL on respon el vostre servidor HAXcms, o torneu-ho a executar amb --domain your-site.example",
+  "loginLinkDetails": "Inicia la sessió com a {user} una sola vegada, fins a {expires} ({minutes} min).\nGenerar un altre enllaç anul·la aquest. Qualsevol amb aquest enllaç pot editar el lloc, així que no l'enganxeu en xats ni tiquets."
 }

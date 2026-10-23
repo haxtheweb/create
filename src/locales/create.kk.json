@@ -588,5 +588,11 @@
   "siteReadyToGo": "{name} дайын. Онымен жұмысты бастау үшін мынаны іске қосыңыз:",
   "siteCreateCustomTheme": "Жеке тақырып жасау",
   "siteSearchPlaceholder": "сабақ",
-  "siteExportSkeletonLabel": "Қаңқа"
+  "siteExportSkeletonLabel": "Қаңқа",
+  "siteActionSiteLoginLink": "Бір реттік кіру сілтемесін жасау (құпиясөзді ұмыттым)",
+  "cliOptTtl": "site:login-link әрекет ету мерзімі (секундпен немесе 10m / 1h); әдепкі 10m",
+  "cliOptUser": "site:login-link үшін HAXcms тіркелгісі (әдепкі — сайт әкімшісі)",
+  "loginLinkTitle": "🔑 Бір реттік кіру сілтемесі",
+  "loginLinkNoBase": "Алдына HAXcms серверіңіз жауап беретін URL мекенжайын қосыңыз немесе --domain your-site.example арқылы қайта іске қосыңыз",
+  "loginLinkDetails": "{user} ретінде бір рет кіреді, {expires} дейін ({minutes} мин).\nЖаңа сілтеме жасау бұл сілтемені жояды. Бұл сілтемесі бар кез келген адам сайтты өңдей алады, сондықтан оны чаттарға немесе тикеттерге қоймаңыз."
 }

@@ -588,5 +588,11 @@
   "siteReadyToGo": "{name} on valmis. Aloita työskentely ajamalla seuraava:",
   "siteCreateCustomTheme": "Luo mukautettu teema",
   "siteSearchPlaceholder": "oppitunti",
-  "siteExportSkeletonLabel": "Skeleton"
+  "siteExportSkeletonLabel": "Skeleton",
+  "siteActionSiteLoginLink": "Luo kertakäyttöinen kirjautumislinkki (unohtunut salasana)",
+  "cliOptTtl": "site:login-link-linkin voimassaoloaika (sekunteina tai 10m / 1h); oletus 10m",
+  "cliOptUser": "HAXcms-tili site:login-link-komennolle (oletuksena sivuston ylläpitäjä)",
+  "loginLinkTitle": "🔑 Kertakäyttöinen kirjautumislinkki",
+  "loginLinkNoBase": "Lisää eteen URL, jossa HAXcms-palvelimesi vastaa, tai suorita uudelleen valinnalla --domain your-site.example",
+  "loginLinkDetails": "Kirjaa sisään käyttäjänä {user} kerran, {expires} asti ({minutes} min).\nUuden linkin luominen mitätöi tämän. Kuka tahansa, jolla on tämä linkki, voi muokata sivustoa, joten älä liitä sitä keskusteluihin tai tiketteihin."
 }

@@ -588,5 +588,11 @@
   "siteReadyToGo": "{name} er klar. Kjør følgende for å begynne å jobbe med det:",
   "siteCreateCustomTheme": "Lag egendefinert tema",
   "siteSearchPlaceholder": "leksjon",
-  "siteExportSkeletonLabel": "Nettstedsmal"
+  "siteExportSkeletonLabel": "Nettstedsmal",
+  "siteActionSiteLoginLink": "Generer en engangslenke for innlogging (glemt passord)",
+  "cliOptTtl": "levetid for site:login-link (sekunder, eller 10m / 1h); standard 10m",
+  "cliOptUser": "HAXcms-konto for site:login-link (standard er nettstedets administrator)",
+  "loginLinkTitle": "🔑 Engangslenke for innlogging",
+  "loginLinkNoBase": "Sett URL-en HAXcms-serveren din svarer på foran, eller kjør på nytt med --domain your-site.example",
+  "loginLinkDetails": "Logger inn som {user} én gang, frem til {expires} ({minutes} min).\nÅ generere en ny lenke annullerer denne. Alle med denne lenken kan redigere nettstedet, så ikke lim den inn i chatter eller saker."
 }

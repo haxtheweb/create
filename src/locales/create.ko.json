@@ -588,5 +588,11 @@
   "siteReadyToGo": "{name} 준비 완료. 작업을 시작하려면 다음을 실행하세요:",
   "siteCreateCustomTheme": "사용자 지정 테마 만들기",
   "siteSearchPlaceholder": "레슨",
-  "siteExportSkeletonLabel": "스켈레톤"
+  "siteExportSkeletonLabel": "스켈레톤",
+  "siteActionSiteLoginLink": "일회용 로그인 링크 생성(비밀번호 분실)",
+  "cliOptTtl": "site:login-link 유효 기간(초 단위 또는 10m / 1h), 기본값 10m",
+  "cliOptUser": "site:login-link에 사용할 HAXcms 계정(기본값: 사이트 관리자)",
+  "loginLinkTitle": "🔑 일회용 로그인 링크",
+  "loginLinkNoBase": "HAXcms 서버가 응답하는 URL을 앞에 붙이거나 --domain your-site.example 옵션으로 다시 실행하세요",
+  "loginLinkDetails": "{user}(으)로 한 번 로그인할 수 있으며 {expires}까지 유효합니다({minutes}분).\n새 링크를 생성하면 이 링크는 취소됩니다. 이 링크가 있으면 누구나 사이트를 편집할 수 있으므로 채팅이나 티켓에 붙여 넣지 마세요."
 }

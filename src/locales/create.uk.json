@@ -588,5 +588,11 @@
   "siteReadyToGo": "{name} готовий. Щоб почати роботу, виконайте:",
   "siteCreateCustomTheme": "Створити власну тему",
   "siteSearchPlaceholder": "урок",
-  "siteExportSkeletonLabel": "Каркас"
+  "siteExportSkeletonLabel": "Каркас",
+  "siteActionSiteLoginLink": "Створити одноразове посилання для входу (забули пароль)",
+  "cliOptTtl": "термін дії site:login-link (секунди або 10m / 1h); типово 10m",
+  "cliOptUser": "обліковий запис HAXcms для site:login-link (типово адміністратор сайту)",
+  "loginLinkTitle": "🔑 Одноразове посилання для входу",
+  "loginLinkNoBase": "Додайте на початок URL, на якому відповідає ваш сервер HAXcms, або запустіть знову з --domain your-site.example",
+  "loginLinkDetails": "Один раз виконує вхід як {user}, до {expires} ({minutes} хв).\nСтворення нового посилання скасовує це. Будь-хто з цим посиланням може редагувати сайт, тож не вставляйте його в чати чи заявки."
 }

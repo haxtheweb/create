@@ -588,5 +588,11 @@
   "siteReadyToGo": "{name} taýýar. Onuň bilen işlemäge başlamak üçin şuny işlediň:",
   "siteCreateCustomTheme": "Ýörite tema dörediň",
   "siteSearchPlaceholder": "sapak",
-  "siteExportSkeletonLabel": "Skelet"
+  "siteExportSkeletonLabel": "Skelet",
+  "siteActionSiteLoginLink": "Bir gezeklik giriş baglanyşygyny döret (açar sözi ýatdan çykdy)",
+  "cliOptTtl": "site:login-link-iň möhleti (sekunt ýa-da 10m / 1h); deslapky 10m",
+  "cliOptUser": "site:login-link üçin HAXcms hasaby (deslapky: saýtyň administratory)",
+  "loginLinkTitle": "🔑 Bir gezeklik giriş baglanyşygy",
+  "loginLinkNoBase": "Öňüne HAXcms serweriňiziň jogap berýän URL-ini goşuň ýa-da --domain your-site.example bilen täzeden işlediň",
+  "loginLinkDetails": "{user} hökmünde bir gezek girýär, {expires} çenli ({minutes} min).\nBaşga baglanyşyk döretmek muny ýatyrýar. Bu baglanyşygy bolan islendik adam saýty üýtgedip biler, şonuň üçin ony çatlara ýa-da biletlere goýmaň."
 }

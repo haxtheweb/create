@@ -588,5 +588,11 @@
   "siteReadyToGo": "{name} រួចរាល់ហើយ។ ដំណើរការខាងក្រោមដើម្បីចាប់ផ្តើមធ្វើការជាមួយវា:",
   "siteCreateCustomTheme": "បង្កើត Theme ផ្ទាល់ខ្លួន",
   "siteSearchPlaceholder": "មេរៀន",
-  "siteExportSkeletonLabel": "Skeleton"
+  "siteExportSkeletonLabel": "Skeleton",
+  "siteActionSiteLoginLink": "បង្កើតតំណចូលប្រើតែម្តង (ភ្លេចពាក្យសម្ងាត់)",
+  "cliOptTtl": "រយៈពេលសុពលភាពនៃ site:login-link (វិនាទី ឬ 10m / 1h); លំនាំដើម 10m",
+  "cliOptUser": "គណនី HAXcms សម្រាប់ site:login-link (លំនាំដើមជាអ្នកគ្រប់គ្រងគេហទំព័រ)",
+  "loginLinkTitle": "🔑 តំណចូលប្រើតែម្តង",
+  "loginLinkNoBase": "បន្ថែម URL ដែលម៉ាស៊ីនមេ HAXcms របស់អ្នកឆ្លើយតបនៅខាងមុខ ឬដំណើរការម្តងទៀតជាមួយ --domain your-site.example",
+  "loginLinkDetails": "ចូលជា {user} តែម្តង រហូតដល់ {expires} ({minutes} នាទី)។\nការបង្កើតតំណថ្មីនឹងលុបចោលតំណនេះ។ អ្នកណាដែលមានតំណនេះអាចកែសម្រួលគេហទំព័របាន ដូច្នេះកុំបិទភ្ជាប់វាក្នុងការជជែក ឬសំបុត្រជំនួយ។"
 }

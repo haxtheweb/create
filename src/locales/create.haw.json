@@ -588,5 +588,11 @@
   "siteReadyToGo": "Ua mākaukau ʻo {name}. E holo i kēia e hoʻomaka i ka hana me ia:",
   "siteCreateCustomTheme": "Hana i kumuhana kūikawā",
   "siteSearchPlaceholder": "haʻawina",
-  "siteExportSkeletonLabel": "Iwi"
+  "siteExportSkeletonLabel": "Iwi",
+  "siteActionSiteLoginLink": "Hana i loulou komo hoʻokahi manawa (poina ka ʻōlelo huna)",
+  "cliOptTtl": "ka lōʻihi o ke ola o site:login-link (kekona, a i ʻole 10m / 1h); paʻamau 10m",
+  "cliOptUser": "moʻokāki HAXcms no site:login-link (paʻamau ka luna kahua)",
+  "loginLinkTitle": "🔑 Loulou komo hoʻokahi manawa",
+  "loginLinkNoBase": "E kau ma mua ka URL e pane mai ai kāu kikowaena HAXcms, a i ʻole e holo hou me --domain your-site.example",
+  "loginLinkDetails": "Komo ma ke ʻano ʻo {user} i hoʻokahi manawa, a hiki i {expires} ({minutes} min).\nʻO ka hana ʻana i loulou hou e hoʻopau i kēia. Hiki i ka mea nona kēia loulou ke hoʻoponopono i ke kahua, no laila mai kau iā ia ma nā kamaʻilio a i ʻole nā tiketi."
 }

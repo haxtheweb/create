@@ -588,5 +588,11 @@
   "siteReadyToGo": "I-{name} isilungile. Sebenzisa okulandelayo ukuze uqale ukusebenza ngayo:",
   "siteCreateCustomTheme": "Dala Itimu Yangokwezifiso",
   "siteSearchPlaceholder": "isifundo",
-  "siteExportSkeletonLabel": "Uhlaka"
+  "siteExportSkeletonLabel": "Uhlaka",
+  "siteActionSiteLoginLink": "Dala isixhumanisi sokungena esisetshenziswa kanye (ukhohlwe iphasiwedi)",
+  "cliOptTtl": "isikhathi sokuphila se-site:login-link (amasekhondi, noma 10m / 1h); okuzenzakalelayo 10m",
+  "cliOptUser": "i-akhawunti ye-HAXcms ye-site:login-link (okuzenzakalelayo umlawuli wesayithi)",
+  "loginLinkTitle": "🔑 Isixhumanisi sokungena esisetshenziswa kanye",
+  "loginLinkNoBase": "Faka ngaphambili i-URL lapho iseva yakho ye-HAXcms iphendula khona, noma uphinde usebenzise nge --domain your-site.example",
+  "loginLinkDetails": "Ingena njengo-{user} kanye, kuze kube ngu-{expires} ({minutes} min).\nUkudala esinye isixhumanisi kukhansela lesi. Noma ubani onalesi sixhumanisi angahlela isayithi, ngakho ungasinamathiseli ezingxoxweni noma kumathikithi."
 }

@@ -588,5 +588,11 @@
   "siteReadyToGo": "{name} تیار اے۔ ایہدے نال کم شروع کرن لئی ایہ چلاؤ:",
   "siteCreateCustomTheme": "کسٹم تھیم بناؤ",
   "siteSearchPlaceholder": "سبق",
-  "siteExportSkeletonLabel": "سکیلیٹن"
+  "siteExportSkeletonLabel": "سکیلیٹن",
+  "siteActionSiteLoginLink": "اک واری لاگ ان لنک بناؤ (پاس ورڈ بھل گیا)",
+  "cliOptTtl": "site:login-link دی مدت (سیکنڈ، یا 10m / 1h)؛ ڈیفالٹ 10m",
+  "cliOptUser": "site:login-link لئی HAXcms کھاتہ (ڈیفالٹ سائٹ ایڈمن)",
+  "loginLinkTitle": "🔑 اک واری لاگ ان لنک",
+  "loginLinkNoBase": "ایہدے اگے اوہ URL لاؤ جیہدے تے تہاڈا HAXcms سرور جواب دیندا اے، یا --domain your-site.example نال فیر چلاؤ",
+  "loginLinkDetails": "{user} وجوں اک واری سائن ان کردا اے، {expires} تک ({minutes} منٹ)۔\nہور لنک بناون نال ایہ منسوخ ہو جاندا اے۔ جیہدے کول وی ایہ لنک ہووے اوہ سائٹ ایڈٹ کر سکدا اے، ایس لئی ایہنوں چیٹاں یا ٹکٹاں وچ پیسٹ نہ کرو۔"
 }

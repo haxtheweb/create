@@ -588,5 +588,11 @@
   "siteReadyToGo": "{name} is gereed. Voer die volgende uit om daarmee te begin werk:",
   "siteCreateCustomTheme": "Skep pasgemaakte tema",
   "siteSearchPlaceholder": "les",
-  "siteExportSkeletonLabel": "Geraamte"
+  "siteExportSkeletonLabel": "Geraamte",
+  "siteActionSiteLoginLink": "Genereer 'n eenmalige aanmeldskakel (wagwoord vergeet)",
+  "cliOptTtl": "leeftyd van 'n site:login-link (sekondes, of 10m / 1h); verstek 10m",
+  "cliOptUser": "HAXcms-rekening vir site:login-link (verstek is die werf-admin)",
+  "loginLinkTitle": "🔑 Eenmalige aanmeldskakel",
+  "loginLinkNoBase": "Voeg die URL waarop jou HAXcms-bediener antwoord vooraan, of voer weer uit met --domain your-site.example",
+  "loginLinkDetails": "Meld een keer aan as {user}, tot {expires} ({minutes} min).\n'n Nuwe skakel kanselleer hierdie een. Enigiemand met hierdie skakel kan die werf wysig, so moenie dit in kletse of kaartjies plak nie."
 }

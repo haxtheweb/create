@@ -588,5 +588,11 @@
   "siteReadyToGo": "{name} sedia digunakan. Jalankan yang berikut untuk mula menggunakannya:",
   "siteCreateCustomTheme": "Cipta Tema Tersuai",
   "siteSearchPlaceholder": "pelajaran",
-  "siteExportSkeletonLabel": "Rangka"
+  "siteExportSkeletonLabel": "Rangka",
+  "siteActionSiteLoginLink": "Jana pautan log masuk sekali guna (lupa kata laluan)",
+  "cliOptTtl": "tempoh hayat site:login-link (saat, atau 10m / 1h); lalai 10m",
+  "cliOptUser": "akaun HAXcms untuk site:login-link (lalai kepada pentadbir tapak)",
+  "loginLinkTitle": "🔑 Pautan log masuk sekali guna",
+  "loginLinkNoBase": "Tambahkan URL yang dijawab oleh pelayan HAXcms anda di hadapannya, atau jalankan semula dengan --domain your-site.example",
+  "loginLinkDetails": "Log masuk sebagai {user} sekali sahaja, sehingga {expires} ({minutes} min).\nMenjana pautan lain akan membatalkan pautan ini. Sesiapa yang mempunyai pautan ini boleh menyunting tapak, jadi jangan tampalkannya dalam sembang atau tiket."
 }

@@ -588,5 +588,11 @@
   "siteReadyToGo": "{name} омода аст. Барои оғози кор бо он инро иҷро кунед:",
   "siteCreateCustomTheme": "Сохтани мавзӯи фардӣ",
   "siteSearchPlaceholder": "дарс",
-  "siteExportSkeletonLabel": "Скелет"
+  "siteExportSkeletonLabel": "Скелет",
+  "siteActionSiteLoginLink": "Эҷоди пайванди яккаратаи воридшавӣ (пароли фаромӯшшуда)",
+  "cliOptTtl": "мӯҳлати site:login-link (сония, ё 10m / 1h); пешфарз 10m",
+  "cliOptUser": "ҳисоби HAXcms барои site:login-link (пешфарз маъмури сайт)",
+  "loginLinkTitle": "🔑 Пайванди яккаратаи воридшавӣ",
+  "loginLinkNoBase": "Пеш аз он URL-еро илова кунед, ки сервери HAXcms-и шумо дар он ҷавоб медиҳад, ё бо --domain your-site.example аз нав иҷро кунед",
+  "loginLinkDetails": "Як бор ҳамчун {user} ворид мекунад, то {expires} ({minutes} дақ).\nЭҷоди пайванди дигар инро бекор мекунад. Ҳар кас бо ин пайванд метавонад сайтро таҳрир кунад, пас онро ба чатҳо ё дархостҳо нагузоред."
 }

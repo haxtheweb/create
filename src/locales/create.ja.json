@@ -592,5 +592,11 @@
   "siteReadyToGo": "{name} の準備ができました。作業を始めるには次を実行してください:",
   "siteCreateCustomTheme": "カスタムテーマを作成",
   "siteSearchPlaceholder": "レッスン",
-  "siteExportSkeletonLabel": "スケルトン"
+  "siteExportSkeletonLabel": "スケルトン",
+  "siteActionSiteLoginLink": "ワンタイムログインリンクを生成（パスワードを忘れた場合）",
+  "cliOptTtl": "site:login-link の有効期間（秒、または 10m / 1h）。既定値は 10m",
+  "cliOptUser": "site:login-link の HAXcms アカウント（既定はサイト管理者）",
+  "loginLinkTitle": "🔑 ワンタイムログインリンク",
+  "loginLinkNoBase": "HAXcms サーバーが応答する URL を先頭に付けるか、--domain your-site.example を付けて再実行してください",
+  "loginLinkDetails": "{user} として 1 回だけサインインできます。有効期限: {expires}（{minutes} 分）。\n別のリンクを生成するとこのリンクは無効になります。このリンクを持つ人は誰でもサイトを編集できるため、チャットやチケットに貼り付けないでください。"
 }

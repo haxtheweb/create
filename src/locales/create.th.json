@@ -588,5 +588,11 @@
   "siteReadyToGo": "{name} พร้อมแล้ว รันคำสั่งต่อไปนี้เพื่อเริ่มใช้งาน:",
   "siteCreateCustomTheme": "สร้างธีมแบบกำหนดเอง",
   "siteSearchPlaceholder": "บทเรียน",
-  "siteExportSkeletonLabel": "โครงร่าง"
+  "siteExportSkeletonLabel": "โครงร่าง",
+  "siteActionSiteLoginLink": "สร้างลิงก์เข้าสู่ระบบแบบใช้ครั้งเดียว (ลืมรหัสผ่าน)",
+  "cliOptTtl": "อายุของ site:login-link (วินาที หรือ 10m / 1h); ค่าเริ่มต้น 10m",
+  "cliOptUser": "บัญชี HAXcms สำหรับ site:login-link (ค่าเริ่มต้นคือผู้ดูแลไซต์)",
+  "loginLinkTitle": "🔑 ลิงก์เข้าสู่ระบบแบบใช้ครั้งเดียว",
+  "loginLinkNoBase": "เติม URL ที่เซิร์ฟเวอร์ HAXcms ของคุณตอบสนองไว้ข้างหน้า หรือรันใหม่ด้วย --domain your-site.example",
+  "loginLinkDetails": "เข้าสู่ระบบเป็น {user} ได้ครั้งเดียว จนถึง {expires} ({minutes} นาที)\nการสร้างลิงก์ใหม่จะยกเลิกลิงก์นี้ ใครก็ตามที่มีลิงก์นี้สามารถแก้ไขไซต์ได้ จึงอย่าวางลงในแชทหรือทิกเก็ต"
 }

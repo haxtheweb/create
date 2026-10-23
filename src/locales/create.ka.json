@@ -588,5 +588,11 @@
   "siteReadyToGo": "{name} მზადაა. მასთან სამუშაოდ გაუშვით:",
   "siteCreateCustomTheme": "მორგებული თემის შექმნა",
   "siteSearchPlaceholder": "გაკვეთილი",
-  "siteExportSkeletonLabel": "ჩონჩხი"
+  "siteExportSkeletonLabel": "ჩონჩხი",
+  "siteActionSiteLoginLink": "ერთჯერადი შესვლის ბმულის გენერირება (დაგავიწყდათ პაროლი)",
+  "cliOptTtl": "site:login-link-ის მოქმედების ვადა (წამებში, ან 10m / 1h); ნაგულისხმევი 10m",
+  "cliOptUser": "HAXcms ანგარიში site:login-link-ისთვის (ნაგულისხმევად საიტის ადმინისტრატორი)",
+  "loginLinkTitle": "🔑 ერთჯერადი შესვლის ბმული",
+  "loginLinkNoBase": "წინ დაურთეთ URL, რომელზეც თქვენი HAXcms სერვერი პასუხობს, ან ხელახლა გაუშვით --domain your-site.example-ით",
+  "loginLinkDetails": "ერთხელ შედის როგორც {user}, {expires}-მდე ({minutes} წთ).\nახალი ბმულის გენერირება ამ ბმულს გააუქმებს. ვისაც ეს ბმული აქვს, შეუძლია საიტის რედაქტირება, ამიტომ ნუ ჩასვამთ მას ჩატებში ან ტიკეტებში."
 }

@@ -588,5 +588,11 @@
   "siteReadyToGo": "{name} چمتو دی. د کار پیلولو لپاره لاندې وچلوئ:",
   "siteCreateCustomTheme": "ځانګړې Theme جوړه کړئ",
   "siteSearchPlaceholder": "لوست",
-  "siteExportSkeletonLabel": "Skeleton"
+  "siteExportSkeletonLabel": "Skeleton",
+  "siteActionSiteLoginLink": "یو ځلی د ننوتو لینک جوړ کړئ (پټنوم مو هېر شوی)",
+  "cliOptTtl": "د site:login-link موده (ثانیې، یا 10m / 1h)؛ ډیفالټ 10m",
+  "cliOptUser": "د site:login-link لپاره HAXcms حساب (ډیفالټ د سایټ اډمین)",
+  "loginLinkTitle": "🔑 یو ځلی د ننوتو لینک",
+  "loginLinkNoBase": "مخکې یې هغه URL ورزیات کړئ چې ستاسو HAXcms سرور پرې ځواب ورکوي، یا یې له --domain your-site.example سره بیا وچلوئ",
+  "loginLinkDetails": "یو ځل د {user} په توګه ننوځي، تر {expires} پورې ({minutes} دقیقې).\nد بل لینک جوړول دا لغوه کوي. هر څوک چې دا لینک ولري سایټ سمولی شي، نو په چټونو یا ټکټونو کې یې مه پېسټ کوئ."
 }
