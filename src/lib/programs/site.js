@@ -41,6 +41,8 @@ import {
   buildLoginLinkPath,
   loadMagicLinkStore,
   parseLoginLinkTtl,
+  isPhpInstall,
+  phpInstallError,
 } from "../login-link.js";
 
 // Security (Stream-A): the deprecated @haxtheweb/open-apis npm dependency was
@@ -2881,6 +2883,10 @@ export async function siteCommandDetected(commandRun) {
         // site's server reads. Filesystem access to _config is the trust
         // boundary (it already allows replacing .user), so no password needed.
         try {
+          // a link minted into a PHP install's _config could never redeem
+          if (isPhpInstall(HAXCMS.configDirectory)) {
+            throw phpInstallError();
+          }
           const magicLinkStore = await loadMagicLinkStore();
           const ttlSeconds = parseLoginLinkTtl(commandRun.options.ttl);
           const issued = magicLinkStore.issueMagicLink(HAXCMS, {

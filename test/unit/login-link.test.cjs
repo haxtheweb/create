@@ -28,6 +28,8 @@ const {
   buildLoginLinkPath,
   parseLoginLinkTtl,
   loadMagicLinkStore,
+  isPhpInstall,
+  phpInstallError,
 } = available ? mod : {};
 
 const opts = { skip: skipReason, timeout: 15000 };
@@ -133,3 +135,18 @@ test(
     }
   },
 );
+
+test("isPhpInstall spots a HAXcms PHP install next to the config", opts, () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "hax-php-install-"));
+  fs.mkdirSync(path.join(root, "_config"));
+  assert.equal(isPhpInstall(path.join(root, "_config")), false);
+  fs.mkdirSync(path.join(root, "system/backend/php"), { recursive: true });
+  fs.writeFileSync(
+    path.join(root, "system/backend/php/bootstrapHAX.php"),
+    "<?php",
+  );
+  assert.equal(isPhpInstall(path.join(root, "_config")), true);
+  assert.equal(isPhpInstall(""), false);
+  assert.equal(phpInstallError().code, "MAGIC_LINK_PHP_INSTALL");
+  assert.match(phpInstallError().message, /scripts\/magic-link\.php/);
+});

@@ -7,7 +7,40 @@
 // HAXcms server reads. The CLI only needs filesystem access to that _config;
 // it never talks to the server.
 
+import { existsSync } from "node:fs";
+import path from "node:path";
+
 export const MAGIC_LINK_ROUTE = "system/api/v1/session/magic-link";
+
+/**
+ * True when this _config belongs to a HAXcms PHP install. PHP keeps its
+ * accounts in config.php, which this CLI's Node backend can't read, so a link
+ * minted here would never redeem. Detected by the PHP backend sitting next to
+ * the config directory.
+ */
+export function isPhpInstall(configDirectory) {
+  if (typeof configDirectory !== "string" || configDirectory === "") {
+    return false;
+  }
+  return existsSync(
+    path.join(
+      configDirectory,
+      "..",
+      "system",
+      "backend",
+      "php",
+      "bootstrapHAX.php",
+    ),
+  );
+}
+
+export function phpInstallError() {
+  const err = new Error(
+    "This site is served by HAXcms PHP, which keeps its accounts in config.php. Generate the link on the server with: php system/backend/php/scripts/magic-link.php --base-url=https://your-site.example",
+  );
+  err.code = "MAGIC_LINK_PHP_INSTALL";
+  return err;
+}
 
 function isLoopbackHost(value) {
   const host = String(value).split("/")[0].replace(/:\d+$/, "").toLowerCase();
