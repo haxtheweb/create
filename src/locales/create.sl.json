@@ -588,5 +588,11 @@
   "siteReadyToGo": "{name} je pripravljeno. Za začetek dela zaženite:",
   "siteCreateCustomTheme": "Ustvari temo po meri",
   "siteSearchPlaceholder": "lekcija",
-  "siteExportSkeletonLabel": "Okostje"
+  "siteExportSkeletonLabel": "Okostje",
+  "siteActionSiteLoginLink": "Ustvari enkratno povezavo za prijavo (pozabljeno geslo)",
+  "cliOptTtl": "veljavnost povezave site:login-link (sekunde ali 10m / 1h); privzeto 10m",
+  "cliOptUser": "račun HAXcms za site:login-link (privzeto skrbnik spletišča)",
+  "loginLinkTitle": "🔑 Enkratna povezava za prijavo",
+  "loginLinkNoBase": "Pred povezavo dodajte URL, na katerem se odziva vaš strežnik HAXcms, ali ukaz zaženite znova z --domain your-site.example",
+  "loginLinkDetails": "Enkrat vas prijavi kot {user}, do {expires} ({minutes} min).\nNova povezava prekliče to. Kdor ima to povezavo, lahko ureja spletišče, zato je ne lepite v klepete ali zahtevke."
 }

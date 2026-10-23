@@ -588,5 +588,11 @@
   "siteReadyToGo": "Το {name} είναι έτοιμο. Εκτελέστε τα παρακάτω για να ξεκινήσετε:",
   "siteCreateCustomTheme": "Δημιουργία προσαρμοσμένου θέματος",
   "siteSearchPlaceholder": "μάθημα",
-  "siteExportSkeletonLabel": "Σκελετός"
+  "siteExportSkeletonLabel": "Σκελετός",
+  "siteActionSiteLoginLink": "Δημιουργία συνδέσμου σύνδεσης μίας χρήσης (ξεχάσατε τον κωδικό)",
+  "cliOptTtl": "διάρκεια ισχύος ενός site:login-link (δευτερόλεπτα, ή 10m / 1h)· προεπιλογή 10m",
+  "cliOptUser": "λογαριασμός HAXcms για το site:login-link (προεπιλογή ο διαχειριστής του ιστότοπου)",
+  "loginLinkTitle": "🔑 Σύνδεσμος σύνδεσης μίας χρήσης",
+  "loginLinkNoBase": "Προσθέστε μπροστά το URL στο οποίο αποκρίνεται ο διακομιστής HAXcms, ή εκτελέστε ξανά με --domain your-site.example",
+  "loginLinkDetails": "Συνδέει ως {user} μία φορά, έως {expires} ({minutes} λεπτά).\nΗ δημιουργία νέου συνδέσμου ακυρώνει αυτόν. Όποιος έχει αυτόν τον σύνδεσμο μπορεί να επεξεργαστεί τον ιστότοπο, οπότε μην τον επικολλάτε σε συνομιλίες ή tickets."
 }

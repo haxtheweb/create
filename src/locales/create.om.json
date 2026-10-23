@@ -588,5 +588,11 @@
   "siteReadyToGo": "{name} qophaa'eera. Isa waliin hojjechuu jalqabuuf kana hojjechisi:",
   "siteCreateCustomTheme": "Teemii Dhuunfaa Uumi",
   "siteSearchPlaceholder": "barnoota",
-  "siteExportSkeletonLabel": "Lafee"
+  "siteExportSkeletonLabel": "Lafee",
+  "siteActionSiteLoginLink": "Liinkii seensaa yeroo tokkoo uumi (jecha icciitii irraanfatte)",
+  "cliOptTtl": "turtii site:login-link (sekondii, ykn 10m / 1h); durtii 10m",
+  "cliOptUser": "herrega HAXcms site:login-link-f (durtiin bulchaa marsariitii)",
+  "loginLinkTitle": "🔑 Liinkii seensaa yeroo tokkoo",
+  "loginLinkNoBase": "URL tajaajilaan HAXcms keessan irratti deebisu dura isaatti dabali, ykn --domain your-site.example waliin irra deebi'ii hojjechiisi",
+  "loginLinkDetails": "Akka {user}tti yeroo tokko seensisa, hanga {expires} ({minutes} daq).\nLiinkii biraa uumuun kana haqa. Namni liinkii kana qabu kamiyyuu marsariitii gulaaluu danda'a, kanaaf chaatii ykn tikeetii keessa hin maxxansin."
 }

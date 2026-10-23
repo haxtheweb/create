@@ -588,5 +588,11 @@
   "siteReadyToGo": "{name} siap digunakan. Jalankan perintah berikut untuk mulai bekerja:",
   "siteCreateCustomTheme": "Buat Tema Kustom",
   "siteSearchPlaceholder": "pelajaran",
-  "siteExportSkeletonLabel": "Skeleton"
+  "siteExportSkeletonLabel": "Skeleton",
+  "siteActionSiteLoginLink": "Buat tautan login sekali pakai (lupa kata sandi)",
+  "cliOptTtl": "masa berlaku site:login-link (detik, atau 10m / 1h); bawaan 10m",
+  "cliOptUser": "akun HAXcms untuk site:login-link (bawaan: admin situs)",
+  "loginLinkTitle": "🔑 Tautan login sekali pakai",
+  "loginLinkNoBase": "Awali dengan URL tempat server HAXcms Anda merespons, atau jalankan ulang dengan --domain your-site.example",
+  "loginLinkDetails": "Masuk sebagai {user} satu kali, hingga {expires} ({minutes} menit).\nMembuat tautan lain akan membatalkan tautan ini. Siapa pun yang memiliki tautan ini dapat mengedit situs, jadi jangan tempelkan di obrolan atau tiket."
 }

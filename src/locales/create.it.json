@@ -588,5 +588,11 @@
   "siteReadyToGo": "{name} è pronto. Esegui quanto segue per iniziare a lavorarci:",
   "siteCreateCustomTheme": "Crea tema personalizzato",
   "siteSearchPlaceholder": "lezione",
-  "siteExportSkeletonLabel": "Skeleton"
+  "siteExportSkeletonLabel": "Skeleton",
+  "siteActionSiteLoginLink": "Genera un link di accesso monouso (password dimenticata)",
+  "cliOptTtl": "durata di un site:login-link (secondi, oppure 10m / 1h); predefinito 10m",
+  "cliOptUser": "account HAXcms per site:login-link (predefinito: l'amministratore del sito)",
+  "loginLinkTitle": "🔑 Link di accesso monouso",
+  "loginLinkNoBase": "Anteponi l'URL su cui risponde il tuo server HAXcms, oppure riesegui con --domain your-site.example",
+  "loginLinkDetails": "Accede una sola volta come {user}, fino a {expires} ({minutes} min).\nGenerare un altro link annulla questo. Chiunque abbia questo link può modificare il sito, quindi non incollarlo in chat o ticket."
 }

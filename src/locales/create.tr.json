@@ -588,5 +588,11 @@
   "siteReadyToGo": "{name} hazır. Çalışmaya başlamak için şunu çalıştırın:",
   "siteCreateCustomTheme": "Özel Tema Oluştur",
   "siteSearchPlaceholder": "ders",
-  "siteExportSkeletonLabel": "İskelet"
+  "siteExportSkeletonLabel": "İskelet",
+  "siteActionSiteLoginLink": "Tek kullanımlık giriş bağlantısı oluştur (şifremi unuttum)",
+  "cliOptTtl": "site:login-link geçerlilik süresi (saniye veya 10m / 1h); varsayılan 10m",
+  "cliOptUser": "site:login-link için HAXcms hesabı (varsayılan site yöneticisi)",
+  "loginLinkTitle": "🔑 Tek kullanımlık giriş bağlantısı",
+  "loginLinkNoBase": "Başına HAXcms sunucunuzun yanıt verdiği URL'yi ekleyin veya --domain your-site.example ile yeniden çalıştırın",
+  "loginLinkDetails": "{user} olarak bir kez, {expires} saatine kadar ({minutes} dk) oturum açar.\nYeni bağlantı oluşturmak bunu iptal eder. Bu bağlantıya sahip herkes siteyi düzenleyebilir, bu yüzden sohbetlere veya taleplere yapıştırmayın."
 }

@@ -588,5 +588,11 @@
   "siteReadyToGo": "{name} အသင့်ဖြစ်ပါပြီ။ စတင်အသုံးပြုရန် အောက်ပါတို့ကို run ပါ:",
   "siteCreateCustomTheme": "Custom Theme ဖန်တီးရန်",
   "siteSearchPlaceholder": "သင်ခန်းစာ",
-  "siteExportSkeletonLabel": "Skeleton"
+  "siteExportSkeletonLabel": "Skeleton",
+  "siteActionSiteLoginLink": "တစ်ကြိမ်သုံး login link ဖန်တီးရန် (password မေ့သွားသည်)",
+  "cliOptTtl": "site:login-link ၏ သက်တမ်း (စက္ကန့်၊ သို့မဟုတ် 10m / 1h); မူလ 10m",
+  "cliOptUser": "site:login-link အတွက် HAXcms အကောင့် (မူလမှာ site admin)",
+  "loginLinkTitle": "🔑 တစ်ကြိမ်သုံး login link",
+  "loginLinkNoBase": "သင့် HAXcms server တုံ့ပြန်သော URL ကို ရှေ့တွင် ထည့်ပါ၊ သို့မဟုတ် --domain your-site.example ဖြင့် ပြန်လည်လုပ်ဆောင်ပါ",
+  "loginLinkDetails": "{user} အဖြစ် တစ်ကြိမ် ဝင်ရောက်ပေးသည်၊ {expires} အထိ ({minutes} မိနစ်)။\nနောက်ထပ် link ဖန်တီးပါက ဤ link ပယ်ဖျက်သွားမည်။ ဤ link ရှိသူမည်သူမဆို site ကို ပြင်ဆင်နိုင်သဖြင့် chat သို့မဟုတ် ticket များတွင် မကူးထည့်ပါနှင့်။"
 }

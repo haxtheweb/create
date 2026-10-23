@@ -588,5 +588,11 @@
   "siteReadyToGo": "{name} wis siap. Lakokake iki kanggo miwiti nggarap:",
   "siteCreateCustomTheme": "Gawe Tema Kustom",
   "siteSearchPlaceholder": "pelajaran",
-  "siteExportSkeletonLabel": "Skeleton"
+  "siteExportSkeletonLabel": "Skeleton",
+  "siteActionSiteLoginLink": "Gawe pranala mlebu sepisan (lali tembung sandhi)",
+  "cliOptTtl": "umur site:login-link (detik, utawa 10m / 1h); gawan 10m",
+  "cliOptUser": "akun HAXcms kanggo site:login-link (gawan: admin situs)",
+  "loginLinkTitle": "🔑 Pranala mlebu sepisan",
+  "loginLinkNoBase": "Wenehi ing ngarepe URL papan server HAXcms sampeyan mangsuli, utawa bukak maneh nganggo --domain your-site.example",
+  "loginLinkDetails": "Mlebu dadi {user} sepisan, nganti {expires} ({minutes} menit).\nNggawe pranala liyane bakal mbatalake iki. Sapa wae sing duwe pranala iki bisa nyunting situs, mula aja ditempelake ing obrolan utawa tiket."
 }

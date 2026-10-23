@@ -588,5 +588,11 @@
   "siteReadyToGo": "{name} מוכן. הריצו את הפקודה הבאה כדי להתחיל לעבוד איתו:",
   "siteCreateCustomTheme": "יצירת ערכת נושא מותאמת אישית",
   "siteSearchPlaceholder": "שיעור",
-  "siteExportSkeletonLabel": "שלד"
+  "siteExportSkeletonLabel": "שלד",
+  "siteActionSiteLoginLink": "יצירת קישור כניסה חד-פעמי (שכחתי סיסמה)",
+  "cliOptTtl": "תוקף ה-site:login-link (בשניות, או 10m / 1h); ברירת מחדל 10m",
+  "cliOptUser": "חשבון HAXcms עבור site:login-link (ברירת מחדל: מנהל האתר)",
+  "loginLinkTitle": "🔑 קישור כניסה חד-פעמי",
+  "loginLinkNoBase": "יש להוסיף לפניו את ה-URL שבו שרת ה-HAXcms שלך זמין, או להריץ שוב עם --domain your-site.example",
+  "loginLinkDetails": "מתחבר בתור {user} פעם אחת, עד {expires} ({minutes} דק׳).\nיצירת קישור נוסף מבטלת את הקישור הזה. כל מי שמחזיק בקישור יכול לערוך את האתר, לכן אין להדביק אותו בצ׳אטים או בפניות."
 }

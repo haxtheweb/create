@@ -588,5 +588,11 @@
   "siteReadyToGo": "{name} සූදානම්. එය සමඟ වැඩ ආරම්භ කිරීමට පහත දෑ ධාවනය කරන්න:",
   "siteCreateCustomTheme": "අභිරුචි තේමාවක් සාදන්න",
   "siteSearchPlaceholder": "පාඩම",
-  "siteExportSkeletonLabel": "ඇටසැකිල්ල"
+  "siteExportSkeletonLabel": "ඇටසැකිල්ල",
+  "siteActionSiteLoginLink": "එක් වරක් භාවිත කළ හැකි පිවිසුම් සබැඳියක් ජනනය කරන්න (මුරපදය අමතකයි)",
+  "cliOptTtl": "site:login-link හි වලංගු කාලය (තත්පර, හෝ 10m / 1h); පෙරනිමිය 10m",
+  "cliOptUser": "site:login-link සඳහා HAXcms ගිණුම (පෙරනිමිය අඩවි පරිපාලක)",
+  "loginLinkTitle": "🔑 එක් වරක් භාවිත කළ හැකි පිවිසුම් සබැඳිය",
+  "loginLinkNoBase": "ඔබේ HAXcms සේවාදායකය ප්‍රතිචාර දක්වන URL එක ඉදිරියෙන් එක් කරන්න, නැතහොත් --domain your-site.example සමඟ නැවත ධාවනය කරන්න",
+  "loginLinkDetails": "{user} ලෙස එක් වරක් පිවිසෙයි, {expires} දක්වා (මිනිත්තු {minutes}).\nතවත් සබැඳියක් ජනනය කළහොත් මෙය අවලංගු වේ. මෙම සබැඳිය ඇති ඕනෑම අයෙකුට අඩවිය සංස්කරණය කළ හැකි බැවින්, එය චැට් හෝ ටිකට් තුළ අලවන්න එපා."
 }

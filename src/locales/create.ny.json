@@ -588,5 +588,11 @@
   "siteReadyToGo": "{name} yakonzeka. Yendetsani izi kuti muyambe kugwira nayo ntchito:",
   "siteCreateCustomTheme": "Pangani Theme Yanu",
   "siteSearchPlaceholder": "phunziro",
-  "siteExportSkeletonLabel": "Skeleton"
+  "siteExportSkeletonLabel": "Skeleton",
+  "siteActionSiteLoginLink": "Pangani ulalo wolowera kamodzi (mwaiwala password)",
+  "cliOptTtl": "nthawi ya site:login-link (masekondi, kapena 10m / 1h); mwachisawawa 10m",
+  "cliOptUser": "akaunti ya HAXcms ya site:login-link (mwachisawawa ndi admin wa site)",
+  "loginLinkTitle": "🔑 Ulalo wolowera kamodzi",
+  "loginLinkNoBase": "Ikani patsogolo pake URL yomwe seva yanu ya HAXcms imayankhapo, kapena yendetsaninso ndi --domain your-site.example",
+  "loginLinkDetails": "Imalowa ngati {user} kamodzi, mpaka {expires} ({minutes} min).\nKupanga ulalo wina kumaletsa uwu. Aliyense ali ndi ulalowu akhoza kusintha site, choncho musauike m'macheza kapena m'matikiti."
 }

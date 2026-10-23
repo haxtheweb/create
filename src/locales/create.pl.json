@@ -588,5 +588,11 @@
   "siteReadyToGo": "{name} jest gotowa. Uruchom poniższe, aby zacząć pracę:",
   "siteCreateCustomTheme": "Utwórz motyw niestandardowy",
   "siteSearchPlaceholder": "lekcja",
-  "siteExportSkeletonLabel": "Szkielet"
+  "siteExportSkeletonLabel": "Szkielet",
+  "siteActionSiteLoginLink": "Wygeneruj jednorazowy link logowania (zapomniane hasło)",
+  "cliOptTtl": "czas ważności site:login-link (sekundy lub 10m / 1h); domyślnie 10m",
+  "cliOptUser": "konto HAXcms dla site:login-link (domyślnie administrator witryny)",
+  "loginLinkTitle": "🔑 Jednorazowy link logowania",
+  "loginLinkNoBase": "Poprzedź go adresem URL, pod którym odpowiada Twój serwer HAXcms, lub uruchom ponownie z --domain your-site.example",
+  "loginLinkDetails": "Loguje jednorazowo jako {user}, do {expires} ({minutes} min).\nWygenerowanie kolejnego linku unieważnia ten. Każdy, kto ma ten link, może edytować witrynę, więc nie wklejaj go na czatach ani w zgłoszeniach."
 }

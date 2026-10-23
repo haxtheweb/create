@@ -588,5 +588,11 @@
   "siteReadyToGo": "{name} hazırdır. Onunla işləməyə başlamaq üçün bunu işə salın:",
   "siteCreateCustomTheme": "Fərdi mövzu yarat",
   "siteSearchPlaceholder": "dərs",
-  "siteExportSkeletonLabel": "Skeleton"
+  "siteExportSkeletonLabel": "Skeleton",
+  "siteActionSiteLoginLink": "Birdəfəlik giriş linki yarat (parolu unutmusunuz)",
+  "cliOptTtl": "site:login-link-in qüvvədə olma müddəti (saniyə, və ya 10m / 1h); standart 10m",
+  "cliOptUser": "site:login-link üçün HAXcms hesabı (standart olaraq sayt administratoru)",
+  "loginLinkTitle": "🔑 Birdəfəlik giriş linki",
+  "loginLinkNoBase": "Əvvəlinə HAXcms serverinizin cavab verdiyi URL-i əlavə edin və ya --domain your-site.example ilə yenidən işə salın",
+  "loginLinkDetails": "{user} kimi bir dəfə daxil olur, {expires} vaxtına qədər ({minutes} dəq).\nYeni link yaratmaq bunu ləğv edir. Bu linkə sahib olan hər kəs saytı redaktə edə bilər, ona görə onu çatlara və ya tiketlərə yapışdırmayın."
 }

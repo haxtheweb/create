@@ -588,5 +588,11 @@
   "siteReadyToGo": "{name} yagadzirira. Mhanyisa zvinotevera kuti utange kushanda nayo:",
   "siteCreateCustomTheme": "Gadzira Theme Yako",
   "siteSearchPlaceholder": "chidzidzo",
-  "siteExportSkeletonLabel": "Skeleton"
+  "siteExportSkeletonLabel": "Skeleton",
+  "siteActionSiteLoginLink": "Gadzira link yekupinda kamwe chete (wakanganwa password)",
+  "cliOptTtl": "nguva inogara site:login-link (masekonzi, kana 10m / 1h); default 10m",
+  "cliOptUser": "account yeHAXcms ye site:login-link (default ndiye admin wesaiti)",
+  "loginLinkTitle": "🔑 Link yekupinda kamwe chete",
+  "loginLinkNoBase": "Isa pamberi payo URL inopindura server yako yeHAXcms, kana mhanyisa zvakare ne --domain your-site.example",
+  "loginLinkDetails": "Inopinda se{user} kamwe chete, kusvika {expires} ({minutes} min).\nKugadzira imwe link kunodzima iyi. Ani nani ane link iyi anogona kugadzirisa saiti, saka usaiise mumachats kana matickets."
 }

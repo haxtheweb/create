@@ -588,5 +588,11 @@
   "siteReadyToGo": "{name} ya shirya. Gudanar da waɗannan don fara aiki da shi:",
   "siteCreateCustomTheme": "Ƙirƙiri jigo na musamman",
   "siteSearchPlaceholder": "darasi",
-  "siteExportSkeletonLabel": "Kwarangwal"
+  "siteExportSkeletonLabel": "Kwarangwal",
+  "siteActionSiteLoginLink": "Ƙirƙiri hanyar shiga ta sau ɗaya (an manta kalmar sirri)",
+  "cliOptTtl": "tsawon rayuwar site:login-link (daƙiƙoƙi, ko 10m / 1h); tsoho 10m",
+  "cliOptUser": "asusun HAXcms na site:login-link (tsoho shi ne mai gudanar da shafin)",
+  "loginLinkTitle": "🔑 Hanyar shiga ta sau ɗaya",
+  "loginLinkNoBase": "Saka URL ɗin da sabar HAXcms ɗinka ke amsawa a gabanta, ko sake gudanarwa da --domain your-site.example",
+  "loginLinkDetails": "Yana shiga a matsayin {user} sau ɗaya, har zuwa {expires} ({minutes} min).\nƘirƙirar wata hanyar zai soke wannan. Duk wanda ke da wannan hanyar zai iya gyara shafin, don haka kada ka liƙa ta a hira ko tikiti."
 }

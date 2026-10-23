@@ -588,5 +588,11 @@
   "siteReadyToGo": "Mae {name} yn barod. Rhedwch y canlynol i ddechrau gweithio arno:",
   "siteCreateCustomTheme": "Creu thema bersonol",
   "siteSearchPlaceholder": "gwers",
-  "siteExportSkeletonLabel": "Sgerbwd"
+  "siteExportSkeletonLabel": "Sgerbwd",
+  "siteActionSiteLoginLink": "Cynhyrchu dolen mewngofnodi untro (wedi anghofio cyfrinair)",
+  "cliOptTtl": "oes site:login-link (eiliadau, neu 10m / 1h); rhagosodiad 10m",
+  "cliOptUser": "cyfrif HAXcms ar gyfer site:login-link (gweinyddwr y safle yn ddiofyn)",
+  "loginLinkTitle": "🔑 Dolen mewngofnodi untro",
+  "loginLinkNoBase": "Rhowch yr URL y mae eich gweinydd HAXcms yn ateb arno o'i blaen, neu ail-redeg gyda --domain your-site.example",
+  "loginLinkDetails": "Yn mewngofnodi fel {user} unwaith, tan {expires} ({minutes} mun).\nMae cynhyrchu dolen arall yn canslo hon. Gall unrhyw un sydd â'r ddolen hon olygu'r safle, felly peidiwch â'i gludo mewn sgyrsiau na thocynnau."
 }

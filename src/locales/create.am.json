@@ -588,5 +588,11 @@
   "siteReadyToGo": "{name} ዝግጁ ነው። በእሱ መስራት ለመጀመር የሚከተለውን ያሂዱ፦",
   "siteCreateCustomTheme": "ብጁ ገጽታ ይፍጠሩ",
   "siteSearchPlaceholder": "ትምህርት",
-  "siteExportSkeletonLabel": "አጽም"
+  "siteExportSkeletonLabel": "አጽም",
+  "siteActionSiteLoginLink": "የአንድ ጊዜ መግቢያ አገናኝ ይፍጠሩ (የይለፍ ቃል ረስተዋል)",
+  "cliOptTtl": "የsite:login-link የሚቆይበት ጊዜ (ሰከንዶች፣ ወይም 10m / 1h)፤ ነባሪ 10m",
+  "cliOptUser": "ለsite:login-link የHAXcms መለያ (ነባሪው የሳይቱ አስተዳዳሪ ነው)",
+  "loginLinkTitle": "🔑 የአንድ ጊዜ መግቢያ አገናኝ",
+  "loginLinkNoBase": "የHAXcms አገልጋይዎ የሚመልስበትን URL ከፊቱ ያክሉ፣ ወይም በ--domain your-site.example እንደገና ያሂዱ",
+  "loginLinkDetails": "እንደ {user} አንድ ጊዜ ያስገባል፣ እስከ {expires} ድረስ ({minutes} ደቂቃ)።\nሌላ አገናኝ መፍጠር ይህንን ይሰርዘዋል። ይህ አገናኝ ያለው ማንኛውም ሰው ሳይቱን ማርትዕ ይችላል፣ ስለዚህ በቻቶች ወይም ቲኬቶች ውስጥ አይለጥፉት።"
 }

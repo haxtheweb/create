@@ -588,5 +588,11 @@
   "siteReadyToGo": "Tá {name} réidh. Rith an méid seo a leanas chun tosú ag obair leis:",
   "siteCreateCustomTheme": "Cruthaigh Téama Saincheaptha",
   "siteSearchPlaceholder": "ceacht",
-  "siteExportSkeletonLabel": "Creatlach"
+  "siteExportSkeletonLabel": "Creatlach",
+  "siteActionSiteLoginLink": "Gin nasc logála isteach aonúsáide (dearmad ar an bhfocal faire)",
+  "cliOptTtl": "saolré site:login-link (soicindí, nó 10m / 1h); réamhshocrú 10m",
+  "cliOptUser": "cuntas HAXcms le haghaidh site:login-link (riarthóir an tsuímh de réir réamhshocraithe)",
+  "loginLinkTitle": "🔑 Nasc logála isteach aonúsáide",
+  "loginLinkNoBase": "Cuir roimhe an URL a bhfreagraíonn do fhreastalaí HAXcms air, nó rith arís le --domain your-site.example",
+  "loginLinkDetails": "Logálann isteach mar {user} uair amháin, go dtí {expires} ({minutes} nóim).\nCuireann nasc nua an ceann seo ar ceal. Is féidir le duine ar bith a bhfuil an nasc seo aige an suíomh a chur in eagar, mar sin ná greamaigh é i gcomhráite ná i dticéid."
 }

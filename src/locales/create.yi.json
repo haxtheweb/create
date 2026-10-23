@@ -588,5 +588,11 @@
   "siteReadyToGo": "{name} איז גרייט. לויפֿט דאָס פֿאָלגנדיקע כּדי אָנצוהייבן אַרבעטן דערמיט:",
   "siteCreateCustomTheme": "שאַפֿן אַן אייגענע טעמע",
   "siteSearchPlaceholder": "לעקציע",
-  "siteExportSkeletonLabel": "שקעלעט"
+  "siteExportSkeletonLabel": "שקעלעט",
+  "siteActionSiteLoginLink": "שאַפֿן אַן אײנמאָליקן לאָגין־לינק (פֿאַרגעסן פּאַראָל)",
+  "cliOptTtl": "גילטיקייט פֿון אַ site:login-link (סעקונדעס, אָדער 10m / 1h); גרונט 10m",
+  "cliOptUser": "HAXcms חשבון פֿאַר site:login-link (גרונט: דער זײַטל־אַדמיניסטראַטאָר)",
+  "loginLinkTitle": "🔑 אײנמאָליקער לאָגין־לינק",
+  "loginLinkNoBase": "שטעלט פֿאָרויס דעם URL וווּ אײַער HAXcms סערווער ענטפֿערט, אָדער לויפֿט ווידער מיט --domain your-site.example",
+  "loginLinkDetails": "לאָגט אײַן ווי {user} אײן מאָל, ביז {expires} ({minutes} מינ).\nשאַפֿן אַן אַנדער לינק מבֿטל דעם דאָזיקן. ווער עס האָט דעם לינק קען רעדאַקטירן דעם זײַטל, טאָ שטעלט אים נישט אַרײַן אין שמועסן אָדער טיקעטן."
 }

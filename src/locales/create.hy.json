@@ -588,5 +588,11 @@
   "siteReadyToGo": "{name}-ը պատրաստ է։ Աշխատանքը սկսելու համար գործարկեք:",
   "siteCreateCustomTheme": "Ստեղծել հատուկ թեմա",
   "siteSearchPlaceholder": "դաս",
-  "siteExportSkeletonLabel": "Կմախք"
+  "siteExportSkeletonLabel": "Կմախք",
+  "siteActionSiteLoginLink": "Ստեղծել մեկանգամյա մուտքի հղում (մոռացել եմ գաղտնաբառը)",
+  "cliOptTtl": "site:login-link-ի գործողության ժամկետը (վայրկյաններով կամ 10m / 1h); լռելյայն 10m",
+  "cliOptUser": "HAXcms հաշիվ site:login-link-ի համար (լռելյայն՝ կայքի ադմինիստրատորը)",
+  "loginLinkTitle": "🔑 Մեկանգամյա մուտքի հղում",
+  "loginLinkNoBase": "Դրա սկզբում ավելացրեք այն URL-ը, որով պատասխանում է ձեր HAXcms սերվերը, կամ կրկին գործարկեք --domain your-site.example-ով",
+  "loginLinkDetails": "Մեկ անգամ մուտք է գործում որպես {user}՝ մինչև {expires} ({minutes} րոպե)։\nՆոր հղում ստեղծելը չեղարկում է այս մեկը։ Այս հղումն ունեցող ցանկացած ոք կարող է խմբագրել կայքը, ուստի մի տեղադրեք այն չաթերում կամ տոմսերում։"
 }

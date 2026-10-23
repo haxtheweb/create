@@ -588,5 +588,11 @@
   "siteReadyToGo": "{name} әзер. Аның белән эшли башлау өчен түбәндәгене башкарыгыз:",
   "siteCreateCustomTheme": "Үз темагызны ясау",
   "siteSearchPlaceholder": "дәрес",
-  "siteExportSkeletonLabel": "Скелет"
+  "siteExportSkeletonLabel": "Скелет",
+  "siteActionSiteLoginLink": "Бер тапкыр керү сылтамасы ясау (серсүз онытылган)",
+  "cliOptTtl": "site:login-link гамәлдә булу вакыты (секунд, яки 10m / 1h); килешү буенча 10m",
+  "cliOptUser": "site:login-link өчен HAXcms хисабы (килешү буенча сайт администраторы)",
+  "loginLinkTitle": "🔑 Бер тапкыр керү сылтамасы",
+  "loginLinkNoBase": "Алдына HAXcms серверыгыз җавап биргән URL өстәгез, яки --domain your-site.example белән кабат җибәрегез",
+  "loginLinkDetails": "{user} буларак бер тапкыр кертә, {expires} кадәр ({minutes} мин).\nЯңа сылтама ясау моны юкка чыгара. Бу сылтамасы булган һәркем сайтны үзгәртә ала, шуңа күрә аны чатларга яки тикетларга куймагыз."
 }

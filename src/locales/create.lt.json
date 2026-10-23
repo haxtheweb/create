@@ -588,5 +588,11 @@
   "siteReadyToGo": "{name} paruošta. Norėdami pradėti darbą, paleiskite:",
   "siteCreateCustomTheme": "Sukurti pasirinktinę temą",
   "siteSearchPlaceholder": "pamoka",
-  "siteExportSkeletonLabel": "Šablonas"
+  "siteExportSkeletonLabel": "Šablonas",
+  "siteActionSiteLoginLink": "Sugeneruoti vienkartinę prisijungimo nuorodą (pamiršau slaptažodį)",
+  "cliOptTtl": "site:login-link galiojimo laikas (sekundėmis arba 10m / 1h); numatytasis 10m",
+  "cliOptUser": "HAXcms paskyra, skirta site:login-link (numatytoji – svetainės administratorius)",
+  "loginLinkTitle": "🔑 Vienkartinė prisijungimo nuoroda",
+  "loginLinkNoBase": "Pridėkite priekyje URL, kuriuo atsako jūsų HAXcms serveris, arba paleiskite iš naujo su --domain your-site.example",
+  "loginLinkDetails": "Vieną kartą prisijungia kaip {user}, iki {expires} ({minutes} min.).\nSugeneravus kitą nuorodą, ši atšaukiama. Bet kas, turintis šią nuorodą, gali redaguoti svetainę, todėl neįklijuokite jos į pokalbius ar užklausas."
 }

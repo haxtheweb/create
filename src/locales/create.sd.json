@@ -588,5 +588,11 @@
   "siteReadyToGo": "{name} تيار آهي. ان تي ڪم شروع ڪرڻ لاءِ هيٺيون هلايو:",
   "siteCreateCustomTheme": "ڪسٽم ٿيم ٺاهيو",
   "siteSearchPlaceholder": "سبق",
-  "siteExportSkeletonLabel": "اسڪيليٽن"
+  "siteExportSkeletonLabel": "اسڪيليٽن",
+  "siteActionSiteLoginLink": "هڪ ڀيري لاگ ان لنڪ ٺاهيو (پاسورڊ وسري ويو)",
+  "cliOptTtl": "site:login-link جي مدت (سيڪنڊ، يا 10m / 1h)؛ ڊيفالٽ 10m",
+  "cliOptUser": "site:login-link لاءِ HAXcms کاتو (ڊيفالٽ سائيٽ ايڊمن)",
+  "loginLinkTitle": "🔑 هڪ ڀيري لاگ ان لنڪ",
+  "loginLinkNoBase": "ان جي اڳيان اهو URL لڳايو جنهن تي توهان جو HAXcms سرور جواب ڏئي ٿو، يا --domain your-site.example سان ٻيهر هلايو",
+  "loginLinkDetails": "{user} طور هڪ ڀيرو سائن ان ڪري ٿو، {expires} تائين ({minutes} منٽ).\nٻي لنڪ ٺاهڻ سان هيءَ منسوخ ٿي ويندي. جنهن وٽ به هيءَ لنڪ هجي اهو سائيٽ ايڊٽ ڪري سگهي ٿو، تنهن ڪري ان کي چيٽن يا ٽڪيٽن ۾ پيسٽ نه ڪريو."
 }

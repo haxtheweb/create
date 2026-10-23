@@ -588,5 +588,11 @@
   "siteReadyToGo": "{name} ir gatavs. Palaidiet šo, lai sāktu darbu:",
   "siteCreateCustomTheme": "Izveidot pielāgotu tēmu",
   "siteSearchPlaceholder": "nodarbība",
-  "siteExportSkeletonLabel": "Sagatave"
+  "siteExportSkeletonLabel": "Sagatave",
+  "siteActionSiteLoginLink": "Ģenerēt vienreizēju pieteikšanās saiti (aizmirsta parole)",
+  "cliOptTtl": "site:login-link derīguma laiks (sekundēs vai 10m / 1h); noklusējums 10m",
+  "cliOptUser": "HAXcms konts priekš site:login-link (noklusējums — vietnes administrators)",
+  "loginLinkTitle": "🔑 Vienreizēja pieteikšanās saite",
+  "loginLinkNoBase": "Pievienojiet priekšā URL, kurā atbild jūsu HAXcms serveris, vai palaidiet vēlreiz ar --domain your-site.example",
+  "loginLinkDetails": "Vienreiz piesakās kā {user}, līdz {expires} ({minutes} min).\nĢenerējot citu saiti, šī tiek atcelta. Ikviens, kam ir šī saite, var rediģēt vietni, tāpēc neielīmējiet to tērzēšanās vai pieteikumos."
 }

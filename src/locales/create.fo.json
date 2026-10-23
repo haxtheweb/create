@@ -588,5 +588,11 @@
   "siteReadyToGo": "{name} er klárt. Koyr hetta fyri at byrja at arbeiða við tí:",
   "siteCreateCustomTheme": "Stovna sergjørt tema",
   "siteSearchPlaceholder": "lestur",
-  "siteExportSkeletonLabel": "Grind"
+  "siteExportSkeletonLabel": "Grind",
+  "siteActionSiteLoginLink": "Ger eitt eingangs innritanarleinki (gloymt loyniorð)",
+  "cliOptTtl": "gildistíð hjá einum site:login-link (sekund, ella 10m / 1h); vanligt 10m",
+  "cliOptUser": "HAXcms-kontu til site:login-link (vanliga er umsitarin av síðuni)",
+  "loginLinkTitle": "🔑 Eingangs innritanarleinki",
+  "loginLinkNoBase": "Set URL'in, sum tín HAXcms-ambætari svarar á, framman fyri, ella koyr aftur við --domain your-site.example",
+  "loginLinkDetails": "Ritar inn sum {user} eina ferð, til {expires} ({minutes} min).\nEitt nýtt leinki ógildar hetta. Øll við hesum leinkinum kunnu broyta síðuna, so set tað ikki inn í kjatt ella tickets."
 }

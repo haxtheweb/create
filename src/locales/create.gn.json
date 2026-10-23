@@ -588,5 +588,11 @@
   "siteReadyToGo": "{name} oĩma. Emboguata ko'ã reñepyrũ hag̃ua remba'apo hese:",
   "siteCreateCustomTheme": "Ejapo jeguakaha ñemomoĩmbyre",
   "siteSearchPlaceholder": "mbo'epy",
-  "siteExportSkeletonLabel": "Kangue"
+  "siteExportSkeletonLabel": "Kangue",
+  "siteActionSiteLoginLink": "Emoheñói peteĩ jeike link peteĩjeýnte guarã (nderesarái contraseña-gui)",
+  "cliOptTtl": "site:login-link oduráva (segundo-pe, térã 10m / 1h); ijypykue 10m",
+  "cliOptUser": "HAXcms cuenta site:login-link-pe guarã (ijypykue tenda administrador)",
+  "loginLinkTitle": "🔑 Jeike link peteĩjeýnte guarã",
+  "loginLinkNoBase": "Emoĩ henondépe URL nde HAXcms servidor ombohováiva, térã emongu'e jey --domain your-site.example ndive",
+  "loginLinkDetails": "Oike {user} ramo peteĩjeýnte, {expires} peve ({minutes} min).\nAmbue link emoheñóiramo, kóva oñembogue. Oimeraẽ oguerekóva ko link ikatu omoambue tenda, upévare ani emoĩ chat térã ticket-pe."
 }

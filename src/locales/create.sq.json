@@ -588,5 +588,11 @@
   "siteReadyToGo": "{name} është gati. Ekzekutoni sa vijon për të nisur punën me të:",
   "siteCreateCustomTheme": "Krijo temë të personalizuar",
   "siteSearchPlaceholder": "mësim",
-  "siteExportSkeletonLabel": "Skelet"
+  "siteExportSkeletonLabel": "Skelet",
+  "siteActionSiteLoginLink": "Krijo një lidhje hyrjeje njëpërdorimshe (fjalëkalim i harruar)",
+  "cliOptTtl": "jetëgjatësia e një site:login-link (sekonda, ose 10m / 1h); parazgjedhja 10m",
+  "cliOptUser": "llogaria HAXcms për site:login-link (parazgjedhja: administratori i sajtit)",
+  "loginLinkTitle": "🔑 Lidhje hyrjeje njëpërdorimshe",
+  "loginLinkNoBase": "Vendosi përpara URL-në ku përgjigjet serveri juaj HAXcms, ose ekzekutoje sërish me --domain your-site.example",
+  "loginLinkDetails": "Hyn një herë si {user}, deri më {expires} ({minutes} min).\nKrijimi i një lidhjeje tjetër e anulon këtë. Kushdo që ka këtë lidhje mund ta redaktojë sajtin, ndaj mos e ngjitni në biseda ose tiketa."
 }

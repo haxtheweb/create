@@ -588,5 +588,11 @@
   "siteReadyToGo": "{name} waa diyaar. Socodsii kuwan si aad ugu bilowdo la shaqaynteeda:",
   "siteCreateCustomTheme": "Abuur mawduuc gaar ah",
   "siteSearchPlaceholder": "cashar",
-  "siteExportSkeletonLabel": "Qalfoof"
+  "siteExportSkeletonLabel": "Qalfoof",
+  "siteActionSiteLoginLink": "Samee link gelitaan hal mar ah (furaha sirta waa la ilaaway)",
+  "cliOptTtl": "muddada site:login-link (ilbiriqsiyo, ama 10m / 1h); caadi ahaan 10m",
+  "cliOptUser": "akoonka HAXcms ee site:login-link (caadi ahaan maamulaha goobta)",
+  "loginLinkTitle": "🔑 Link gelitaan hal mar ah",
+  "loginLinkNoBase": "Hore ugu dar URL-ka uu server-kaaga HAXcms ka jawaabo, ama dib u socodsii adoo isticmaalaya --domain your-site.example",
+  "loginLinkDetails": "Hal mar ayuu kugu gelinayaa sida {user}, ilaa {expires} ({minutes} daqiiqo).\nSamaynta link kale waxay baajinaysaa kan. Qof kasta oo haysta link-gan wuu wax ka beddeli karaa goobta, markaa ha ku dhejin wada-sheekaysiyo ama tikidhada."
 }

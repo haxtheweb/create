@@ -167,6 +167,8 @@ async function main() {
     .option("--replace <char>", t("cliOptReplace"))
     .option("--confirm", t("cliOptConfirm"))
     .option("--destroy-confirm", t("cliOptDestroyConfirm"))
+    .option("--ttl <char>", t("cliOptTtl"))
+    .option("--user <char>", t("cliOptUser"))
 
     .version(packageJson.version)
     .helpCommand(true);
@@ -279,6 +281,8 @@ async function main() {
     .option("--replace <char>", t("cliOptReplace"))
     .option("--confirm", t("cliOptConfirm"))
     .option("--destroy-confirm", t("cliOptDestroyConfirm"))
+    .option("--ttl <char>", t("cliOptTtl"))
+    .option("--user <char>", t("cliOptUser"))
     .version(packageJson.version);
   let siteNodeOps = siteNodeOperations();
   for (let i in siteNodeOps) {

@@ -588,5 +588,11 @@
   "siteReadyToGo": "{name} tayyor. U bilan ishlashni boshlash uchun quyidagini bajaring:",
   "siteCreateCustomTheme": "Maxsus mavzu yaratish",
   "siteSearchPlaceholder": "dars",
-  "siteExportSkeletonLabel": "Skeleton"
+  "siteExportSkeletonLabel": "Skeleton",
+  "siteActionSiteLoginLink": "Bir martalik kirish havolasini yaratish (parol unutilgan)",
+  "cliOptTtl": "site:login-link amal qilish muddati (soniya yoki 10m / 1h); standart 10m",
+  "cliOptUser": "site:login-link uchun HAXcms hisobi (standart: sayt administratori)",
+  "loginLinkTitle": "🔑 Bir martalik kirish havolasi",
+  "loginLinkNoBase": "Oldiga HAXcms serveringiz javob beradigan URL manzilini qoʻshing yoki --domain your-site.example bilan qayta ishga tushiring",
+  "loginLinkDetails": "{user} sifatida bir marta kiritadi, {expires} gacha ({minutes} daq).\nYangi havola yaratilsa, bu bekor boʻladi. Bu havolaga ega har kim saytni tahrirlay oladi, shuning uchun uni chatlar yoki tiketlarga joylamang."
 }

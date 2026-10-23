@@ -588,5 +588,11 @@
   "siteReadyToGo": "{name} آماده است. برای شروع کار با آن این را اجرا کنید:",
   "siteCreateCustomTheme": "ایجاد پوسته سفارشی",
   "siteSearchPlaceholder": "درس",
-  "siteExportSkeletonLabel": "اسکلت"
+  "siteExportSkeletonLabel": "اسکلت",
+  "siteActionSiteLoginLink": "ایجاد پیوند ورود یک‌بارمصرف (فراموشی رمز عبور)",
+  "cliOptTtl": "مدت اعتبار site:login-link (ثانیه، یا 10m / 1h)؛ پیش‌فرض 10m",
+  "cliOptUser": "حساب HAXcms برای site:login-link (پیش‌فرض: مدیر سایت)",
+  "loginLinkTitle": "🔑 پیوند ورود یک‌بارمصرف",
+  "loginLinkNoBase": "URL‌ای را که سرور HAXcms شما روی آن پاسخ می‌دهد به ابتدای آن اضافه کنید، یا دوباره با --domain your-site.example اجرا کنید",
+  "loginLinkDetails": "یک بار به‌عنوان {user} وارد می‌شود، تا {expires} ({minutes} دقیقه).\nایجاد پیوند دیگر این پیوند را باطل می‌کند. هر کسی این پیوند را داشته باشد می‌تواند سایت را ویرایش کند، پس آن را در گفتگوها یا تیکت‌ها قرار ندهید."
 }

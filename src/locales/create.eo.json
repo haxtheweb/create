@@ -588,5 +588,11 @@
   "siteReadyToGo": "{name} estas preta. Rulu la jenon por komenci labori kun ĝi:",
   "siteCreateCustomTheme": "Krei propran etoson",
   "siteSearchPlaceholder": "leciono",
-  "siteExportSkeletonLabel": "Skeleto"
+  "siteExportSkeletonLabel": "Skeleto",
+  "siteActionSiteLoginLink": "Generi unufojan ensalutan ligilon (forgesita pasvorto)",
+  "cliOptTtl": "daŭro de site:login-link (sekundoj, aŭ 10m / 1h); defaŭlte 10m",
+  "cliOptUser": "HAXcms-konto por site:login-link (defaŭlte la retejestro)",
+  "loginLinkTitle": "🔑 Unufoja ensaluta ligilo",
+  "loginLinkNoBase": "Antaŭmetu la URL, ĉe kiu via HAXcms-servilo respondas, aŭ rulu denove kun --domain your-site.example",
+  "loginLinkDetails": "Ensalutas kiel {user} unufoje, ĝis {expires} ({minutes} min).\nGeneri alian ligilon nuligas ĉi tiun. Ĉiu ajn kun ĉi tiu ligilo povas redakti la retejon, do ne algluu ĝin en babilejojn aŭ biletojn."
 }

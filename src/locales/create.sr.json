@@ -588,5 +588,11 @@
   "siteReadyToGo": "{name} је спреман. Покрените следеће да почнете рад:",
   "siteCreateCustomTheme": "Креирај прилагођену тему",
   "siteSearchPlaceholder": "лекција",
-  "siteExportSkeletonLabel": "Шаблон"
+  "siteExportSkeletonLabel": "Шаблон",
+  "siteActionSiteLoginLink": "Генериши једнократни линк за пријаву (заборављена лозинка)",
+  "cliOptTtl": "трајање site:login-link (секунде, или 10m / 1h); подразумевано 10m",
+  "cliOptUser": "HAXcms налог за site:login-link (подразумевано администратор сајта)",
+  "loginLinkTitle": "🔑 Једнократни линк за пријаву",
+  "loginLinkNoBase": "Додајте испред URL на коме ваш HAXcms сервер одговара или поново покрените са --domain your-site.example",
+  "loginLinkDetails": "Пријављује као {user} једном, до {expires} ({minutes} мин).\nГенерисање новог линка поништава овај. Свако ко има овај линк може да уређује сајт, зато га не лепите у ћаскања или тикете."
 }

@@ -588,5 +588,11 @@
   "siteReadyToGo": "{name} adịla njikere. Gbaa ihe ndị a ka ịmalite iji ya rụọ ọrụ:",
   "siteCreateCustomTheme": "Mepụta isiokwu ahaziri ahazi",
   "siteSearchPlaceholder": "nkuzi",
-  "siteExportSkeletonLabel": "Ọkpụkpụ"
+  "siteExportSkeletonLabel": "Ọkpụkpụ",
+  "siteActionSiteLoginLink": "Mepụta njikọ nbanye nke otu ugboro (echefuru okwuntughe)",
+  "cliOptTtl": "ogologo ndụ site:login-link (sekọnd, ma ọ bụ 10m / 1h); ndabara 10m",
+  "cliOptUser": "akaụntụ HAXcms maka site:login-link (ndabara bụ onye nchịkwa saịtị)",
+  "loginLinkTitle": "🔑 Njikọ nbanye nke otu ugboro",
+  "loginLinkNoBase": "Tinye URL ebe sava HAXcms gị na-aza n'ihu ya, ma ọ bụ mee ya ọzọ na --domain your-site.example",
+  "loginLinkDetails": "Na-abanye dị ka {user} otu ugboro, ruo {expires} ({minutes} nkeji).\nỊmepụta njikọ ọzọ na-akagbu nke a. Onye ọ bụla nwere njikọ a nwere ike idezi saịtị ahụ, ya mere etinyela ya na nkata ma ọ bụ tiketi."
 }

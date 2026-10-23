@@ -588,5 +588,11 @@
   "siteReadyToGo": "{name} este gata. Rulați următoarele pentru a începe să lucrați:",
   "siteCreateCustomTheme": "Creează o temă personalizată",
   "siteSearchPlaceholder": "lecție",
-  "siteExportSkeletonLabel": "Schelet"
+  "siteExportSkeletonLabel": "Schelet",
+  "siteActionSiteLoginLink": "Generează un link de autentificare unic (parolă uitată)",
+  "cliOptTtl": "durata de valabilitate a unui site:login-link (secunde, sau 10m / 1h); implicit 10m",
+  "cliOptUser": "contul HAXcms pentru site:login-link (implicit administratorul site-ului)",
+  "loginLinkTitle": "🔑 Link de autentificare unic",
+  "loginLinkNoBase": "Adăugați în față URL-ul la care răspunde serverul HAXcms, sau rulați din nou cu --domain your-site.example",
+  "loginLinkDetails": "Autentifică o singură dată ca {user}, până la {expires} ({minutes} min).\nGenerarea unui alt link îl anulează pe acesta. Oricine are acest link poate edita site-ul, așa că nu-l lipiți în chaturi sau tichete."
 }

@@ -588,5 +588,11 @@
   "siteReadyToGo": "{name} on valmis. Sellega töötamise alustamiseks käivitage:",
   "siteCreateCustomTheme": "Loo kohandatud teema",
   "siteSearchPlaceholder": "õppetund",
-  "siteExportSkeletonLabel": "Skelett"
+  "siteExportSkeletonLabel": "Skelett",
+  "siteActionSiteLoginLink": "Loo ühekordne sisselogimislink (unustatud parool)",
+  "cliOptTtl": "site:login-link kehtivusaeg (sekundites või 10m / 1h); vaikimisi 10m",
+  "cliOptUser": "HAXcms-i konto site:login-link jaoks (vaikimisi saidi administraator)",
+  "loginLinkTitle": "🔑 Ühekordne sisselogimislink",
+  "loginLinkNoBase": "Lisa selle ette URL, millel sinu HAXcms-i server vastab, või käivita uuesti valikuga --domain your-site.example",
+  "loginLinkDetails": "Logib ühe korra sisse kasutajana {user}, kuni {expires} ({minutes} min).\nUue lingi loomine tühistab selle. Igaüks, kellel see link on, saab saiti muuta, seega ära kleebi seda vestlustesse ega piletitesse."
 }

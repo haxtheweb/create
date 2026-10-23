@@ -588,5 +588,11 @@
   "siteReadyToGo": "{name} lest. Ħaddem dan li ġej biex tibda taħdem bih:",
   "siteCreateCustomTheme": "Oħloq Tema Personalizzata",
   "siteSearchPlaceholder": "lezzjoni",
-  "siteExportSkeletonLabel": "Skeletru"
+  "siteExportSkeletonLabel": "Skeletru",
+  "siteActionSiteLoginLink": "Iġġenera link ta' login għal darba waħda (insejt il-password)",
+  "cliOptTtl": "il-validità ta' site:login-link (sekondi, jew 10m / 1h); default 10m",
+  "cliOptUser": "kont HAXcms għal site:login-link (default l-amministratur tas-sit)",
+  "loginLinkTitle": "🔑 Link ta' login għal darba waħda",
+  "loginLinkNoBase": "Żid quddiemha l-URL li fuqu jwieġeb is-server HAXcms tiegħek, jew erġa' ħaddem b'--domain your-site.example",
+  "loginLinkDetails": "Tidħol bħala {user} darba waħda, sa {expires} ({minutes} min).\nJekk tiġġenera link ieħor, dan jiġi kkanċellat. Kulħadd b'din il-link jista' jeditja s-sit, għalhekk tpoġġihiex f'chats jew tickets."
 }

@@ -588,5 +588,11 @@
   "siteReadyToGo": "{name} is klaar. Voer het volgende uit om ermee aan de slag te gaan:",
   "siteCreateCustomTheme": "Aangepast thema maken",
   "siteSearchPlaceholder": "les",
-  "siteExportSkeletonLabel": "Skelet"
+  "siteExportSkeletonLabel": "Skelet",
+  "siteActionSiteLoginLink": "Eenmalige inloglink genereren (wachtwoord vergeten)",
+  "cliOptTtl": "geldigheidsduur van een site:login-link (seconden, of 10m / 1h); standaard 10m",
+  "cliOptUser": "HAXcms-account voor site:login-link (standaard de sitebeheerder)",
+  "loginLinkTitle": "🔑 Eenmalige inloglink",
+  "loginLinkNoBase": "Zet de URL waarop je HAXcms-server reageert ervoor, of voer opnieuw uit met --domain your-site.example",
+  "loginLinkDetails": "Logt één keer in als {user}, tot {expires} ({minutes} min).\nEen nieuwe link genereren maakt deze ongeldig. Iedereen met deze link kan de site bewerken, dus plak hem niet in chats of tickets."
 }
