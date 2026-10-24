@@ -33,6 +33,7 @@
   "auditSchemaSummary": "{label}: {files} file(s), {errors} error(s), {warnings} warning(s)",
   "auditSchemaErrorTag": "error",
   "auditSchemaWarningTag": "warning",
+  "auditSchemaDerivedTags": "{file} tags: {tags}",
   "auditSchemaPassed": "HAX schema checks passed",
   "auditSchemaProblems": "Schema problems found. Re-run with {debug} to see warnings, or {strict} to fail on them.",
   "auditUnknownType": "Unknown audit type \"{type}\". Use ddd, schema, i18n, ssr or all.",

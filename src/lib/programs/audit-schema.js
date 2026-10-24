@@ -354,6 +354,16 @@ export function auditSchemaCommand(commandRun, root = null, deps = {}) {
             `${color.red(errorTag)}${tagPad(errorTag)}${rel} ${e.path}: ${e.message}`,
           );
         }
+        // HAXcms plugins: derived tags (needs-server, runs-commands, ...) carry
+        // security and longevity implications, so they are always shown
+        if (Array.isArray(r.derivedTags) && r.derivedTags.length > 0) {
+          p.log.info(
+            t("auditSchemaDerivedTags", {
+              file: rel,
+              tags: r.derivedTags.join(", "),
+            }),
+          );
+        }
         if (options.debug || strict) {
           for (const w of r.warnings || []) {
             p.log.message(

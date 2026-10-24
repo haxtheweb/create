@@ -202,6 +202,41 @@ test("auditSchemaCommand fails on errors, and on warnings only with --strict", (
   }
 });
 
+test("plugin derived tags are always shown", () => {
+  const root = makeProject();
+  try {
+    logs.length = 0;
+    const withTags = {
+      plugin: {
+        ok: true,
+        via: "local",
+        reports: [
+          {
+            file: path.join(root, "_plugins", "example", "plugin.yaml"),
+            errors: [],
+            warnings: [],
+            derivedTags: ["needs-server", "runs-commands"],
+          },
+        ],
+      },
+    };
+    const r = auditSchemaCommand({ options: {} }, root, {
+      runValidator: fakeRunner(withTags).run,
+    });
+    assert.equal(r.passed, true);
+    assert.ok(
+      logs.some(
+        ([k, m]) =>
+          k === "info" &&
+          m.includes("plugin.yaml") &&
+          m.includes("needs-server, runs-commands"),
+      ),
+    );
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
 test("a validator that cannot run counts as a failure with its reason", () => {
   const root = makeProject();
   try {
