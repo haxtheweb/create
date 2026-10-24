@@ -403,6 +403,15 @@ Validate HAX schema documents in the current folder and fail on warnings
 .br
 Report how selected elements server-render
 .TP
+.B hax plugin create quiet-hours
+Scaffold a HAXcms plugin; pick the hooks it implements (common hooks are preselected)
+.TP
+.B hax plugin create quiet-hours \--hooks common,render.after.body \--runtimes nodejs,php \--y
+Scaffold without prompts; each hook gets a stub with its "Implements hook" docblock
+.TP
+.B hax plugin hooks \--format json
+List every hook a plugin can implement, with when it runs and what it is for
+.TP
 .B hax party \--repos haxtheweb/webcomponents
 Join the HAX community by cloning specific repositories
 .TP

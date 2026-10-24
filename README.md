@@ -55,6 +55,14 @@ hax start
 - `hax skills install --all` - Install all bundled skills into `~/.agents/skills/` for any agent to use
 - `hax skills install <name>` - Install a specific bundled skill
 
+## HAXcms plugins
+
+- `hax plugin create` - Scaffold a HAXcms plugin: id, title, category, backends (Node.js, PHP) and the hooks it implements. The hook picker preselects the hooks most plugins use and lists every other hook with what it is for, so you can see what is possible.
+- `hax plugin create my-plugin --hooks common,render.after.body --runtimes nodejs --y` - The same without prompts (for scripts and agents). `--hooks` takes hook names, `common`, or `none`.
+- `hax plugin hooks [--common] [--format json]` - List the hooks a plugin can implement.
+
+Every hook stub comes with a docblock whose first line is `Implements hook <name>.`, the convention the plugin spec's validator and README generator use (https://github.com/haxtheweb/haxcms-plugin-examples, spec/02). The hook list comes from the installed `@haxtheweb/haxcms-plugin-spec` package, or a bundled snapshot when it is not installed.
+
 ## Bundled Agent Skills
 
 This CLI ships interface skills in `src/skills/` (compiled to `dist/skills/`) that teach agents how to use the `hax` CLI. These are version-locked to the CLI — when a command or flag ships, the matching skill updates in the same release.
