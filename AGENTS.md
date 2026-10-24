@@ -211,7 +211,7 @@ The HAX ecosystem uses a sophisticated build pipeline optimized for unbundled Ja
   - Checks CSS and structure against DDD design system standards
   - Ignores files listed in `.dddignore`
   - Run from component root for accurate results
-- **Audit HAX schema documents** (site.json, skeletons, haxProperties + demoSchema + locales, appstore.json, Merlin commands):
+- **Audit HAX schema documents** (site.json, skeletons, haxProperties + demoSchema + locales, appstore.json, Merlin commands, plugin.yaml + registries):
   ```bash
   hax audit schema            # add --strict to fail on warnings, --format json for a report
   hax audit i18n              # English hardcoded in Lit templates instead of this.t

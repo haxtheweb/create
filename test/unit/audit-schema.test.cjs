@@ -66,6 +66,12 @@ function makeProject() {
     'SuperDaemonInstance.defineOption({ title: "x" })',
   );
   write(root, "custom/other.js", "export const nothing = 1");
+  write(root, "_plugins/example/plugin.yaml", "id: example\n");
+  write(
+    root,
+    "_plugins/example/tests/plugin.yaml",
+    "id: ignored-test-fixture\n",
+  );
   write(root, "node_modules/pkg/lib/ignored.haxProperties.json", {});
   write(root, "dist/appstore.json", {});
   write(root, "test/fixtures.test.js", "el.defineOption({ broken: true })");
@@ -94,6 +100,10 @@ test("discoverSchemaTargets groups files by validator and skips build output", (
     ]);
     assert.deepEqual(rel(t.appstore), ["appstore.json"]);
     assert.deepEqual(rel(t.merlin), [path.join("custom", "my-el.js")]);
+    // plugin manifests are found; copies under test directories are skipped
+    assert.deepEqual(rel(t.plugin), [
+      path.join("_plugins", "example", "plugin.yaml"),
+    ]);
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }

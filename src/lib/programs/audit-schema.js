@@ -64,6 +64,13 @@ export const SCHEMA_VALIDATORS = {
     bin: "merlin-validate",
     args: ["--scan"],
   },
+  plugin: {
+    label: "HAXcms plugins (plugin.yaml and registries)",
+    labelKey: "auditSchemaLabelPlugin",
+    pkg: "@haxtheweb/haxcms-plugin-spec",
+    bin: "hax-plugin-validate",
+    args: [],
+  },
 };
 
 /**
@@ -103,7 +110,7 @@ const SKIP_DIRS = new Set([
 /**
  * @description Walk a project and group the files each validator should check.
  * @param root directory to audit
- * @returns {{site: string[], skeleton: string[], haxProperties: string[], demoSchema: string[], appstore: string[], merlin: string[]}}
+ * @returns {{site: string[], skeleton: string[], haxProperties: string[], demoSchema: string[], appstore: string[], merlin: string[], plugin: string[]}}
  */
 export function discoverSchemaTargets(root) {
   const targets = {
@@ -113,6 +120,7 @@ export function discoverSchemaTargets(root) {
     demoSchema: [],
     appstore: [],
     merlin: [],
+    plugin: [],
   };
   const rootSite = path.join(root, "site.json");
   if (existsSync(rootSite)) {
@@ -152,6 +160,9 @@ export function discoverSchemaTargets(root) {
         }
       } else if (name === "appstore.json") {
         targets.appstore.push(full);
+      } else if (name === "plugin.yaml") {
+        // HAXcms plugin manifest; the plugin validator also checks its registries
+        targets.plugin.push(full);
       } else if (name.endsWith(".json") && path.basename(dir) === "skeletons") {
         targets.skeleton.push(full);
       } else if (
