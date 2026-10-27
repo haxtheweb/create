@@ -117,6 +117,7 @@ async function main() {
     .option("--author <char>", t("cliOptAuthor"))
     .option("--template <char>", t("cliOptTemplate"))
     .option("--writeHaxProperties", t("cliOptWriteHaxProperties"))
+    .option("--no-docs", t("cliOptNoDocs"))
     .option("--force", t("cliOptForce"))
 
     // options for site
@@ -323,6 +324,7 @@ async function main() {
     .option("--author <char>", t("cliOptAuthor"))
     .option("--name <char>", t("cliOptWcName"))
     .option("--writeHaxProperties", t("cliOptWriteHaxProperties"))
+    .option("--no-docs", t("cliOptNoDocs"))
     .option("--template <char>", t("cliOptTemplate"))
     .option("--to-file <char>", t("cliOptToFile"))
     .option("--no-extras", t("cliOptNoExtras"))

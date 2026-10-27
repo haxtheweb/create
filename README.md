@@ -143,6 +143,7 @@ Options:
   --org <char>                        organization for package.json
   --author <char>                     author for site / package.json
   --writeHaxProperties                Write haxProperties for the element
+  --no-docs                           in a monorepo, leave out the docs data step
   --import-site <char>                URL of site to import
   --import-structure <char>           import method to use:
                                       pressbooksToSite
