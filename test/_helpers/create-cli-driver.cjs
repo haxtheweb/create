@@ -198,8 +198,12 @@ const site = require(path.join(repoRoot, "src", "lib", "programs", "site.js"));
 const webcomponent = require(
   path.join(repoRoot, "src", "lib", "programs", "webcomponent.js"),
 );
-const party = require(path.join(repoRoot, "src", "lib", "programs", "party.js"));
-const skills = require(path.join(repoRoot, "src", "lib", "programs", "skills.js"));
+const party = require(
+  path.join(repoRoot, "src", "lib", "programs", "party.js"),
+);
+const skills = require(
+  path.join(repoRoot, "src", "lib", "programs", "skills.js"),
+);
 const auditSchema = require(
   path.join(repoRoot, "src", "lib", "programs", "audit-schema.js"),
 );
