@@ -408,7 +408,7 @@ export async function execNpxHaxcmsNodejsFallback(cwd, env, assumeYes) {
       throw new Error(t("siteNpxFallbackDeclined"));
     }
   }
-  return exec(`npx ${HAXCMS_NODEJS_FALLBACK_SPEC}`, { cwd, env });
+  return runCommand("npx", [HAXCMS_NODEJS_FALLBACK_SPEC], { cwd, env });
 }
 
 // Launches the local HAXcms server for site:start/site:serve/site creation's
