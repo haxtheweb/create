@@ -2,6 +2,7 @@
 
 import * as fs from "node:fs";
 import * as path from "node:path";
+import { execFileSync } from "node:child_process";
 import { setTimeout } from "node:timers/promises";
 import * as ejs from "ejs";
 import * as p from "@clack/prompts";
@@ -163,6 +164,26 @@ function quietAwareSpinner(commandRun) {
   return p.spinner();
 }
 
+// the monorepo script that generates an element's docs data
+const DOCS_SCRIPT = "scripts/extract-element-docs.mjs";
+
+/**
+ * @description Whether a new element's build should write its docs data:
+ * only in a monorepo whose root has the docs script, and not with --no-docs.
+ */
+export function docsStepFor(commandRun, project) {
+  const options = (commandRun && commandRun.options) || {};
+  if (!options.isMonorepo || options.docs === false || project.docs === false) {
+    return false;
+  }
+  if (!project.path) {
+    return false;
+  }
+  return fs.existsSync(
+    path.join(path.resolve(project.path, ".."), DOCS_SCRIPT),
+  );
+}
+
 export async function webcomponentProcess(commandRun, project, port = "8000") {
   // Security (M-2): defense-in-depth re-check of --npm-client at the point it
   // is interpolated into exec() shell strings. create.js validates earlier,
@@ -191,6 +212,9 @@ export async function webcomponentProcess(commandRun, project, port = "8000") {
   }
   // values not set by user but used in templating
   project.className = dashToCamel(project.name);
+  // monorepos that publish docs data (scripts/extract-element-docs.mjs at the
+  // root) get it in the element build by default; --no-docs leaves it out
+  project.docsStep = docsStepFor(commandRun, project);
   // option to build github repo link for the user
   if (project.extras && project.extras.includes("git")) {
     // @todo need to support git@ and https methods
@@ -315,6 +339,23 @@ export async function webcomponentProcess(commandRun, project, port = "8000") {
     }
   }
   s.stop(t("wcFilesAwesome"));
+  // write the first docs data now so lib/<tag>.docs.json exists before the
+  // first build; the build refreshes it from then on
+  if (project.docsStep) {
+    try {
+      execFileSync(
+        process.execPath,
+        [
+          path.join(path.resolve(project.path, ".."), DOCS_SCRIPT),
+          "--write",
+          project.name,
+        ],
+        { stdio: "ignore" },
+      );
+    } catch {
+      // the element build writes it; nothing to do if this early run fails
+    }
+  }
   // haxtheweb/issues#3119: ship the web component skill inside standalone
   // scaffolds so agents find it next to AGENTS.md (copied after ejs rendering
   // so the skill text is never treated as a template)
