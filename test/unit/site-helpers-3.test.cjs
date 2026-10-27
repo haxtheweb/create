@@ -74,12 +74,8 @@ const {
   skipReason,
   module: siteModule,
 } = require("../_helpers/site-canary.cjs");
-const {
-  applyNodeEdits,
-  applySiteLanguage,
-  nextSiblingOrder,
-  siteThemeList,
-} = available ? siteModule : {};
+const { applyNodeEdits, applySiteLanguage, nextSiblingOrder, siteThemeList } =
+  available ? siteModule : {};
 
 const opts = { skip: skipReason, timeout: 30000 };
 
@@ -136,95 +132,129 @@ test.beforeEach(() => {
 
 // --- applyNodeEdits ---
 
-test("applyNodeEdits slug edit slugifies, dedupes and flags overridePathauto", opts, async () => {
+test(
+  "applyNodeEdits slug edit slugifies, dedupes and flags overridePathauto",
+  opts,
+  async () => {
+    const site = fakeSite();
+    const page = fakePage();
+    const changed = await applyNodeEdits(
+      site,
+      page,
+      { slug: "My New Slug" },
+      { options: {} },
+    );
+    assert.deepEqual(changed, ["slug"]);
+    assert.equal(page.slug, "my-new-slug-unique");
+    assert.equal(page.metadata.overridePathauto, true);
+    assert.equal(
+      updateCalls.length,
+      1,
+      "structure change saved via updateNode",
+    );
+  },
+);
+
+test("applyNodeEdits skips empty slugs without saving", opts, async () => {
   const site = fakeSite();
   const page = fakePage();
   const changed = await applyNodeEdits(
     site,
     page,
-    { slug: "My New Slug" },
+    { slug: "" },
     { options: {} },
   );
-  assert.deepEqual(changed, ["slug"]);
-  assert.equal(page.slug, "my-new-slug-unique");
-  assert.equal(page.metadata.overridePathauto, true);
-  assert.equal(updateCalls.length, 1, "structure change saved via updateNode");
-});
-
-test("applyNodeEdits skips empty slugs without saving", opts, async () => {
-  const site = fakeSite();
-  const page = fakePage();
-  const changed = await applyNodeEdits(site, page, { slug: "" }, { options: {} });
   assert.deepEqual(changed, []);
   assert.equal(page.slug, "page-one");
   assert.equal(updateCalls.length, 0);
 });
 
-test("applyNodeEdits content writes through page.writeLocation", opts, async () => {
-  const site = fakeSite();
-  const page = fakePage();
-  const changed = await applyNodeEdits(
-    site,
-    page,
-    { content: "<p>fresh body</p>" },
-    { options: {} },
-  );
-  assert.deepEqual(changed, ["content"]);
-  assert.deepEqual(writeLocationCalls, ["<p>fresh body</p>"]);
-  assert.equal(updateCalls.length, 0, "content is not a structure change");
-});
+test(
+  "applyNodeEdits content writes through page.writeLocation",
+  opts,
+  async () => {
+    const site = fakeSite();
+    const page = fakePage();
+    const changed = await applyNodeEdits(
+      site,
+      page,
+      { content: "<p>fresh body</p>" },
+      { options: {} },
+    );
+    assert.deepEqual(changed, ["content"]);
+    assert.deepEqual(writeLocationCalls, ["<p>fresh body</p>"]);
+    assert.equal(updateCalls.length, 0, "content is not a structure change");
+  },
+);
 
-test("applyNodeEdits applies metadata fields as booleans and lists", opts, async () => {
-  const site = fakeSite();
-  const page = fakePage();
-  const changed = await applyNodeEdits(
-    site,
-    page,
-    { published: "false", hideInMenu: "true", tags: "a, b" },
-    { options: {} },
-  );
-  assert.deepEqual(changed, ["published", "hideInMenu", "tags"]);
-  assert.equal(page.metadata.published, false);
-  assert.equal(page.metadata.hideInMenu, true);
-  assert.equal(page.metadata.tags, "a, b");
-  assert.equal(updateCalls.length, 1);
-});
+test(
+  "applyNodeEdits applies metadata fields as booleans and lists",
+  opts,
+  async () => {
+    const site = fakeSite();
+    const page = fakePage();
+    const changed = await applyNodeEdits(
+      site,
+      page,
+      { published: "false", hideInMenu: "true", tags: "a, b" },
+      { options: {} },
+    );
+    assert.deepEqual(changed, ["published", "hideInMenu", "tags"]);
+    assert.equal(page.metadata.published, false);
+    assert.equal(page.metadata.hideInMenu, true);
+    assert.equal(page.metadata.tags, "a, b");
+    assert.equal(updateCalls.length, 1);
+  },
+);
 
-test("applyNodeEdits validates the theme against the registry", opts, async () => {
-  const site = fakeSite();
-  const page = fakePage();
-  const changed = await applyNodeEdits(
-    site,
-    page,
-    { theme: "clean-one" },
-    { options: {} },
-  );
-  assert.deepEqual(changed, ["theme"]);
-  assert.equal(page.metadata.theme.element, "clean-one");
-  await assert.rejects(() =>
-    applyNodeEdits(site, fakePage(), { theme: "nope-theme" }, { options: {} }),
-  );
-});
+test(
+  "applyNodeEdits validates the theme against the registry",
+  opts,
+  async () => {
+    const site = fakeSite();
+    const page = fakePage();
+    const changed = await applyNodeEdits(
+      site,
+      page,
+      { theme: "clean-one" },
+      { options: {} },
+    );
+    assert.deepEqual(changed, ["theme"]);
+    assert.equal(page.metadata.theme.element, "clean-one");
+    await assert.rejects(() =>
+      applyNodeEdits(
+        site,
+        fakePage(),
+        { theme: "nope-theme" },
+        { options: {} },
+      ),
+    );
+  },
+);
 
-test("applyNodeEdits resolves parent by id or slug and rejects bad parents", opts, async () => {
-  const site = fakeSite();
-  const page = fakePage();
-  let changed = await applyNodeEdits(
-    site,
-    page,
-    { parent: "page-two" },
-    { options: {} },
-  );
-  assert.deepEqual(changed, ["parent"]);
-  assert.equal(page.parent, "item-2", "slug resolved to the parent id");
-  await assert.rejects(() =>
-    applyNodeEdits(site, fakePage(), { parent: "ghost" }, { options: {} }),
-  );
-  // a node can not be its own parent
-  await assert.rejects(() =>
-    applyNodeEdits(site, fakePage(), { parent: "item-1" }, { options: {} }),
-  );
-});
+test(
+  "applyNodeEdits resolves parent by id or slug and rejects bad parents",
+  opts,
+  async () => {
+    const site = fakeSite();
+    const page = fakePage();
+    let changed = await applyNodeEdits(
+      site,
+      page,
+      { parent: "page-two" },
+      { options: {} },
+    );
+    assert.deepEqual(changed, ["parent"]);
+    assert.equal(page.parent, "item-2", "slug resolved to the parent id");
+    await assert.rejects(() =>
+      applyNodeEdits(site, fakePage(), { parent: "ghost" }, { options: {} }),
+    );
+    // a node can not be its own parent
+    await assert.rejects(() =>
+      applyNodeEdits(site, fakePage(), { parent: "item-1" }, { options: {} }),
+    );
+  },
+);
 
 test("applyNodeEdits rejects a non-numeric order", opts, async () => {
   await assert.rejects(() =>
@@ -232,71 +262,91 @@ test("applyNodeEdits rejects a non-numeric order", opts, async () => {
   );
 });
 
-test("applyNodeEdits default branch sets title-style fields", opts, async () => {
-  const site = fakeSite();
-  const page = fakePage();
-  const changed = await applyNodeEdits(
-    site,
-    page,
-    { title: "Renamed Page" },
-    { options: {} },
-  );
-  assert.deepEqual(changed, ["title"]);
-  assert.equal(page.title, "Renamed Page");
-  assert.equal(updateCalls.length, 1);
-});
+test(
+  "applyNodeEdits default branch sets title-style fields",
+  opts,
+  async () => {
+    const site = fakeSite();
+    const page = fakePage();
+    const changed = await applyNodeEdits(
+      site,
+      page,
+      { title: "Renamed Page" },
+      { options: {} },
+    );
+    assert.deepEqual(changed, ["title"]);
+    assert.equal(page.title, "Renamed Page");
+    assert.equal(updateCalls.length, 1);
+  },
+);
 
 // --- applySiteLanguage ---
 
-test("applySiteLanguage writes an explicit --site-lang into the manifest", opts, async () => {
-  const saveCalls = [];
-  structureContextResponse = {
-    name: "langsite",
-    manifest: { metadata: {}, save: (arg) => saveCalls.push(arg) },
-  };
-  const lang = await applySiteLanguage(
-    { options: { siteLang: "es" } },
-    { path: "/tmp/lang-site", name: "mysite" },
-  );
-  assert.equal(lang, "es");
-  assert.equal(saveCalls.length, 1);
-  assert.equal(
-    structureContextResponse.manifest.metadata.site.settings.lang,
-    "es",
-  );
-  assert.equal(structureContextCalls.length, 1);
-});
+test(
+  "applySiteLanguage writes an explicit --site-lang into the manifest",
+  opts,
+  async () => {
+    const saveCalls = [];
+    structureContextResponse = {
+      name: "langsite",
+      manifest: { metadata: {}, save: (arg) => saveCalls.push(arg) },
+    };
+    const lang = await applySiteLanguage(
+      { options: { siteLang: "es" } },
+      { path: "/tmp/lang-site", name: "mysite" },
+    );
+    assert.equal(lang, "es");
+    assert.equal(saveCalls.length, 1);
+    assert.equal(
+      structureContextResponse.manifest.metadata.site.settings.lang,
+      "es",
+    );
+    assert.equal(structureContextCalls.length, 1);
+  },
+);
 
-test("applySiteLanguage writes an explicit English choice too", opts, async () => {
-  const saveCalls = [];
-  structureContextResponse = {
-    manifest: { metadata: {}, save: (arg) => saveCalls.push(arg) },
-  };
-  const lang = await applySiteLanguage(
-    { options: { siteLang: "en" } },
-    { path: "/tmp/lang-site", name: "mysite" },
-  );
-  assert.equal(lang, "en");
-  assert.equal(saveCalls.length, 1);
-});
+test(
+  "applySiteLanguage writes an explicit English choice too",
+  opts,
+  async () => {
+    const saveCalls = [];
+    structureContextResponse = {
+      manifest: { metadata: {}, save: (arg) => saveCalls.push(arg) },
+    };
+    const lang = await applySiteLanguage(
+      { options: { siteLang: "en" } },
+      { path: "/tmp/lang-site", name: "mysite" },
+    );
+    assert.equal(lang, "en");
+    assert.equal(saveCalls.length, 1);
+  },
+);
 
-test("applySiteLanguage ignores the prompt-defaulted English", opts, async () => {
-  structureContextResponse = { manifest: { metadata: {} } };
-  const lang = await applySiteLanguage(
-    { options: {} },
-    { path: "/tmp/lang-site", name: "mysite", siteLang: "en" },
-  );
-  assert.equal(lang, null);
-  assert.equal(structureContextCalls.length, 0, "backend never contacted");
-});
+test(
+  "applySiteLanguage ignores the prompt-defaulted English",
+  opts,
+  async () => {
+    structureContextResponse = { manifest: { metadata: {} } };
+    const lang = await applySiteLanguage(
+      { options: {} },
+      { path: "/tmp/lang-site", name: "mysite", siteLang: "en" },
+    );
+    assert.equal(lang, null);
+    assert.equal(structureContextCalls.length, 0, "backend never contacted");
+  },
+);
 
-test("applySiteLanguage returns null with no language chosen", opts, async () => {
-  const lang = await applySiteLanguage(
-    { options: {} },
-    { path: "/tmp/lang-site", name: "mysite" },
-  );
-  assert.equal(lang, null);
-});
+test(
+  "applySiteLanguage returns null with no language chosen",
+  opts,
+  async () => {
+    const lang = await applySiteLanguage(
+      { options: {} },
+      { path: "/tmp/lang-site", name: "mysite" },
+    );
+    assert.equal(lang, null);
+  },
+);
 
 test("applySiteLanguage swallows backend failures", opts, async () => {
   structureContextResponse = null;
@@ -328,11 +378,15 @@ function writeCustomElements(dir, payload) {
 test("siteThemeList filters hidden/terrible/legacy themes", opts, async () => {
   const values = (await siteThemeList(true)).map((item) => item.value);
   assert.ok(values.includes("clean-one"));
-  ["terrible-one", "terrible-prefixed", "legacy-one", "deprecated-one", "hidden-one"].forEach(
-    (hiddenValue) => {
-      assert.ok(!values.includes(hiddenValue), hiddenValue + " filtered out");
-    },
-  );
+  [
+    "terrible-one",
+    "terrible-prefixed",
+    "legacy-one",
+    "deprecated-one",
+    "hidden-one",
+  ].forEach((hiddenValue) => {
+    assert.ok(!values.includes(hiddenValue), hiddenValue + " filtered out");
+  });
   assert.ok(values.includes("custom-theme"), "custom theme entry offered");
 });
 
@@ -343,51 +397,61 @@ test("siteThemeList(false) keeps the non-common themes", opts, async () => {
   });
 });
 
-test("siteThemeList discovers custom themes from custom-elements.json", opts, async () => {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "hax-custom-themes-"));
-  writeCustomElements(dir, {
-    modules: [
-      {
-        declarations: [
-          {
-            superclass: { name: "HAXCMSLitElementTheme" },
-            tagName: "my-custom-theme",
-            name: "MyCustomTheme",
-          },
-        ],
-      },
-      {
-        declarations: [
-          {
-            superclass: { name: "PolarisFlexTheme" },
-            tagName: "polaris-custom",
-          },
-        ],
-      },
-      {
-        // not a theme superclass: skipped
-        declarations: [{ superclass: { name: "LitElement" }, tagName: "not-a-theme" }],
-      },
-      { declarations: [] },
-      null,
-    ],
-  });
-  const values = (await siteThemeList(true, dir)).map((item) => item.value);
-  assert.ok(values.includes("my-custom-theme"));
-  assert.ok(values.includes("polaris-custom"));
-  assert.ok(!values.includes("not-a-theme"));
-  const custom = (await siteThemeList(true, dir)).find(
-    (item) => item.value === "my-custom-theme",
-  );
-  assert.equal(custom.label, "MyCustomTheme");
-});
+test(
+  "siteThemeList discovers custom themes from custom-elements.json",
+  opts,
+  async () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "hax-custom-themes-"));
+    writeCustomElements(dir, {
+      modules: [
+        {
+          declarations: [
+            {
+              superclass: { name: "HAXCMSLitElementTheme" },
+              tagName: "my-custom-theme",
+              name: "MyCustomTheme",
+            },
+          ],
+        },
+        {
+          declarations: [
+            {
+              superclass: { name: "PolarisFlexTheme" },
+              tagName: "polaris-custom",
+            },
+          ],
+        },
+        {
+          // not a theme superclass: skipped
+          declarations: [
+            { superclass: { name: "LitElement" }, tagName: "not-a-theme" },
+          ],
+        },
+        { declarations: [] },
+        null,
+      ],
+    });
+    const values = (await siteThemeList(true, dir)).map((item) => item.value);
+    assert.ok(values.includes("my-custom-theme"));
+    assert.ok(values.includes("polaris-custom"));
+    assert.ok(!values.includes("not-a-theme"));
+    const custom = (await siteThemeList(true, dir)).find(
+      (item) => item.value === "my-custom-theme",
+    );
+    assert.equal(custom.label, "MyCustomTheme");
+  },
+);
 
-test("siteThemeList survives an invalid custom-elements.json", opts, async () => {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "hax-custom-bad-"));
-  writeCustomElements(dir, "{ not json");
-  const values = (await siteThemeList(true, dir)).map((item) => item.value);
-  assert.deepEqual(values, ["clean-one", "custom-theme"]);
-});
+test(
+  "siteThemeList survives an invalid custom-elements.json",
+  opts,
+  async () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "hax-custom-bad-"));
+    writeCustomElements(dir, "{ not json");
+    const values = (await siteThemeList(true, dir)).map((item) => item.value);
+    assert.deepEqual(values, ["clean-one", "custom-theme"]);
+  },
+);
 
 // --- nextSiblingOrder ---
 
