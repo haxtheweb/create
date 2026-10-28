@@ -1,0 +1,1 @@
+Snapshot of `schema/hook-contracts.json` and `schema/categories.json` from https://github.com/haxtheweb/haxcms-plugin-examples, used by `hax plugin` when the `@haxtheweb/haxcms-plugin-spec` package is not installed. When the package is installed, its copy wins. Refresh this snapshot whenever the spec's hook list changes.

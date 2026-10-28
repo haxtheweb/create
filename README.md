@@ -45,7 +45,7 @@ hax start
 - `hax site mysite --skeleton-machine-name clean-one --y` - create a new HAXsite from an installed skeleton template
 - `hax wc --search "tooltip"` - Search existing HAX elements (tag, title, description, tags) before building a new one; `--format json` for scripts
 - `hax audit` - Audits web components for compliance with DDD (HAX design system)
-- `hax audit schema` - Validates `site.json`, skeletons, `haxProperties` (and their `demoSchema` / locales), `appstore.json` and Merlin commands against the HAX schemas
+- `hax audit schema` - Validates `site.json`, skeletons, `haxProperties` (and their `demoSchema` / locales), `appstore.json`, Merlin commands and HAXcms plugins (`plugin.yaml` and its registries) against the HAX schemas
 - `hax audit i18n` - Finds English hardcoded in Lit templates (text and attributes like `aria-label`, `title`, `placeholder`) that should come from `this.t` so it can be translated
 - `hax audit all` - Runs all three
 - `hax audit ssr` - Report-only: server-renders every element in `wc-registry.json` with `@lit-labs/ssr` and buckets the result (rendered / shell / empty / no shadow root / threw) with output and style sizes. Never fails on render problems and is not part of `all`. Runs with a small inert DOM environment (`window`, event target, observers, element query/child/class/style APIs as no-ops) so elements fail only for their own reasons; `--no-shim` turns that off to show what elements manage unaided. Also reports elements that supply their own `progressiveEnhancement` fallback markup and the size of a primitive-tag stylesheet that covers it, and flags HTML boolean attributes written as `="false"` (a `.checked=${value}` property binding on a native input renders as `checked="false"`, which browsers read as on until hydration; use `?checked=${value}`) or a native element's address bound as a property in the element's own source (`<iframe .src=${url}>`, which Lit SSR does not write; use `src=${url}`). Options: `--only <tags>`, `--timeout <ms>`, `--save-html <dir>`, `--no-shim`, `--format json`
@@ -54,6 +54,14 @@ hax start
 - `hax skills list` - List bundled agent skills shipped with the CLI
 - `hax skills install --all` - Install all bundled skills into `~/.agents/skills/` for any agent to use
 - `hax skills install <name>` - Install a specific bundled skill
+
+## HAXcms plugins
+
+- `hax plugin create` - Scaffold a HAXcms plugin: id, title, category, backends (Node.js, PHP) and the hooks it implements. The hook picker preselects the hooks most plugins use and lists every other hook with what it is for, so you can see what is possible.
+- `hax plugin create my-plugin --hooks common,render.after.body --runtimes nodejs --y` - The same without prompts (for scripts and agents). `--hooks` takes hook names, `common`, or `none`.
+- `hax plugin hooks [--common] [--format json]` - List the hooks a plugin can implement.
+
+Every hook stub comes with a docblock whose first line is `Implements hook <name>.`, the convention the plugin spec's validator and README generator use (https://github.com/haxtheweb/haxcms-plugin-examples, spec/02). The hook list comes from the installed `@haxtheweb/haxcms-plugin-spec` package, or a bundled snapshot when it is not installed.
 
 ## Bundled Agent Skills
 

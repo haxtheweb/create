@@ -39,6 +39,7 @@ import {
   siteSkeletonList,
 } from "./lib/programs/site.js";
 import { skillsCommandDetected, skillsActions } from "./lib/programs/skills.js";
+import { pluginCommandDetected, pluginActions } from "./lib/programs/plugin.js";
 import {
   camelToDash,
   exec,
@@ -436,6 +437,54 @@ async function main() {
     .option("--quiet", t("cliOptQuiet"))
     .version(packageJson.version);
 
+  // plugin program: scaffold HAXcms plugins and discover the hooks they can implement
+  let strPluginActions = "";
+  pluginActions().forEach((action) => {
+    strPluginActions += `${action.value} - ${action.label}` + "\n\r";
+  });
+  program
+    .command("plugin")
+    .description(t("cliCmdPlugin"))
+    .argument("[action]", t("cliArgPluginAction") + "\n\r" + strPluginActions)
+    .argument("[name]", t("cliArgPluginName"))
+    .action((action, name, cmdOptions = {}) => {
+      commandRun = {
+        command: "plugin",
+        arguments: { action: action || "create" },
+        options: {},
+      };
+      if (name) {
+        commandRun.arguments.name = name;
+      }
+      // subcommand-only options
+      for (const k of [
+        "hooks",
+        "runtimes",
+        "title",
+        "category",
+        "description",
+        "common",
+      ]) {
+        if (cmdOptions[k] !== undefined) {
+          commandRun.options[k] = cmdOptions[k];
+        }
+      }
+    })
+    .option("--name <char>", t("cliOptPluginName"))
+    .option("--title <char>", t("cliOptPluginTitle"))
+    .option("--description <char>", t("cliOptPluginDescription"))
+    .option("--category <char>", t("cliOptPluginCategory"))
+    .option("--runtimes <char>", t("cliOptPluginRuntimes"))
+    .option("--hooks <char>", t("cliOptPluginHooks"))
+    .option("--common", t("cliOptPluginCommon"))
+    .option("--path <char>", t("cliOptPath"))
+    .option("--y", t("cliOptYes"))
+    .option("--auto", t("cliOptAuto"))
+    .option("--no-i", t("cliOptNoI"))
+    .option("--format <char>", t("cliOptFormat"))
+    .option("--quiet", t("cliOptQuiet"))
+    .version(packageJson.version);
+
   // process program arguments
   program.parse();
   commandRun.options = { ...commandRun.options, ...program.opts() };
@@ -706,6 +755,12 @@ async function main() {
     await partyCommandDetected(commandRun);
   } else if (commandRun.command === "skills") {
     await skillsCommandDetected(commandRun);
+  } else if (commandRun.command === "plugin") {
+    try {
+      await pluginCommandDetected(commandRun);
+    } catch (e) {
+      program.error(color.red(e.message));
+    }
   }
   // CLI works within context of the site if one is detected, otherwise we can do other things
   else if (await systemStructureContext()) {
