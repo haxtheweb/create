@@ -56,6 +56,21 @@ Closes [ISSUE #XXXX](https://github.com/haxtheweb/issues/issues/XXXX)
 - [ ] My changes don't introduce console warnings/errors
 - [ ] I have checked for performance implications
 
+## HAX Pillar Checks
+
+<!-- For non-trivial changes. A "no" is fine: name it below, say why, and link a follow-up issue in https://github.com/haxtheweb/issues. Full questions: https://github.com/haxtheweb/praw/blob/main/WORLDVIEW.md#pillar-checks -->
+
+- [ ] **Accessible**: meets WCAG 2.0 AA without extra effort from authors
+- [ ] **Efficient**: no new heavy dependency or build step without reason; a newcomer gets it in about three seconds
+- [ ] **Extensible**: built on web standards; plugs into existing and future systems
+- [ ] **Free and open**: no paywall, lock-in or required proprietary service
+- [ ] **Platform agnostic**: works the same across backends (Node.js, PHP, static, desktop); backend changes are mirrored in haxcms-nodejs and haxcms-php
+- [ ] **Remixable**: content stays portable (HTML, JSON Outline Schema); import and export still work
+- [ ] **Sustainable**: someone other than the author could maintain it; sites made before this change still work
+- [ ] **Human creativity first**: if AI is involved, people keep the creative decisions and the output doesn't depend on one AI service
+
+Any "no", and why:
+
 ## Ways to Test This Change
 
 <!-- Provide step-by-step instructions for testing -->
