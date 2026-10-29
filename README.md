@@ -65,6 +65,7 @@ This CLI ships interface skills in `src/skills/` (compiled to `dist/skills/`) th
 - `hax-claudehax` — ClaudeHAX plugin, `/hax` slash command, CLI operation
 - `hax-webcomponent-dev` — `hax webcomponent`, HAXSchema, component scaffolding
 - `hax-ecosystem-onboarding` — environment setup, first scaffold, repo cloning
+- `hax-rpg-character` — extending the rpg-character avatar with new pixel-art pieces
 
 Install them for your agents:
 
