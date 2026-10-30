@@ -281,9 +281,11 @@ process.exit = (code) => {
 
 process.argv = [process.argv[0], "hax"].concat(argv);
 // pretend to be a TTY so main() keeps interactive prompts enabled; the clack
-// stubs answer them deterministically
+// stubs answer them deterministically. Clear CI too: main() treats CI=true as
+// non-interactive (haxtheweb/issues#3116), and GitHub Actions sets it.
 if (scenario.tty) {
   process.stdout.isTTY = true;
+  delete process.env.CI;
 }
 
 // requiring create.js kicks off main(); every scenario ends via an exit
