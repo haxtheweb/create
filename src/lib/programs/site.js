@@ -238,20 +238,112 @@ async function invokeRoute(routeHandler, body = {}, query = {}, params = {}) {
         securityLevel: "authenticated-site",
       }
     : undefined;
-  await routeHandler(
-    {
-      body: body,
-      query: query,
-      params: params,
-      headers: {
-        "x-haxcms-user-token": query.user_token || "fakeToken",
-        "x-haxcms-site-token": query.site_token || "fakeToken",
+  const run = () =>
+    routeHandler(
+      {
+        body: body,
+        query: query,
+        params: params,
+        headers: {
+          "x-haxcms-user-token": query.user_token || "fakeToken",
+          "x-haxcms-site-token": query.site_token || "fakeToken",
+          "x-hax-actor": cliActor(),
+        },
+        haxcmsSiteApiAuth: siteAuthContext,
       },
-      haxcmsSiteApiAuth: siteAuthContext,
-    },
-    res,
-  );
+      res,
+    );
+  // haxtheweb/issues#3191: route handlers run in-process here, so the web
+  // server's commit wrapper never sees them; give their commits the same
+  // "[actor:operationId:txn]" prefix it would.
+  const commitContext = cliCommitContextFor(routeHandler);
+  if (commitContext) {
+    await commitContextLib.runWithCommitContext(commitContext, run);
+  } else {
+    await run();
+  }
   return res;
+}
+
+// haxtheweb/issues#3191: HAXcms records who made each change in a site's git
+// history. Older haxcms-nodejs releases have no commitContext module; then
+// commits are simply not prefixed, as before.
+let commitContextLib = null;
+try {
+  // optional: only in haxcms-nodejs releases with commit op codes
+  // eslint-disable-next-line n/no-missing-require
+  commitContextLib = require("@haxtheweb/haxcms-nodejs/dist/lib/commitContext.js");
+} catch {
+  commitContextLib = null;
+}
+// a person ran the CLI unless --agent / HAX_ACTOR=agent says an agent did
+export function cliActor() {
+  return String(process.env.HAX_ACTOR || "").toLowerCase() === "agent"
+    ? "agent"
+    : "human";
+}
+let routeOperationIndex = null;
+// handler function -> the write route it is registered for, so invokeRoute
+// callers do not have to pass route keys around. A handler registered for
+// more than one route, or for a read as well (e.g. GET and POST skeletons),
+// is ambiguous: invokeRoute cannot tell which call it is, so it gets no
+// context rather than a wrong one.
+function routeFor(handler) {
+  if (!routeOperationIndex) {
+    const routes = new Map();
+    const all = allRoutesLib.allRoutes || {};
+    for (const scope of ["system", "site"]) {
+      const map = all[scope] && all[scope].map ? all[scope].map : {};
+      for (const method of Object.keys(map)) {
+        for (const key of Object.keys(map[method])) {
+          const fn = map[method][key];
+          if (!routes.has(fn)) {
+            routes.set(fn, []);
+          }
+          routes.get(fn).push({ scope: scope, method: method, key: key });
+        }
+      }
+    }
+    routeOperationIndex = new Map();
+    for (const [fn, list] of routes) {
+      if (list.length === 1 && list[0].method !== "get") {
+        routeOperationIndex.set(fn, list[0]);
+      }
+    }
+  }
+  return routeOperationIndex.get(handler) || null;
+}
+// the commit context for one in-process write route call, or null for reads,
+// ambiguous handlers, and when the installed haxcms-nodejs has no commit op
+// codes. The operationId is looked up only if the call actually commits
+// (the first lookup reads both OpenAPI specs).
+export function cliCommitContextFor(handler) {
+  if (!commitContextLib) {
+    return null;
+  }
+  const route = routeFor(handler);
+  if (!route) {
+    return null;
+  }
+  const context = commitContextLib.createRequestCommitContext(
+    { headers: { "x-hax-actor": cliActor() } },
+    "",
+  );
+  let op = null;
+  Object.defineProperty(context, "op", {
+    enumerable: true,
+    get() {
+      if (op === null) {
+        op = commitContextLib.getOperationId(
+          route.scope,
+          route.method,
+          route.key,
+        );
+      }
+      return op;
+    },
+  });
+  return context;
 }
 // Security (Stream-A): map --import-structure names to on-prem haxcms-nodejs
 // route handlers (replaces the deprecated @haxtheweb/open-apis broker). Platform

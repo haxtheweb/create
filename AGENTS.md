@@ -4,6 +4,7 @@
 >
 > - Inside a HAX site, read `llms.txt` and `.well-known/agent-skills/index.json` first, then run `hax site` for an orientation of the site and its scriptable commands.
 > - Always pass `--y --no-i` when scripting. With no TTY (sandboxes, CI) the CLI implies `--no-i` automatically.
+> - As an agent, also pass `--agent` to `hax site` commands (or set `HAX_ACTOR=agent`) so your changes are recorded as agent changes in the site's git history and revision panel.
 > - Use the global `hax` command, never `npx hax` (a different npm package).
 
 This file provides comprehensive instructions for AI coding agents working within the HAX ecosystem. HAX (Headless Authoring eXperience) is a comprehensive web development ecosystem that enables rapid creation of accessible, performant web components and static sites. Follow these guidelines to set up, develop, test, and contribute effectively to HAX projects.
