@@ -33,10 +33,10 @@
     "format:check": "prettier --check .",
     "precheck": "node scripts/precheck.mjs",
     "precheck:fix": "node scripts/precheck.mjs --fix",
-    "test": "node --require ./test/_helpers/english.cjs --test test/unit/**/*.test.cjs test/smoke/**/*.test.cjs",
-    "test:unit": "node --require ./test/_helpers/english.cjs --test test/unit/**/*.test.cjs",
+    "test": "node --require ./test/_helpers/english.cjs --test test/unit/**/*.test.cjs test/unit/**/*.test.js test/smoke/**/*.test.cjs",
+    "test:unit": "node --require ./test/_helpers/english.cjs --test test/unit/**/*.test.cjs test/unit/**/*.test.js",
     "test:smoke": "node --require ./test/_helpers/english.cjs --test test/smoke/**/*.test.cjs",
-    "test:coverage": "c8 --all --include='src/create.js' --include='src/lib/**' --exclude='test/**' --exclude='dist/**' --reporter=text --reporter=lcov --report-dir=coverage node --require ./test/_helpers/english.cjs --test test/unit/**/*.test.cjs test/smoke/**/*.test.cjs"
+    "test:coverage": "c8 --all --include='src/create.js' --include='src/lib/**' --exclude='test/**' --exclude='dist/**' --reporter=text --reporter=lcov --report-dir=coverage node --require ./test/_helpers/english.cjs --test test/unit/**/*.test.cjs test/unit/**/*.test.js test/smoke/**/*.test.cjs"
   },
   "man": [
     "./dist/docs/hax.1"

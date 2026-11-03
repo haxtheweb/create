@@ -29,7 +29,7 @@ npm run precheck && npm run lint                # required gate before any commi
 
 ## Regression guards (must stay green)
 
-- `test/unit/security-helpers-fuzz.test.cjs` — fuzzes the validators/sanitizers
+- `test/unit/security-helpers-fuzz.test.js` — fuzzes the validators/sanitizers
 - `test/unit/site-security.test.cjs` — SSRF / sanitization / path-traversal helpers
 - Seam A unit tests over the `src/lib/utils.js` validators
 

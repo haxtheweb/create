@@ -3,6 +3,10 @@
 // user-controlled input, so the properties are "never throws unexpectedly" and
 // "never lets the dangerous thing through". Mirrors haxcms-nodejs
 // test/unit/security-helpers-fuzz.test.cjs.
+//
+// This file is deliberately `.js` (still CommonJS: package.json has no
+// "type": "module"). OpenSSF Scorecard's Fuzzing check only scans *.js/*.jsx
+// files for `require("fast-check")`, so a `.cjs` name hides it from Scorecard.
 "use strict";
 
 require("@babel/register");
