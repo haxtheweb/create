@@ -76,7 +76,10 @@
     "markdown-it": "^14.3.1",
     "ws": "8.21.3",
     "sharp": "0.35.5",
-    "image-size": "^2.0.4"
+    "image-size": "^2.0.4",
+    "follow-redirects": "^1.16.2",
+    "glob@>=9.0.0 <14.0.2": "^14.0.3",
+    "minimatch@>=5.0.0 <11.0.1": "^11.0.4"
   },
   "devDependencies": {
     "@babel/cli": "7.28.6",
