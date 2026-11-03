@@ -5,7 +5,9 @@
 # Run:    docker run --rm hax-cli --help
 #          docker run --rm -v "$PWD":/work hax-cli site mysite --path /work
 #
-FROM node:22-slim
+# Base image pinned by digest (OpenSSF Scorecard Pinned-Dependencies); Renovate
+# keeps the digest fresh via the dockerfile pinDigests rule in renovate.json.
+FROM node:22-slim@sha256:4b150b48b4116e2a22f2c39cc27025fbf4f153e2078fd3b14d159fdb5c7279da
 
 WORKDIR /app
 
