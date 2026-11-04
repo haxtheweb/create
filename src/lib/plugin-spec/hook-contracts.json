@@ -1,0 +1,1211 @@
+[
+  {
+    "name": "entity.before.create",
+    "phase": "before",
+    "definedBy": "core",
+    "when": "an entity is about to be created (any entity type the subscription lists)",
+    "subject": "the entity record: `{ id, type, ...fields, ext: { <plugin>: {...} } }` as submitted",
+    "previous": "none",
+    "returns": "the record (may change it)",
+    "veto": true,
+    "detachable": false,
+    "comment": "validate or normalize the new record, or veto with a message",
+    "example": "**comments** rejects a comment over the length limit or from a blocked user; **spam** vetoes obvious spam",
+    "common": true
+  },
+  {
+    "name": "entity.after.create",
+    "phase": "after",
+    "definedBy": "core",
+    "when": "the entity was created and stored",
+    "subject": "the entity record: `{ id, type, ...fields, ext: { <plugin>: {...} } }` as stored, with its new `id`",
+    "previous": "none",
+    "returns": "the record as the caller receives it (annotations); the store is not rewritten",
+    "veto": false,
+    "detachable": true,
+    "comment": "react to the new record: notify, index, update a derived store",
+    "example": "**search** indexes the new record; **notifications** emails moderators about a new comment"
+  },
+  {
+    "name": "entity.before.read",
+    "phase": "before",
+    "definedBy": "core",
+    "when": "an entity or list is about to be read",
+    "subject": "`{ type, id?, query }` (what is being asked for)",
+    "previous": "none",
+    "returns": "the request (narrow a query, add filters)",
+    "veto": true,
+    "detachable": false,
+    "comment": "narrow what is read (for example hide drafts from anonymous callers), or veto",
+    "example": "**comments** hides unapproved comments from anonymous readers by narrowing the query"
+  },
+  {
+    "name": "entity.after.read",
+    "phase": "after",
+    "definedBy": "core",
+    "when": "the entity or list was loaded",
+    "subject": "the record, or `{ items: [records], total }` for a list, with `ext.<plugin>` annotations",
+    "previous": "none",
+    "returns": "the record or list as the caller receives it (annotate, redact)",
+    "veto": false,
+    "detachable": false,
+    "comment": "annotate or redact what the caller receives; not detachable because the caller waits for it",
+    "example": "**example** adds an `ext.awesome.explosions` count to each file it lists; **privacy** redacts emails for non-admins"
+  },
+  {
+    "name": "entity.before.update",
+    "phase": "before",
+    "definedBy": "core",
+    "when": "an entity is about to be updated",
+    "subject": "the entity record: `{ id, type, ...fields, ext: { <plugin>: {...} } }` with the submitted changes merged",
+    "previous": "the stored record",
+    "returns": "the record (may change it)",
+    "veto": true,
+    "detachable": false,
+    "comment": "compare with ctx.previous, normalize, or veto",
+    "example": "**announcements** refuses to edit an announcement that is already published to all users"
+  },
+  {
+    "name": "entity.after.update",
+    "phase": "after",
+    "definedBy": "core",
+    "when": "the update was stored",
+    "subject": "the entity record: `{ id, type, ...fields, ext: { <plugin>: {...} } }` as stored",
+    "previous": "the record before the update",
+    "returns": "the record as the caller receives it",
+    "veto": false,
+    "detachable": true,
+    "comment": "react to what changed between ctx.previous and the subject",
+    "example": "**search** re-indexes; **page-cache** invalidates cached pages that showed the record"
+  },
+  {
+    "name": "entity.before.delete",
+    "phase": "before",
+    "definedBy": "core",
+    "when": "an entity is about to be deleted",
+    "subject": "the stored record",
+    "previous": "none",
+    "returns": "nothing",
+    "veto": true,
+    "detachable": false,
+    "comment": "refuse deletion (for example while something depends on it), or veto",
+    "example": "**media-library** refuses to delete a file that pages still embed"
+  },
+  {
+    "name": "entity.after.delete",
+    "phase": "after",
+    "definedBy": "core",
+    "when": "the entity was deleted",
+    "subject": "the record as it was before deletion",
+    "previous": "none",
+    "returns": "nothing",
+    "veto": false,
+    "detachable": true,
+    "comment": "clean up anything that pointed at the deleted record",
+    "example": "**comments** deletes the thread when its page is deleted (cascade)"
+  },
+  {
+    "name": "page.before.save",
+    "phase": "before",
+    "definedBy": "core",
+    "when": "page content or metadata is about to be written (editor save, CLI, import)",
+    "aliasOf": [
+      {
+        "hook": "entity.before.create",
+        "entities": [
+          "page"
+        ]
+      },
+      {
+        "hook": "entity.before.update",
+        "entities": [
+          "page"
+        ]
+      }
+    ],
+    "subject": "the page: `{ id, siteId, title, location, slug, parent, order, content, metadata }` as submitted",
+    "previous": "the stored page",
+    "returns": "the page (may change content or metadata)",
+    "veto": true,
+    "detachable": false,
+    "comment": "inspect or adjust the page before it is written (for example clean up markup), or veto",
+    "example": "**a11y-check** warns about images without alt text; **content-sanitize** strips pasted Word markup",
+    "common": true
+  },
+  {
+    "name": "page.after.save",
+    "phase": "after",
+    "definedBy": "core",
+    "when": "the page was written to disk",
+    "aliasOf": [
+      {
+        "hook": "entity.after.create",
+        "entities": [
+          "page"
+        ]
+      },
+      {
+        "hook": "entity.after.update",
+        "entities": [
+          "page"
+        ]
+      }
+    ],
+    "subject": "the page: `{ id, siteId, title, location, slug, parent, order, content, metadata }` as written",
+    "previous": "the page before the save",
+    "returns": "nothing (the file is already written)",
+    "veto": false,
+    "detachable": true,
+    "comment": "react to the saved page: re-index for search, invalidate a cache, notify",
+    "example": "**search** re-indexes the page; **page-cache** drops that page's cached HTML; **xapi** records an authoring event",
+    "common": true
+  },
+  {
+    "name": "page.before.delete",
+    "phase": "before",
+    "definedBy": "core",
+    "when": "a page is about to be deleted (outline editor, CLI)",
+    "aliasOf": [
+      {
+        "hook": "entity.before.delete",
+        "entities": [
+          "page"
+        ]
+      }
+    ],
+    "subject": "the page: `{ id, siteId, title, location, slug, parent, order, content, metadata }` as stored",
+    "previous": "none",
+    "returns": "nothing",
+    "veto": true,
+    "detachable": false,
+    "comment": "refuse to delete a page others link to, or veto",
+    "example": "**comments** warns that the page's thread will be deleted; **link-check** refuses while other pages link here"
+  },
+  {
+    "name": "page.after.delete",
+    "phase": "after",
+    "definedBy": "core",
+    "when": "the page was deleted",
+    "aliasOf": [
+      {
+        "hook": "entity.after.delete",
+        "entities": [
+          "page"
+        ]
+      }
+    ],
+    "subject": "the page: `{ id, siteId, title, location, slug, parent, order, content, metadata }` as it was before deletion",
+    "previous": "none",
+    "returns": "nothing",
+    "veto": false,
+    "detachable": true,
+    "comment": "clean up anything tied to the deleted page",
+    "example": "**comments** deletes the thread; **search** drops the page from the index",
+    "common": true
+  },
+  {
+    "name": "manifest.before.save",
+    "phase": "before",
+    "definedBy": "core",
+    "when": "site.json is about to be written (outline change, settings save, theme change)",
+    "aliasOf": [
+      {
+        "hook": "entity.before.update",
+        "entities": [
+          "site"
+        ]
+      }
+    ],
+    "subject": "the site manifest: the full `site.json` object (`{ id, title, author, metadata, items: [...] }`) as it will be written",
+    "previous": "the stored manifest",
+    "returns": "the manifest (may change it)",
+    "veto": true,
+    "detachable": false,
+    "comment": "inspect or adjust site.json before it is written, or veto",
+    "example": "**regions** moves region data out of `site.json` into its own store before the write"
+  },
+  {
+    "name": "manifest.after.save",
+    "phase": "after",
+    "definedBy": "core",
+    "when": "site.json was written",
+    "aliasOf": [
+      {
+        "hook": "entity.after.update",
+        "entities": [
+          "site"
+        ]
+      }
+    ],
+    "subject": "the site manifest: the full `site.json` object (`{ id, title, author, metadata, items: [...] }`) as written",
+    "previous": "the manifest before the save",
+    "returns": "nothing",
+    "veto": false,
+    "detachable": true,
+    "comment": "react to outline or settings changes: rebuild a derived file, notify",
+    "example": "**sitemap / llms.txt** regenerate; **page-cache** clears the menu-dependent cache",
+    "common": true
+  },
+  {
+    "name": "theme.before.change",
+    "phase": "before",
+    "definedBy": "core",
+    "when": "a site's theme is about to change (site settings, CLI)",
+    "aliasOf": [
+      {
+        "hook": "entity.before.update",
+        "entities": [
+          "site"
+        ],
+        "changed": [
+          "metadata.theme"
+        ]
+      }
+    ],
+    "subject": "`{ siteId, theme, settings }` (the new theme and its settings)",
+    "previous": "`{ theme, settings }` currently in use",
+    "returns": "the new theme and settings (may adjust settings)",
+    "veto": true,
+    "detachable": false,
+    "comment": "check the new theme is compatible, or veto",
+    "example": "**institution-skeleton** (HAXiam) refuses themes outside the approved list; **regions** checks the new theme renders its regions"
+  },
+  {
+    "name": "theme.after.change",
+    "phase": "after",
+    "definedBy": "core",
+    "when": "the theme change was saved",
+    "aliasOf": [
+      {
+        "hook": "entity.after.update",
+        "entities": [
+          "site"
+        ],
+        "changed": [
+          "metadata.theme"
+        ]
+      }
+    ],
+    "subject": "`{ siteId, theme, settings }`",
+    "previous": "the theme and settings before",
+    "returns": "nothing",
+    "veto": false,
+    "detachable": true,
+    "comment": "react to the new theme",
+    "example": "**page-cache** clears the site's cache; **pwa** rebuilds the manifest colors"
+  },
+  {
+    "name": "file.before.save",
+    "phase": "before",
+    "definedBy": "files",
+    "when": "a file is about to be uploaded or its record changed (file manager, editor upload, appstore upload target)",
+    "aliasOf": [
+      {
+        "hook": "entity.before.create",
+        "entities": [
+          "file"
+        ]
+      },
+      {
+        "hook": "entity.before.update",
+        "entities": [
+          "file"
+        ]
+      }
+    ],
+    "subject": "the file record: `{ id, siteId, path, name, mimeType, size, alt?, ext: {...} }` as submitted, with the upload in ctx.upload",
+    "previous": "the stored record, on update",
+    "returns": "the record (may change name or metadata)",
+    "veto": true,
+    "detachable": false,
+    "comment": "check type and size, rename, or veto",
+    "example": "**image-optimize** resizes and converts large images; **virus-scan** vetoes infected uploads"
+  },
+  {
+    "name": "file.after.save",
+    "phase": "after",
+    "definedBy": "files",
+    "when": "the file is stored",
+    "aliasOf": [
+      {
+        "hook": "entity.after.create",
+        "entities": [
+          "file"
+        ]
+      },
+      {
+        "hook": "entity.after.update",
+        "entities": [
+          "file"
+        ]
+      }
+    ],
+    "subject": "the file record: `{ id, siteId, path, name, mimeType, size, alt?, ext: {...} }` as stored",
+    "previous": "the record before the update, on update",
+    "returns": "the record as the caller receives it",
+    "veto": false,
+    "detachable": true,
+    "comment": "react to a new or changed file",
+    "example": "**media-library** writes thumbnails; **search** indexes PDF text"
+  },
+  {
+    "name": "file.before.delete",
+    "phase": "before",
+    "definedBy": "files",
+    "when": "a file is about to be deleted",
+    "aliasOf": [
+      {
+        "hook": "entity.before.delete",
+        "entities": [
+          "file"
+        ]
+      }
+    ],
+    "subject": "the file record: `{ id, siteId, path, name, mimeType, size, alt?, ext: {...} }` as stored",
+    "previous": "none",
+    "returns": "nothing",
+    "veto": true,
+    "detachable": false,
+    "comment": "refuse while pages still embed the file, or veto",
+    "example": "**media-library** refuses while pages embed the file"
+  },
+  {
+    "name": "file.after.delete",
+    "phase": "after",
+    "definedBy": "files",
+    "when": "the file was deleted",
+    "aliasOf": [
+      {
+        "hook": "entity.after.delete",
+        "entities": [
+          "file"
+        ]
+      }
+    ],
+    "subject": "the file record: `{ id, siteId, path, name, mimeType, size, alt?, ext: {...} }` as it was before deletion",
+    "previous": "none",
+    "returns": "nothing",
+    "veto": false,
+    "detachable": true,
+    "comment": "remove derived files",
+    "example": "**media-library** removes thumbnails"
+  },
+  {
+    "name": "config.before.read",
+    "phase": "before",
+    "definedBy": "core",
+    "when": "a plugin's configuration is about to be read (subscription `config` list decides whose)",
+    "subject": "`{ plugin, scope, siteId?, keys? }`",
+    "previous": "none",
+    "returns": "the request",
+    "veto": true,
+    "detachable": false,
+    "comment": "uncommon: audit or restrict access to configuration",
+    "example": "**config-audit** records which plugin or user read secrets-adjacent config (uncommon)"
+  },
+  {
+    "name": "config.after.read",
+    "phase": "after",
+    "definedBy": "core",
+    "when": "the configuration was loaded",
+    "subject": "`{ plugin, scope, siteId?, values }` (the plugin whose config it is, system or site scope, the settings values); secret values are already redacted",
+    "previous": "none",
+    "returns": "the values as the caller receives them",
+    "veto": false,
+    "detachable": false,
+    "comment": "uncommon: redact or annotate values for the caller",
+    "example": "**multi-tenant** (HAXiam) overlays institution defaults onto a site's values (uncommon)"
+  },
+  {
+    "name": "config.before.save",
+    "phase": "before",
+    "definedBy": "core",
+    "when": "configuration is about to be written (dashboard, `hax plugin config set`, install migration)",
+    "subject": "`{ plugin, scope, siteId?, values }` (the plugin whose config it is, system or site scope, the settings values) as submitted",
+    "previous": "the stored values",
+    "returns": "the values (may normalize them)",
+    "veto": true,
+    "detachable": false,
+    "comment": "validate or normalize a settings change, or veto",
+    "example": "**google-analytics** rejects a malformed measurement ID",
+    "common": true
+  },
+  {
+    "name": "config.after.save",
+    "phase": "after",
+    "definedBy": "core",
+    "when": "configuration was written; requirements are re-evaluated after this",
+    "subject": "`{ plugin, scope, siteId?, values }` (the plugin whose config it is, system or site scope, the settings values) as written",
+    "previous": "the values before the save",
+    "returns": "nothing",
+    "veto": false,
+    "detachable": true,
+    "comment": "react to a settings change: clear a cache, copy to a backup location",
+    "example": "**config-backup** copies every change to a backup location; **page-cache** clears after a theme setting change"
+  },
+  {
+    "name": "git.before.commit",
+    "phase": "before",
+    "definedBy": "git",
+    "when": "HAXcms is about to make a git commit for a site (after a page or manifest save)",
+    "subject": "`{ siteId, message, files: [paths], author }`",
+    "previous": "none",
+    "returns": "the commit (adjust the message or add files)",
+    "veto": true,
+    "detachable": false,
+    "comment": "last chance to add files or adjust the commit message, or veto the commit",
+    "example": "**changelog** adds a CHANGELOG entry to the commit and rewrites the message"
+  },
+  {
+    "name": "git.after.commit",
+    "phase": "after",
+    "definedBy": "git",
+    "when": "the commit was made",
+    "subject": "`{ siteId, hash, message, files: [paths], author }`",
+    "previous": "none",
+    "returns": "nothing",
+    "veto": false,
+    "detachable": true,
+    "comment": "push or rsync the site elsewhere; usually `detached: true`",
+    "example": "**rsync-deploy** pushes the site to a remote server (`detached: true`)"
+  },
+  {
+    "name": "transaction.before.start",
+    "phase": "before",
+    "definedBy": "core",
+    "when": "a unit of work is about to start; every operation runs in one (a single save gets an implicit one, the outline editor or an import opens an explicit bulk one)",
+    "subject": "the transaction: `{ id, origin, bulk, operations: [{ hook, entity?, id? }], marks: {} }` (origin is what started it: outline editor, import, CLI, a single save); operations is empty",
+    "previous": "none",
+    "returns": "the transaction",
+    "veto": true,
+    "detachable": false,
+    "comment": "note what is about to happen, or refuse to start",
+    "example": "**git** notes that a bulk outline edit is starting so it will commit once at the end"
+  },
+  {
+    "name": "transaction.after.start",
+    "phase": "after",
+    "definedBy": "core",
+    "when": "the transaction is open",
+    "subject": "the transaction: `{ id, origin, bulk, operations: [{ hook, entity?, id? }], marks: {} }` (origin is what started it: outline editor, import, CLI, a single save)",
+    "previous": "none",
+    "returns": "nothing",
+    "veto": false,
+    "detachable": false,
+    "comment": "prepare for the work",
+    "example": "**search** pauses per-page indexing for a bulk import"
+  },
+  {
+    "name": "transaction.before.end",
+    "phase": "before",
+    "definedBy": "core",
+    "when": "the work is done and the transaction is about to close",
+    "subject": "the transaction: `{ id, origin, bulk, operations: [{ hook, entity?, id? }], marks: {} }` (origin is what started it: outline editor, import, CLI, a single save); operations lists everything that ran",
+    "previous": "none",
+    "returns": "the transaction",
+    "veto": true,
+    "detachable": false,
+    "comment": "finish deferred work that must succeed for the transaction to count, or veto to fail it",
+    "example": "**git** makes the single commit for everything marked during the transaction"
+  },
+  {
+    "name": "transaction.after.end",
+    "phase": "after",
+    "definedBy": "core",
+    "when": "the transaction closed",
+    "subject": "the transaction: `{ id, origin, bulk, operations: [{ hook, entity?, id? }], marks: {} }` (origin is what started it: outline editor, import, CLI, a single save) plus `ok`",
+    "previous": "none",
+    "returns": "nothing",
+    "veto": false,
+    "detachable": true,
+    "comment": "react once to the whole unit of work",
+    "example": "**search** re-indexes every page the import touched; **page-cache** clears once instead of per page"
+  },
+  {
+    "name": "rest.before.request",
+    "phase": "before",
+    "definedBy": "core",
+    "when": "a request to a plugin or core route is about to reach its handler",
+    "subject": "the request: `{ method, path, operationId, headers, query, body, user? }`",
+    "previous": "none",
+    "returns": "the request (may change headers, query or body)",
+    "veto": true,
+    "detachable": false,
+    "comment": "check or adjust the request before the handler runs, or refuse it",
+    "example": "**rate-limit-plus** applies a stricter limit per token; **mcp** checks the scoped token's site and read-only flag",
+    "common": true
+  },
+  {
+    "name": "rest.after.request",
+    "phase": "after",
+    "definedBy": "core",
+    "when": "the handler produced a response, before it is sent",
+    "subject": "the response: `{ status, headers, body }`, with the request in ctx.request",
+    "previous": "none",
+    "returns": "the response (add headers, trim fields)",
+    "veto": false,
+    "detachable": false,
+    "comment": "adjust the response before it is sent; not detachable",
+    "example": "**cors** adds headers for an allowed origin; **privacy** trims fields for anonymous callers"
+  },
+  {
+    "name": "plugin.before.requirements",
+    "phase": "before",
+    "definedBy": "core",
+    "when": "status is being calculated (enable, settings save, dashboard load)",
+    "subject": "the list of unmet requirements so far `[{ key, message }]`; it starts with one entry per `required` settings field that has no value (core adds these), so a hook only adds what the settings form cannot express",
+    "previous": "none",
+    "returns": "the list with this plugin's own unmet requirements added",
+    "veto": false,
+    "detachable": false,
+    "comment": "report unmet requirements; the plugin stays enabled but inactive until the list is empty",
+    "example": "**google-analytics** stays inactive until a measurement ID is set; a plugin that needs **cookie-consent** waits for it",
+    "common": true
+  },
+  {
+    "name": "plugin.after.requirements",
+    "phase": "after",
+    "definedBy": "core",
+    "when": "the requirements list is final and status is set",
+    "subject": "`{ id, scope, siteId?, status, unmet: [{ key, message }] }`",
+    "previous": "the previous status",
+    "returns": "nothing",
+    "veto": false,
+    "detachable": true,
+    "comment": "react to becoming active or inactive",
+    "example": "**onboarding** shows the admin a setup checklist when a plugin turns inactive"
+  },
+  {
+    "name": "plugin.before.install",
+    "phase": "before",
+    "definedBy": "core",
+    "when": "about to install (runs once, the first time the plugin is enabled in a scope)",
+    "subject": "`{ id, version, scope, siteId? }` (the plugin changing state)",
+    "previous": "none",
+    "returns": "nothing",
+    "veto": true,
+    "detachable": false,
+    "comment": "check preconditions for install; veto to refuse",
+    "example": "**announcements** checks the system can write its system store before installing"
+  },
+  {
+    "name": "plugin.after.install",
+    "phase": "after",
+    "definedBy": "core",
+    "when": "install finished",
+    "subject": "`{ id, version, scope, siteId? }` (the plugin changing state)",
+    "previous": "none",
+    "returns": "nothing",
+    "veto": false,
+    "detachable": true,
+    "comment": "migrate settings that used to live in site.json or core config into this plugin's settings",
+    "example": "**google-analytics** moves `gaID` out of `site.json` into its own settings (first enable)"
+  },
+  {
+    "name": "plugin.before.enable",
+    "phase": "before",
+    "definedBy": "core",
+    "when": "about to enable (runs every time the plugin is enabled in a scope)",
+    "subject": "`{ id, version, scope, siteId? }` (the plugin changing state)",
+    "previous": "none",
+    "returns": "nothing",
+    "veto": true,
+    "detachable": false,
+    "comment": "check preconditions for enable; veto to refuse",
+    "example": "**mcp** refuses to enable on a site whose deployment blocks it"
+  },
+  {
+    "name": "plugin.after.enable",
+    "phase": "after",
+    "definedBy": "core",
+    "when": "enable finished",
+    "subject": "`{ id, version, scope, siteId? }` (the plugin changing state)",
+    "previous": "none",
+    "returns": "nothing",
+    "veto": false,
+    "detachable": true,
+    "comment": "set up what the plugin needs at runtime",
+    "example": "**log** starts collecting; any plugin observes another being enabled (for example **views** registering a source)"
+  },
+  {
+    "name": "plugin.before.disable",
+    "phase": "before",
+    "definedBy": "core",
+    "when": "about to disable (runs when the plugin is disabled in a scope; data is kept)",
+    "subject": "`{ id, version, scope, siteId? }` (the plugin changing state)",
+    "previous": "none",
+    "returns": "nothing",
+    "veto": true,
+    "detachable": false,
+    "comment": "check preconditions for disable; veto to refuse",
+    "example": "**theme pack** refuses while a site still uses its theme (core also enforces this)"
+  },
+  {
+    "name": "plugin.after.disable",
+    "phase": "after",
+    "definedBy": "core",
+    "when": "disable finished",
+    "subject": "`{ id, version, scope, siteId? }` (the plugin changing state)",
+    "previous": "none",
+    "returns": "nothing",
+    "veto": false,
+    "detachable": true,
+    "comment": "tear down what enable set up; core clears caches and rebuilds managed outputs",
+    "example": "**page-cache** removes its cache folder; **ssr** removes its compiled renderers"
+  },
+  {
+    "name": "plugin.before.uninstall",
+    "phase": "before",
+    "definedBy": "core",
+    "when": "about to uninstall (runs when the plugin is uninstalled after disable; its data is purged)",
+    "subject": "`{ id, version, scope, siteId? }` (the plugin changing state)",
+    "previous": "none",
+    "returns": "nothing",
+    "veto": true,
+    "detachable": false,
+    "comment": "check preconditions for uninstall; veto to refuse",
+    "example": "**comments** warns that all threads will be purged and requires confirmation"
+  },
+  {
+    "name": "plugin.after.uninstall",
+    "phase": "after",
+    "definedBy": "core",
+    "when": "uninstall finished",
+    "subject": "`{ id, version, scope, siteId? }` (the plugin changing state)",
+    "previous": "none",
+    "returns": "nothing",
+    "veto": false,
+    "detachable": true,
+    "comment": "remove anything outside the plugin's own stores",
+    "example": "**media-library** removes thumbnails it wrote outside its own stores"
+  },
+  {
+    "name": "plugin.before.upgrade",
+    "phase": "before",
+    "definedBy": "core",
+    "when": "about to upgrade (runs when a newer version is installed, around its upgrade steps)",
+    "subject": "`{ id, version, scope, siteId? }` (the plugin changing state)",
+    "previous": "the installed version",
+    "returns": "nothing",
+    "veto": true,
+    "detachable": false,
+    "comment": "check preconditions for upgrade; veto to refuse",
+    "example": "**views** snapshots view definitions before an upgrade step changes their shape"
+  },
+  {
+    "name": "plugin.after.upgrade",
+    "phase": "after",
+    "definedBy": "core",
+    "when": "upgrade finished",
+    "subject": "`{ id, version, scope, siteId? }` (the plugin changing state)",
+    "previous": "the installed version",
+    "returns": "nothing",
+    "veto": false,
+    "detachable": true,
+    "comment": "prepare for or follow up on data upgrades",
+    "example": "**announcements** marks new tips as unread after an upgrade"
+  },
+  {
+    "name": "site.before.create",
+    "phase": "before",
+    "definedBy": "core",
+    "when": "a site is about to be created",
+    "subject": "the site summary: `{ id, name, title, path, theme, owner }`; a skeleton or import can be adjusted in the before hook",
+    "previous": "none",
+    "returns": "the site summary (may change it)",
+    "veto": true,
+    "detachable": false,
+    "comment": "check or adjust before the site is created, or veto",
+    "example": "**institution-skeleton** (HAXiam) forces the institution theme and license onto new sites"
+  },
+  {
+    "name": "site.after.create",
+    "phase": "after",
+    "definedBy": "core",
+    "when": "the site was created",
+    "subject": "the site summary: `{ id, name, title, path, theme, owner }` as it is after the operation",
+    "previous": "none",
+    "returns": "nothing",
+    "veto": false,
+    "detachable": true,
+    "comment": "react after the site is created",
+    "example": "**announcements** queues the welcome tip for the new site owner"
+  },
+  {
+    "name": "site.before.duplicate",
+    "phase": "before",
+    "definedBy": "core",
+    "when": "a site is about to be duplicated",
+    "subject": "the site summary: `{ id, name, title, path, theme, owner }`; subject is the source site; ctx.target is the new one",
+    "previous": "none",
+    "returns": "the site summary (may change it)",
+    "veto": true,
+    "detachable": false,
+    "comment": "check or adjust before the site is duplicated, or veto",
+    "example": "**retention** blocks duplicating a site under legal hold"
+  },
+  {
+    "name": "site.after.duplicate",
+    "phase": "after",
+    "definedBy": "core",
+    "when": "the site was duplicated",
+    "subject": "the site summary: `{ id, name, title, path, theme, owner }` as it is after the operation",
+    "previous": "none",
+    "returns": "nothing",
+    "veto": false,
+    "detachable": true,
+    "comment": "react after the site is duplicated",
+    "example": "**comments** starts the copy with no comments (siteData is not copied)"
+  },
+  {
+    "name": "site.before.archive",
+    "phase": "before",
+    "definedBy": "core",
+    "when": "a site is about to be archived",
+    "subject": "the site summary: `{ id, name, title, path, theme, owner }`",
+    "previous": "none",
+    "returns": "the site summary (may change it)",
+    "veto": true,
+    "detachable": false,
+    "comment": "check or adjust before the site is archived, or veto",
+    "example": "**lms-sync** refuses to archive a site still linked to an active course"
+  },
+  {
+    "name": "site.after.archive",
+    "phase": "after",
+    "definedBy": "core",
+    "when": "the site was archived",
+    "subject": "the site summary: `{ id, name, title, path, theme, owner }` as it is after the operation",
+    "previous": "none",
+    "returns": "nothing",
+    "veto": false,
+    "detachable": true,
+    "comment": "react after the site is archived",
+    "example": "**search** removes the site from the system index"
+  },
+  {
+    "name": "site.before.delete",
+    "phase": "before",
+    "definedBy": "core",
+    "when": "a site is about to be deleted",
+    "subject": "the site summary: `{ id, name, title, path, theme, owner }`",
+    "previous": "none",
+    "returns": "the site summary (may change it)",
+    "veto": true,
+    "detachable": false,
+    "comment": "check or adjust before the site is deleted, or veto",
+    "example": "**retention** blocks deletion while a retention policy is active"
+  },
+  {
+    "name": "site.after.delete",
+    "phase": "after",
+    "definedBy": "core",
+    "when": "the site was deleted",
+    "subject": "the site summary: `{ id, name, title, path, theme, owner }` as it is after the operation",
+    "previous": "none",
+    "returns": "nothing",
+    "veto": false,
+    "detachable": true,
+    "comment": "react after the site is deleted",
+    "example": "**analytics** removes stored reports for the site"
+  },
+  {
+    "name": "site.before.export",
+    "phase": "before",
+    "definedBy": "core",
+    "when": "a site is about to be exported",
+    "subject": "the site summary: `{ id, name, title, path, theme, owner }`; ctx.format names the export format",
+    "previous": "none",
+    "returns": "the site summary (may change it)",
+    "veto": true,
+    "detachable": false,
+    "comment": "check or adjust before the site is exported, or veto",
+    "example": "**restricted-assets** removes files whose redistribution is restricted from the export"
+  },
+  {
+    "name": "site.after.export",
+    "phase": "after",
+    "definedBy": "core",
+    "when": "the site was exported",
+    "subject": "the site summary: `{ id, name, title, path, theme, owner }` as it is after the operation",
+    "previous": "none",
+    "returns": "nothing",
+    "veto": false,
+    "detachable": true,
+    "comment": "react after the site is exported",
+    "example": "**epub / pdf / docx exporters** attach their output alongside the zip"
+  },
+  {
+    "name": "user.before.login",
+    "phase": "before",
+    "definedBy": "core",
+    "when": "a user is about to login",
+    "subject": "the user: a limited record `{ id, name, displayName, roles, avatar }` by default; the full record (email and profile fields, never the password or tokens) only with the `users:full` capability",
+    "previous": "none",
+    "returns": "nothing",
+    "veto": true,
+    "detachable": false,
+    "comment": "refuse the login (for example outside allowed hours), or veto",
+    "example": "**sso** (HAXiam) refuses local logins when SSO is required"
+  },
+  {
+    "name": "user.after.login",
+    "phase": "after",
+    "definedBy": "core",
+    "when": "the user login finished",
+    "subject": "the user: a limited record `{ id, name, displayName, roles, avatar }` by default; the full record (email and profile fields, never the password or tokens) only with the `users:full` capability",
+    "previous": "none",
+    "returns": "nothing",
+    "veto": false,
+    "detachable": true,
+    "comment": "react to the login: record it, warm a cache",
+    "example": "**announcements** shows unread What's New items; **log** records the login"
+  },
+  {
+    "name": "user.before.logout",
+    "phase": "before",
+    "definedBy": "core",
+    "when": "a user is about to logout",
+    "subject": "the user: a limited record `{ id, name, displayName, roles, avatar }` by default; the full record (email and profile fields, never the password or tokens) only with the `users:full` capability",
+    "previous": "none",
+    "returns": "nothing",
+    "veto": true,
+    "detachable": false,
+    "comment": "refuse the logout (for example outside allowed hours), or veto",
+    "example": "**autosave** flushes an unsaved draft first"
+  },
+  {
+    "name": "user.after.logout",
+    "phase": "after",
+    "definedBy": "core",
+    "when": "the user logout finished",
+    "subject": "the user: a limited record `{ id, name, displayName, roles, avatar }` by default; the full record (email and profile fields, never the password or tokens) only with the `users:full` capability",
+    "previous": "none",
+    "returns": "nothing",
+    "veto": false,
+    "detachable": true,
+    "comment": "react to the logout: record it, warm a cache",
+    "example": "**session-cleanup** clears that user's cached tokens"
+  },
+  {
+    "name": "user.before.export",
+    "phase": "before",
+    "definedBy": "core",
+    "when": "core is about to export everything kept about a user (personalData stores and privacy.export)",
+    "subject": "`{ userId }`",
+    "previous": "none",
+    "returns": "nothing",
+    "veto": true,
+    "detachable": false,
+    "comment": "refuse the export (for example while an identity check is pending), or veto",
+    "example": "**retention** refuses exports for accounts flagged for review"
+  },
+  {
+    "name": "user.after.export",
+    "phase": "after",
+    "definedBy": "core",
+    "when": "the export was assembled",
+    "subject": "`{ userId, stores: [\"<plugin>.<store>\"] }` (store names only, never the records)",
+    "previous": "none",
+    "returns": "nothing",
+    "veto": false,
+    "detachable": true,
+    "comment": "record that an export happened",
+    "example": "**log** records who exported whose data"
+  },
+  {
+    "name": "user.before.erase",
+    "phase": "before",
+    "definedBy": "core",
+    "when": "core is about to erase everything kept about a user",
+    "subject": "`{ userId }`",
+    "previous": "none",
+    "returns": "nothing",
+    "veto": true,
+    "detachable": false,
+    "comment": "refuse the erase (for example a legal hold), or veto",
+    "example": "**retention** vetoes while a legal hold is set"
+  },
+  {
+    "name": "user.after.erase",
+    "phase": "after",
+    "definedBy": "core",
+    "when": "the erase finished",
+    "subject": "`{ userId, removed: { \"<plugin>.<store>\": count } }`",
+    "previous": "none",
+    "returns": "nothing",
+    "veto": false,
+    "detachable": true,
+    "comment": "clean up copies outside stores: published snapshots, caches, search indexes",
+    "example": "**comments** marks pages whose published snapshot named the user for republish"
+  },
+  {
+    "name": "register.before.routes",
+    "phase": "before",
+    "definedBy": "core",
+    "when": "the platform is collecting OpenAPI paths contributed by plugins",
+    "subject": "the list collected so far",
+    "previous": "none",
+    "returns": "the list with this plugin's additions",
+    "veto": false,
+    "detachable": false,
+    "comment": "add to the routes list",
+    "example": "**views** adds a route per saved view; **mcp** adds its discovery operation"
+  },
+  {
+    "name": "register.after.routes",
+    "phase": "after",
+    "definedBy": "core",
+    "when": "the routes list is complete",
+    "subject": "the merged list from every plugin",
+    "previous": "none",
+    "returns": "nothing",
+    "veto": false,
+    "detachable": false,
+    "comment": "inspect the final routes list (audit, conflicts)",
+    "example": "**api-docs** builds a combined OpenAPI document for the dashboard"
+  },
+  {
+    "name": "register.before.entities",
+    "phase": "before",
+    "definedBy": "core",
+    "when": "the platform is collecting entity definitions",
+    "subject": "the list collected so far",
+    "previous": "none",
+    "returns": "the list with this plugin's additions",
+    "veto": false,
+    "detachable": false,
+    "comment": "add to the entities list",
+    "example": "**example** adds `awesomeFile` extending `file`"
+  },
+  {
+    "name": "register.after.entities",
+    "phase": "after",
+    "definedBy": "core",
+    "when": "the entities list is complete",
+    "subject": "the merged list from every plugin",
+    "previous": "none",
+    "returns": "nothing",
+    "veto": false,
+    "detachable": false,
+    "comment": "inspect the final entities list (audit, conflicts)",
+    "example": "**schema-report** warns about two plugins annotating the same field"
+  },
+  {
+    "name": "register.before.contracts",
+    "phase": "before",
+    "definedBy": "core",
+    "when": "the platform is collecting contract implementations",
+    "subject": "the list collected so far",
+    "previous": "none",
+    "returns": "the list with this plugin's additions",
+    "veto": false,
+    "detachable": false,
+    "comment": "add to the contracts list",
+    "example": "**importer-moodle** implements `import.platform`"
+  },
+  {
+    "name": "register.after.contracts",
+    "phase": "after",
+    "definedBy": "core",
+    "when": "the contracts list is complete",
+    "subject": "the merged list from every plugin",
+    "previous": "none",
+    "returns": "nothing",
+    "veto": false,
+    "detachable": false,
+    "comment": "inspect the final contracts list (audit, conflicts)",
+    "example": "**importers** lists every available import platform in the UI"
+  },
+  {
+    "name": "register.before.prompts",
+    "phase": "before",
+    "definedBy": "core",
+    "when": "the platform is collecting prompts (seeded from docs/prompts.yaml) for the plugin screen and the MCP plugin",
+    "subject": "the list collected so far",
+    "previous": "none",
+    "returns": "the list with this plugin's additions",
+    "veto": false,
+    "detachable": false,
+    "comment": "add to the prompts list",
+    "example": "**any plugin** adds a 'fix this' prompt only when it currently has unmet requirements"
+  },
+  {
+    "name": "register.after.prompts",
+    "phase": "after",
+    "definedBy": "core",
+    "when": "the prompts list is complete",
+    "subject": "the merged list from every plugin",
+    "previous": "none",
+    "returns": "nothing",
+    "veto": false,
+    "detachable": false,
+    "comment": "inspect the final prompts list (audit, conflicts)",
+    "example": "**mcp** serves the final list through MCP's prompts feature"
+  },
+  {
+    "name": "render.before",
+    "phase": "before",
+    "definedBy": "core",
+    "when": "a page is about to be rendered (live request or static publish)",
+    "subject": "the render context: `{ site, page, theme, mode, cacheable, head: [tags], content, body: { start: [], end: [] }, html }`, filled in as the stages progress; only site, page, theme and mode are set",
+    "previous": "none",
+    "returns": "the context, or `ctx.respond(html)` to short-circuit with a cached document",
+    "veto": true,
+    "detachable": false,
+    "comment": "serve a cached document with ctx.respond(html), or prepare the context",
+    "example": "**page-cache** returns the cached HTML with `ctx.respond(html)` and skips the rest"
+  },
+  {
+    "name": "render.before.head",
+    "phase": "before",
+    "definedBy": "core",
+    "when": "the head is about to be assembled",
+    "subject": "the render context: `{ site, page, theme, mode, cacheable, head: [tags], content, body: { start: [], end: [] }, html }`, filled in as the stages progress",
+    "previous": "none",
+    "returns": "the context (add to head)",
+    "veto": false,
+    "detachable": false,
+    "comment": "add meta, link and script tags to the head",
+    "example": "**google-analytics** adds the consent-gated loader; **seo-plus** adds extra meta tags",
+    "common": true
+  },
+  {
+    "name": "render.after.head",
+    "phase": "after",
+    "definedBy": "core",
+    "when": "the head is assembled",
+    "subject": "the render context: `{ site, page, theme, mode, cacheable, head: [tags], content, body: { start: [], end: [] }, html }`, filled in as the stages progress; head is final",
+    "previous": "none",
+    "returns": "the context",
+    "veto": false,
+    "detachable": false,
+    "comment": "inspect or reorder the final head",
+    "example": "**csp** computes a Content-Security-Policy from the final head"
+  },
+  {
+    "name": "render.before.content",
+    "phase": "before",
+    "definedBy": "core",
+    "when": "the page content is about to be placed in the shell",
+    "subject": "the render context: `{ site, page, theme, mode, cacheable, head: [tags], content, body: { start: [], end: [] }, html }`, filled in as the stages progress; content is the stored page HTML",
+    "previous": "none",
+    "returns": "the context (replace or transform content)",
+    "veto": false,
+    "detachable": false,
+    "comment": "transform content before it is placed, for example server-side render custom elements",
+    "example": "**ssr** renders custom elements to HTML; **glossary** links defined terms"
+  },
+  {
+    "name": "render.after.content",
+    "phase": "after",
+    "definedBy": "core",
+    "when": "the content is placed",
+    "subject": "the render context: `{ site, page, theme, mode, cacheable, head: [tags], content, body: { start: [], end: [] }, html }`, filled in as the stages progress; content is final",
+    "previous": "none",
+    "returns": "the context",
+    "veto": false,
+    "detachable": false,
+    "comment": "inspect or post-process the placed content",
+    "example": "**a11y-check** flags the rendered page in preview mode",
+    "common": true
+  },
+  {
+    "name": "render.before.body",
+    "phase": "before",
+    "definedBy": "core",
+    "when": "right after the opening body tag",
+    "subject": "the render context: `{ site, page, theme, mode, cacheable, head: [tags], content, body: { start: [], end: [] }, html }`, filled in as the stages progress",
+    "previous": "none",
+    "returns": "the context (push to body.start)",
+    "veto": false,
+    "detachable": false,
+    "comment": "inject markup at the start of the body",
+    "example": "**skip-links** or a **maintenance-banner** right after `<body>`"
+  },
+  {
+    "name": "render.after.body",
+    "phase": "after",
+    "definedBy": "core",
+    "when": "right before the closing body tag",
+    "subject": "the render context: `{ site, page, theme, mode, cacheable, head: [tags], content, body: { start: [], end: [] }, html }`, filled in as the stages progress",
+    "previous": "none",
+    "returns": "the context (push to body.end)",
+    "veto": false,
+    "detachable": false,
+    "comment": "inject singletons and scripts at the end of the body, with settings baked in from the plugin's config",
+    "example": "**cookie-consent** banner, **announcements** toast, **example** `awesome-counter` singleton with settings baked in",
+    "common": true
+  },
+  {
+    "name": "render.after",
+    "phase": "after",
+    "definedBy": "core",
+    "when": "the document is complete",
+    "subject": "the render context: `{ site, page, theme, mode, cacheable, head: [tags], content, body: { start: [], end: [] }, html }`, filled in as the stages progress; html is the final document",
+    "previous": "none",
+    "returns": "the context (may change html)",
+    "veto": false,
+    "detachable": false,
+    "comment": "last chance to alter the final document; store it in a cache. Stages: `transform` changes the document (minify, rewrite links), `seal` computes things over the final bytes (CSP hashes, signatures), `store` keeps the result (page caches, static publish)",
+    "example": "**page-cache** stores the final document; **minify** compresses it",
+    "stages": [
+      "transform",
+      "seal",
+      "store"
+    ]
+  },
+  {
+    "name": "rebuild.before",
+    "phase": "before",
+    "definedBy": "core",
+    "when": "managed files are about to be regenerated (registries, page shells, static output)",
+    "subject": "`{ scope, siteId?, reason, fragments: [itemIds] }` (fragments: pages that are content pieces rendered inside other pages, such as region content, so they are left out of llms.txt, the sitemap and search)",
+    "previous": "none",
+    "returns": "the subject (add item ids to `fragments`)",
+    "veto": true,
+    "detachable": false,
+    "comment": "prepare for a rebuild, mark fragment pages, or veto it",
+    "example": "**regions** adds the pages used in theme regions to `fragments`; **static-publish** clears its output folder"
+  },
+  {
+    "name": "rebuild.after",
+    "phase": "after",
+    "definedBy": "core",
+    "when": "managed files were regenerated",
+    "subject": "`{ scope, siteId?, reason, files: [paths] }`",
+    "previous": "none",
+    "returns": "nothing",
+    "veto": false,
+    "detachable": true,
+    "comment": "write this plugin's own managed files",
+    "example": "**sitemap / llms.txt**, **views** snapshots and feeds, **search** index file",
+    "common": true
+  },
+  {
+    "name": "schedule.before.run",
+    "phase": "before",
+    "definedBy": "core",
+    "when": "a scheduled job is about to run (from `hax plugin schedule run` or the timer plugin)",
+    "subject": "`{ job, plugin, scope, siteId?, lastRun }`",
+    "previous": "none",
+    "returns": "nothing",
+    "veto": true,
+    "detachable": false,
+    "comment": "skip a job run (for example during maintenance)",
+    "example": "**maintenance-mode** skips jobs during a maintenance window"
+  },
+  {
+    "name": "schedule.after.run",
+    "phase": "after",
+    "definedBy": "core",
+    "when": "the scheduled job finished",
+    "subject": "`{ job, plugin, scope, siteId?, ok, durationMs, error? }`",
+    "previous": "none",
+    "returns": "nothing",
+    "veto": false,
+    "detachable": true,
+    "comment": "record the result or alert on failure",
+    "example": "**log** records the result; **notifications** alerts on a failed job"
+  }
+]

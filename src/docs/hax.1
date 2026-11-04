@@ -136,7 +136,7 @@ Actions to perform on web component include:
 \- DDD design system usage in CSS / JS (default)
 .br
 .B schema
-\- site.json, skeletons, haxProperties, demoSchema, appstore.json and Merlin commands against the HAX schemas (\-\-strict fails on warnings, \-\-format json for a report)
+\- site.json, skeletons, haxProperties, demoSchema, appstore.json, Merlin commands and HAXcms plugins (plugin.yaml and its registries) against the HAX schemas (\-\-strict fails on warnings, \-\-format json for a report)
 .br
 .B ssr
 \- report\-only: server\-render every wc\-registry.json element with @lit\-labs/ssr and bucket the result (never fails, not part of all; \-\-only, \-\-timeout, \-\-save\-html, \-\-no\-shim, \-\-format json)
@@ -405,6 +405,15 @@ Validate HAX schema documents in the current folder and fail on warnings
 .B hax audit ssr \--only rpg-character,d-d-d
 .br
 Report how selected elements server-render
+.TP
+.B hax plugin create quiet-hours
+Scaffold a HAXcms plugin; pick the hooks it implements (common hooks are preselected)
+.TP
+.B hax plugin create quiet-hours \--hooks common,render.after.body \--runtimes nodejs,php \--y
+Scaffold without prompts; each hook gets a stub with its "Implements hook" docblock
+.TP
+.B hax plugin hooks \--format json
+List every hook a plugin can implement, with when it runs and what it is for
 .TP
 .B hax party \--repos haxtheweb/webcomponents
 Join the HAX community by cloning specific repositories
