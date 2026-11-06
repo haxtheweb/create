@@ -20,7 +20,9 @@ import {
   logger,
   isStructuredFormat,
   enableStructuredOutput,
+  writeData,
 } from "./lib/logging.js";
+import { dump } from "js-yaml";
 import { auditCommandDetected } from "./lib/programs/audit.js";
 import { runAuditCommand as runAuditCommandWith } from "./lib/programs/audit-schema.js";
 import { partyCommandDetected } from "./lib/programs/party.js";
@@ -37,7 +39,14 @@ import {
   siteCommandDetected,
   siteThemeList,
   siteSkeletonList,
+  siteListOutput,
 } from "./lib/programs/site.js";
+import {
+  buildCliManifest,
+  formatCliManifest,
+  completionScript,
+  COMPLETION_SHELLS,
+} from "./lib/cli-manifest.js";
 import { skillsCommandDetected, skillsActions } from "./lib/programs/skills.js";
 import {
   camelToDash,
@@ -82,6 +91,30 @@ exec("which git", (error) => {
     sysGit = false;
   }
 });
+
+// haxtheweb/issues#3228: `hax list` / `hax completion` read the program itself
+function cliManifest() {
+  const auditTypes = {
+    ddd: "cliArgAuditDdd",
+    schema: "cliArgAuditSchema",
+    i18n: "cliArgAuditI18n",
+    ssr: "cliArgAuditSsr",
+    all: "cliArgAuditAll",
+  };
+  return buildCliManifest(
+    program,
+    {
+      site: siteActions(),
+      wc: webcomponentActions(),
+      skills: skillsActions(),
+      audit: Object.keys(auditTypes).map((type) => ({
+        value: type,
+        label: t(auditTypes[type]),
+      })),
+    },
+    packageJson.version,
+  );
+}
 
 async function main() {
   let wcReg = {};
@@ -169,6 +202,9 @@ async function main() {
     .option("--replace <char>", t("cliOptReplace"))
     .option("--confirm", t("cliOptConfirm"))
     .option("--destroy-confirm", t("cliOptDestroyConfirm"))
+    // haxtheweb/issues#3228
+    .option("--only <char>", t("cliOptOnly"))
+    .option("--count <char>", t("cliOptCount"))
 
     .version(packageJson.version)
     .helpCommand(true);
@@ -282,6 +318,8 @@ async function main() {
     .option("--replace <char>", t("cliOptReplace"))
     .option("--confirm", t("cliOptConfirm"))
     .option("--destroy-confirm", t("cliOptDestroyConfirm"))
+    .option("--only <char>", t("cliOptOnly"))
+    .option("--count <char>", t("cliOptCount"))
     .version(packageJson.version);
   let siteNodeOps = siteNodeOperations();
   for (let i in siteNodeOps) {
@@ -437,6 +475,33 @@ async function main() {
     .option("--format <char>", t("cliOptFormat"))
     .option("--quiet", t("cliOptQuiet"))
     .version(packageJson.version);
+
+  // haxtheweb/issues#3228: machine-readable command manifest + shell completion
+  program
+    .command("list")
+    .description(t("cliCmdList"))
+    .option("--format <char>", t("cliOptFormat"))
+    .action(() => {
+      commandRun = {
+        command: "list",
+        arguments: {},
+        options: {},
+      };
+    });
+  program
+    .command("completion")
+    .description(t("cliCmdCompletion"))
+    .argument(
+      "[shell]",
+      t("cliArgCompletionShell", { shells: COMPLETION_SHELLS.join(", ") }),
+    )
+    .action((shell) => {
+      commandRun = {
+        command: "completion",
+        arguments: { shell: shell || "bash" },
+        options: {},
+      };
+    });
 
   // process program arguments
   program.parse();
@@ -684,6 +749,41 @@ async function main() {
     }
   } catch (e) {
     program.error(color.red(e.message));
+  }
+  // haxtheweb/issues#3228: these describe or survey the CLI and work anywhere
+  if (commandRun.command === "list" || commandRun.command === "completion") {
+    const manifest = cliManifest();
+    if (commandRun.command === "completion") {
+      const shell = commandRun.arguments.shell;
+      if (!COMPLETION_SHELLS.includes(shell)) {
+        program.error(
+          color.red(
+            t("cliCompletionUnknownShell", {
+              shell: shell,
+              shells: COMPLETION_SHELLS.join(", "),
+            }),
+          ),
+        );
+      }
+      writeData(completionScript(shell, manifest));
+    } else if (isStructuredFormat(commandRun.options.format)) {
+      writeData(
+        commandRun.options.format === "yaml"
+          ? dump(manifest)
+          : JSON.stringify(manifest, null, 2),
+      );
+    } else {
+      writeData(formatCliManifest(manifest));
+    }
+    process.exit(0);
+  }
+  if (
+    commandRun.command === "site" &&
+    commandRun.arguments.action === "site:list" &&
+    !(await systemStructureContext())
+  ) {
+    siteListOutput(commandRun, process.cwd());
+    process.exit(0);
   }
   // test for updating to latest or just run the command
   if (commandRun.command === "webcomponent" && commandRun.options.search) {

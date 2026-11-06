@@ -43,6 +43,7 @@ test("siteActions returns the expected fixed list of actions", opts, () => {
     "node:add",
     "node:edit",
     "node:delete",
+    "node:generate",
     "site:stats",
     "site:items",
     "site:items-import",
@@ -52,6 +53,12 @@ test("siteActions returns the expected fixed list of actions", opts, () => {
     "site:blocks",
     "site:analytics",
     "site:revisions",
+    "site:validate",
+    "site:rebuild",
+    "site:archive",
+    "site:restore",
+    "site:logs",
+    "site:list",
     "site:export",
     "site:theme",
     "site:element",
@@ -86,7 +93,7 @@ test(
     const b = siteActions();
     assert.notEqual(a, b);
     a.push({ value: "mutated", label: "mutated" });
-    assert.equal(b.length, 33);
+    assert.equal(b.length, 40);
   },
 );
 

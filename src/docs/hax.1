@@ -45,6 +45,9 @@ Actions to perform on site include:
 .B node:delete
 \- Delete a page
 .br
+.B node:generate
+\- Generate placeholder pages (\-\-count, \-\-title prefix, \-\-parent)
+.br
 .B site:stats
 \- Site Status / stats
 .br
@@ -59,6 +62,24 @@ Actions to perform on site include:
 .br
 .B site:search
 \- Search site content
+.br
+.B site:validate
+\- Validate site structure and content; exits 1 on errors (alias site:doctor)
+.br
+.B site:rebuild
+\- Rebuild generated files: feeds, sitemap, search index, llms.txt, managed files, agent skills (\-\-only)
+.br
+.B site:archive
+\- Archive the whole site to a .tar.gz (default ~/.haxtheweb/archives/<site>/, or \-\-to\-file)
+.br
+.B site:restore
+\- Restore the site from an archive (\-\-source); archives the current state first; needs \-\-y or \-\-confirm
+.br
+.B site:logs
+\- Show recent CLI log entries (\-\-search, \-\-search\-limit)
+.br
+.B site:list
+\- List sites in this folder, a folder of sites, or a HAXcms _sites root
 .br
 .B site:theme
 \- Change theme
@@ -154,6 +175,16 @@ Actions to perform include:
 \- Test action
 .RE
 .RE
+.PP
+.B list
+[\-\-format json|yaml] \- List every command, action and option for tools and agents
+.PP
+.B completion
+[bash|zsh] \- Print a shell completion script. Add
+.B source <(hax completion bash)
+to ~/.bashrc, or
+.B source <(hax completion zsh)
+to ~/.zshrc after compinit
 .PP
 .B help
 [command] \- display help for command
@@ -298,6 +329,12 @@ max number of site search matches to return
 \--search\-selector
 treat \--search as a selector query (tag, tag[attr], tag[attr="value"], [attr])
 .TP
+\--only <char>
+site:rebuild targets to rebuild, comma separated (rss, sitemap, search, llms, managed, skills)
+.TP
+\--count <char>
+number of pages for node:generate (default 10, max 200)
+.TP
 \--search\-mode <char>
 search mode override (text or selector)
 .TP
@@ -395,6 +432,21 @@ Search site title and tags fields, limited to 10 matches
 .TP
 .B hax site node:add \--title "New Page" \--content "Page content"
 Add a new page to an existing site
+.TP
+.B hax site site:validate \--format json
+Check site.json and every page for broken structure, dead links, missing files and unknown elements
+.TP
+.B hax site site:rebuild \--only search,llms
+Regenerate the search index and llms.txt
+.TP
+.B hax site site:archive && hax site site:restore \--source ./site.tar.gz \--y
+Snapshot a site, then restore it (the current state is archived first)
+.TP
+.B hax site node:generate \--count 20 \--parent unit-1
+Add 20 placeholder pages under unit-1 for theme testing
+.TP
+.B hax list \--format json
+Machine-readable list of every command and action
 .TP
 .B hax audit \--debug
 Audit web components for compliance with DDD (HAX design system) with debug output

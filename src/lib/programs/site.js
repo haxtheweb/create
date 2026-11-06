@@ -35,6 +35,18 @@ import {
 import { t } from "../i18n.js";
 import { normalizeSiteLanguage } from "../language-registry.js";
 import { apiMessage, annotateApiBody } from "../api-messages.js";
+import {
+  validateSite,
+  parseRebuildTargets,
+  defaultArchivePath,
+  createSiteArchive,
+  restoreSiteArchive,
+  assertArchiveRestorable,
+  readCliLogs,
+  listSites,
+  generateCount,
+  placeholderPageHtml,
+} from "../site-tools.js";
 
 // Security (Stream-A): the deprecated @haxtheweb/open-apis npm dependency was
 // removed; converter calls now route in-process through haxcms-nodejs handlers
@@ -1039,6 +1051,7 @@ export function siteHiddenActions() {
     "site:files-upload",
     "site:files-delete",
     "site:search-replace",
+    "site:doctor",
     "quit",
   ];
 }
@@ -1095,6 +1108,7 @@ export function siteActions() {
     { value: "node:add", label: t("siteActionNodeAdd") },
     { value: "node:edit", label: t("siteActionNodeEdit") },
     { value: "node:delete", label: t("siteActionNodeDelete") },
+    { value: "node:generate", label: t("siteActionNodeGenerate") },
     { value: "site:stats", label: t("siteActionSiteStats") },
     { value: "site:items", label: t("siteActionSiteItems") },
     { value: "site:items-import", label: t("siteActionSiteItemsImport") },
@@ -1104,6 +1118,12 @@ export function siteActions() {
     { value: "site:blocks", label: t("siteActionSiteBlocks") },
     { value: "site:analytics", label: t("siteActionSiteAnalytics") },
     { value: "site:revisions", label: t("siteActionSiteRevisions") },
+    { value: "site:validate", label: t("siteActionSiteValidate") },
+    { value: "site:rebuild", label: t("siteActionSiteRebuild") },
+    { value: "site:archive", label: t("siteActionSiteArchive") },
+    { value: "site:restore", label: t("siteActionSiteRestore") },
+    { value: "site:logs", label: t("siteActionSiteLogs") },
+    { value: "site:list", label: t("siteActionSiteList") },
     { value: "site:export", label: t("siteActionSiteExport") },
     { value: "site:theme", label: t("siteActionSiteTheme") },
     { value: "site:element", label: t("siteActionSiteElement") },
@@ -3520,6 +3540,235 @@ export async function siteCommandDetected(commandRun) {
         }
         break;
       }
+      // haxtheweb/issues#3228: drush-inspired site commands
+      case "site:doctor":
+      case "site:validate": {
+        const report = validateSite(
+          activeHaxsite.siteDirectory,
+          activeHaxsite.manifest,
+          loadElementRegistry(activeHaxsite.siteDirectory),
+        );
+        if (commandRun.options.format || commandRun.options.quiet) {
+          logStructuredOutput(commandRun, report);
+        } else {
+          report.errors.forEach((e) => log(e.message, "error"));
+          report.warnings.forEach((w) => log(w.message, "warn"));
+          p.outro(
+            t("siteValidateSummary", {
+              errors: report.summary.errors,
+              warnings: report.summary.warnings,
+              pages: report.summary.pagesChecked,
+            }),
+          );
+        }
+        if (commandRun.options.toFile) {
+          fs.writeFileSync(
+            commandRun.options.toFile,
+            formatStructuredOutput(commandRun, report),
+          );
+        }
+        if (report.errors.length > 0) {
+          process.exitCode = 1;
+        }
+        break;
+      }
+      case "site:rebuild": {
+        try {
+          const targets = parseRebuildTargets(commandRun.options.only);
+          const rebuilt = await rebuildSiteTargets(activeHaxsite, targets);
+          await cliSiteCommit(
+            activeHaxsite,
+            // commit messages stay English, like logs
+            `Rebuilt ${rebuilt.join(" ")}`,
+            "upgradeManagedFiles",
+          );
+          if (commandRun.options.format) {
+            logStructuredOutput(commandRun, { rebuilt: rebuilt });
+          } else if (!commandRun.options.quiet) {
+            p.outro(
+              `${color.green("✓")} ${t("siteRebuildDone", { targets: rebuilt.join(", ") })}`,
+            );
+          }
+        } catch (e) {
+          log(formatErrorForLogging(e), "error");
+          process.exitCode = 1;
+        }
+        break;
+      }
+      case "site:archive": {
+        try {
+          const target = commandRun.options.toFile
+            ? resolveLocalPath(commandRun.options.toFile)
+            : defaultArchivePath(activeHaxsite.name);
+          const file = await createSiteArchive(
+            activeHaxsite.siteDirectory,
+            target,
+          );
+          if (commandRun.options.format) {
+            logStructuredOutput(commandRun, { archive: file });
+          } else if (!commandRun.options.quiet) {
+            p.outro(
+              `${color.green("✓")} ${t("siteArchiveDone", { path: file })}`,
+            );
+          }
+        } catch (e) {
+          log(formatErrorForLogging(e), "error");
+          process.exitCode = 1;
+        }
+        break;
+      }
+      case "site:restore": {
+        try {
+          let source = commandRun.options.source;
+          if (
+            !source &&
+            commandRun.options.i !== false &&
+            !commandRun.options.y
+          ) {
+            source = await p.text({
+              message: t("siteRestoreSourcePrompt"),
+              validate: (value) => {
+                if (!value) return t("siteRestoreSourceRequired");
+              },
+            });
+          }
+          if (!source || p.isCancel(source)) {
+            log(t("siteRestoreSourceRequired"), "error");
+            process.exitCode = 1;
+            break;
+          }
+          source = resolveLocalPath(source);
+          if (!fs.existsSync(source) || !fs.statSync(source).isFile()) {
+            log(t("siteRestoreSourceMissing", { path: source }), "error");
+            process.exitCode = 1;
+            break;
+          }
+          let confirmed = !!(
+            commandRun.options.y || commandRun.options.confirm
+          );
+          if (!confirmed && commandRun.options.i !== false) {
+            const answer = await p.confirm({
+              message: t("siteRestoreConfirm", {
+                site: activeHaxsite.name,
+                path: source,
+              }),
+              initialValue: false,
+            });
+            confirmed = answer === true;
+          }
+          if (!confirmed) {
+            log(t("siteRestoreNeedsConfirm"), "error");
+            process.exitCode = 1;
+            break;
+          }
+          // refuse a bad archive before anything is touched
+          await assertArchiveRestorable(source);
+          // always keep the current state before replacing it
+          const safety = await createSiteArchive(
+            activeHaxsite.siteDirectory,
+            defaultArchivePath(`${activeHaxsite.name}-pre-restore`),
+          );
+          const restored = await restoreSiteArchive(
+            source,
+            activeHaxsite.siteDirectory,
+          );
+          if (commandRun.options.format) {
+            logStructuredOutput(commandRun, {
+              restored: source,
+              safetyArchive: safety,
+              skippedLinks: restored.skippedLinks,
+            });
+          } else if (!commandRun.options.quiet) {
+            p.outro(
+              `${color.green("✓")} ${t("siteRestoreDone", { path: source, safety: safety })}`,
+            );
+          }
+        } catch (e) {
+          log(formatErrorForLogging(e), "error");
+          process.exitCode = 1;
+        }
+        break;
+      }
+      case "site:logs": {
+        const entries = readCliLogs({
+          search: commandRun.options.search,
+          limit: commandRun.options.searchLimit,
+        });
+        if (commandRun.options.format) {
+          logStructuredOutput(commandRun, entries);
+        } else if (entries.length === 0) {
+          p.outro(t("siteLogsEmpty"));
+        } else {
+          writeData(
+            entries
+              .map((e) => `${e.timestamp || "-"} ${e.level} ${e.message}`)
+              .join("\n"),
+          );
+        }
+        if (commandRun.options.toFile) {
+          fs.writeFileSync(
+            commandRun.options.toFile,
+            formatStructuredOutput(commandRun, entries),
+          );
+        }
+        break;
+      }
+      case "site:list":
+        siteListOutput(commandRun, process.cwd());
+        break;
+      case "node:generate": {
+        const count = generateCount(commandRun.options.count);
+        const prefix = titleWasProvided
+          ? commandRun.options.title
+          : t("siteGenerateDefaultTitle");
+        let parent = null;
+        if (commandRun.options.parent && commandRun.options.parent !== "") {
+          const parentNode = findNodeByIdOrSlug(
+            activeHaxsite,
+            commandRun.options.parent,
+          );
+          parent = parentNode ? parentNode.id : commandRun.options.parent;
+        }
+        let order = nextSiblingOrder(activeHaxsite.manifest.items, parent);
+        const created = [];
+        try {
+          const cliBridge = await getHaxcmsNodejsCli();
+          for (let i = 1; i <= count; i++) {
+            const body = {
+              site: activeHaxsite,
+              node: {
+                title: `${prefix} ${i}`,
+                contents: placeholderPageHtml(i),
+              },
+              order: order++,
+            };
+            if (parent) {
+              body.parent = parent;
+            }
+            const resp = await cliBridge.cliBridge("v1/items", body, "post");
+            const data = resp && resp.res ? resp.res.data : null;
+            if (!data || (data.status && data.status >= 400)) {
+              throw new Error(
+                t("siteNodeAddFailed", {
+                  reason: apiMessage(data, t("siteNoApiResponse")),
+                }),
+              );
+            }
+            created.push(
+              data.data && data.data.id ? data.data.id : body.node.title,
+            );
+          }
+        } catch (e) {
+          log(formatErrorForLogging(e), "error");
+          process.exitCode = 1;
+        }
+        if (commandRun.options.format) {
+          logStructuredOutput(commandRun, { created: created });
+        } else if (!commandRun.options.quiet) {
+          p.outro(t("siteGenerateDone", { count: created.length }));
+        }
+        break;
+      }
       case "issue:general":
         // open the issues
         p.intro(
@@ -3600,6 +3849,90 @@ export async function siteCommandDetected(commandRun) {
   if (!commandRun.options.quiet) {
     communityStatement();
   }
+}
+
+// haxtheweb/issues#3228: element registry for site:validate. A site's own
+// wc-registry.json wins; otherwise the registry this CLI ships with.
+export function loadElementRegistry(siteDirectory) {
+  const candidates = [
+    siteDirectory ? path.join(siteDirectory, "wc-registry.json") : null,
+    path.join(__dirname, "../wc-registry.json"),
+  ].filter(Boolean);
+  for (const file of candidates) {
+    try {
+      return JSON.parse(fs.readFileSync(file, "utf8"));
+    } catch {
+      // missing or unreadable: try the next registry
+    }
+  }
+  return {};
+}
+
+// regenerate derived files through the same HAXcms site methods a save uses
+export async function rebuildSiteTargets(site, targets) {
+  const done = [];
+  for (const target of targets) {
+    if (["rss", "sitemap", "search", "llms"].includes(target)) {
+      await site.updateAlternateFormats(target);
+    } else if (target === "managed") {
+      await site.rebuildManagedFiles();
+    } else if (target === "skills") {
+      if (typeof site.rebuildAgentSkills === "function") {
+        await site.rebuildAgentSkills();
+      }
+    }
+    done.push(target);
+  }
+  return done;
+}
+
+// commit a CLI-made change with the same [actor:op:txn] prefix as route calls
+export async function cliSiteCommit(site, message, op) {
+  if (!site || typeof site.gitCommit !== "function") {
+    return;
+  }
+  const run = async () => {
+    try {
+      await site.gitCommit(message, op);
+    } catch {
+      // nothing changed, or no git: a rebuild never fails on its commit
+    }
+  };
+  if (commitContextLib) {
+    const context = commitContextLib.createRequestCommitContext(
+      { headers: { "x-hax-actor": cliActor() } },
+      op,
+    );
+    await commitContextLib.runWithCommitContext(context, run);
+  } else {
+    await run();
+  }
+}
+
+// site:list works inside a site, in a folder of sites, or a HAXcms root
+export function siteListOutput(commandRun, directory) {
+  const sites = listSites(directory);
+  if (commandRun.options.format) {
+    logStructuredOutput(commandRun, sites);
+  } else if (sites.length === 0) {
+    log(t("siteListEmpty", { path: directory }));
+  } else {
+    writeData(
+      sites
+        .map(
+          (s) =>
+            `${s.name}\t${s.title || "-"}\t${s.theme || "-"}\t${s.pages}\t${s.updated || "-"}`,
+        )
+        .join("\n"),
+    );
+  }
+  if (commandRun.options.toFile) {
+    fs.writeFileSync(
+      commandRun.options.toFile,
+      formatStructuredOutput(commandRun, sites),
+    );
+  }
+  return sites;
 }
 
 // haxtheweb/issues#3127: order for a new node so it lands after its siblings
