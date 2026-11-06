@@ -2292,6 +2292,7 @@ export async function siteCommandDetected(commandRun) {
             if (!commandRun.options.customThemeTemplate) {
               const options = [
                 { value: "base", label: t("siteThemeTemplateBase") },
+                { value: "starter", label: t("siteThemeTemplateStarter") },
                 {
                   value: "polaris-flex",
                   label: t("siteThemeTemplatePolarisFlex"),
@@ -4838,6 +4839,13 @@ async function customSiteTheme(commandRun, project) {
       `${sitePath}/custom/src/sidebar-theme.js`,
     );
     await fs.renameSync(`${sitePath}/custom/src/sidebar-theme.js`, filePath);
+  } else if (themeTemplate === "starter") {
+    // full theme contract, marked up for `hax audit theme`
+    await fs.copyFileSync(
+      `${process.mainModule.path}/templates/sitetheme/starter-theme.js`,
+      `${sitePath}/custom/src/starter-theme.js`,
+    );
+    await fs.renameSync(`${sitePath}/custom/src/starter-theme.js`, filePath);
   } else {
     // vanilla theme is default
     await fs.copyFileSync(

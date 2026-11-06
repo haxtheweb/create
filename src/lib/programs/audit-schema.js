@@ -12,6 +12,7 @@ import path from "node:path";
 import color from "picocolors";
 import { auditI18nCommand } from "./audit-i18n.js";
 import { auditSsrCommand } from "./audit-ssr.js";
+import { auditThemeCommand } from "./audit-theme.js";
 import { t } from "../i18n.js";
 
 /**
@@ -397,6 +398,7 @@ export function runAuditCommand(commandRun, dddPath, schemaRoot, deps = {}) {
   const auditSchema = deps.auditSchema || auditSchemaCommand;
   const auditI18n = deps.auditI18n || auditI18nCommand;
   const auditSsr = deps.auditSsr || auditSsrCommand;
+  const auditTheme = deps.auditTheme || auditThemeCommand;
   if (type === "ddd") {
     // DDD audit keeps its existing behavior, including exiting itself
     return auditDDD(commandRun, dddPath);
@@ -407,6 +409,11 @@ export function runAuditCommand(commandRun, dddPath, schemaRoot, deps = {}) {
   }
   if (type === "i18n") {
     const r = auditI18n(commandRun, schemaRoot);
+    return exit(r.passed ? 0 : 1);
+  }
+  if (type === "theme") {
+    // HAXcms theme contract; not part of "all" yet
+    const r = auditTheme(commandRun, schemaRoot);
     return exit(r.passed ? 0 : 1);
   }
   if (type === "ssr") {
