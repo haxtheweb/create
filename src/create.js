@@ -99,6 +99,7 @@ function cliManifest() {
     schema: "cliArgAuditSchema",
     i18n: "cliArgAuditI18n",
     ssr: "cliArgAuditSsr",
+    theme: "cliArgAuditTheme",
     all: "cliArgAuditAll",
   };
   return buildCliManifest(
@@ -393,6 +394,9 @@ async function main() {
         "\n\r" +
         "ssr - " +
         t("cliArgAuditSsr") +
+        "\n\r" +
+        "theme - " +
+        t("cliArgAuditTheme") +
         "\n\r" +
         "all - " +
         t("cliArgAuditAll"),
@@ -1448,6 +1452,7 @@ async function main() {
               if (results.theme === "custom-theme") {
                 const options = [
                   { value: "base", label: t("cliThemeTemplateBase") },
+                  { value: "starter", label: t("cliThemeTemplateStarter") },
                   {
                     value: "polaris-flex",
                     label: t("cliThemeTemplatePolarisFlex"),

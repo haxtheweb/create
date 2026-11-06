@@ -48,6 +48,7 @@ hax start
 - `hax audit schema` - Validates `site.json`, skeletons, `haxProperties` (and their `demoSchema` / locales), `appstore.json` and Merlin commands against the HAX schemas
 - `hax audit i18n` - Finds English hardcoded in Lit templates (text and attributes like `aria-label`, `title`, `placeholder`) that should come from `this.t` so it can be translated
 - `hax audit all` - Runs all three
+- `hax audit theme` - Checks HAXcms theme source (a site's `custom/src/`, or theme files under the current directory) against the theme contract: extends `HAXCMSLitElementTheme`, `static get tag()` + `customElements.define`, `#contentcontainer > #slot > <slot>` for the HAX editor, a skip-link rendered first, `super.styles`, dark mode (`light-dark()` needs `color-scheme`), a responsive `@media` fallback, `site-region` names the Appearance dialog can assign, `globalThis` and no optional chaining. Each finding's rule id matches a `@hax-theme-contract` marker in the `starter` template. Errors fail; warnings fail with `--strict`. `--format json` gives rule, severity, file, line, message and fix for agents. Not part of `all`
 - `hax audit ssr` - Report-only: server-renders every element in `wc-registry.json` with `@lit-labs/ssr` and buckets the result (rendered / shell / empty / no shadow root / threw) with output and style sizes. Never fails on render problems and is not part of `all`. Runs with a small inert DOM environment (`window`, event target, observers, element query/child/class/style APIs as no-ops) so elements fail only for their own reasons; `--no-shim` turns that off to show what elements manage unaided. Also reports elements that supply their own `progressiveEnhancement` fallback markup and the size of a primitive-tag stylesheet that covers it, and flags HTML boolean attributes written as `="false"` (a `.checked=${value}` property binding on a native input renders as `checked="false"`, which browsers read as on until hydration; use `?checked=${value}`) or a native element's address bound as a property in the element's own source (`<iframe .src=${url}>`, which Lit SSR does not write; use `src=${url}`). Options: `--only <tags>`, `--timeout <ms>`, `--save-html <dir>`, `--no-shim`, `--format json`
 - `hax update` - HAX CLI self update
 - `hax party` - Display options to join the HAX community and get involved!
@@ -171,7 +172,7 @@ Options:
   --items-import <char>               import items from a file / site
   --custom-theme-name <char>          custom theme name
   --custom-theme-template <char>      custom theme template; (options: base,
-                                      polaris-flex, polaris-sidebar)
+                                      starter, polaris-flex, polaris-sidebar)
   --skeleton-file <char>              path to skeleton JSON file
   --skeleton-machine-name <char>      skeleton machine name (installed template)
                                       to create a site from

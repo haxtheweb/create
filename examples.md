@@ -111,6 +111,13 @@ Create a new site called `zombocom`, that has a custom theme called `custom-zomb
 hax site zombocom --theme "custom-theme" --custom-theme-name "custom-zombocom-theme" --custom-theme-template "base" --y
 ```
 
+Same, but start from the `starter` template: the full HAXcms theme contract (skip-link, editor wiring, menu, breadcrumb, regions, dark mode, palettes, mobile breakpoint) with each required block marked, which is the best starting point for an AI agent. Then check it with `hax audit theme`
+
+```bash
+hax site zombocom --theme "custom-theme" --custom-theme-name "custom-zombocom-theme" --custom-theme-template "starter" --y --no-i
+cd zombocom && hax audit theme --format json
+```
+
 # site - existing site
 
 `--root ./zombocom` - implies to run the command as if it was executed from the `./zombocom` folder

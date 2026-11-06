@@ -1116,7 +1116,7 @@ test("CLI list --format json describes every command", smokeOpts, () => {
   const audit = manifest.commands.find((c) => c.name === "audit");
   assert.deepEqual(
     audit.actions.map((a) => a.value),
-    ["ddd", "schema", "i18n", "ssr", "all"],
+    ["ddd", "schema", "i18n", "ssr", "theme", "all"],
   );
 });
 
