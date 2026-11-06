@@ -185,6 +185,30 @@ function tagValue(method) {
 }
 
 /**
+ * @description Drop HTML comments from template markup before reading tags
+ * out of it. An index scan instead of a regex replace, so no partial `<!--`
+ * can survive; an unterminated comment runs to the end, as in a browser.
+ */
+export function stripHtmlComments(text) {
+  let out = "";
+  let i = 0;
+  while (i < text.length) {
+    const start = text.indexOf("<!--", i);
+    if (start === -1) {
+      out += text.slice(i);
+      break;
+    }
+    out += text.slice(i, start);
+    const end = text.indexOf("-->", start + 4);
+    if (end === -1) {
+      break;
+    }
+    i = end + 3;
+  }
+  return out;
+}
+
+/**
  * @description The first HTML tag in the first html`` template of render(),
  * ignoring comments. Returns null when render has no template.
  */
@@ -194,7 +218,7 @@ function firstRenderedTag(source, renderMethod) {
   if (open === -1) {
     return null;
   }
-  const markup = body.slice(open + 5).replace(/<!--[\s\S]*?-->/g, "");
+  const markup = stripHtmlComments(body.slice(open + 5));
   const m = markup.match(/<([a-zA-Z][\w-]*)([^>]*)>/);
   return m ? { tag: m[1].toLowerCase(), attrs: m[2] } : null;
 }
@@ -305,9 +329,7 @@ export function auditThemeSource(source) {
     const cc = renderSource.search(/id\s*=\s*["']contentcontainer["']/);
     const slotDiv = renderSource.search(/id\s*=\s*["']slot["']/);
     const slotAfter =
-      slotDiv === -1
-        ? ""
-        : renderSource.slice(slotDiv).replace(/<!--[\s\S]*?-->/g, "");
+      slotDiv === -1 ? "" : stripHtmlComments(renderSource.slice(slotDiv));
     const defaultSlot = /<slot(\s[^>]*)?>/.exec(slotAfter);
     const defaultSlotUnnamed =
       defaultSlot && !/\bname\s*=/.test(defaultSlot[1] || "");

@@ -419,3 +419,12 @@ test("runAuditCommand routes theme", () => {
   assert.equal(code, 1);
   assert.deepEqual(calls, ["/x"]);
 });
+
+test("stripHtmlComments removes comments, unterminated ones to the end", () => {
+  const {
+    stripHtmlComments,
+  } = require("../../src/lib/programs/audit-theme.js");
+  assert.equal(stripHtmlComments("a<!-- x -->b<!--y-->c"), "abc");
+  assert.equal(stripHtmlComments("keep<!-- never closed"), "keep");
+  assert.equal(stripHtmlComments("none"), "none");
+});
