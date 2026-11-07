@@ -2729,7 +2729,9 @@ export async function siteCommandDetected(commandRun) {
             // creates a new site or uses the existing site config.
             const netlifyArgs = ["deploy", "--prod"];
             if (commandRun.options.domain) {
-              netlifyArgs.push("--site", commandRun.options.domain);
+              // Security (R2-M-1): --site=<v> so the value can never be read as a
+              // separate option by the publish CLI
+              netlifyArgs.push(`--site=${commandRun.options.domain}`);
             }
             execOutput = await runCommand("netlify", netlifyArgs, {
               cwd: activeHaxsite.directory,
@@ -2739,7 +2741,9 @@ export async function siteCommandDetected(commandRun) {
           } else {
             let netlifyArgs = ["deploy", "--prod"];
             if (commandRun.options.domain) {
-              netlifyArgs.push("--site", commandRun.options.domain);
+              // Security (R2-M-1): --site=<v> so the value can never be read as a
+              // separate option by the publish CLI
+              netlifyArgs.push(`--site=${commandRun.options.domain}`);
             }
             execOutput = await interactiveExec("netlify", netlifyArgs, {
               cwd: activeHaxsite.directory,
@@ -2811,7 +2815,8 @@ export async function siteCommandDetected(commandRun) {
             // --domain sets the project name; otherwise default settings.
             const vercelArgs = ["--prod"];
             if (commandRun.options.domain) {
-              vercelArgs.push("--name", commandRun.options.domain);
+              // Security (R2-M-1): --name=<v>, see netlify above
+              vercelArgs.push(`--name=${commandRun.options.domain}`);
             }
             execOutput = await runCommand("vercel", vercelArgs, {
               cwd: activeHaxsite.directory,
@@ -2821,7 +2826,8 @@ export async function siteCommandDetected(commandRun) {
           } else {
             let vercelArgs = ["--prod"];
             if (commandRun.options.domain) {
-              vercelArgs.push("--name", commandRun.options.domain);
+              // Security (R2-M-1): --name=<v>, see netlify above
+              vercelArgs.push(`--name=${commandRun.options.domain}`);
             }
             execOutput = await interactiveExec("vercel", vercelArgs, {
               cwd: activeHaxsite.directory,

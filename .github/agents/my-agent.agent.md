@@ -30,13 +30,20 @@ These rules ensure consistency, quality, and proper integration across all HAX p
 
 ## Quick Start - New to HAX?
 
-**🚀 For complete newcomers**, we've created an automated onboarding script that sets up your entire HAX development environment with Warp optimization:
+**🚀 For complete newcomers**, install the HAX CLI from npm and let it set up your environment (never pipe a remote script into your shell):
 
 ```bash
-# Run the onboarding script from anywhere
-curl -fsSL https://raw.githubusercontent.com/haxtheweb/praw/main/hax-onboarding.sh | bash
+# Install the HAX CLI
+npm install --global @haxtheweb/create
 
-# Or if you've already cloned https://github.com/haxtheweb/praw:
+# Scaffold and serve your first site, no prompts
+hax site my-hax-site --y --no-i
+cd my-hax-site && hax serve
+```
+
+If you prefer the guided onboarding script, clone https://github.com/haxtheweb/praw, read `hax-onboarding.sh`, and then run it from the checkout:
+
+```bash
 cd praw
 ./hax-onboarding.sh
 ```
