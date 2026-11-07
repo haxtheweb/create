@@ -1079,3 +1079,174 @@ test(
     }
   },
 );
+
+// haxtheweb/issues#3228: drush-inspired commands through the built CLI
+function runCli(args, cwd, env = ISOLATED_ENV) {
+  return spawnSync(process.execPath, [CLI, ...args], {
+    encoding: "utf8",
+    env: env,
+    cwd: cwd,
+    timeout: 60000,
+  });
+}
+
+test("CLI list --format json describes every command", smokeOpts, () => {
+  const res = runCli(["list", "--format", "json"], ISOLATED_HOME);
+  assert.equal(res.status, 0, `stderr: ${res.stderr}`);
+  const manifest = JSON.parse(res.stdout);
+  assert.equal(manifest.name, "hax");
+  assert.equal(manifest.version, version);
+  const names = manifest.commands.map((c) => c.name);
+  for (const name of ["site", "wc", "audit", "skills", "list", "completion"]) {
+    assert.ok(names.includes(name), `manifest lists ${name}`);
+  }
+  const site = manifest.commands.find((c) => c.name === "site");
+  const siteActions = site.actions.map((a) => a.value);
+  for (const action of [
+    "site:validate",
+    "site:rebuild",
+    "site:archive",
+    "site:restore",
+    "site:logs",
+    "site:list",
+    "node:generate",
+  ]) {
+    assert.ok(siteActions.includes(action), `site actions include ${action}`);
+  }
+  const audit = manifest.commands.find((c) => c.name === "audit");
+  assert.deepEqual(
+    audit.actions.map((a) => a.value),
+    ["ddd", "schema", "i18n", "ssr", "theme", "all"],
+  );
+});
+
+test(
+  "CLI completion prints bash and zsh scripts and refuses others",
+  smokeOpts,
+  () => {
+    const bash = runCli(["completion", "bash"], ISOLATED_HOME);
+    assert.equal(bash.status, 0, `stderr: ${bash.stderr}`);
+    assert.match(bash.stdout, /complete -F _hax_completion hax/);
+    if (spawnSync("bash", ["--version"]).status === 0) {
+      const syntax = spawnSync("bash", ["-n"], { input: bash.stdout });
+      assert.equal(syntax.status, 0, String(syntax.stderr));
+    }
+    const zsh = runCli(["completion", "zsh"], ISOLATED_HOME);
+    assert.equal(zsh.status, 0, `stderr: ${zsh.stderr}`);
+    assert.match(zsh.stdout, /^#compdef hax/);
+    const fish = runCli(["completion", "fish"], ISOLATED_HOME);
+    assert.notEqual(fish.status, 0);
+  },
+);
+
+test(
+  "CLI site:validate, node:generate, site:archive, site:restore and site:list on a new site",
+  { ...smokeOpts, timeout: 240000 },
+  () => {
+    const parentDir = fs.mkdtempSync(
+      path.join(os.tmpdir(), "hax-drush-smoke-"),
+    );
+    const siteName = "drush-smoke-site";
+    const flags = ["--y", "--no-i"];
+    try {
+      const created = runCli(
+        [
+          "site",
+          "--name",
+          siteName,
+          "--path",
+          parentDir,
+          "--theme",
+          "clean-one",
+          ...flags,
+          "--no-extras",
+        ],
+        parentDir,
+      );
+      assert.equal(created.status, 0, `stderr: ${created.stderr}`);
+      const siteDir = path.join(parentDir, siteName);
+
+      const generated = runCli(
+        ["site", "node:generate", "--count", "2", "--format", "json", ...flags],
+        siteDir,
+      );
+      assert.equal(generated.status, 0, `stderr: ${generated.stderr}`);
+      assert.equal(JSON.parse(generated.stdout).created.length, 2);
+
+      const valid = runCli(
+        ["site", "site:validate", "--format", "json", ...flags],
+        siteDir,
+      );
+      assert.equal(valid.status, 0, `stderr: ${valid.stderr}`);
+      const report = JSON.parse(valid.stdout);
+      assert.deepEqual(report.errors, []);
+      assert.equal(report.summary.items, 3);
+
+      const archiveFile = path.join(parentDir, "snapshot.tar.gz");
+      const archived = runCli(
+        [
+          "site",
+          "site:archive",
+          "--to-file",
+          archiveFile,
+          "--format",
+          "json",
+          ...flags,
+        ],
+        siteDir,
+      );
+      assert.equal(archived.status, 0, `stderr: ${archived.stderr}`);
+      assert.ok(fs.existsSync(archiveFile));
+
+      // break the site, then restore it
+      const manifestPath = path.join(siteDir, "site.json");
+      const original = fs.readFileSync(manifestPath, "utf8");
+      const broken = JSON.parse(original);
+      broken.items[1].parent = "missing-parent";
+      fs.writeFileSync(manifestPath, JSON.stringify(broken));
+      const invalid = runCli(
+        ["site", "site:validate", "--quiet", ...flags],
+        siteDir,
+      );
+      assert.equal(invalid.status, 1, "validate exits 1 on errors");
+
+      const noConfirm = runCli(
+        ["site", "site:restore", "--source", archiveFile, "--no-i"],
+        siteDir,
+      );
+      assert.equal(noConfirm.status, 1, "restore needs --y or --confirm");
+
+      const restored = runCli(
+        [
+          "site",
+          "site:restore",
+          "--source",
+          archiveFile,
+          "--format",
+          "json",
+          ...flags,
+        ],
+        siteDir,
+      );
+      assert.equal(restored.status, 0, `stderr: ${restored.stderr}`);
+      const result = JSON.parse(restored.stdout);
+      assert.ok(
+        fs.existsSync(result.safetyArchive),
+        "safety archive was written",
+      );
+      assert.equal(fs.readFileSync(manifestPath, "utf8"), original);
+
+      const listed = runCli(
+        ["site", "site:list", "--format", "json", ...flags],
+        parentDir,
+      );
+      assert.equal(listed.status, 0, `stderr: ${listed.stderr}`);
+      assert.deepEqual(
+        JSON.parse(listed.stdout).map((s) => s.name),
+        [siteName],
+      );
+    } finally {
+      fs.rmSync(parentDir, { recursive: true, force: true });
+    }
+  },
+);
