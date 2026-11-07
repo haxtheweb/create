@@ -5,7 +5,7 @@ description: >
   Use when creating a new HAXsite, editing site.json, managing page content, or modifying themes
   in the HAXcms ecosystem. Use when the user says "create a site", "add pages", "edit site.json",
   or references HAXcms site structure.
-version: 1.1.0
+version: 1.2.0
 license: Apache-2.0
 metadata:
   author: haxtheweb
@@ -48,7 +48,20 @@ Two supported CLI paths, run from inside the site directory:
 - Update an existing page: `hax site node:edit --item-id <id-or-slug> --title "<title>" --content <file-or-html> --y --no-i` (any of `--title`, `--slug`, `--content`, `--description`, `--tags`, `--parent`, `--order`, `--published`, `--hide-in-menu`, `--theme`, applied together).
 - Bulk (preferred for a whole program): build a JOS items array (one object per page with `title`, `slug`, `parent`, `indent`, `order`, `metadata`, and `content`), then run `hax site site:items-import --items-import <items.json> --y --no-i`. The import remaps parent references to the newly generated ids automatically.
 
-To mark a page draft/private (e.g. verbatim transcripts), set `metadata.published: false` in the import item. After creation, verify with `hax site site:items`. (PRAW Rule — see RULES.md "HAXcms page creation via CLI".)
+To mark a page draft/private (e.g. verbatim transcripts), set `metadata.published: false` in the import item. After creation, verify with `hax site site:items`.
+
+## Safe bulk changes
+
+Before any bulk change (an items import, many `node:edit` calls, `site:search-replace`, restructuring), snapshot and check the site, then check it again afterward:
+
+1. `hax site site:archive --y --no-i --agent` writes a `.tar.gz` of the whole site to `~/.haxtheweb/archives/<site>/`. If the change goes wrong, `hax site site:restore --source <archive> --y --no-i --agent` puts it back (it archives the current state first).
+2. `hax site site:validate --format json --y --no-i` before the change, so you know which problems were already there.
+3. Make the change through the CLI.
+4. `hax site site:validate --format json --y --no-i` again. It exits 1 on structural errors (duplicate ids or slugs, missing parents, parent cycles, missing page files); fix any errors your change introduced. Warnings (dead internal links, missing `files/` references, unknown elements) are worth fixing too.
+
+Never hand-edit generated files (`llms.txt`, `sitemap.xml`, `rss.xml`, `atom.xml`, `lunrSearchIndex.json`, the managed `AGENTS.md` block). Regenerate them with `hax site site:rebuild --y --no-i --agent`, or only some with `--only rss,sitemap,search,llms,managed,skills`.
+
+For theme testing or a demo, `hax site node:generate --count 10 --parent <id-or-slug> --y --no-i --agent` adds placeholder pages through the same path as `node:add`. (PRAW Rule — see RULES.md "HAXcms page creation via CLI".)
 
 ## Educational Content Standards
 
@@ -64,6 +77,7 @@ When creating educational content:
 
 - Run `yarn run build` after theme modifications involving HAXCMSLitElement
 - Do not manually edit `custom-elements.json` or generated manifest files
+- Regenerate feeds, sitemap, search index and `llms.txt` with `hax site site:rebuild`, never by hand
 - Use HAX CLI tools for site operations rather than manual file edits
 - Ensure `site.json` is valid JSON Outline Schema before committing
 
