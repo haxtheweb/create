@@ -6,11 +6,14 @@ require("@babel/register");
 
 const test = require("node:test");
 const assert = require("node:assert/strict");
+const path = require("node:path");
 
 const {
   validateNpmClient,
   rejectShellMetacharacters,
   validateDomain,
+  validateTemplateName,
+  listTemplateNames,
   validateWebcomponentName,
   dashToCamel,
   camelToDash,
@@ -70,6 +73,9 @@ test("rejectShellMetacharacters rejects every dangerous metacharacter", () => {
     "a!b",
     "a\nb",
     "a\\b",
+    // cmd.exe variable expansion and escape characters
+    "a%PATH%b",
+    "a^b",
   ];
   for (const bad of dangerous) {
     assert.throws(
@@ -103,6 +109,50 @@ test("validateDomain rejects values outside the hostname charset", () => {
   assert.throws(() => validateDomain("example.com; rm"), /Invalid --domain/);
   assert.throws(() => validateDomain("a$b"), /Invalid --domain/);
   assert.throws(() => validateDomain("a b"), /Invalid --domain/);
+});
+
+test("validateDomain rejects a leading dash (argument injection)", () => {
+  // Security (R2-M-1): "-" is in the hostname charset, so "--help" or
+  // "-x" would otherwise reach netlify/vercel/surge as an option
+  assert.throws(() => validateDomain("--help"), /cannot start with "-"/);
+  assert.throws(() => validateDomain("-x.example.com"), /cannot start with/);
+  assert.equal(validateDomain("x-y.example.com"), "x-y.example.com");
+});
+
+// --- --template allowlist ---
+
+test("validateTemplateName only accepts the shipped template directories", () => {
+  const root = path.join(__dirname, "..", "..", "src", "templates");
+  for (const ok of ["compliant", "minimal", "training", "monorepo"]) {
+    assert.equal(validateTemplateName(ok, root, "webcomponent"), ok);
+  }
+  assert.equal(validateTemplateName("", root, "webcomponent"), "");
+  assert.equal(
+    validateTemplateName(undefined, root, "webcomponent"),
+    undefined,
+  );
+  for (const bad of [
+    "../sitedotfiles",
+    "../../lib",
+    "compliant/..",
+    "/etc",
+    "nope",
+    "Compliant",
+    ".git",
+  ]) {
+    assert.throws(
+      () => validateTemplateName(bad, root, "webcomponent"),
+      /Invalid --template value: choose one of compliant, minimal, monorepo, training/,
+      `expected rejection for: ${JSON.stringify(bad)}`,
+    );
+  }
+  assert.deepEqual(listTemplateNames(root, "webcomponent"), [
+    "compliant",
+    "minimal",
+    "monorepo",
+    "training",
+  ]);
+  assert.deepEqual(listTemplateNames(root, "no-such-type"), []);
 });
 
 // --- Web component name validator (spec-style: error string | null) ---

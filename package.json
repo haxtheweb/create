@@ -29,6 +29,7 @@
     "local": "npm run build && npm link",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
+    "lint:security": "eslint --config eslint.security.config.mjs \"src/**/*.js\" \"scripts/**/*.js\"",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "precheck": "node scripts/precheck.mjs",

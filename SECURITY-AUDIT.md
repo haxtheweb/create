@@ -5,9 +5,8 @@ Entry point for recurring security audits of this repo. `create` is one of five 
 ## Read order (do this first)
 
 1. `CONTEXT.md` — module map, test seams (A: pure functions, B: fs fixtures, C: CLI smoke), domain vocabulary
-2. `security_best_practices_report.md` — canonical current state: findings, verified hardening, dependency posture
-3. `security_best_practices_report_YYYY-MM-DD.md` — archived rounds; the inline `Security (H-x/M-x/L-x/R2-x)` comments in `src/` reference these finding IDs
-4. `SECURITY.md` — disclosure policy (private advisory at `haxtheweb/issues`, never public issues)
+2. `docs/security-findings-key.md` — what each `Security (H-x/M-x/L-x/R2-x)` ID in the inline `src/` comments refers to, one line per finding (the full reports are gitignored working files, see Reporting convention)
+3. `SECURITY.md` — disclosure policy (private advisory at `haxtheweb/issues`, never public issues)
 
 ## Scope
 
@@ -39,7 +38,7 @@ A security fix without a matching test here is incomplete.
 
 ## Reporting convention
 
-- `security_best_practices_report.md` (undated) is always the canonical current state — update it in place
-- Completed audit rounds are archived as `security_best_practices_report_YYYY-MM-DD.md`
+- `security_best_practices_report.md` (undated) is the auditor's working report for the current round; it and the dated archives `security_best_practices_report_YYYY-MM-DD.md` are gitignored and never committed
 - Cite findings as `file:line`; mark fixes with inline `Security (H-x/M-x/L-x/R2-x)` comments referencing the finding ID
+- Every ID used in a `src/` comment gets a one-line entry in `docs/security-findings-key.md` (the committed record), so the comments stay resolvable without the report
 - Report vulnerabilities via `SECURITY.md` (private advisory), never public issues

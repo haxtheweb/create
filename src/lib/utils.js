@@ -378,7 +378,9 @@ export function githubRepoLink(gitRepo) {
 // into an exec() shell string. Rejecting these at the option boundary closes
 // the command-injection vector at every exec(...${opt}...) call site without
 // requiring a full exec()->spawn() migration of the publish/clone flows.
-const SHELL_METACHARACTER_RE = /[;&|`$<>!(){}#\n\r\\]/;
+// `%` and `^` are cmd.exe's variable-expansion and escape characters
+// (Windows hosts run the same publish flows through cmd).
+const SHELL_METACHARACTER_RE = /[;&|`$<>!(){}#%^\n\r\\]/;
 
 /**
  * Reject shell metacharacters in a value that will be interpolated into a
@@ -465,6 +467,47 @@ export function validateDomain(value) {
   }
   if (typeof value !== "string" || !DOMAIN_RE.test(value)) {
     throw new Error(t("utilInvalidDomain"));
+  }
+  // Security (R2-M-1): the charset allows "-", so "--help" / "-x" would pass
+  // and be read as an option by the publish CLI it is handed to.
+  rejectLeadingDash(value, "domain");
+  return value;
+}
+
+// Security: --template picks a directory under src/templates/<type>/, so it
+// must be one of the shipped names, never a path. Resolved against the
+// templates root at call time so the allowlist can't drift from what ships.
+export function listTemplateNames(templatesRoot, type) {
+  try {
+    return fs
+      .readdirSync(path.join(templatesRoot, type), { withFileTypes: true })
+      .filter((d) => d.isDirectory() && !d.name.startsWith("."))
+      .map((d) => d.name)
+      .sort();
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Validate a --template value against the template directories that ship
+ * with the CLI. Returns the value, or throws naming the valid choices.
+ * @param {string} value
+ * @param {string} templatesRoot absolute path to src/dist templates dir
+ * @param {string} type "webcomponent" (the only templated project type)
+ */
+export function validateTemplateName(value, templatesRoot, type) {
+  if (value === undefined || value === null || value === "") {
+    return value;
+  }
+  const allowed = listTemplateNames(templatesRoot, type);
+  if (typeof value !== "string" || !allowed.includes(value)) {
+    throw new Error(
+      t("utilInvalidTemplate", {
+        option: "template",
+        choices: allowed.join(", "),
+      }),
+    );
   }
   return value;
 }
