@@ -147,6 +147,7 @@
   "wcGitRepoLocation": "Git Repo location:",
   "wcCopyingProjectFiles": "Copying project files",
   "wcFilesCopied": "Files copied",
+  "wcCopyFailed": "Could not copy the {template} template into {path}.",
   "wcMakingFilesAwesome": "Making files awesome",
   "wcFilesAwesome": "Files are now awesome!",
   "wcInstallationMagic": "Installation magic ({command})",
