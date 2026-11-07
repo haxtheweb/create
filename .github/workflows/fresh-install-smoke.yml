@@ -1,0 +1,149 @@
+name: fresh-install-smoke
+# haxtheweb/issues#3262: catch onboarding breaks before new users hit them.
+#
+# Every night, on a clean runner, this does what the README tells a new user
+# to do, using the default branch instead of the published package:
+#   1. build the CLI and install it globally (`npm install --global` of the
+#      packed package, the same files `npm install @haxtheweb/create --global`
+#      would install)
+#   2. `hax site <name> --y --no-i` to create a new site
+#   3. `hax serve` in the background, then fetch the home page and site.json
+#      from localhost
+#   4. add a page with `hax site node:add` and confirm it is served
+#
+# Localhost only: nothing here talks to a live HAX deployment. The runner has
+# no git identity and no TTY, like a first-time user's CI or AI agent.
+on:
+  schedule:
+    - cron: "11 9 * * *" # nightly, 09:11 UTC
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  fresh-install:
+    name: "Fresh install: hax site, serve, add a page"
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      SITE_NAME: smoke-site
+      PAGE_TITLE: Nightly smoke page
+      PAGE_TEXT: Added by the nightly fresh-install smoke test.
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+
+      - name: Build the CLI
+        run: |
+          npm ci --no-audit --no-fund
+          npm run build
+
+      - name: Install the CLI globally
+        run: |
+          mkdir -p "$RUNNER_TEMP/pkg"
+          npm pack --pack-destination "$RUNNER_TEMP/pkg"
+          npm install --global "$RUNNER_TEMP"/pkg/haxtheweb-create-*.tgz
+          # leave the checkout so nothing resolves from its node_modules
+          cd "$RUNNER_TEMP"
+          echo "hax is $(command -v hax)"
+          expected="$(node -p "require('$GITHUB_WORKSPACE/package.json').version")"
+          actual="$(hax --version)"
+          echo "hax --version: $actual (expected $expected)"
+          test "$actual" = "$expected"
+
+      - name: Create a new site
+        run: |
+          mkdir -p "$RUNNER_TEMP/sites"
+          cd "$RUNNER_TEMP/sites"
+          hax site "$SITE_NAME" --y --no-i
+          test -f "$SITE_NAME/site.json"
+          echo "SITE_DIR=$RUNNER_TEMP/sites/$SITE_NAME" >> "$GITHUB_ENV"
+
+      - name: Start hax serve in the background
+        run: |
+          cd "$SITE_DIR"
+          nohup hax serve > "$RUNNER_TEMP/serve.log" 2>&1 &
+          # hax serve picks the first free port from 3000 and prints it
+          port=""
+          for _ in $(seq 1 60); do
+            port="$(grep -oE 'localhost:[0-9]+' "$RUNNER_TEMP/serve.log" | head -n 1 | cut -d: -f2 || true)"
+            if [ -n "$port" ] && curl -fsS -o /dev/null "http://localhost:$port/"; then
+              break
+            fi
+            port=""
+            sleep 2
+          done
+          if [ -z "$port" ]; then
+            echo "::error title=hax serve::server did not answer on localhost within 120s"
+            cat "$RUNNER_TEMP/serve.log"
+            exit 1
+          fi
+          echo "BASE_URL=http://localhost:$port" >> "$GITHUB_ENV"
+          echo "hax serve is up on http://localhost:$port"
+
+      - name: Home page and site.json load
+        run: |
+          status="$(curl -sS -o "$RUNNER_TEMP/home.html" -w '%{http_code}' "$BASE_URL/")"
+          echo "GET / -> $status"
+          test "$status" = "200"
+          grep -q "<title>$SITE_NAME</title>" "$RUNNER_TEMP/home.html"
+          grep -q "haxcms-site-builder" "$RUNNER_TEMP/home.html"
+          status="$(curl -sS -o "$RUNNER_TEMP/site.json" -w '%{http_code}' "$BASE_URL/site.json")"
+          echo "GET /site.json -> $status"
+          test "$status" = "200"
+          node -e '
+            const site = JSON.parse(require("fs").readFileSync(process.argv[1], "utf8"));
+            if (!Array.isArray(site.items) || site.items.length < 1) {
+              throw new Error("site.json has no page items");
+            }
+            console.log(`site.json parses: "${site.title}", ${site.items.length} item(s)`);
+          ' "$RUNNER_TEMP/site.json"
+
+      - name: Add a page with the CLI
+        run: |
+          cd "$SITE_DIR"
+          hax site node:add --title "$PAGE_TITLE" --content "<p>$PAGE_TEXT</p>" --y --no-i --agent
+
+      - name: New page shows in site.json
+        run: |
+          curl -fsS -o "$RUNNER_TEMP/site-after.json" "$BASE_URL/site.json"
+          node -e '
+            const fs = require("fs");
+            const site = JSON.parse(fs.readFileSync(process.argv[1], "utf8"));
+            const item = site.items.find((i) => i.title === process.env.PAGE_TITLE);
+            if (!item) {
+              throw new Error(`"${process.env.PAGE_TITLE}" is not in site.json`);
+            }
+            console.log(`site.json lists "${item.title}" at /${item.slug} (${item.location})`);
+            fs.appendFileSync(process.env.GITHUB_ENV, `PAGE_SLUG=${item.slug}\nPAGE_LOCATION=${item.location}\n`);
+          ' "$RUNNER_TEMP/site-after.json"
+
+      - name: New page content is served
+        run: |
+          curl -fsS "$BASE_URL/$PAGE_LOCATION" | tee "$RUNNER_TEMP/page.html"
+          echo
+          grep -qF "$PAGE_TEXT" "$RUNNER_TEMP/page.html"
+
+      # KNOWN BUG (found while writing this workflow, haxtheweb/issues#3262):
+      # haxcms-nodejs loads site.json once when `hax serve` starts (single-site
+      # mode) and routes page URLs from that copy, so a page added while the
+      # server is running answers HTTP 404 at its own URL until the server is
+      # restarted. Left failing on purpose so the nightly run stays honest;
+      # it should pass once the server re-reads the site.
+      - name: "KNOWN BUG: new page URL answers 200 without a restart"
+        run: |
+          status="$(curl -sS -o /dev/null -w '%{http_code}' "$BASE_URL/$PAGE_SLUG")"
+          echo "GET /$PAGE_SLUG -> $status"
+          if [ "$status" != "200" ]; then
+            echo "::error title=New page URL::GET /$PAGE_SLUG returned $status while hax serve is running (site.json already lists the page). Restarting hax serve makes it 200."
+            exit 1
+          fi
+
+      - name: hax serve log
+        if: always()
+        run: cat "$RUNNER_TEMP/serve.log" || true
