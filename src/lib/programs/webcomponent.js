@@ -251,10 +251,28 @@ export async function webcomponentProcess(commandRun, project, port = "8000") {
   s.start(merlinSays(t("wcCopyingProjectFiles")));
   // leverage this little helper from HAXcms
   let templateDir = project.template || "compliant";
-  await HAXCMS.recurseCopy(
+  // recurseCopy requires the directory the copy must stay inside (its
+  // containment base) and returns false instead of copying without it.
+  // The new element folder lives directly under project.path, so that is
+  // the base; make sure it exists since the copy no longer creates it.
+  fs.mkdirSync(project.path, { recursive: true });
+  const copied = await HAXCMS.recurseCopy(
     `${process.mainModule.path}/templates/${project.type}/${templateDir}/`,
     `${project.path}/${project.name}`,
+    [],
+    project.path,
   );
+  if (copied === false) {
+    s.stop(
+      color.red(
+        t("wcCopyFailed", {
+          template: `${project.type}/${templateDir}`,
+          path: `${project.path}/${project.name}`,
+        }),
+      ),
+    );
+    process.exit(1);
+  }
   // rename gitignore to improve copy cross platform compat
   const renameIfExists = (src, dest) => {
     if (fs.existsSync(src)) {
