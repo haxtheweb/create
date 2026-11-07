@@ -5,7 +5,7 @@ import globals from "globals";
 
 // Team convention: no `?.` optional chaining. The project's Babel/parser
 // toolchain has had issues with this syntax; see AGENTS.md / hax audit.
-const noOptionalChaining = {
+export const noOptionalChaining = {
   selector: "ChainExpression",
   message:
     "Optional chaining (`?.`) is banned in this codebase; use an explicit guard (e.g. `a && a.b`) instead.",
@@ -14,14 +14,14 @@ const noOptionalChaining = {
 // Team convention: prefer `globalThis` over bare `window` so code behaves
 // consistently outside browser-only contexts. `create` is a Node CLI with no
 // legitimate DOM/browser context, so this is not scoped/excepted here.
-const noWindowGlobal = {
+export const noWindowGlobal = {
   selector: "Identifier[name='window']",
   message: "Use `globalThis` instead of `window` for global-scope references.",
 };
 
 // Security: shell-string exec() with interpolated values is a command
 // injection risk. Use runCommand(cmd, [args]) (src/lib/utils.js) instead.
-const noInterpolatedExec = {
+export const noInterpolatedExec = {
   selector:
     "CallExpression[callee.name='exec'] > TemplateLiteral[expressions.length>0]",
   message:

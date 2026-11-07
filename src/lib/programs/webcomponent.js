@@ -24,6 +24,7 @@ import {
   githubRepoLink,
   rejectShellMetacharacters,
   rejectLeadingDash,
+  validateTemplateName,
 } from "../utils.js";
 import * as haxcmsLib from "@haxtheweb/haxcms-nodejs/dist/lib/HAXCMS.js";
 const HAXCMS = haxcmsLib.HAXCMS;
@@ -249,12 +250,26 @@ export async function webcomponentProcess(commandRun, project, port = "8000") {
   }
   let s = quietAwareSpinner(commandRun);
   s.start(merlinSays(t("wcCopyingProjectFiles")));
-  // leverage this little helper from HAXcms
-  let templateDir = project.template || "compliant";
-  await HAXCMS.recurseCopy(
-    `${process.mainModule.path}/templates/${project.type}/${templateDir}/`,
-    `${project.path}/${project.name}`,
+  // Security: the template name picks a directory under templates/<type>/;
+  // re-validate here (prompt answers and programmatic callers bypass the
+  // CLI boundary check) and confirm the copy produced a project before the
+  // rename/rewrite steps run against a possibly empty directory.
+  // __dirname is lib/programs in both src/ and dist/, so ../../templates is
+  // the shipped templates directory regardless of how the CLI was launched.
+  const templatesRoot = path.join(__dirname, "../../templates");
+  const templateDir = validateTemplateName(
+    project.template || "compliant",
+    templatesRoot,
+    project.type,
   );
+  const templateSource = path.join(templatesRoot, project.type, templateDir);
+  const projectDir = path.join(project.path, project.name);
+  await HAXCMS.recurseCopy(`${templateSource}/`, projectDir);
+  // every shipped template has webcomponent.js (renamed to <name>.js below)
+  if (!fs.existsSync(path.join(projectDir, "webcomponent.js"))) {
+    s.stop(color.red(t("wcTemplateCopyFailed", { template: templateDir })));
+    throw new Error(t("wcTemplateCopyFailed", { template: templateDir }));
+  }
   // rename gitignore to improve copy cross platform compat
   const renameIfExists = (src, dest) => {
     if (fs.existsSync(src)) {

@@ -61,6 +61,7 @@ import {
   rejectLeadingDash,
   hasNameSpecialCharacters,
   validateDomain,
+  validateTemplateName,
 } from "./lib/utils.js";
 import * as haxcmsLib from "@haxtheweb/haxcms-nodejs/dist/lib/HAXCMS.js";
 const systemStructureContext = haxcmsLib.systemStructureContext;
@@ -727,6 +728,16 @@ async function main() {
     // as an option (e.g. -e <cmd> runs a program).
     rejectLeadingDash(commandRun.options.source, "source");
     rejectLeadingDash(commandRun.options.destination, "destination");
+    // Security: --template selects a directory under templates/webcomponent,
+    // so it must be one of the shipped names (never a path). The monorepo
+    // detection above sets "monorepo" itself, which is on the list.
+    if (commandRun.options.template && commandRun.command !== "site") {
+      validateTemplateName(
+        commandRun.options.template,
+        path.join(__dirname, "templates"),
+        "webcomponent",
+      );
+    }
     if (commandRun.options.exclude) {
       String(commandRun.options.exclude)
         .split(",")
