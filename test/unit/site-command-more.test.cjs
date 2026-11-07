@@ -737,10 +737,16 @@ for (const publisher of ["surge", "netlify", "vercel"]) {
         !fs.existsSync(path.join(SITE_DIR, "index.html.bak")),
         "backup cleaned up by restore",
       );
-      // local build artifacts were cleaned for the static publish
+      // local build artifacts were moved aside for the static publish and
+      // moved back afterwards, never deleted from the live site
       assert.ok(
-        !fs.existsSync(path.join(SITE_DIR, "wc-registry.json")),
-        "wc-registry removed",
+        fs.existsSync(path.join(SITE_DIR, "wc-registry.json")),
+        "wc-registry restored",
+      );
+      assert.ok(fs.existsSync(path.join(SITE_DIR, "build")), "build/ restored");
+      assert.ok(
+        !fs.existsSync(siteModule.staticPublishStashDir(SITE_DIR)),
+        "stash dir cleaned up",
       );
     },
   );
