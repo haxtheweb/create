@@ -515,6 +515,25 @@ export async function execNpxHaxcmsNodejsFallback(cwd, env, assumeYes) {
   return runCommand("npx", [HAXCMS_NODEJS_FALLBACK_SPEC], { cwd, env });
 }
 
+// Security (M-4 / R2-H-1): every local launch runs haxcms-nodejs with
+// HAXCMS_DISABLE_JWT_CHECKS, i.e. with no login. Newer haxcms-nodejs binds
+// 127.0.0.1 on its own in that mode, but the published 26.8.x line this CLI
+// still depends on binds every interface, so the CLI pins the bind address
+// itself rather than trusting the server to. An explicit HAXCMS_HOST in the
+// caller's environment is honoured (that is the documented override).
+export const LOCAL_HAXCMS_HOST = "127.0.0.1";
+
+export function localHaxcmsServerEnv(baseEnv = process.env, extra = {}) {
+  const env = { ...baseEnv, ...extra };
+  if (
+    typeof env.HAXCMS_HOST !== "string" ||
+    env.HAXCMS_HOST.trim().length === 0
+  ) {
+    env.HAXCMS_HOST = LOCAL_HAXCMS_HOST;
+  }
+  return env;
+}
+
 // Launches the local HAXcms server for site:start/site:serve/site creation's
 // launch-on-create flow. Prefers spawning the already-installed dependency
 // in-process (no network required); only falls back to `npx` if that isn't
@@ -1523,19 +1542,18 @@ export async function siteCommandDetected(commandRun) {
 ⌨️  ${t("siteServerStopPress", { keys: color.bold(color.black(color.bgRed(` ${t("wcCtrlCOrBreak")} `))) })}`);
           }
           // Security (M-4 / R2-H-1): HAXCMS_DISABLE_JWT_CHECKS is scoped to
-          // local dev only. haxcms-nodejs binds 127.0.0.1 automatically in
-          // this mode (HAXCMS_HOST overrides) and rejects non-loopback Host
-          // headers, so the no-login server isn't reachable from the network.
+          // local dev only and the server is pinned to loopback via
+          // HAXCMS_HOST (see localHaxcmsServerEnv), so the no-login server
+          // isn't reachable from the network.
           // Issue #2993: spawn the locally-resolved haxcms-nodejs bin
           // directly (no npx/network round-trip); falls back to npx only
           // if local resolution fails.
           await spawnHaxcmsNodejs(
             activeHaxsite.directory,
-            {
-              ...process.env,
+            localHaxcmsServerEnv(process.env, {
               PORT: `${port}`,
               HAXCMS_DISABLE_JWT_CHECKS: "true",
-            },
+            }),
             commandRun.options.y,
           );
         } catch (e) {
@@ -1555,12 +1573,11 @@ export async function siteCommandDetected(commandRun) {
           // Issue #2993: same in-process spawn (with npx fallback) as start.
           await spawnHaxcmsNodejs(
             activeHaxsite.directory,
-            {
-              ...process.env,
+            localHaxcmsServerEnv(process.env, {
               PORT: `${port}`,
               HAXCMS_DISABLE_JWT_CHECKS: "true",
               NODE_ENV: "development",
-            },
+            }),
             commandRun.options.y,
           );
         } catch (e) {
@@ -4857,9 +4874,9 @@ export async function siteProcess(commandRun, project, port = "3000") {
     project.extras.includes("launch")
   ) {
     let optionPath = `${project.path}/${project.name}`;
-    // Security (M-4 / R2-H-1): scoped JWT-disable for local launch; the server
-    // binds loopback on its own in this mode. 'command' is shown to the user
-    // as the "launch later" instructions (issue #2993).
+    // Security (M-4 / R2-H-1): scoped JWT-disable for local launch; the
+    // server is pinned to loopback via localHaxcmsServerEnv. 'command' is
+    // shown to the user as the "launch later" instructions (issue #2993).
     let command = `hax serve`;
     if (!commandRun.options.quiet) {
       p.note(`${merlinSays(`${t("siteSummonedDaemon")} 👹`)}
@@ -4884,10 +4901,9 @@ ${color.underline(color.cyan(`http://localhost:${port}`))}
       // resolution fails.
       await spawnHaxcmsNodejs(
         optionPath,
-        {
-          ...process.env,
+        localHaxcmsServerEnv(process.env, {
           HAXCMS_DISABLE_JWT_CHECKS: "true",
-        },
+        }),
         commandRun.options.y,
       );
     } catch {
