@@ -16,6 +16,7 @@ import { log, writeData } from "../logging.js";
 import {
   dashToCamel,
   readAllFiles,
+  isRewritableTextFile,
   exec,
   runCommand,
   validateWebcomponentName,
@@ -893,6 +894,51 @@ export function getInputMethodFromType(type) {
   return false;
 }
 
+/**
+ * Work out what `hax wc rename` would touch under `dir` without changing
+ * anything. readAllFiles already skips .git/ (and other VCS dirs),
+ * node_modules/, dist/ and public/; on top of that every file is read once
+ * and classified: text files whose bytes round-trip through UTF-8 go in
+ * `rewrite`, everything else (fonts, images, pdfs, archives, anything with
+ * a NUL byte) goes in `skipped` and is never rewritten. Files whose
+ * basename contains the old name go in `rename` regardless of type, since
+ * renaming does not touch their bytes.
+ */
+export function planWebcomponentRename(dir, { oldName, newName }) {
+  const plan = { rewrite: [], rename: [], skipped: [] };
+  for (const filePath of readAllFiles(dir)) {
+    let buffer;
+    try {
+      if (fs.lstatSync(filePath).isSymbolicLink()) {
+        plan.skipped.push(filePath);
+        continue;
+      }
+      buffer = fs.readFileSync(filePath);
+    } catch {
+      plan.skipped.push(filePath);
+      continue;
+    }
+    if (isRewritableTextFile(filePath, buffer)) {
+      plan.rewrite.push(filePath);
+    } else {
+      plan.skipped.push(filePath);
+    }
+    const basename = path.basename(filePath);
+    if (basename.includes(oldName)) {
+      plan.rename.push({
+        old: filePath,
+        new: path.join(
+          path.dirname(filePath),
+          basename.replaceAll(oldName, newName),
+        ),
+      });
+    }
+  }
+  // rename deeper files first to avoid parent rename blocking children
+  plan.rename.sort((a, b) => b.old.length - a.old.length);
+  return plan;
+}
+
 export async function webcomponentRename(commandRun, packageData) {
   const oldCwd = process.cwd();
   const oldDirName = path.basename(oldCwd);
@@ -972,28 +1018,50 @@ export async function webcomponentRename(commandRun, packageData) {
   const newScopedName = scope + newName;
   const newDir = path.join(parentDir, newName);
 
+  const dryRun = Boolean(commandRun.options.dryRun);
+  const plan = planWebcomponentRename(oldCwd, { oldName, newName });
+
+  if (dryRun) {
+    if (!commandRun.options.quiet) {
+      p.note(
+        [
+          t("wcRenameDryRunHeading", { oldName, newName }),
+          "",
+          `${t("wcRenameDryRunRewrite", { count: plan.rewrite.length })}`,
+          ...plan.rewrite.map((f) => `  ${path.relative(oldCwd, f)}`),
+          "",
+          `${t("wcRenameDryRunRename", { count: plan.rename.length })}`,
+          ...plan.rename.map(
+            (r) =>
+              `  ${path.relative(oldCwd, r.old)} → ${path.relative(oldCwd, r.new)}`,
+          ),
+          "",
+          `${t("wcRenameDryRunSkipped", { count: plan.skipped.length })}`,
+          ...plan.skipped.map((f) => `  ${path.relative(oldCwd, f)}`),
+          "",
+          `  ${oldCwd} → ${newDir}`,
+        ].join("\n"),
+      );
+    }
+    return plan;
+  }
+
   let s = quietAwareSpinner(commandRun);
   s.start(merlinSays(t("wcRenaming", { oldName, newName })));
 
-  // rewrite file contents
-  for (const filePath of readAllFiles(oldCwd)) {
-    // skip binary and generated directories
-    if (
-      filePath.includes("/node_modules/") ||
-      filePath.includes("/dist/") ||
-      filePath.includes("/public/")
-    ) {
-      continue;
-    }
-    if (filePath.endsWith(".jpg") || filePath.endsWith(".png")) {
-      continue;
-    }
+  // rewrite file contents. Security: only files the planner classified as
+  // text are rewritten; binaries (fonts, images, pdfs, archives) and VCS
+  // internals (.git/ objects) are never read as UTF-8 or written back.
+  for (const filePath of plan.rewrite) {
     try {
-      let content = fs.readFileSync(filePath, "utf8");
+      const original = fs.readFileSync(filePath);
+      let content = original.toString("utf8");
       // replace class name first, then tag name
       content = content.replaceAll(oldClassName, newClassName);
       content = content.replaceAll(oldName, newName);
-      fs.writeFileSync(filePath, content);
+      if (content !== original.toString("utf8")) {
+        fs.writeFileSync(filePath, Buffer.from(content, "utf8"));
+      }
     } catch (err) {
       console.warn(
         color.yellow(
@@ -1003,26 +1071,9 @@ export async function webcomponentRename(commandRun, packageData) {
     }
   }
 
-  // rename files that contain the old name in their basename
-  const filesToRename = [];
-  for (const filePath of readAllFiles(oldCwd)) {
-    if (
-      filePath.includes("/node_modules/") ||
-      filePath.includes("/dist/") ||
-      filePath.includes("/public/")
-    ) {
-      continue;
-    }
-    const basename = path.basename(filePath);
-    if (basename.includes(oldName)) {
-      const newBasename = basename.replaceAll(oldName, newName);
-      const newFilePath = path.join(path.dirname(filePath), newBasename);
-      filesToRename.push({ old: filePath, new: newFilePath });
-    }
-  }
-  // rename deeper files first to avoid parent rename blocking children
-  filesToRename.sort((a, b) => b.old.length - a.old.length);
-  for (const { old: oldPath, new: newPath } of filesToRename) {
+  // rename files that contain the old name in their basename (binary files
+  // included: only the name changes, the bytes do not)
+  for (const { old: oldPath, new: newPath } of plan.rename) {
     if (fs.existsSync(oldPath)) {
       fs.renameSync(oldPath, newPath);
     }
