@@ -241,8 +241,9 @@ test("launch extra summons the local haxcms-nodejs server", opts, async () => {
     );
     assert.equal(spawnCalls.length, 1);
     assert.equal(spawnCalls[0].opts.cwd, path.join(root, "launch-site"));
-    // R2-H-1: haxcms-nodejs binds loopback itself in no-login mode
+    // R2-H-1: no-login mode is always pinned to loopback by the CLI
     assert.equal(spawnCalls[0].opts.env.HAXCMS_DISABLE_JWT_CHECKS, "true");
+    assert.equal(spawnCalls[0].opts.env.HAXCMS_HOST, "127.0.0.1");
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }

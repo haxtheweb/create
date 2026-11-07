@@ -77,6 +77,8 @@ const {
   resolveHaxcmsNodejsBin,
   execNpxHaxcmsNodejsFallback,
   spawnHaxcmsNodejs,
+  localHaxcmsServerEnv,
+  LOCAL_HAXCMS_HOST,
 } = available ? siteModule : {};
 
 const opts = { skip: skipReason, timeout: 15000 };
@@ -225,3 +227,41 @@ test(
     }
   },
 );
+
+// Security (M-4 / R2-H-1): the no-login local server must be pinned to
+// loopback by the CLI itself; the published haxcms-nodejs 26.8.x line does
+// not bind 127.0.0.1 on its own when HAXCMS_DISABLE_JWT_CHECKS is set.
+test("localHaxcmsServerEnv pins HAXCMS_HOST to loopback", opts, () => {
+  assert.equal(LOCAL_HAXCMS_HOST, "127.0.0.1");
+  const env = localHaxcmsServerEnv(
+    { PATH: "/usr/bin" },
+    { PORT: "3001", HAXCMS_DISABLE_JWT_CHECKS: "true" },
+  );
+  assert.equal(env.HAXCMS_HOST, "127.0.0.1");
+  assert.equal(env.PORT, "3001");
+  assert.equal(env.HAXCMS_DISABLE_JWT_CHECKS, "true");
+  assert.equal(env.PATH, "/usr/bin");
+});
+
+test(
+  "localHaxcmsServerEnv honours an explicit HAXCMS_HOST from the caller",
+  opts,
+  () => {
+    const env = localHaxcmsServerEnv(
+      { HAXCMS_HOST: "0.0.0.0" },
+      { HAXCMS_DISABLE_JWT_CHECKS: "true" },
+    );
+    assert.equal(env.HAXCMS_HOST, "0.0.0.0");
+    // an empty/blank value is not an explicit override
+    assert.equal(
+      localHaxcmsServerEnv({ HAXCMS_HOST: "   " }).HAXCMS_HOST,
+      "127.0.0.1",
+    );
+  },
+);
+
+test("localHaxcmsServerEnv does not mutate the base environment", opts, () => {
+  const base = { PATH: "/usr/bin" };
+  localHaxcmsServerEnv(base, { PORT: "1" });
+  assert.deepEqual(base, { PATH: "/usr/bin" });
+});
