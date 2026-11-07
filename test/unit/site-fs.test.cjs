@@ -25,6 +25,9 @@ const {
   fixLegacyIgnoreFile,
   prepareSiteForStaticPublish,
   restoreSiteAfterStaticPublish,
+  staticPublishStashDir,
+  stashStaticPublishArtifacts,
+  unstashStaticPublishArtifacts,
   buildStaticLlmsFull,
   writeStaticLlmsFull,
   removeStaticLlmsFull,
@@ -191,13 +194,24 @@ test(
 // --- prepareSiteForStaticPublish / restoreSiteAfterStaticPublish round-trip ---
 
 test(
-  "prepareSiteForStaticPublish returns false when there is no ghpages.html",
+  "prepareSiteForStaticPublish returns false for a nonexistent directory",
+  opts,
+  () => {
+    assert.equal(
+      prepareSiteForStaticPublish(path.join(os.tmpdir(), "hax-no-such-site")),
+      false,
+    );
+  },
+);
+
+test(
+  "prepareSiteForStaticPublish does not swap index when there is no ghpages.html",
   opts,
   () => {
     const root = fs.mkdtempSync(path.join(os.tmpdir(), "hax-prep-nogh-"));
     try {
       fs.writeFileSync(path.join(root, "index.html"), "original index");
-      assert.equal(prepareSiteForStaticPublish(root), false);
+      assert.equal(prepareSiteForStaticPublish(root).indexSwapped, false);
       assert.equal(
         fs.readFileSync(path.join(root, "index.html"), "utf8"),
         "original index",
@@ -218,7 +232,7 @@ test(
       fs.writeFileSync(path.join(root, "ghpages.html"), "GHPAGES ENTRY");
 
       // prepare: back up index, copy ghpages -> index
-      assert.equal(prepareSiteForStaticPublish(root), true);
+      assert.equal(prepareSiteForStaticPublish(root).indexSwapped, true);
       assert.equal(
         fs.readFileSync(path.join(root, "index.html"), "utf8"),
         "GHPAGES ENTRY",
@@ -244,26 +258,183 @@ test(
   },
 );
 
+// Security / data loss: local artifacts are moved aside for the publish and
+// moved back afterwards; a real build/ directory is never deleted.
 test(
-  "prepareSiteForStaticPublish removes build/ and wc-registry.json",
+  "prepareSiteForStaticPublish moves build/, wc-registry.json and assets/babel* aside and restore brings them back byte-identical",
   opts,
   () => {
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), "hax-prep-artifacts-"));
+    const parent = fs.mkdtempSync(
+      path.join(os.tmpdir(), "hax-prep-artifacts-"),
+    );
+    const root = path.join(parent, "site");
+    fs.mkdirSync(root);
     try {
       fs.writeFileSync(path.join(root, "ghpages.html"), "entry");
-      fs.mkdirSync(path.join(root, "build"), { recursive: true });
+      fs.mkdirSync(path.join(root, "build", "es6"), { recursive: true });
       fs.writeFileSync(path.join(root, "build", "x.js"), "x");
-      fs.writeFileSync(path.join(root, "wc-registry.json"), "{}");
+      fs.writeFileSync(path.join(root, "build", "es6", "y.js"), "yy");
+      fs.writeFileSync(path.join(root, "wc-registry.json"), '{"a":"b"}');
+      fs.mkdirSync(path.join(root, "assets"));
+      fs.writeFileSync(path.join(root, "assets", "babel-top.js"), "babel");
+      fs.writeFileSync(path.join(root, "assets", "logo.svg"), "<svg/>");
 
-      prepareSiteForStaticPublish(root);
-
-      assert.ok(!fs.existsSync(path.join(root, "build")), "build/ removed");
+      const state = prepareSiteForStaticPublish(root);
+      assert.deepEqual(state.stash.moved.sort(), [
+        path.join("assets", "babel-top.js"),
+        "build",
+        "wc-registry.json",
+      ]);
+      assert.deepEqual(state.stash.skipped, []);
+      const stash = staticPublishStashDir(root);
+      assert.equal(stash, state.stash.stashDir);
       assert.ok(
-        !fs.existsSync(path.join(root, "wc-registry.json")),
-        "wc-registry.json removed",
+        !stash.startsWith(root + path.sep),
+        "stash lives outside the site so it cannot be published",
+      );
+
+      // gone from the live site while publishing...
+      assert.ok(!fs.existsSync(path.join(root, "build")), "build/ moved out");
+      assert.ok(!fs.existsSync(path.join(root, "wc-registry.json")));
+      assert.ok(!fs.existsSync(path.join(root, "assets", "babel-top.js")));
+      assert.ok(
+        fs.existsSync(path.join(root, "assets", "logo.svg")),
+        "non-babel assets untouched",
+      );
+      // ...but preserved, not deleted
+      assert.equal(
+        fs.readFileSync(path.join(stash, "build", "es6", "y.js"), "utf8"),
+        "yy",
+      );
+
+      assert.equal(restoreSiteAfterStaticPublish(root), true);
+      assert.equal(
+        fs.readFileSync(path.join(root, "build", "x.js"), "utf8"),
+        "x",
+      );
+      assert.equal(
+        fs.readFileSync(path.join(root, "build", "es6", "y.js"), "utf8"),
+        "yy",
+      );
+      assert.equal(
+        fs.readFileSync(path.join(root, "wc-registry.json"), "utf8"),
+        '{"a":"b"}',
+      );
+      assert.equal(
+        fs.readFileSync(path.join(root, "assets", "babel-top.js"), "utf8"),
+        "babel",
+      );
+      assert.ok(!fs.existsSync(stash), "empty stash dir removed");
+    } finally {
+      fs.rmSync(parent, { recursive: true, force: true });
+    }
+  },
+);
+
+test(
+  "static publish artifacts survive when the publish throws before restore",
+  opts,
+  () => {
+    const parent = fs.mkdtempSync(path.join(os.tmpdir(), "hax-prep-throw-"));
+    const root = path.join(parent, "site");
+    fs.mkdirSync(root);
+    try {
+      fs.writeFileSync(path.join(root, "index.html"), "ORIGINAL");
+      fs.writeFileSync(path.join(root, "ghpages.html"), "entry");
+      fs.mkdirSync(path.join(root, "build"));
+      fs.writeFileSync(path.join(root, "build", "x.js"), "x");
+      // the publish flow: prepare in try, restore in finally
+      let prepared = false;
+      assert.throws(() => {
+        try {
+          prepared = prepareSiteForStaticPublish(root);
+          throw new Error("publish CLI install declined");
+        } finally {
+          if (prepared) {
+            restoreSiteAfterStaticPublish(root);
+          }
+        }
+      }, /declined/);
+      assert.equal(
+        fs.readFileSync(path.join(root, "build", "x.js"), "utf8"),
+        "x",
+      );
+      assert.equal(
+        fs.readFileSync(path.join(root, "index.html"), "utf8"),
+        "ORIGINAL",
       );
     } finally {
-      fs.rmSync(root, { recursive: true, force: true });
+      fs.rmSync(parent, { recursive: true, force: true });
+    }
+  },
+);
+
+test(
+  "a stash left by a crashed publish is restored by the next prepare and never overwrites live files",
+  opts,
+  () => {
+    const parent = fs.mkdtempSync(path.join(os.tmpdir(), "hax-prep-crash-"));
+    const root = path.join(parent, "site");
+    fs.mkdirSync(root);
+    try {
+      fs.mkdirSync(path.join(root, "build"));
+      fs.writeFileSync(path.join(root, "build", "x.js"), "x");
+      fs.writeFileSync(path.join(root, "wc-registry.json"), "live");
+      // simulate a crash: artifacts stashed, process died before restore
+      stashStaticPublishArtifacts(root);
+      assert.ok(!fs.existsSync(path.join(root, "build")));
+      // user regenerated wc-registry.json in the meantime
+      fs.writeFileSync(path.join(root, "wc-registry.json"), "regenerated");
+
+      const restored = unstashStaticPublishArtifacts(root);
+      assert.equal(restored, 1, "build/ moved back; registry left as is");
+      assert.equal(
+        fs.readFileSync(path.join(root, "build", "x.js"), "utf8"),
+        "x",
+      );
+      assert.equal(
+        fs.readFileSync(path.join(root, "wc-registry.json"), "utf8"),
+        "regenerated",
+        "live file never overwritten by a stale stash",
+      );
+      // the conflicting entry stays in the stash rather than being deleted
+      const stash = staticPublishStashDir(root);
+      assert.equal(
+        fs.readFileSync(path.join(stash, "wc-registry.json"), "utf8"),
+        "live",
+      );
+    } finally {
+      fs.rmSync(parent, { recursive: true, force: true });
+    }
+  },
+);
+
+test(
+  "prepareSiteForStaticPublish never rm's a real directory tree",
+  opts,
+  () => {
+    const parent = fs.mkdtempSync(path.join(os.tmpdir(), "hax-prep-norm-"));
+    const root = path.join(parent, "site");
+    fs.mkdirSync(root);
+    const realRm = fs.rmSync;
+    const realRmdir = fs.rmdirSync;
+    const removed = [];
+    fs.rmSync = (target, ...rest) => {
+      removed.push(target);
+      return realRm(target, ...rest);
+    };
+    try {
+      fs.mkdirSync(path.join(root, "build"));
+      fs.writeFileSync(path.join(root, "build", "x.js"), "x");
+      fs.writeFileSync(path.join(root, "ghpages.html"), "entry");
+      prepareSiteForStaticPublish(root);
+      restoreSiteAfterStaticPublish(root);
+      assert.deepEqual(removed, [], "fs.rmSync never called by the flow");
+      assert.ok(fs.existsSync(path.join(root, "build", "x.js")));
+    } finally {
+      fs.rmSync = realRm;
+      fs.rmdirSync = realRmdir;
+      fs.rmSync(parent, { recursive: true, force: true });
     }
   },
 );
