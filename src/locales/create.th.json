@@ -634,5 +634,19 @@
   "cliArgCompletionShell": "Shell ที่จะสร้างการเติมคำอัตโนมัติ: {shells}",
   "cliCompletionUnknownShell": "ไม่รู้จัก shell {shell} shell ที่รองรับ: {shells}",
   "siteRestoreUnreadable": "ไม่สามารถอ่านรายการในไฟล์เก็บถาวรทีละรายการได้",
-  "siteRestoreInvalidSiteJson": "site.json ในไฟล์เก็บถาวรไม่ใช่ไซต์ HAX ที่ถูกต้อง จึงไม่มีการเปลี่ยนแปลงใดๆ"
+  "siteRestoreInvalidSiteJson": "site.json ในไฟล์เก็บถาวรไม่ใช่ไซต์ HAX ที่ถูกต้อง จึงไม่มีการเปลี่ยนแปลงใดๆ",
+  "cliCmdAlias": "แสดงรายการไซต์ที่ตั้งชื่อไว้ (alias) สำหรับ `hax @name ...`",
+  "cliArgAliasAction": "list (ค่าเริ่มต้น) หรือ show",
+  "cliArgAliasName": "alias ที่จะแสดง มีหรือไม่มี @ ก็ได้",
+  "aliasFileInvalid": "ไม่สามารถอ่านไฟล์ alias {file}: {reason}",
+  "aliasNotAMap": "ต้องเป็นแมปของชื่อ alias",
+  "aliasBadName": "ชื่อ alias {name} ใน {file} ใช้ได้เฉพาะตัวอักษร ตัวเลข ., _ และ -",
+  "aliasBadEntry": "alias {name} ใน {file} ต้องมี root, rsync หรือ url",
+  "aliasUnknown": "ไม่รู้จัก alias {alias} alias ที่รู้จัก: {known}",
+  "aliasNoneDefined": "ไม่มี (เพิ่มลงใน ~/.haxtheweb/aliases.yml หรือ hax.aliases.yml)",
+  "aliasRemoteNotYet": "alias {alias} ไม่มี root ในเครื่อง ยังไม่รองรับ alias ระยะไกล",
+  "aliasWithRoot": "{alias} กำหนดโฟลเดอร์ไซต์ไว้แล้ว ให้ลบ --root",
+  "aliasUnknownAction": "ไม่รู้จักการกระทำของ alias {action} ใช้ list หรือ show",
+  "aliasNoneFound": "ไม่มี alias ที่กำหนดไว้ ไฟล์ alias ที่อ่าน: {files}",
+  "aliasMissingRoot": "ไม่พบโฟลเดอร์"
 }

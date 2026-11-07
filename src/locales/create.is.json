@@ -634,5 +634,19 @@
   "cliArgCompletionShell": "Skel sem útfylling er búin til fyrir: {shells}",
   "cliCompletionUnknownShell": "Óþekkt skel {shell}. Studdar skeljar: {shells}",
   "siteRestoreUnreadable": "Ekki var hægt að lesa efnisyfirlit safnskrárinnar færslu fyrir færslu",
-  "siteRestoreInvalidSiteJson": "site.json í safnskránni er ekki gildur HAX-vefur, svo engu var breytt"
+  "siteRestoreInvalidSiteJson": "site.json í safnskránni er ekki gildur HAX-vefur, svo engu var breytt",
+  "cliCmdAlias": "Birta nefnda vefi (samnefni) fyrir `hax @name ...`",
+  "cliArgAliasAction": "list (sjálfgefið) eða show",
+  "cliArgAliasName": "samnefni til að sýna, með eða án @",
+  "aliasFileInvalid": "Ekki tókst að lesa samnefnaskrána {file}: {reason}",
+  "aliasNotAMap": "bjóst við vörpun samnefna",
+  "aliasBadName": "Samnefnið {name} í {file} má aðeins nota bókstafi, tölustafi, ., _ og -",
+  "aliasBadEntry": "Samnefnið {name} í {file} þarf root, rsync eða url",
+  "aliasUnknown": "Óþekkt samnefni {alias}. Þekkt samnefni: {known}",
+  "aliasNoneDefined": "engin (bættu þeim við ~/.haxtheweb/aliases.yml eða hax.aliases.yml)",
+  "aliasRemoteNotYet": "Samnefnið {alias} hefur ekkert staðbundið root; fjarsamnefni eru ekki studd enn",
+  "aliasWithRoot": "{alias} stillir þegar möppu vefsins; slepptu --root",
+  "aliasUnknownAction": "Óþekkt samnefnisaðgerð {action}; notaðu list eða show",
+  "aliasNoneFound": "Engin samnefni skilgreind. Lesnar samnefnaskrár: {files}",
+  "aliasMissingRoot": "mappa vantar"
 }

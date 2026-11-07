@@ -634,5 +634,19 @@
   "cliArgCompletionShell": "Shell at gera fullgerð til: {shells}",
   "cliCompletionUnknownShell": "Ókent shell {shell}. Studd shell: {shells}",
   "siteRestoreUnreadable": "Listin yvir arkivið kundi ikki lesast post fyri post",
-  "siteRestoreInvalidSiteJson": "site.json í arkivinum er ikki ein gild HAX-síða, so einki varð broytt"
+  "siteRestoreInvalidSiteJson": "site.json í arkivinum er ikki ein gild HAX-síða, so einki varð broytt",
+  "cliCmdAlias": "Vís nevndar síður (aliasir) til `hax @name ...`",
+  "cliArgAliasAction": "list (sjálvvirði) ella show",
+  "cliArgAliasName": "alias at vísa, við ella uttan @",
+  "aliasFileInvalid": "Aliasfílan {file} kundi ikki lesast: {reason}",
+  "aliasNotAMap": "vántaði eitt kort av aliasnøvnum",
+  "aliasBadName": "Aliasnavnið {name} í {file} kann bert brúka bókstavir, tøl, ., _ og -",
+  "aliasBadEntry": "Aliasið {name} í {file} hevur brúk fyri root, rsync ella url",
+  "aliasUnknown": "Ókent alias {alias}. Kend aliasir: {known}",
+  "aliasNoneDefined": "eingin (legg tey afturat í ~/.haxtheweb/aliases.yml ella hax.aliases.yml)",
+  "aliasRemoteNotYet": "Aliasið {alias} hevur ongan lokalan root; fjar-aliasir verða ikki stuðlað enn",
+  "aliasWithRoot": "{alias} ásetur longu mappuna hjá síðuni; slepp --root",
+  "aliasUnknownAction": "Ókend aliasgerð {action}; brúka list ella show",
+  "aliasNoneFound": "Eingin aliasir ásett. Lisnar aliasfílur: {files}",
+  "aliasMissingRoot": "mappa vantar"
 }

@@ -634,5 +634,19 @@
   "cliArgCompletionShell": "Shell xumurri itti uumamu: {shells}",
   "cliCompletionUnknownShell": "Shell {shell} hin beekamu. Shell deeggaraman: {shells}",
   "siteRestoreUnreadable": "Tarreen kuusaa galmee galmeedhaan dubbifamuu hin dandeenye",
-  "siteRestoreInvalidSiteJson": "site.json kuusaa marsariitii HAX sirrii miti, kanaaf wanti jijjiirame hin jiru"
+  "siteRestoreInvalidSiteJson": "site.json kuusaa marsariitii HAX sirrii miti, kanaaf wanti jijjiirame hin jiru",
+  "cliCmdAlias": "Marsariiwwan maqaa qaban (alias) `hax @name ...`f tarreessi",
+  "cliArgAliasAction": "list (durtii) ykn show",
+  "cliArgAliasName": "alias agarsiifamu, @ waliin ykn malee",
+  "aliasFileInvalid": "Faayilli alias {file} dubbifamuu hin dandeenye: {reason}",
+  "aliasNotAMap": "kaartaan maqaalee alias eegamaa ture",
+  "aliasBadName": "Maqaan alias {name} {file} keessaa qubee, lakkoofsa, ., _ fi - qofa fayyadamuu danda'a",
+  "aliasBadEntry": "Aliasni {name} {file} keessaa root, rsync ykn url barbaada",
+  "aliasUnknown": "Alias hin beekamne {alias}. Aliasoota beekaman: {known}",
+  "aliasNoneDefined": "hin jiru (~/.haxtheweb/aliases.yml ykn hax.aliases.yml irratti dabali)",
+  "aliasRemoteNotYet": "Aliasni {alias} root naannoo hin qabu; aliasoonni fagoo ammaaf hin deeggaraman",
+  "aliasWithRoot": "{alias} kuusaa marsariitii duraan murteessa; --root haqi",
+  "aliasUnknownAction": "Gocha alias hin beekamne {action}; list ykn show fayyadami",
+  "aliasNoneFound": "Aliasni ibsame hin jiru. Faayilota alias dubbifaman: {files}",
+  "aliasMissingRoot": "kuusaan hin jiru"
 }

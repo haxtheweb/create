@@ -634,5 +634,19 @@
   "cliArgCompletionShell": "Shell a ga-emepụtara mmecha: {shells}",
   "cliCompletionUnknownShell": "Shell {shell} amaghị. Shell a na-akwado: {shells}",
   "siteRestoreUnreadable": "Enweghị ike ịgụ ndepụta nchekwa ahụ otu ndenye n'otu n'otu",
-  "siteRestoreInvalidSiteJson": "site.json dị na nchekwa ahụ abụghị saịtị HAX ziri ezi, ya mere ọ dịghị ihe gbanwere"
+  "siteRestoreInvalidSiteJson": "site.json dị na nchekwa ahụ abụghị saịtị HAX ziri ezi, ya mere ọ dịghị ihe gbanwere",
+  "cliCmdAlias": "Depụta saịtị ndị nwere aha (aha njirimara) maka `hax @name ...`",
+  "cliArgAliasAction": "list (ndabara) ma ọ bụ show",
+  "cliArgAliasName": "aha njirimara a ga-egosi, ya na @ ma ọ bụ na-enweghị",
+  "aliasFileInvalid": "Enweghị ike ịgụ faịlụ aha njirimara {file}: {reason}",
+  "aliasNotAMap": "a tụrụ anya maapụ aha njirimara",
+  "aliasBadName": "Aha njirimara {name} na {file} nwere ike iji naanị mkpụrụedemede, nọmba, ., _ na -",
+  "aliasBadEntry": "Aha njirimara {name} na {file} chọrọ root, rsync ma ọ bụ url",
+  "aliasUnknown": "Aha njirimara amaghị {alias}. Aha njirimara a maara: {known}",
+  "aliasNoneDefined": "ọ dịghị (tinye ha na ~/.haxtheweb/aliases.yml ma ọ bụ hax.aliases.yml)",
+  "aliasRemoteNotYet": "Aha njirimara {alias} enweghị root mpaghara; a naghị akwado aha njirimara dị anya ugbu a",
+  "aliasWithRoot": "{alias} edoworị folda saịtị; wepụ --root",
+  "aliasUnknownAction": "Omume aha njirimara amaghị {action}; jiri list ma ọ bụ show",
+  "aliasNoneFound": "Enweghị aha njirimara akọwapụtara. Faịlụ aha njirimara a gụrụ: {files}",
+  "aliasMissingRoot": "folda adịghị"
 }

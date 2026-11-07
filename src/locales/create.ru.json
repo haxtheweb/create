@@ -638,5 +638,19 @@
   "cliArgCompletionShell": "Оболочка, для которой создаётся автодополнение: {shells}",
   "cliCompletionUnknownShell": "Неизвестная оболочка {shell}. Поддерживаемые оболочки: {shells}",
   "siteRestoreUnreadable": "Не удалось прочитать список архива по записям",
-  "siteRestoreInvalidSiteJson": "site.json в архиве не является корректным сайтом HAX, поэтому ничего не изменено"
+  "siteRestoreInvalidSiteJson": "site.json в архиве не является корректным сайтом HAX, поэтому ничего не изменено",
+  "cliCmdAlias": "Показать именованные сайты (алиасы) для `hax @name ...`",
+  "cliArgAliasAction": "list (по умолчанию) или show",
+  "cliArgAliasName": "алиас для показа, с @ или без",
+  "aliasFileInvalid": "Не удалось прочитать файл алиасов {file}: {reason}",
+  "aliasNotAMap": "ожидалась карта имён алиасов",
+  "aliasBadName": "Имя алиаса {name} в {file} может содержать только буквы, цифры, ., _ и -",
+  "aliasBadEntry": "Алиасу {name} в {file} нужен root, rsync или url",
+  "aliasUnknown": "Неизвестный алиас {alias}. Известные алиасы: {known}",
+  "aliasNoneDefined": "нет (добавьте их в ~/.haxtheweb/aliases.yml или hax.aliases.yml)",
+  "aliasRemoteNotYet": "У алиаса {alias} нет локального root; удалённые алиасы пока не поддерживаются",
+  "aliasWithRoot": "{alias} уже задаёт папку сайта; уберите --root",
+  "aliasUnknownAction": "Неизвестное действие алиаса {action}; используйте list или show",
+  "aliasNoneFound": "Алиасы не определены. Прочитанные файлы алиасов: {files}",
+  "aliasMissingRoot": "папка отсутствует"
 }

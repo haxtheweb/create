@@ -634,5 +634,19 @@
   "cliArgCompletionShell": "Completion ဖန်တီးမည့် shell: {shells}",
   "cliCompletionUnknownShell": "မသိသော shell {shell}။ ပံ့ပိုးထားသော shell များ: {shells}",
   "siteRestoreUnreadable": "Archive စာရင်းကို entry တစ်ခုချင်းစီ ဖတ်၍ မရပါ",
-  "siteRestoreInvalidSiteJson": "Archive ၏ site.json သည် မှန်ကန်သော HAX site မဟုတ်သဖြင့် ဘာမှ မပြောင်းလဲခဲ့ပါ"
+  "siteRestoreInvalidSiteJson": "Archive ၏ site.json သည် မှန်ကန်သော HAX site မဟုတ်သဖြင့် ဘာမှ မပြောင်းလဲခဲ့ပါ",
+  "cliCmdAlias": "`hax @name ...` အတွက် အမည်ပေးထားသော ဆိုက်များ (alias များ) ကို စာရင်းပြရန်",
+  "cliArgAliasAction": "list (မူလ) သို့မဟုတ် show",
+  "cliArgAliasName": "ပြသရန် alias၊ @ ပါသည်ဖြစ်စေ မပါသည်ဖြစ်စေ",
+  "aliasFileInvalid": "alias ဖိုင် {file} ကို ဖတ်၍မရပါ- {reason}",
+  "aliasNotAMap": "alias အမည်များ၏ map ကို မျှော်လင့်ထားသည်",
+  "aliasBadName": "{file} ရှိ alias အမည် {name} တွင် စာလုံး၊ ဂဏန်း၊ ., _ နှင့် - သာ သုံးနိုင်သည်",
+  "aliasBadEntry": "{file} ရှိ alias {name} တွင် root၊ rsync သို့မဟုတ် url လိုအပ်သည်",
+  "aliasUnknown": "မသိသော alias {alias}။ သိရှိထားသော alias များ- {known}",
+  "aliasNoneDefined": "မရှိပါ (~/.haxtheweb/aliases.yml သို့မဟုတ် hax.aliases.yml တွင် ထည့်ပါ)",
+  "aliasRemoteNotYet": "alias {alias} တွင် local root မရှိပါ; remote alias များကို မပံ့ပိုးသေးပါ",
+  "aliasWithRoot": "{alias} က ဆိုက်ဖိုဒါကို သတ်မှတ်ပြီးဖြစ်သည်; --root ကို ဖယ်ပါ",
+  "aliasUnknownAction": "မသိသော alias လုပ်ဆောင်ချက် {action}; list သို့မဟုတ် show ကို သုံးပါ",
+  "aliasNoneFound": "သတ်မှတ်ထားသော alias မရှိပါ။ ဖတ်ခဲ့သော alias ဖိုင်များ- {files}",
+  "aliasMissingRoot": "ဖိုဒါ မရှိပါ"
 }

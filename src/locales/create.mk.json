@@ -634,5 +634,19 @@
   "cliArgCompletionShell": "Школка за која се генерира довршување: {shells}",
   "cliCompletionUnknownShell": "Непозната школка {shell}. Поддржани школки: {shells}",
   "siteRestoreUnreadable": "Листата на архивата не можеше да се прочита запис по запис",
-  "siteRestoreInvalidSiteJson": "site.json од архивата не е валиден HAX сајт, па ништо не е променето"
+  "siteRestoreInvalidSiteJson": "site.json од архивата не е валиден HAX сајт, па ништо не е променето",
+  "cliCmdAlias": "Прикажи именувани сајтови (алијаси) за `hax @name ...`",
+  "cliArgAliasAction": "list (стандардно) или show",
+  "cliArgAliasName": "алијас за прикажување, со или без @",
+  "aliasFileInvalid": "Датотеката со алијаси {file} не може да се прочита: {reason}",
+  "aliasNotAMap": "се очекуваше мапа од имиња на алијаси",
+  "aliasBadName": "Името на алијасот {name} во {file} може да содржи само букви, бројки, ., _ и -",
+  "aliasBadEntry": "На алијасот {name} во {file} му треба root, rsync или url",
+  "aliasUnknown": "Непознат алијас {alias}. Познати алијаси: {known}",
+  "aliasNoneDefined": "нема (додајте ги во ~/.haxtheweb/aliases.yml или hax.aliases.yml)",
+  "aliasRemoteNotYet": "Алијасот {alias} нема локален root; оддалечените алијаси сè уште не се поддржани",
+  "aliasWithRoot": "{alias} веќе ја поставува папката на сајтот; отстранете --root",
+  "aliasUnknownAction": "Непозната акција за алијас {action}; користете list или show",
+  "aliasNoneFound": "Нема дефинирани алијаси. Прочитани датотеки: {files}",
+  "aliasMissingRoot": "папката недостасува"
 }

@@ -638,5 +638,19 @@
   "cliArgCompletionShell": "補完を生成するシェル: {shells}",
   "cliCompletionUnknownShell": "不明なシェル {shell}。対応シェル: {shells}",
   "siteRestoreUnreadable": "アーカイブの一覧をエントリーごとに読み取れませんでした",
-  "siteRestoreInvalidSiteJson": "アーカイブの site.json は有効な HAX サイトではないため、何も変更されませんでした"
+  "siteRestoreInvalidSiteJson": "アーカイブの site.json は有効な HAX サイトではないため、何も変更されませんでした",
+  "cliCmdAlias": "`hax @name ...` で使う名前付きサイト（エイリアス）を一覧表示",
+  "cliArgAliasAction": "list（既定）または show",
+  "cliArgAliasName": "表示するエイリアス（@ の有無は問わない）",
+  "aliasFileInvalid": "エイリアスファイル {file} を読み込めませんでした: {reason}",
+  "aliasNotAMap": "エイリアス名のマップが必要です",
+  "aliasBadName": "{file} のエイリアス名 {name} には英字、数字、.、_、- のみ使用できます",
+  "aliasBadEntry": "{file} のエイリアス {name} には root、rsync、url のいずれかが必要です",
+  "aliasUnknown": "不明なエイリアス {alias}。既知のエイリアス: {known}",
+  "aliasNoneDefined": "なし（~/.haxtheweb/aliases.yml または hax.aliases.yml に追加してください）",
+  "aliasRemoteNotYet": "エイリアス {alias} にはローカルの root がありません。リモートエイリアスはまだサポートされていません",
+  "aliasWithRoot": "{alias} はすでにサイトフォルダーを指定しています。--root を外してください",
+  "aliasUnknownAction": "不明なエイリアス操作 {action}。list または show を使用してください",
+  "aliasNoneFound": "エイリアスが定義されていません。読み込んだエイリアスファイル: {files}",
+  "aliasMissingRoot": "フォルダーがありません"
 }

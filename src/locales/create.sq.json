@@ -634,5 +634,19 @@
   "cliArgCompletionShell": "Shell-i për të cilin gjenerohet plotësimi: {shells}",
   "cliCompletionUnknownShell": "Shell i panjohur {shell}. Shell-et e mbështetura: {shells}",
   "siteRestoreUnreadable": "Lista e arkivit nuk mund të lexohej hyrje pas hyrjeje",
-  "siteRestoreInvalidSiteJson": "site.json i arkivit nuk është sajt i vlefshëm HAX, prandaj nuk u ndryshua asgjë"
+  "siteRestoreInvalidSiteJson": "site.json i arkivit nuk është sajt i vlefshëm HAX, prandaj nuk u ndryshua asgjë",
+  "cliCmdAlias": "Listo sajtet me emër (aliaset) për `hax @name ...`",
+  "cliArgAliasAction": "list (parazgjedhje) ose show",
+  "cliArgAliasName": "aliasi për t'u shfaqur, me ose pa @",
+  "aliasFileInvalid": "Skedari i aliaseve {file} nuk u lexua dot: {reason}",
+  "aliasNotAMap": "pritej një hartë emrash aliasesh",
+  "aliasBadName": "Emri i aliasit {name} në {file} mund të përdorë vetëm shkronja, numra, ., _ dhe -",
+  "aliasBadEntry": "Aliasi {name} në {file} ka nevojë për root, rsync ose url",
+  "aliasUnknown": "Alias i panjohur {alias}. Aliaset e njohura: {known}",
+  "aliasNoneDefined": "asnjë (shtojini te ~/.haxtheweb/aliases.yml ose hax.aliases.yml)",
+  "aliasRemoteNotYet": "Aliasi {alias} nuk ka root lokal; aliaset e largëta nuk mbështeten ende",
+  "aliasWithRoot": "{alias} e cakton tashmë dosjen e sajtit; hiqni --root",
+  "aliasUnknownAction": "Veprim i panjohur aliasi {action}; përdorni list ose show",
+  "aliasNoneFound": "Nuk ka aliase të përcaktuara. Skedarët e aliaseve të lexuar: {files}",
+  "aliasMissingRoot": "dosja mungon"
 }

@@ -113,6 +113,7 @@ cd my-hax-site && hax serve
 - With `--format json` or `--format yaml`, stdout carries only the data, so it can be piped straight into `jq` or a parser. Progress messages go to stderr.
 - A mistyped action (for example `hax site node:ad`) exits with status 1 and suggests the closest action.
 - `hax list --format json` describes every command, action and option, so you can discover the CLI without parsing `--help`.
+- `hax @name site:stats` runs against a site named in `~/.haxtheweb/aliases.yml` or a project `hax.aliases.yml`, from any folder (`hax alias` lists them).
 - `hax site site:validate` exits 1 when a site has structural errors; run it before and after bulk changes.
 - Every site ships `AGENTS.md`, `llms.txt` and `.well-known/agent-skills/index.json`. Read those before changing anything.
 
@@ -210,6 +211,8 @@ Commands:
                                       get involved!
   skills [options] [action] [name]    List and install bundled agent skills for
                                       HAX ecosystem agents
+  alias [options] [action] [name]     List named sites (aliases) for `hax @name
+                                      ...`
   list [options]                      List every command, action and option
                                       (--format json for tools and agents)
   completion [shell]                  Print a shell completion script

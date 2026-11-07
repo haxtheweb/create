@@ -634,5 +634,19 @@
   "cliArgCompletionShell": "Shell yekugadzirira kupedzisa: {shells}",
   "cliCompletionUnknownShell": "Shell isingazivikanwi {shell}. Ma shell anotsigirwa: {shells}",
   "siteRestoreUnreadable": "Rondedzero yearchive haina kugona kuverengwa chinyorwa nechinyorwa",
-  "siteRestoreInvalidSiteJson": "site.json yearchive haisi saiti yeHAX inoshanda, saka hapana chakachinjwa"
+  "siteRestoreInvalidSiteJson": "site.json yearchive haisi saiti yeHAX inoshanda, saka hapana chakachinjwa",
+  "cliCmdAlias": "Nyora masaiti ane mazita (maalias) e `hax @name ...`",
+  "cliArgAliasAction": "list (yakatarwa) kana show",
+  "cliArgAliasName": "alias yekuratidza, ine @ kana isina",
+  "aliasFileInvalid": "Faira re alias {file} harina kuverengwa: {reason}",
+  "aliasNotAMap": "taitarisira mepu yemazita e alias",
+  "aliasBadName": "Zita re alias {name} mu {file} rinogona kushandisa mavara, nhamba, ., _ ne - chete",
+  "aliasBadEntry": "Alias {name} mu {file} inoda root, rsync kana url",
+  "aliasUnknown": "Alias isingazivikanwe {alias}. Maalias anozivikanwa: {known}",
+  "aliasNoneDefined": "hapana (awedzere ku ~/.haxtheweb/aliases.yml kana hax.aliases.yml)",
+  "aliasRemoteNotYet": "Alias {alias} haina root yemuno; maalias ari kure haasati atsigirwa",
+  "aliasWithRoot": "{alias} yatoisa foruda yesaiti; bvisa --root",
+  "aliasUnknownAction": "Chiito che alias chisingazivikanwe {action}; shandisa list kana show",
+  "aliasNoneFound": "Hapana maalias akatsanangurwa. Mafaira e alias akaverengwa: {files}",
+  "aliasMissingRoot": "foruda haipo"
 }

@@ -634,5 +634,19 @@
   "cliArgCompletionShell": "Cragen i gynhyrchu cwblhau ar ei chyfer: {shells}",
   "cliCompletionUnknownShell": "Cragen anhysbys {shell}. Cregyn a gefnogir: {shells}",
   "siteRestoreUnreadable": "Nid oedd modd darllen rhestr yr archif fesul cofnod",
-  "siteRestoreInvalidSiteJson": "Nid yw site.json yr archif yn safle HAX dilys, felly ni newidiwyd dim"
+  "siteRestoreInvalidSiteJson": "Nid yw site.json yr archif yn safle HAX dilys, felly ni newidiwyd dim",
+  "cliCmdAlias": "Rhestru safleoedd wedi'u henwi (aliasau) ar gyfer `hax @name ...`",
+  "cliArgAliasAction": "list (rhagosodiad) neu show",
+  "cliArgAliasName": "alias i'w ddangos, gyda @ neu hebddo",
+  "aliasFileInvalid": "Nid oedd modd darllen y ffeil aliasau {file}: {reason}",
+  "aliasNotAMap": "disgwylid map o enwau aliasau",
+  "aliasBadName": "Dim ond llythrennau, rhifau, ., _ a - y caiff yr enw alias {name} yn {file} eu defnyddio",
+  "aliasBadEntry": "Mae angen root, rsync neu url ar yr alias {name} yn {file}",
+  "aliasUnknown": "Alias anhysbys {alias}. Aliasau hysbys: {known}",
+  "aliasNoneDefined": "dim (ychwanegwch nhw at ~/.haxtheweb/aliases.yml neu hax.aliases.yml)",
+  "aliasRemoteNotYet": "Nid oes gan yr alias {alias} root lleol; nid yw aliasau pell yn cael eu cefnogi eto",
+  "aliasWithRoot": "Mae {alias} eisoes yn gosod ffolder y safle; hepgorwch --root",
+  "aliasUnknownAction": "Gweithred alias anhysbys {action}; defnyddiwch list neu show",
+  "aliasNoneFound": "Dim aliasau wedi'u diffinio. Ffeiliau aliasau a ddarllenwyd: {files}",
+  "aliasMissingRoot": "ffolder ar goll"
 }

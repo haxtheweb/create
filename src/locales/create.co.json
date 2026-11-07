@@ -634,5 +634,19 @@
   "cliArgCompletionShell": "Shell per a quale generà u cumplementu: {shells}",
   "cliCompletionUnknownShell": "Shell scunnisciuta {shell}. Shell supportate: {shells}",
   "siteRestoreUnreadable": "A lista di l'archiviu ùn hà pussutu esse letta voce per voce",
-  "siteRestoreInvalidSiteJson": "U site.json di l'archiviu ùn hè micca un situ HAX validu, dunque nunda hè statu cambiatu"
+  "siteRestoreInvalidSiteJson": "U site.json di l'archiviu ùn hè micca un situ HAX validu, dunque nunda hè statu cambiatu",
+  "cliCmdAlias": "Elencu di i siti numinati (alias) per `hax @name ...`",
+  "cliArgAliasAction": "list (predefinitu) o show",
+  "cliArgAliasName": "alias da mustrà, cù o senza @",
+  "aliasFileInvalid": "Ùn s'hè pussutu leghje u schedariu d'alias {file}: {reason}",
+  "aliasNotAMap": "una carta di nomi d'alias era aspettata",
+  "aliasBadName": "U nome d'alias {name} in {file} pò aduprà solu lettere, cifre, ., _ è -",
+  "aliasBadEntry": "L'alias {name} in {file} hà bisognu di un root, rsync o url",
+  "aliasUnknown": "Alias scunnisciutu {alias}. Alias cunnisciuti: {known}",
+  "aliasNoneDefined": "nisunu (aghjunghjiteli à ~/.haxtheweb/aliases.yml o hax.aliases.yml)",
+  "aliasRemoteNotYet": "L'alias {alias} ùn hà micca root lucale; l'alias remoti ùn sò ancu supportati",
+  "aliasWithRoot": "{alias} definisce digià u cartulare di u situ; caccià --root",
+  "aliasUnknownAction": "Azzione d'alias scunnisciuta {action}; aduprà list o show",
+  "aliasNoneFound": "Nisunu alias definitu. Schedarii d'alias letti: {files}",
+  "aliasMissingRoot": "cartulare mancante"
 }

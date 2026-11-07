@@ -634,5 +634,19 @@
   "cliArgCompletionShell": "Shell za koji se generiše dovršavanje: {shells}",
   "cliCompletionUnknownShell": "Nepoznat shell {shell}. Podržani shellovi: {shells}",
   "siteRestoreUnreadable": "Popis arhive nije mogao biti pročitan unos po unos",
-  "siteRestoreInvalidSiteJson": "site.json iz arhive nije važeća HAX stranica, pa ništa nije promijenjeno"
+  "siteRestoreInvalidSiteJson": "site.json iz arhive nije važeća HAX stranica, pa ništa nije promijenjeno",
+  "cliCmdAlias": "Prikaži imenovane stranice (aliase) za `hax @name ...`",
+  "cliArgAliasAction": "list (zadano) ili show",
+  "cliArgAliasName": "alias za prikaz, sa ili bez @",
+  "aliasFileInvalid": "Datoteka aliasa {file} nije mogla biti pročitana: {reason}",
+  "aliasNotAMap": "očekivana je mapa naziva aliasa",
+  "aliasBadName": "Naziv aliasa {name} u {file} smije sadržavati samo slova, brojeve, ., _ i -",
+  "aliasBadEntry": "Alias {name} u {file} treba root, rsync ili url",
+  "aliasUnknown": "Nepoznat alias {alias}. Poznati aliasi: {known}",
+  "aliasNoneDefined": "nema (dodajte ih u ~/.haxtheweb/aliases.yml ili hax.aliases.yml)",
+  "aliasRemoteNotYet": "Alias {alias} nema lokalni root; udaljeni aliasi još nisu podržani",
+  "aliasWithRoot": "{alias} već postavlja direktorij stranice; uklonite --root",
+  "aliasUnknownAction": "Nepoznata akcija aliasa {action}; koristite list ili show",
+  "aliasNoneFound": "Nema definisanih aliasa. Pročitane datoteke aliasa: {files}",
+  "aliasMissingRoot": "direktorij nedostaje"
 }

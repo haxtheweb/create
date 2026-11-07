@@ -634,5 +634,19 @@
   "cliArgCompletionShell": "Ka shell e hana ai i ka hoʻopau: {shells}",
   "cliCompletionUnknownShell": "ʻAʻole ʻike ʻia ka shell {shell}. Nā shell i kākoʻo ʻia: {shells}",
   "siteRestoreUnreadable": "ʻAʻole hiki ke heluhelu i ka papa inoa o ka waihona mālama i kēlā me kēia mea",
-  "siteRestoreInvalidSiteJson": "ʻAʻole ka site.json o ka waihona mālama he kahua HAX kūpono, no laila ʻaʻohe mea i loli"
+  "siteRestoreInvalidSiteJson": "ʻAʻole ka site.json o ka waihona mālama he kahua HAX kūpono, no laila ʻaʻohe mea i loli",
+  "cliCmdAlias": "Papa inoa o nā kahua i kapa ʻia (alias) no `hax @name ...`",
+  "cliArgAliasAction": "list (paʻamau) a i ʻole show",
+  "cliArgAliasName": "alias e hōʻike ai, me @ a i ʻole me ka ʻole",
+  "aliasFileInvalid": "ʻAʻole hiki ke heluhelu i ka faila alias {file}: {reason}",
+  "aliasNotAMap": "ua manaʻo ʻia he palapala ʻāina o nā inoa alias",
+  "aliasBadName": "Hiki i ka inoa alias {name} ma {file} ke hoʻohana i nā hua palapala, nā helu, ., _ a me - wale nō",
+  "aliasBadEntry": "Pono ka alias {name} ma {file} i kekahi root, rsync a i ʻole url",
+  "aliasUnknown": "Alias ʻike ʻole ʻia {alias}. Nā alias i ʻike ʻia: {known}",
+  "aliasNoneDefined": "ʻaʻohe (e hoʻohui iā lākou i ~/.haxtheweb/aliases.yml a i ʻole hax.aliases.yml)",
+  "aliasRemoteNotYet": "ʻAʻohe root kūloko o ka alias {alias}; ʻaʻole i kākoʻo ʻia nā alias mamao",
+  "aliasWithRoot": "Ua hoʻonohonoho mua ʻo {alias} i ka waihona kahua; wehe iā --root",
+  "aliasUnknownAction": "Hana alias ʻike ʻole ʻia {action}; e hoʻohana iā list a i ʻole show",
+  "aliasNoneFound": "ʻAʻohe alias i wehewehe ʻia. Nā faila alias i heluhelu ʻia: {files}",
+  "aliasMissingRoot": "nalowale ka waihona"
 }

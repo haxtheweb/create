@@ -634,5 +634,19 @@
   "cliArgCompletionShell": "Shell, fir déi d'Vervollstännegung generéiert gëtt: {shells}",
   "cliCompletionUnknownShell": "Onbekannt Shell {shell}. Ënnerstëtzt Shells: {shells}",
   "siteRestoreUnreadable": "D'Lëscht vum Archiv konnt net Agtrag fir Agtrag gelies ginn",
-  "siteRestoreInvalidSiteJson": "D'site.json vum Archiv ass kee gültege HAX-Site, dofir gouf näischt geännert"
+  "siteRestoreInvalidSiteJson": "D'site.json vum Archiv ass kee gültege HAX-Site, dofir gouf näischt geännert",
+  "cliCmdAlias": "Benannt Siten (Aliasen) fir `hax @name ...` oplëschten",
+  "cliArgAliasAction": "list (Standard) oder show",
+  "cliArgAliasName": "Alias fir unzeweisen, mat oder ouni @",
+  "aliasFileInvalid": "Alias-Fichier {file} konnt net gelies ginn: {reason}",
+  "aliasNotAMap": "eng Zouuerdnung vun Alias-Nimm gouf erwaart",
+  "aliasBadName": "Den Alias-Numm {name} an {file} dierf nëmme Buschtawen, Zuelen, ., _ an - benotzen",
+  "aliasBadEntry": "Den Alias {name} an {file} brauch e root, rsync oder url",
+  "aliasUnknown": "Onbekannten Alias {alias}. Bekannt Aliasen: {known}",
+  "aliasNoneDefined": "keng (füügt se an ~/.haxtheweb/aliases.yml oder hax.aliases.yml bäi)",
+  "aliasRemoteNotYet": "Den Alias {alias} huet kee lokale root; Remote-Aliasen ginn nach net ënnerstëtzt",
+  "aliasWithRoot": "{alias} leet den Dossier vum Site schonn fest; loosst --root ewech",
+  "aliasUnknownAction": "Onbekannt Alias-Aktioun {action}; benotzt list oder show",
+  "aliasNoneFound": "Keng Aliasen definéiert. Geliese Alias-Fichieren: {files}",
+  "aliasMissingRoot": "Dossier feelt"
 }

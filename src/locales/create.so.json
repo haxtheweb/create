@@ -634,5 +634,19 @@
   "cliArgCompletionShell": "Shell-ka loo samaynayo dhammaystirka: {shells}",
   "cliCompletionUnknownShell": "Shell aan la aqoon {shell}. Shell-yada la taageero: {shells}",
   "siteRestoreUnreadable": "Liiska kaydka lama akhrin karin gelin-gelin",
-  "siteRestoreInvalidSiteJson": "site.json-ka kaydka ma aha goob HAX oo sax ah, sidaa darteed waxba lama beddelin"
+  "siteRestoreInvalidSiteJson": "site.json-ka kaydka ma aha goob HAX oo sax ah, sidaa darteed waxba lama beddelin",
+  "cliCmdAlias": "Tax goobaha magacyada leh (alias-yada) ee `hax @name ...`",
+  "cliArgAliasAction": "list (caadi) ama show",
+  "cliArgAliasName": "alias-ka la muujinayo, @ leh ama la'aan",
+  "aliasFileInvalid": "Faylka alias-ka {file} lama akhrin karin: {reason}",
+  "aliasNotAMap": "waxaa la filayay khariidad magacyo alias ah",
+  "aliasBadName": "Magaca alias-ka {name} ee {file} wuxuu isticmaali karaa xarfo, tirooyin, ., _ iyo - oo keliya",
+  "aliasBadEntry": "Alias-ka {name} ee {file} wuxuu u baahan yahay root, rsync ama url",
+  "aliasUnknown": "Alias aan la aqoon {alias}. Alias-yada la yaqaan: {known}",
+  "aliasNoneDefined": "midna (ku dar ~/.haxtheweb/aliases.yml ama hax.aliases.yml)",
+  "aliasRemoteNotYet": "Alias-ka {alias} ma laha root maxalli ah; alias-yada fog weli lama taageero",
+  "aliasWithRoot": "{alias} horey ayuu u dejiyay galka goobta; ka saar --root",
+  "aliasUnknownAction": "Ficil alias oo aan la aqoon {action}; isticmaal list ama show",
+  "aliasNoneFound": "Alias lama qeexin. Faylasha alias ee la akhriyay: {files}",
+  "aliasMissingRoot": "galku ma jiro"
 }

@@ -634,5 +634,19 @@
   "cliArgCompletionShell": "A shell, amelyhez kiegészítést kell generálni: {shells}",
   "cliCompletionUnknownShell": "Ismeretlen shell: {shell}. Támogatott shellek: {shells}",
   "siteRestoreUnreadable": "Az archívum listáját nem lehetett bejegyzésenként beolvasni",
-  "siteRestoreInvalidSiteJson": "Az archívum site.json fájlja nem érvényes HAX-webhely, így semmi sem változott"
+  "siteRestoreInvalidSiteJson": "Az archívum site.json fájlja nem érvényes HAX-webhely, így semmi sem változott",
+  "cliCmdAlias": "Elnevezett webhelyek (aliasok) listázása a `hax @name ...` parancshoz",
+  "cliArgAliasAction": "list (alapértelmezett) vagy show",
+  "cliArgAliasName": "megjelenítendő alias, @ jellel vagy anélkül",
+  "aliasFileInvalid": "A(z) {file} aliasfájl nem olvasható: {reason}",
+  "aliasNotAMap": "aliasnevek leképezése volt várható",
+  "aliasBadName": "A(z) {name} aliasnév a(z) {file} fájlban csak betűket, számokat, ., _ és - karaktert tartalmazhat",
+  "aliasBadEntry": "A(z) {name} aliashoz a(z) {file} fájlban root, rsync vagy url szükséges",
+  "aliasUnknown": "Ismeretlen alias: {alias}. Ismert aliasok: {known}",
+  "aliasNoneDefined": "nincs (add hozzá őket a ~/.haxtheweb/aliases.yml vagy hax.aliases.yml fájlhoz)",
+  "aliasRemoteNotYet": "A(z) {alias} aliasnak nincs helyi root értéke; a távoli aliasok még nem támogatottak",
+  "aliasWithRoot": "A(z) {alias} már beállítja a webhely mappáját; hagyd el a --root opciót",
+  "aliasUnknownAction": "Ismeretlen aliasművelet: {action}; használd a list vagy show értéket",
+  "aliasNoneFound": "Nincsenek aliasok definiálva. Beolvasott aliasfájlok: {files}",
+  "aliasMissingRoot": "hiányzó mappa"
 }

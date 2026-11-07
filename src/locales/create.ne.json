@@ -634,5 +634,19 @@
   "cliArgCompletionShell": "कम्प्लिसन सिर्जना गर्ने शेल: {shells}",
   "cliCompletionUnknownShell": "अज्ञात शेल {shell}। समर्थित शेलहरू: {shells}",
   "siteRestoreUnreadable": "संग्रहको सूची प्रविष्टि-प्रविष्टि गरी पढ्न सकिएन",
-  "siteRestoreInvalidSiteJson": "संग्रहको site.json मान्य HAX साइट होइन, त्यसैले केही परिवर्तन गरिएन"
+  "siteRestoreInvalidSiteJson": "संग्रहको site.json मान्य HAX साइट होइन, त्यसैले केही परिवर्तन गरिएन",
+  "cliCmdAlias": "`hax @name ...` का लागि नाम दिइएका साइटहरू (एलियासहरू) सूचीबद्ध गर्नुहोस्",
+  "cliArgAliasAction": "list (पूर्वनिर्धारित) वा show",
+  "cliArgAliasName": "देखाउनुपर्ने एलियास, @ सहित वा बिना",
+  "aliasFileInvalid": "एलियास फाइल {file} पढ्न सकिएन: {reason}",
+  "aliasNotAMap": "एलियास नामहरूको म्याप अपेक्षित थियो",
+  "aliasBadName": "{file} मा रहेको एलियास नाम {name} मा अक्षर, अंक, ., _ र - मात्र प्रयोग गर्न सकिन्छ",
+  "aliasBadEntry": "{file} मा रहेको एलियास {name} लाई root, rsync वा url चाहिन्छ",
+  "aliasUnknown": "अज्ञात एलियास {alias}। ज्ञात एलियासहरू: {known}",
+  "aliasNoneDefined": "कुनै छैन (तिनलाई ~/.haxtheweb/aliases.yml वा hax.aliases.yml मा थप्नुहोस्)",
+  "aliasRemoteNotYet": "एलियास {alias} को स्थानीय root छैन; रिमोट एलियासहरू अझै समर्थित छैनन्",
+  "aliasWithRoot": "{alias} ले पहिले नै साइट फोल्डर सेट गर्छ; --root हटाउनुहोस्",
+  "aliasUnknownAction": "अज्ञात एलियास कार्य {action}; list वा show प्रयोग गर्नुहोस्",
+  "aliasNoneFound": "कुनै एलियास परिभाषित छैन। पढिएका एलियास फाइलहरू: {files}",
+  "aliasMissingRoot": "फोल्डर छैन"
 }

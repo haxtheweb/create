@@ -634,5 +634,19 @@
   "cliArgCompletionShell": "Shell, mille jaoks lõpetus genereerida: {shells}",
   "cliCompletionUnknownShell": "Tundmatu shell {shell}. Toetatud shellid: {shells}",
   "siteRestoreUnreadable": "Arhiivi loendit ei õnnestunud kirje kaupa lugeda",
-  "siteRestoreInvalidSiteJson": "Arhiivi site.json pole kehtiv HAX-sait, seega midagi ei muudetud"
+  "siteRestoreInvalidSiteJson": "Arhiivi site.json pole kehtiv HAX-sait, seega midagi ei muudetud",
+  "cliCmdAlias": "Loetle nimega saidid (aliased) käsu `hax @name ...` jaoks",
+  "cliArgAliasAction": "list (vaikimisi) või show",
+  "cliArgAliasName": "kuvatav alias, @-ga või ilma",
+  "aliasFileInvalid": "Aliasefaili {file} ei õnnestunud lugeda: {reason}",
+  "aliasNotAMap": "oodati aliasenimede kaarti",
+  "aliasBadName": "Aliase nimi {name} failis {file} võib sisaldada ainult tähti, numbreid, ., _ ja -",
+  "aliasBadEntry": "Alias {name} failis {file} vajab root, rsync või url väärtust",
+  "aliasUnknown": "Tundmatu alias {alias}. Teadaolevad aliased: {known}",
+  "aliasNoneDefined": "puuduvad (lisa need faili ~/.haxtheweb/aliases.yml või hax.aliases.yml)",
+  "aliasRemoteNotYet": "Aliasel {alias} pole kohalikku root väärtust; kaugaliasi veel ei toetata",
+  "aliasWithRoot": "{alias} määrab juba saidi kausta; jäta --root ära",
+  "aliasUnknownAction": "Tundmatu aliase toiming {action}; kasuta list või show",
+  "aliasNoneFound": "Aliasi pole määratud. Loetud aliasefailid: {files}",
+  "aliasMissingRoot": "kaust puudub"
 }

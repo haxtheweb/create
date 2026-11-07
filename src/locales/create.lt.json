@@ -634,5 +634,19 @@
   "cliArgCompletionShell": "Apvalkalas, kuriam generuoti užbaigimą: {shells}",
   "cliCompletionUnknownShell": "Nežinomas apvalkalas {shell}. Palaikomi apvalkalai: {shells}",
   "siteRestoreUnreadable": "Archyvo sąrašo nepavyko perskaityti įrašas po įrašo",
-  "siteRestoreInvalidSiteJson": "Archyvo site.json nėra tinkama HAX svetainė, todėl niekas nepakeista"
+  "siteRestoreInvalidSiteJson": "Archyvo site.json nėra tinkama HAX svetainė, todėl niekas nepakeista",
+  "cliCmdAlias": "Išvardyti pavadintas svetaines (alias) komandai `hax @name ...`",
+  "cliArgAliasAction": "list (numatytasis) arba show",
+  "cliArgAliasName": "rodomas alias, su @ arba be jo",
+  "aliasFileInvalid": "Nepavyko perskaityti alias failo {file}: {reason}",
+  "aliasNotAMap": "tikėtasi alias pavadinimų žemėlapio",
+  "aliasBadName": "Alias pavadinime {name} faile {file} gali būti tik raidės, skaičiai, ., _ ir -",
+  "aliasBadEntry": "Alias {name} faile {file} reikia root, rsync arba url",
+  "aliasUnknown": "Nežinomas alias {alias}. Žinomi alias: {known}",
+  "aliasNoneDefined": "nėra (pridėkite juos į ~/.haxtheweb/aliases.yml arba hax.aliases.yml)",
+  "aliasRemoteNotYet": "Alias {alias} neturi vietinio root; nuotoliniai alias dar nepalaikomi",
+  "aliasWithRoot": "{alias} jau nustato svetainės aplanką; praleiskite --root",
+  "aliasUnknownAction": "Nežinomas alias veiksmas {action}; naudokite list arba show",
+  "aliasNoneFound": "Alias neapibrėžti. Perskaityti alias failai: {files}",
+  "aliasMissingRoot": "trūksta aplanko"
 }

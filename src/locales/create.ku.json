@@ -634,5 +634,19 @@
   "cliArgCompletionShell": "Shell ku temamkirin jê re were çêkirin: {shells}",
   "cliCompletionUnknownShell": "Shell {shell} nenas e. Shellên piştgirîkirî: {shells}",
   "siteRestoreUnreadable": "Lîsteya arşîvê têketin bi têketin nehate xwendin",
-  "siteRestoreInvalidSiteJson": "site.json a arşîvê ne malpereke HAX ya derbasdar e, ji ber vê tiştek nehate guhertin"
+  "siteRestoreInvalidSiteJson": "site.json a arşîvê ne malpereke HAX ya derbasdar e, ji ber vê tiştek nehate guhertin",
+  "cliCmdAlias": "Malperên bi nav (alias) ji bo `hax @name ...` rêz bike",
+  "cliArgAliasAction": "list (standard) an show",
+  "cliArgAliasName": "aliasa ku were nîşandan, bi @ an bê @",
+  "aliasFileInvalid": "Pela aliasan {file} nehat xwendin: {reason}",
+  "aliasNotAMap": "nexşeyek ji navên aliasan dihat hêvîkirin",
+  "aliasBadName": "Navê aliasê {name} di {file} de tenê dikare tîp, hejmar, ., _ û - bikar bîne",
+  "aliasBadEntry": "Aliasa {name} di {file} de pêdivî bi root, rsync an url heye",
+  "aliasUnknown": "Aliasa nenas {alias}. Aliasên naskirî: {known}",
+  "aliasNoneDefined": "tune (wan li ~/.haxtheweb/aliases.yml an hax.aliases.yml zêde bike)",
+  "aliasRemoteNotYet": "Aliasa {alias} root-a herêmî tune; aliasên dûr hêj nayên piştgirîkirin",
+  "aliasWithRoot": "{alias} jixwe peldanka malperê diyar dike; --root rake",
+  "aliasUnknownAction": "Çalakiya aliasê ya nenas {action}; list an show bikar bîne",
+  "aliasNoneFound": "Tu alias nehatine diyarkirin. Pelên aliasan ên hatine xwendin: {files}",
+  "aliasMissingRoot": "peldank tune ye"
 }

@@ -634,5 +634,19 @@
   "cliArgCompletionShell": "કમ્પ્લીશન બનાવવા માટેનો શેલ: {shells}",
   "cliCompletionUnknownShell": "અજાણ્યો શેલ {shell}. સમર્થિત શેલ: {shells}",
   "siteRestoreUnreadable": "આર્કાઇવની યાદી એન્ટ્રી દર એન્ટ્રી વાંચી શકાઈ નહીં",
-  "siteRestoreInvalidSiteJson": "આર્કાઇવની site.json માન્ય HAX સાઇટ નથી, તેથી કંઈ બદલાયું નથી"
+  "siteRestoreInvalidSiteJson": "આર્કાઇવની site.json માન્ય HAX સાઇટ નથી, તેથી કંઈ બદલાયું નથી",
+  "cliCmdAlias": "`hax @name ...` માટે નામવાળી સાઇટ્સ (ઉપનામો) સૂચિબદ્ધ કરો",
+  "cliArgAliasAction": "list (ડિફોલ્ટ) અથવા show",
+  "cliArgAliasName": "બતાવવાનું ઉપનામ, @ સાથે અથવા વિના",
+  "aliasFileInvalid": "ઉપનામ ફાઇલ {file} વાંચી શકાઈ નહીં: {reason}",
+  "aliasNotAMap": "ઉપનામ નામોનો નકશો અપેક્ષિત હતો",
+  "aliasBadName": "{file} માં ઉપનામ નામ {name} માત્ર અક્ષરો, સંખ્યાઓ, ., _ અને - વાપરી શકે છે",
+  "aliasBadEntry": "{file} માં ઉપનામ {name} ને root, rsync અથવા url જોઈએ",
+  "aliasUnknown": "અજાણ્યું ઉપનામ {alias}. જાણીતા ઉપનામો: {known}",
+  "aliasNoneDefined": "કોઈ નહીં (તેમને ~/.haxtheweb/aliases.yml અથવા hax.aliases.yml માં ઉમેરો)",
+  "aliasRemoteNotYet": "ઉપનામ {alias} પાસે કોઈ લોકલ root નથી; રિમોટ ઉપનામો હજુ સમર્થિત નથી",
+  "aliasWithRoot": "{alias} પહેલેથી જ સાઇટ ફોલ્ડર સેટ કરે છે; --root કાઢી નાખો",
+  "aliasUnknownAction": "અજાણી ઉપનામ ક્રિયા {action}; list અથવા show વાપરો",
+  "aliasNoneFound": "કોઈ ઉપનામો વ્યાખ્યાયિત નથી. વાંચેલી ઉપનામ ફાઇલો: {files}",
+  "aliasMissingRoot": "ફોલ્ડર ગુમ છે"
 }

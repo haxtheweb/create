@@ -634,5 +634,19 @@
   "cliArgCompletionShell": "Lupina, za katero se ustvari dokončevanje: {shells}",
   "cliCompletionUnknownShell": "Neznana lupina {shell}. Podprte lupine: {shells}",
   "siteRestoreUnreadable": "Seznama arhiva ni bilo mogoče prebrati vnos za vnosom",
-  "siteRestoreInvalidSiteJson": "site.json v arhivu ni veljavno spletišče HAX, zato ni bilo nič spremenjeno"
+  "siteRestoreInvalidSiteJson": "site.json v arhivu ni veljavno spletišče HAX, zato ni bilo nič spremenjeno",
+  "cliCmdAlias": "Prikaži poimenovana spletna mesta (aliase) za `hax @name ...`",
+  "cliArgAliasAction": "list (privzeto) ali show",
+  "cliArgAliasName": "alias za prikaz, z @ ali brez",
+  "aliasFileInvalid": "Datoteke z aliasi {file} ni bilo mogoče prebrati: {reason}",
+  "aliasNotAMap": "pričakovan je bil zemljevid imen aliasov",
+  "aliasBadName": "Ime aliasa {name} v {file} lahko vsebuje le črke, številke, ., _ in -",
+  "aliasBadEntry": "Alias {name} v {file} potrebuje root, rsync ali url",
+  "aliasUnknown": "Neznan alias {alias}. Znani aliasi: {known}",
+  "aliasNoneDefined": "ni jih (dodajte jih v ~/.haxtheweb/aliases.yml ali hax.aliases.yml)",
+  "aliasRemoteNotYet": "Alias {alias} nima lokalnega root; oddaljeni aliasi še niso podprti",
+  "aliasWithRoot": "{alias} že določa mapo spletnega mesta; odstranite --root",
+  "aliasUnknownAction": "Neznano dejanje aliasa {action}; uporabite list ali show",
+  "aliasNoneFound": "Ni definiranih aliasov. Prebrane datoteke z aliasi: {files}",
+  "aliasMissingRoot": "mapa manjka"
 }

@@ -634,5 +634,19 @@
   "cliArgCompletionShell": "Shell yang akan dibuatkan pelengkapan: {shells}",
   "cliCompletionUnknownShell": "Shell {shell} tidak dikenal. Shell yang didukung: {shells}",
   "siteRestoreUnreadable": "Daftar isi arsip tidak dapat dibaca per entri",
-  "siteRestoreInvalidSiteJson": "site.json dalam arsip bukan situs HAX yang valid, jadi tidak ada yang diubah"
+  "siteRestoreInvalidSiteJson": "site.json dalam arsip bukan situs HAX yang valid, jadi tidak ada yang diubah",
+  "cliCmdAlias": "Daftar situs bernama (alias) untuk `hax @name ...`",
+  "cliArgAliasAction": "list (default) atau show",
+  "cliArgAliasName": "alias yang ditampilkan, dengan atau tanpa @",
+  "aliasFileInvalid": "File alias {file} tidak dapat dibaca: {reason}",
+  "aliasNotAMap": "diharapkan peta nama alias",
+  "aliasBadName": "Nama alias {name} di {file} hanya boleh memakai huruf, angka, ., _ dan -",
+  "aliasBadEntry": "Alias {name} di {file} memerlukan root, rsync, atau url",
+  "aliasUnknown": "Alias tidak dikenal {alias}. Alias yang dikenal: {known}",
+  "aliasNoneDefined": "tidak ada (tambahkan ke ~/.haxtheweb/aliases.yml atau hax.aliases.yml)",
+  "aliasRemoteNotYet": "Alias {alias} tidak memiliki root lokal; alias remote belum didukung",
+  "aliasWithRoot": "{alias} sudah menetapkan folder situs; hapus --root",
+  "aliasUnknownAction": "Aksi alias tidak dikenal {action}; gunakan list atau show",
+  "aliasNoneFound": "Tidak ada alias yang ditentukan. File alias yang dibaca: {files}",
+  "aliasMissingRoot": "folder tidak ada"
 }

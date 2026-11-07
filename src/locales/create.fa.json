@@ -634,5 +634,19 @@
   "cliArgCompletionShell": "shell برای ایجاد تکمیل خودکار: {shells}",
   "cliCompletionUnknownShell": "shell ناشناخته {shell}. shellهای پشتیبانی‌شده: {shells}",
   "siteRestoreUnreadable": "فهرست بایگانی را نمی‌توان ورودی به ورودی خواند",
-  "siteRestoreInvalidSiteJson": "site.json بایگانی یک سایت معتبر HAX نیست، بنابراین چیزی تغییر نکرد"
+  "siteRestoreInvalidSiteJson": "site.json بایگانی یک سایت معتبر HAX نیست، بنابراین چیزی تغییر نکرد",
+  "cliCmdAlias": "فهرست سایت‌های نام‌دار (نام‌های مستعار) برای `hax @name ...`",
+  "cliArgAliasAction": "list (پیش‌فرض) یا show",
+  "cliArgAliasName": "نام مستعار برای نمایش، با یا بدون @",
+  "aliasFileInvalid": "فایل نام مستعار {file} خوانده نشد: {reason}",
+  "aliasNotAMap": "نگاشتی از نام‌های مستعار انتظار می‌رفت",
+  "aliasBadName": "نام مستعار {name} در {file} فقط می‌تواند از حروف، اعداد، ., _ و - استفاده کند",
+  "aliasBadEntry": "نام مستعار {name} در {file} به root، rsync یا url نیاز دارد",
+  "aliasUnknown": "نام مستعار ناشناخته {alias}. نام‌های مستعار شناخته‌شده: {known}",
+  "aliasNoneDefined": "هیچ (آن‌ها را به ~/.haxtheweb/aliases.yml یا hax.aliases.yml اضافه کنید)",
+  "aliasRemoteNotYet": "نام مستعار {alias} هیچ root محلی ندارد؛ نام‌های مستعار راه دور هنوز پشتیبانی نمی‌شوند",
+  "aliasWithRoot": "{alias} از قبل پوشه سایت را تعیین می‌کند؛ --root را حذف کنید",
+  "aliasUnknownAction": "عملیات نام مستعار ناشناخته {action}؛ از list یا show استفاده کنید",
+  "aliasNoneFound": "هیچ نام مستعاری تعریف نشده است. فایل‌های نام مستعار خوانده‌شده: {files}",
+  "aliasMissingRoot": "پوشه وجود ندارد"
 }

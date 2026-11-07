@@ -634,5 +634,19 @@
   "cliArgCompletionShell": "Шкољка за коју се генерише довршавање: {shells}",
   "cliCompletionUnknownShell": "Непозната шкољка {shell}. Подржане шкољке: {shells}",
   "siteRestoreUnreadable": "Листа архиве није могла да се прочита ставку по ставку",
-  "siteRestoreInvalidSiteJson": "site.json у архиви није важећи HAX сајт, па ништа није промењено"
+  "siteRestoreInvalidSiteJson": "site.json у архиви није важећи HAX сајт, па ништа није промењено",
+  "cliCmdAlias": "Прикажи именоване сајтове (алијасе) за `hax @name ...`",
+  "cliArgAliasAction": "list (подразумевано) или show",
+  "cliArgAliasName": "алијас за приказ, са @ или без",
+  "aliasFileInvalid": "Датотека алијаса {file} није могла да се прочита: {reason}",
+  "aliasNotAMap": "очекивана је мапа имена алијаса",
+  "aliasBadName": "Име алијаса {name} у {file} може да садржи само слова, бројеве, ., _ и -",
+  "aliasBadEntry": "Алијасу {name} у {file} потребан је root, rsync или url",
+  "aliasUnknown": "Непознат алијас {alias}. Познати алијаси: {known}",
+  "aliasNoneDefined": "нема (додајте их у ~/.haxtheweb/aliases.yml или hax.aliases.yml)",
+  "aliasRemoteNotYet": "Алијас {alias} нема локални root; удаљени алијаси још нису подржани",
+  "aliasWithRoot": "{alias} већ поставља фасциклу сајта; уклоните --root",
+  "aliasUnknownAction": "Непозната радња алијаса {action}; користите list или show",
+  "aliasNoneFound": "Нема дефинисаних алијаса. Прочитане датотеке алијаса: {files}",
+  "aliasMissingRoot": "фасцикла недостаје"
 }

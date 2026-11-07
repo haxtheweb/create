@@ -634,5 +634,19 @@
   "cliArgCompletionShell": "Shell cần tạo tự hoàn thành: {shells}",
   "cliCompletionUnknownShell": "Shell không xác định {shell}. Các shell được hỗ trợ: {shells}",
   "siteRestoreUnreadable": "Không thể đọc danh sách bản lưu trữ theo từng mục",
-  "siteRestoreInvalidSiteJson": "site.json trong bản lưu trữ không phải site HAX hợp lệ, nên không có gì bị thay đổi"
+  "siteRestoreInvalidSiteJson": "site.json trong bản lưu trữ không phải site HAX hợp lệ, nên không có gì bị thay đổi",
+  "cliCmdAlias": "Liệt kê các trang đã đặt tên (bí danh) cho `hax @name ...`",
+  "cliArgAliasAction": "list (mặc định) hoặc show",
+  "cliArgAliasName": "bí danh cần hiển thị, có hoặc không có @",
+  "aliasFileInvalid": "Không thể đọc tệp bí danh {file}: {reason}",
+  "aliasNotAMap": "cần một ánh xạ tên bí danh",
+  "aliasBadName": "Tên bí danh {name} trong {file} chỉ được dùng chữ cái, số, ., _ và -",
+  "aliasBadEntry": "Bí danh {name} trong {file} cần root, rsync hoặc url",
+  "aliasUnknown": "Bí danh không xác định {alias}. Các bí danh đã biết: {known}",
+  "aliasNoneDefined": "không có (thêm vào ~/.haxtheweb/aliases.yml hoặc hax.aliases.yml)",
+  "aliasRemoteNotYet": "Bí danh {alias} không có root cục bộ; bí danh từ xa chưa được hỗ trợ",
+  "aliasWithRoot": "{alias} đã đặt thư mục trang; bỏ --root",
+  "aliasUnknownAction": "Hành động bí danh không xác định {action}; dùng list hoặc show",
+  "aliasNoneFound": "Chưa định nghĩa bí danh nào. Các tệp bí danh đã đọc: {files}",
+  "aliasMissingRoot": "thiếu thư mục"
 }

@@ -634,5 +634,19 @@
   "cliArgCompletionShell": "Shell ya kutengenezea ukamilishaji: {shells}",
   "cliCompletionUnknownShell": "Shell isiyojulikana {shell}. Shell zinazotumika: {shells}",
   "siteRestoreUnreadable": "Orodha ya kumbukumbu haikuweza kusomwa ingizo kwa ingizo",
-  "siteRestoreInvalidSiteJson": "site.json ya kumbukumbu si tovuti halali ya HAX, kwa hivyo hakuna kilichobadilishwa"
+  "siteRestoreInvalidSiteJson": "site.json ya kumbukumbu si tovuti halali ya HAX, kwa hivyo hakuna kilichobadilishwa",
+  "cliCmdAlias": "Orodhesha tovuti zenye majina (alias) kwa `hax @name ...`",
+  "cliArgAliasAction": "list (chaguo-msingi) au show",
+  "cliArgAliasName": "alias ya kuonyesha, ikiwa na @ au bila",
+  "aliasFileInvalid": "Faili ya alias {file} haikuweza kusomwa: {reason}",
+  "aliasNotAMap": "ramani ya majina ya alias ilitarajiwa",
+  "aliasBadName": "Jina la alias {name} katika {file} linaweza kutumia herufi, nambari, ., _ na - pekee",
+  "aliasBadEntry": "Alias {name} katika {file} inahitaji root, rsync au url",
+  "aliasUnknown": "Alias isiyojulikana {alias}. Alias zinazojulikana: {known}",
+  "aliasNoneDefined": "hakuna (ziongeze kwenye ~/.haxtheweb/aliases.yml au hax.aliases.yml)",
+  "aliasRemoteNotYet": "Alias {alias} haina root ya ndani; alias za mbali bado hazitumiki",
+  "aliasWithRoot": "{alias} tayari inaweka folda ya tovuti; ondoa --root",
+  "aliasUnknownAction": "Kitendo cha alias kisichojulikana {action}; tumia list au show",
+  "aliasNoneFound": "Hakuna alias zilizofafanuliwa. Faili za alias zilizosomwa: {files}",
+  "aliasMissingRoot": "folda haipo"
 }

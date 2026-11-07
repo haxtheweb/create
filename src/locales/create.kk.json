@@ -634,5 +634,19 @@
   "cliArgCompletionShell": "Толықтыру жасалатын shell: {shells}",
   "cliCompletionUnknownShell": "Белгісіз shell {shell}. Қолдау көрсетілетін shell-дер: {shells}",
   "siteRestoreUnreadable": "Мұрағат тізімін жазба бойынша оқу мүмкін болмады",
-  "siteRestoreInvalidSiteJson": "Мұрағаттағы site.json жарамды HAX сайты емес, сондықтан ештеңе өзгертілмеді"
+  "siteRestoreInvalidSiteJson": "Мұрағаттағы site.json жарамды HAX сайты емес, сондықтан ештеңе өзгертілмеді",
+  "cliCmdAlias": "`hax @name ...` үшін аталған сайттар (алиастар) тізімі",
+  "cliArgAliasAction": "list (әдепкі) немесе show",
+  "cliArgAliasName": "көрсетілетін алиас, @ белгісімен немесе онсыз",
+  "aliasFileInvalid": "{file} алиас файлын оқу мүмкін болмады: {reason}",
+  "aliasNotAMap": "алиас атауларының картасы күтілді",
+  "aliasBadName": "{file} ішіндегі {name} алиас атауында тек әріптер, сандар, ., _ және - болуы мүмкін",
+  "aliasBadEntry": "{file} ішіндегі {name} алиасына root, rsync немесе url қажет",
+  "aliasUnknown": "Белгісіз алиас {alias}. Белгілі алиастар: {known}",
+  "aliasNoneDefined": "жоқ (оларды ~/.haxtheweb/aliases.yml немесе hax.aliases.yml ішіне қосыңыз)",
+  "aliasRemoteNotYet": "{alias} алиасында жергілікті root жоқ; қашықтағы алиастарға әзірге қолдау жоқ",
+  "aliasWithRoot": "{alias} сайт қалтасын бұрыннан орнатады; --root алып тастаңыз",
+  "aliasUnknownAction": "Белгісіз алиас әрекеті {action}; list немесе show пайдаланыңыз",
+  "aliasNoneFound": "Алиастар анықталмаған. Оқылған алиас файлдары: {files}",
+  "aliasMissingRoot": "қалта жоқ"
 }

@@ -638,5 +638,19 @@
   "cliArgCompletionShell": "जिस शेल के लिए कम्प्लीशन बनाना है: {shells}",
   "cliCompletionUnknownShell": "अज्ञात शेल {shell}। समर्थित शेल: {shells}",
   "siteRestoreUnreadable": "संग्रह की सूची प्रविष्टि-दर-प्रविष्टि नहीं पढ़ी जा सकी",
-  "siteRestoreInvalidSiteJson": "संग्रह की site.json मान्य HAX साइट नहीं है, इसलिए कुछ भी नहीं बदला गया"
+  "siteRestoreInvalidSiteJson": "संग्रह की site.json मान्य HAX साइट नहीं है, इसलिए कुछ भी नहीं बदला गया",
+  "cliCmdAlias": "`hax @name ...` के लिए नामित साइटें (उपनाम) सूचीबद्ध करें",
+  "cliArgAliasAction": "list (डिफ़ॉल्ट) या show",
+  "cliArgAliasName": "दिखाने के लिए उपनाम, @ के साथ या बिना",
+  "aliasFileInvalid": "उपनाम फ़ाइल {file} पढ़ी नहीं जा सकी: {reason}",
+  "aliasNotAMap": "उपनाम नामों का मैप अपेक्षित था",
+  "aliasBadName": "{file} में उपनाम नाम {name} केवल अक्षर, संख्याएँ, ., _ और - का उपयोग कर सकता है",
+  "aliasBadEntry": "{file} में उपनाम {name} को root, rsync या url चाहिए",
+  "aliasUnknown": "अज्ञात उपनाम {alias}। ज्ञात उपनाम: {known}",
+  "aliasNoneDefined": "कोई नहीं (इन्हें ~/.haxtheweb/aliases.yml या hax.aliases.yml में जोड़ें)",
+  "aliasRemoteNotYet": "उपनाम {alias} का कोई लोकल root नहीं है; रिमोट उपनाम अभी समर्थित नहीं हैं",
+  "aliasWithRoot": "{alias} पहले से साइट फ़ोल्डर सेट करता है; --root हटाएँ",
+  "aliasUnknownAction": "अज्ञात उपनाम क्रिया {action}; list या show का उपयोग करें",
+  "aliasNoneFound": "कोई उपनाम परिभाषित नहीं है। पढ़ी गई उपनाम फ़ाइलें: {files}",
+  "aliasMissingRoot": "फ़ोल्डर मौजूद नहीं है"
 }

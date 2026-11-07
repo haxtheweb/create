@@ -634,5 +634,19 @@
   "cliArgCompletionShell": "Shell ທີ່ຈະສ້າງ completion: {shells}",
   "cliCompletionUnknownShell": "ບໍ່ຮູ້ຈັກ shell {shell}. Shell ທີ່ຮອງຮັບ: {shells}",
   "siteRestoreUnreadable": "ບໍ່ສາມາດອ່ານລາຍຊື່ໃນໄຟລ໌ເກັບເທື່ອລະລາຍການໄດ້",
-  "siteRestoreInvalidSiteJson": "site.json ໃນໄຟລ໌ເກັບບໍ່ແມ່ນເວັບໄຊ HAX ທີ່ຖືກຕ້ອງ, ດັ່ງນັ້ນຈຶ່ງບໍ່ມີການປ່ຽນແປງຫຍັງ"
+  "siteRestoreInvalidSiteJson": "site.json ໃນໄຟລ໌ເກັບບໍ່ແມ່ນເວັບໄຊ HAX ທີ່ຖືກຕ້ອງ, ດັ່ງນັ້ນຈຶ່ງບໍ່ມີການປ່ຽນແປງຫຍັງ",
+  "cliCmdAlias": "ລາຍຊື່ເວັບໄຊທີ່ມີຊື່ (ນາມແຝງ) ສຳລັບ `hax @name ...`",
+  "cliArgAliasAction": "list (ຄ່າເລີ່ມຕົ້ນ) ຫຼື show",
+  "cliArgAliasName": "ນາມແຝງທີ່ຈະສະແດງ, ມີ ຫຼື ບໍ່ມີ @",
+  "aliasFileInvalid": "ບໍ່ສາມາດອ່ານໄຟລ໌ນາມແຝງ {file}: {reason}",
+  "aliasNotAMap": "ຄາດວ່າຈະເປັນແຜນທີ່ຂອງຊື່ນາມແຝງ",
+  "aliasBadName": "ຊື່ນາມແຝງ {name} ໃນ {file} ໃຊ້ໄດ້ສະເພາະຕົວອັກສອນ, ຕົວເລກ, ., _ ແລະ -",
+  "aliasBadEntry": "ນາມແຝງ {name} ໃນ {file} ຕ້ອງການ root, rsync ຫຼື url",
+  "aliasUnknown": "ນາມແຝງທີ່ບໍ່ຮູ້ຈັກ {alias}. ນາມແຝງທີ່ຮູ້ຈັກ: {known}",
+  "aliasNoneDefined": "ບໍ່ມີ (ເພີ່ມພວກມັນໃສ່ ~/.haxtheweb/aliases.yml ຫຼື hax.aliases.yml)",
+  "aliasRemoteNotYet": "ນາມແຝງ {alias} ບໍ່ມີ root ທ້ອງຖິ່ນ; ຍັງບໍ່ຮອງຮັບນາມແຝງໄລຍະໄກ",
+  "aliasWithRoot": "{alias} ກຳນົດໂຟນເດີເວັບໄຊແລ້ວ; ເອົາ --root ອອກ",
+  "aliasUnknownAction": "ການກະທຳນາມແຝງທີ່ບໍ່ຮູ້ຈັກ {action}; ໃຊ້ list ຫຼື show",
+  "aliasNoneFound": "ບໍ່ມີນາມແຝງທີ່ກຳນົດໄວ້. ໄຟລ໌ນາມແຝງທີ່ອ່ານແລ້ວ: {files}",
+  "aliasMissingRoot": "ບໍ່ພົບໂຟນເດີ"
 }

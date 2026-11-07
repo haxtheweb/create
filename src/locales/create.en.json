@@ -718,5 +718,19 @@
   "cliArgCompletionShell": "Shell to generate completion for: {shells}",
   "cliCompletionUnknownShell": "Unknown shell {shell}. Supported shells: {shells}",
   "siteRestoreUnreadable": "The archive listing could not be read entry by entry",
-  "siteRestoreInvalidSiteJson": "The archive's site.json is not a valid HAX site, so nothing was changed"
+  "siteRestoreInvalidSiteJson": "The archive's site.json is not a valid HAX site, so nothing was changed",
+  "cliCmdAlias": "List named sites (aliases) for `hax @name ...`",
+  "cliArgAliasAction": "list (default) or show",
+  "cliArgAliasName": "alias to show, with or without @",
+  "aliasFileInvalid": "Alias file {file} could not be read: {reason}",
+  "aliasNotAMap": "expected a map of alias names",
+  "aliasBadName": "Alias name {name} in {file} may only use letters, numbers, ., _ and -",
+  "aliasBadEntry": "Alias {name} in {file} needs a root, rsync or url",
+  "aliasUnknown": "Unknown alias {alias}. Known aliases: {known}",
+  "aliasNoneDefined": "none (add them to ~/.haxtheweb/aliases.yml or hax.aliases.yml)",
+  "aliasRemoteNotYet": "Alias {alias} has no local root; remote aliases are not supported yet",
+  "aliasWithRoot": "{alias} already sets the site folder; drop --root",
+  "aliasUnknownAction": "Unknown alias action {action}; use list or show",
+  "aliasNoneFound": "No aliases defined. Alias files read: {files}",
+  "aliasMissingRoot": "folder missing"
 }

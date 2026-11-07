@@ -634,5 +634,19 @@
   "cliArgCompletionShell": "Shell da za a samar wa kammalawa: {shells}",
   "cliCompletionUnknownShell": "Shell {shell} ba a san shi ba. Shell da ake tallafawa: {shells}",
   "siteRestoreUnreadable": "Ba a iya karanta jerin ma'ajiyar shigarwa bayan shigarwa ba",
-  "siteRestoreInvalidSiteJson": "site.json na ma'ajiyar ba shafin HAX mai inganci ba ne, don haka ba a canza komai ba"
+  "siteRestoreInvalidSiteJson": "site.json na ma'ajiyar ba shafin HAX mai inganci ba ne, don haka ba a canza komai ba",
+  "cliCmdAlias": "Jera shafuka masu suna (laƙabi) don `hax @name ...`",
+  "cliArgAliasAction": "list (tsoho) ko show",
+  "cliArgAliasName": "laƙabin da za a nuna, da @ ko babu",
+  "aliasFileInvalid": "Ba a iya karanta fayil ɗin laƙabi {file} ba: {reason}",
+  "aliasNotAMap": "ana tsammanin taswirar sunayen laƙabi",
+  "aliasBadName": "Sunan laƙabi {name} a cikin {file} zai iya amfani da haruffa, lambobi, ., _ da - kawai",
+  "aliasBadEntry": "Laƙabi {name} a cikin {file} yana buƙatar root, rsync ko url",
+  "aliasUnknown": "Laƙabin da ba a sani ba {alias}. Sanannun laƙabi: {known}",
+  "aliasNoneDefined": "babu (ƙara su zuwa ~/.haxtheweb/aliases.yml ko hax.aliases.yml)",
+  "aliasRemoteNotYet": "Laƙabi {alias} ba shi da root na gida; ba a tallafa wa laƙabi masu nisa ba tukuna",
+  "aliasWithRoot": "{alias} ya riga ya saita babban fayil na shafi; cire --root",
+  "aliasUnknownAction": "Aikin laƙabi da ba a sani ba {action}; yi amfani da list ko show",
+  "aliasNoneFound": "Ba a ayyana laƙabi ba. Fayilolin laƙabi da aka karanta: {files}",
+  "aliasMissingRoot": "babban fayil ya ɓace"
 }

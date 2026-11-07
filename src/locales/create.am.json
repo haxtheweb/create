@@ -634,5 +634,19 @@
   "cliArgCompletionShell": "ማጠናቀቂያ የሚፈጠርለት shell፦ {shells}",
   "cliCompletionUnknownShell": "ያልታወቀ shell {shell}። የሚደገፉ shellዎች፦ {shells}",
   "siteRestoreUnreadable": "የማህደሩ ዝርዝር ግቤት በግቤት ሊነበብ አልቻለም",
-  "siteRestoreInvalidSiteJson": "የማህደሩ site.json ትክክለኛ የHAX ሳይት አይደለም፣ ስለዚህ ምንም አልተለወጠም"
+  "siteRestoreInvalidSiteJson": "የማህደሩ site.json ትክክለኛ የHAX ሳይት አይደለም፣ ስለዚህ ምንም አልተለወጠም",
+  "cliCmdAlias": "ለ`hax @name ...` የተሰየሙ ሳይቶችን (ተለዋጭ ስሞችን) ይዘርዝሩ",
+  "cliArgAliasAction": "list (ነባሪ) ወይም show",
+  "cliArgAliasName": "የሚታይ ተለዋጭ ስም፣ ከ@ ጋር ወይም ያለ@",
+  "aliasFileInvalid": "የተለዋጭ ስም ፋይል {file} ሊነበብ አልቻለም፦ {reason}",
+  "aliasNotAMap": "የተለዋጭ ስሞች ካርታ ይጠበቅ ነበር",
+  "aliasBadName": "በ{file} ውስጥ ያለው ተለዋጭ ስም {name} ፊደሎችን፣ ቁጥሮችን፣ ., _ እና - ብቻ መጠቀም ይችላል",
+  "aliasBadEntry": "በ{file} ውስጥ ያለው ተለዋጭ ስም {name} root፣ rsync ወይም url ያስፈልገዋል",
+  "aliasUnknown": "ያልታወቀ ተለዋጭ ስም {alias}። የታወቁ ተለዋጭ ስሞች፦ {known}",
+  "aliasNoneDefined": "የለም (ወደ ~/.haxtheweb/aliases.yml ወይም hax.aliases.yml ያክሏቸው)",
+  "aliasRemoteNotYet": "ተለዋጭ ስም {alias} አካባቢያዊ root የለውም፤ የርቀት ተለዋጭ ስሞች ገና አይደገፉም",
+  "aliasWithRoot": "{alias} የሳይቱን አቃፊ አስቀድሞ ያዘጋጃል፤ --root ን ያስወግዱ",
+  "aliasUnknownAction": "ያልታወቀ የተለዋጭ ስም ተግባር {action}፤ list ወይም show ይጠቀሙ",
+  "aliasNoneFound": "ምንም ተለዋጭ ስሞች አልተገለጹም። የተነበቡ የተለዋጭ ስም ፋይሎች፦ {files}",
+  "aliasMissingRoot": "አቃፊ የለም"
 }

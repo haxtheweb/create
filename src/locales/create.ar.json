@@ -638,5 +638,19 @@
   "cliArgCompletionShell": "الصدفة المراد إنشاء الإكمال لها: {shells}",
   "cliCompletionUnknownShell": "صدفة غير معروفة {shell}. الصدفات المدعومة: {shells}",
   "siteRestoreUnreadable": "تعذرت قراءة قائمة الأرشيف إدخالًا تلو الآخر",
-  "siteRestoreInvalidSiteJson": "ملف site.json في الأرشيف ليس موقع HAX صالحًا، لذا لم يتم تغيير أي شيء"
+  "siteRestoreInvalidSiteJson": "ملف site.json في الأرشيف ليس موقع HAX صالحًا، لذا لم يتم تغيير أي شيء",
+  "cliCmdAlias": "عرض المواقع المسماة (الأسماء المستعارة) لـ `hax @name ...`",
+  "cliArgAliasAction": "list (افتراضي) أو show",
+  "cliArgAliasName": "الاسم المستعار المراد عرضه، مع @ أو بدونها",
+  "aliasFileInvalid": "تعذرت قراءة ملف الأسماء المستعارة {file}: {reason}",
+  "aliasNotAMap": "يُتوقع خريطة من الأسماء المستعارة",
+  "aliasBadName": "الاسم المستعار {name} في {file} يمكنه استخدام الأحرف والأرقام و. و_ و- فقط",
+  "aliasBadEntry": "الاسم المستعار {name} في {file} يحتاج إلى root أو rsync أو url",
+  "aliasUnknown": "اسم مستعار غير معروف {alias}. الأسماء المستعارة المعروفة: {known}",
+  "aliasNoneDefined": "لا شيء (أضفها إلى ~/.haxtheweb/aliases.yml أو hax.aliases.yml)",
+  "aliasRemoteNotYet": "الاسم المستعار {alias} ليس له root محلي؛ الأسماء المستعارة البعيدة غير مدعومة بعد",
+  "aliasWithRoot": "{alias} يحدد مجلد الموقع بالفعل؛ احذف --root",
+  "aliasUnknownAction": "إجراء اسم مستعار غير معروف {action}؛ استخدم list أو show",
+  "aliasNoneFound": "لا توجد أسماء مستعارة معرّفة. ملفات الأسماء المستعارة المقروءة: {files}",
+  "aliasMissingRoot": "المجلد مفقود"
 }

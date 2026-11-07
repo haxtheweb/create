@@ -634,5 +634,19 @@
   "cliArgCompletionShell": "ה-shell שעבורו תיווצר ההשלמה: {shells}",
   "cliCompletionUnknownShell": "shell לא מוכר {shell}. shells נתמכים: {shells}",
   "siteRestoreUnreadable": "לא ניתן היה לקרוא את רשימת הארכיון רשומה אחר רשומה",
-  "siteRestoreInvalidSiteJson": "ה-site.json שבארכיון אינו אתר HAX תקין, ולכן דבר לא שונה"
+  "siteRestoreInvalidSiteJson": "ה-site.json שבארכיון אינו אתר HAX תקין, ולכן דבר לא שונה",
+  "cliCmdAlias": "הצגת אתרים בעלי שם (כינויים) עבור `hax @name ...`",
+  "cliArgAliasAction": "list (ברירת מחדל) או show",
+  "cliArgAliasName": "כינוי להצגה, עם או בלי @",
+  "aliasFileInvalid": "לא ניתן לקרוא את קובץ הכינויים {file}: {reason}",
+  "aliasNotAMap": "צפויה מפה של שמות כינויים",
+  "aliasBadName": "שם הכינוי {name} בקובץ {file} יכול להכיל רק אותיות, ספרות, ., _ ו-",
+  "aliasBadEntry": "הכינוי {name} בקובץ {file} דורש root, rsync או url",
+  "aliasUnknown": "כינוי לא ידוע {alias}. כינויים ידועים: {known}",
+  "aliasNoneDefined": "אין (הוסיפו אותם ל-~/.haxtheweb/aliases.yml או ל-hax.aliases.yml)",
+  "aliasRemoteNotYet": "לכינוי {alias} אין root מקומי; כינויים מרוחקים עדיין לא נתמכים",
+  "aliasWithRoot": "{alias} כבר קובע את תיקיית האתר; הסירו את --root",
+  "aliasUnknownAction": "פעולת כינוי לא ידועה {action}; השתמשו ב-list או show",
+  "aliasNoneFound": "לא הוגדרו כינויים. קובצי כינויים שנקראו: {files}",
+  "aliasMissingRoot": "התיקייה חסרה"
 }

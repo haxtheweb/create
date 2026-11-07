@@ -634,5 +634,19 @@
   "cliArgCompletionShell": "I-shell okuzokwenzelwa ukuqedela: {shells}",
   "cliCompletionUnknownShell": "I-shell engaziwa {shell}. Ama-shell asekelwayo: {shells}",
   "siteRestoreUnreadable": "Uhlu lwe-archive alukwazanga ukufundwa ngokufakiwe ngakunye",
-  "siteRestoreInvalidSiteJson": "I-site.json ye-archive akuyona isayithi evumelekile ye-HAX, ngakho akukho okushintshiwe"
+  "siteRestoreInvalidSiteJson": "I-site.json ye-archive akuyona isayithi evumelekile ye-HAX, ngakho akukho okushintshiwe",
+  "cliCmdAlias": "Bala amasayithi aqanjwe amagama (ama-alias) e-`hax @name ...`",
+  "cliArgAliasAction": "list (okuzenzakalelayo) noma show",
+  "cliArgAliasName": "i-alias okufanele iboniswe, ene-@ noma ngaphandle",
+  "aliasFileInvalid": "Ifayela le-alias {file} alikwazanga ukufundwa: {reason}",
+  "aliasNotAMap": "bekulindelwe imephu yamagama e-alias",
+  "aliasBadName": "Igama le-alias {name} ku-{file} lingasebenzisa izinhlamvu, izinombolo, ., _ no - kuphela",
+  "aliasBadEntry": "I-alias {name} ku-{file} idinga root, rsync noma url",
+  "aliasUnknown": "I-alias engaziwa {alias}. Ama-alias aziwayo: {known}",
+  "aliasNoneDefined": "ayikho (wengeze ku-~/.haxtheweb/aliases.yml noma hax.aliases.yml)",
+  "aliasRemoteNotYet": "I-alias {alias} ayinayo i-root yasendaweni; ama-alias akude awakasekelwa",
+  "aliasWithRoot": "{alias} isivele isetha ifolda yesayithi; susa --root",
+  "aliasUnknownAction": "Isenzo se-alias esingaziwa {action}; sebenzisa list noma show",
+  "aliasNoneFound": "Awekho ama-alias achaziwe. Amafayela e-alias afundiwe: {files}",
+  "aliasMissingRoot": "ifolda ayikho"
 }

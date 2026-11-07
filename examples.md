@@ -486,3 +486,25 @@ source <(hax completion bash)
 # zsh: add to ~/.zshrc after compinit
 source <(hax completion zsh)
 ```
+
+## site aliases
+
+Name your sites once and use them from any folder. Put personal aliases in `~/.haxtheweb/aliases.yml`, or check a `hax.aliases.yml` into a project; the nearest file wins for a name. Paths are relative to the file they're in, and `~` works.
+
+```yaml
+course:
+  root: ./sites/course
+prod:
+  root: ~/deploy/course
+  rsync: user@example.org:/var/www/course/
+```
+
+```bash
+hax alias                      # list aliases and where they come from
+hax @course                    # same as `hax site` inside sites/course
+hax @course site:validate --y  # any site action
+hax @course serve              # any command, run in that site
+hax @course site:rsync --destination @prod --y
+```
+
+Aliases with only a `url` (a remote HAXcms) are reserved for remote sessions and report "not supported yet" for now.

@@ -638,5 +638,19 @@
   "cliArgCompletionShell": "Shell pour lequel générer la complétion : {shells}",
   "cliCompletionUnknownShell": "Shell inconnu {shell}. Shells pris en charge : {shells}",
   "siteRestoreUnreadable": "Le contenu de l'archive n'a pas pu être lu entrée par entrée",
-  "siteRestoreInvalidSiteJson": "Le site.json de l'archive n'est pas un site HAX valide, rien n'a donc été modifié"
+  "siteRestoreInvalidSiteJson": "Le site.json de l'archive n'est pas un site HAX valide, rien n'a donc été modifié",
+  "cliCmdAlias": "Lister les sites nommés (alias) pour `hax @name ...`",
+  "cliArgAliasAction": "list (par défaut) ou show",
+  "cliArgAliasName": "alias à afficher, avec ou sans @",
+  "aliasFileInvalid": "Impossible de lire le fichier d'alias {file} : {reason}",
+  "aliasNotAMap": "une table de noms d'alias était attendue",
+  "aliasBadName": "Le nom d'alias {name} dans {file} ne peut contenir que des lettres, chiffres, ., _ et -",
+  "aliasBadEntry": "L'alias {name} dans {file} nécessite un root, rsync ou url",
+  "aliasUnknown": "Alias inconnu {alias}. Alias connus : {known}",
+  "aliasNoneDefined": "aucun (ajoutez-les à ~/.haxtheweb/aliases.yml ou hax.aliases.yml)",
+  "aliasRemoteNotYet": "L'alias {alias} n'a pas de root local ; les alias distants ne sont pas encore pris en charge",
+  "aliasWithRoot": "{alias} définit déjà le dossier du site ; retirez --root",
+  "aliasUnknownAction": "Action d'alias inconnue {action} ; utilisez list ou show",
+  "aliasNoneFound": "Aucun alias défini. Fichiers d'alias lus : {files}",
+  "aliasMissingRoot": "dossier manquant"
 }

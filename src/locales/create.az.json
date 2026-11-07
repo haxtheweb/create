@@ -634,5 +634,19 @@
   "cliArgCompletionShell": "Tamamlamanın yaradılacağı shell: {shells}",
   "cliCompletionUnknownShell": "Naməlum shell {shell}. Dəstəklənən shell-lər: {shells}",
   "siteRestoreUnreadable": "Arxiv siyahısı qeyd-qeyd oxuna bilmədi",
-  "siteRestoreInvalidSiteJson": "Arxivdəki site.json düzgün HAX saytı deyil, ona görə heç nə dəyişdirilmədi"
+  "siteRestoreInvalidSiteJson": "Arxivdəki site.json düzgün HAX saytı deyil, ona görə heç nə dəyişdirilmədi",
+  "cliCmdAlias": "`hax @name ...` üçün adlandırılmış saytları (aliasları) siyahıla",
+  "cliArgAliasAction": "list (standart) və ya show",
+  "cliArgAliasName": "göstəriləcək alias, @ ilə və ya @ olmadan",
+  "aliasFileInvalid": "Alias faylı {file} oxuna bilmədi: {reason}",
+  "aliasNotAMap": "alias adlarından ibarət xəritə gözlənilirdi",
+  "aliasBadName": "{file} faylındakı {name} alias adı yalnız hərf, rəqəm, ., _ və - istifadə edə bilər",
+  "aliasBadEntry": "{file} faylındakı {name} aliası üçün root, rsync və ya url lazımdır",
+  "aliasUnknown": "Naməlum alias {alias}. Məlum aliaslar: {known}",
+  "aliasNoneDefined": "yoxdur (onları ~/.haxtheweb/aliases.yml və ya hax.aliases.yml faylına əlavə edin)",
+  "aliasRemoteNotYet": "{alias} aliasının yerli root-u yoxdur; uzaq aliaslar hələ dəstəklənmir",
+  "aliasWithRoot": "{alias} artıq sayt qovluğunu təyin edir; --root-u silin",
+  "aliasUnknownAction": "Naməlum alias əməliyyatı {action}; list və ya show istifadə edin",
+  "aliasNoneFound": "Heç bir alias təyin edilməyib. Oxunan alias faylları: {files}",
+  "aliasMissingRoot": "qovluq yoxdur"
 }

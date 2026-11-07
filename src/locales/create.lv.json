@@ -634,5 +634,19 @@
   "cliArgCompletionShell": "Čaula, kurai ģenerēt pabeigšanu: {shells}",
   "cliCompletionUnknownShell": "Nezināma čaula {shell}. Atbalstītās čaulas: {shells}",
   "siteRestoreUnreadable": "Arhīva sarakstu nevarēja nolasīt pa ierakstam",
-  "siteRestoreInvalidSiteJson": "Arhīva site.json nav derīga HAX vietne, tāpēc nekas netika mainīts"
+  "siteRestoreInvalidSiteJson": "Arhīva site.json nav derīga HAX vietne, tāpēc nekas netika mainīts",
+  "cliCmdAlias": "Uzskaitīt nosauktās vietnes (aliasus) komandai `hax @name ...`",
+  "cliArgAliasAction": "list (noklusējums) vai show",
+  "cliArgAliasName": "parādāmais aliass, ar vai bez @",
+  "aliasFileInvalid": "Aliasu failu {file} neizdevās nolasīt: {reason}",
+  "aliasNotAMap": "tika gaidīta aliasu nosaukumu karte",
+  "aliasBadName": "Aliasa nosaukumā {name} failā {file} drīkst būt tikai burti, cipari, ., _ un -",
+  "aliasBadEntry": "Aliasam {name} failā {file} nepieciešams root, rsync vai url",
+  "aliasUnknown": "Nezināms aliass {alias}. Zināmie aliasi: {known}",
+  "aliasNoneDefined": "nav (pievienojiet tos ~/.haxtheweb/aliases.yml vai hax.aliases.yml)",
+  "aliasRemoteNotYet": "Aliasam {alias} nav lokāla root; attālie aliasi vēl netiek atbalstīti",
+  "aliasWithRoot": "{alias} jau norāda vietnes mapi; noņemiet --root",
+  "aliasUnknownAction": "Nezināma aliasa darbība {action}; izmantojiet list vai show",
+  "aliasNoneFound": "Nav definētu aliasu. Nolasītie aliasu faili: {files}",
+  "aliasMissingRoot": "mape nav atrasta"
 }

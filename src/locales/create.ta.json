@@ -634,5 +634,19 @@
   "cliArgCompletionShell": "நிறைவை உருவாக்க வேண்டிய shell: {shells}",
   "cliCompletionUnknownShell": "அறியப்படாத shell {shell}. ஆதரிக்கப்படும் shell கள்: {shells}",
   "siteRestoreUnreadable": "காப்பகப் பட்டியலை உள்ளீடு வாரியாகப் படிக்க முடியவில்லை",
-  "siteRestoreInvalidSiteJson": "காப்பகத்தின் site.json சரியான HAX தளம் அல்ல, எனவே எதுவும் மாற்றப்படவில்லை"
+  "siteRestoreInvalidSiteJson": "காப்பகத்தின் site.json சரியான HAX தளம் அல்ல, எனவே எதுவும் மாற்றப்படவில்லை",
+  "cliCmdAlias": "`hax @name ...` க்கான பெயரிடப்பட்ட தளங்களை (மாற்றுப்பெயர்கள்) பட்டியலிடு",
+  "cliArgAliasAction": "list (இயல்புநிலை) அல்லது show",
+  "cliArgAliasName": "காட்ட வேண்டிய மாற்றுப்பெயர், @ உடன் அல்லது இல்லாமல்",
+  "aliasFileInvalid": "மாற்றுப்பெயர் கோப்பு {file} ஐப் படிக்க முடியவில்லை: {reason}",
+  "aliasNotAMap": "மாற்றுப்பெயர்களின் வரைபடம் எதிர்பார்க்கப்பட்டது",
+  "aliasBadName": "{file} இல் உள்ள மாற்றுப்பெயர் {name} எழுத்துகள், எண்கள், ., _ மற்றும் - ஐ மட்டுமே பயன்படுத்தலாம்",
+  "aliasBadEntry": "{file} இல் உள்ள மாற்றுப்பெயர் {name} க்கு root, rsync அல்லது url தேவை",
+  "aliasUnknown": "தெரியாத மாற்றுப்பெயர் {alias}. அறியப்பட்ட மாற்றுப்பெயர்கள்: {known}",
+  "aliasNoneDefined": "எதுவும் இல்லை (அவற்றை ~/.haxtheweb/aliases.yml அல்லது hax.aliases.yml இல் சேர்க்கவும்)",
+  "aliasRemoteNotYet": "மாற்றுப்பெயர் {alias} க்கு உள்ளூர் root இல்லை; தொலைநிலை மாற்றுப்பெயர்கள் இன்னும் ஆதரிக்கப்படவில்லை",
+  "aliasWithRoot": "{alias} ஏற்கனவே தளக் கோப்புறையை அமைக்கிறது; --root ஐ நீக்கவும்",
+  "aliasUnknownAction": "தெரியாத மாற்றுப்பெயர் செயல் {action}; list அல்லது show ஐப் பயன்படுத்தவும்",
+  "aliasNoneFound": "மாற்றுப்பெயர்கள் எதுவும் வரையறுக்கப்படவில்லை. படித்த மாற்றுப்பெயர் கோப்புகள்: {files}",
+  "aliasMissingRoot": "கோப்புறை இல்லை"
 }

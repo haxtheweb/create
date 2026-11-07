@@ -634,5 +634,19 @@
   "cliArgCompletionShell": "Tamamlama oluşturulacak kabuk: {shells}",
   "cliCompletionUnknownShell": "Bilinmeyen kabuk {shell}. Desteklenen kabuklar: {shells}",
   "siteRestoreUnreadable": "Arşiv listesi girdi girdi okunamadı",
-  "siteRestoreInvalidSiteJson": "Arşivdeki site.json geçerli bir HAX sitesi değil, bu yüzden hiçbir şey değiştirilmedi"
+  "siteRestoreInvalidSiteJson": "Arşivdeki site.json geçerli bir HAX sitesi değil, bu yüzden hiçbir şey değiştirilmedi",
+  "cliCmdAlias": "`hax @name ...` için adlandırılmış siteleri (takma adları) listele",
+  "cliArgAliasAction": "list (varsayılan) veya show",
+  "cliArgAliasName": "gösterilecek takma ad, @ ile veya olmadan",
+  "aliasFileInvalid": "Takma ad dosyası {file} okunamadı: {reason}",
+  "aliasNotAMap": "takma ad adlarından oluşan bir eşleme bekleniyordu",
+  "aliasBadName": "{file} içindeki {name} takma adı yalnızca harf, rakam, ., _ ve - içerebilir",
+  "aliasBadEntry": "{file} içindeki {name} takma adı için root, rsync veya url gerekir",
+  "aliasUnknown": "Bilinmeyen takma ad {alias}. Bilinen takma adlar: {known}",
+  "aliasNoneDefined": "yok (bunları ~/.haxtheweb/aliases.yml veya hax.aliases.yml dosyasına ekleyin)",
+  "aliasRemoteNotYet": "{alias} takma adının yerel root değeri yok; uzak takma adlar henüz desteklenmiyor",
+  "aliasWithRoot": "{alias} site klasörünü zaten belirtiyor; --root seçeneğini kaldırın",
+  "aliasUnknownAction": "Bilinmeyen takma ad eylemi {action}; list veya show kullanın",
+  "aliasNoneFound": "Tanımlı takma ad yok. Okunan takma ad dosyaları: {files}",
+  "aliasMissingRoot": "klasör eksik"
 }

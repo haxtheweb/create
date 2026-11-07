@@ -634,5 +634,19 @@
   "cliArgCompletionShell": "Avtotoʻldirish yaratiladigan shell: {shells}",
   "cliCompletionUnknownShell": "Nomaʼlum shell {shell}. Qoʻllab-quvvatlanadigan shell'lar: {shells}",
   "siteRestoreUnreadable": "Arxiv roʻyxatini yozuvma-yozuv oʻqib boʻlmadi",
-  "siteRestoreInvalidSiteJson": "Arxivdagi site.json toʻgʻri HAX sayti emas, shuning uchun hech narsa oʻzgartirilmadi"
+  "siteRestoreInvalidSiteJson": "Arxivdagi site.json toʻgʻri HAX sayti emas, shuning uchun hech narsa oʻzgartirilmadi",
+  "cliCmdAlias": "`hax @name ...` uchun nomlangan saytlar (aliaslar) roʻyxati",
+  "cliArgAliasAction": "list (standart) yoki show",
+  "cliArgAliasName": "koʻrsatiladigan alias, @ bilan yoki usiz",
+  "aliasFileInvalid": "{file} alias faylini oʻqib boʻlmadi: {reason}",
+  "aliasNotAMap": "alias nomlari xaritasi kutilgan edi",
+  "aliasBadName": "{file} dagi {name} alias nomida faqat harflar, raqamlar, ., _ va - boʻlishi mumkin",
+  "aliasBadEntry": "{file} dagi {name} aliasiga root, rsync yoki url kerak",
+  "aliasUnknown": "Nomaʼlum alias {alias}. Maʼlum aliaslar: {known}",
+  "aliasNoneDefined": "yoʻq (ularni ~/.haxtheweb/aliases.yml yoki hax.aliases.yml ga qoʻshing)",
+  "aliasRemoteNotYet": "{alias} aliasida mahalliy root yoʻq; masofaviy aliaslar hali qoʻllab-quvvatlanmaydi",
+  "aliasWithRoot": "{alias} allaqachon sayt papkasini belgilaydi; --root ni olib tashlang",
+  "aliasUnknownAction": "Nomaʼlum alias amali {action}; list yoki show dan foydalaning",
+  "aliasNoneFound": "Hech qanday alias aniqlanmagan. Oʻqilgan alias fayllari: {files}",
+  "aliasMissingRoot": "papka yoʻq"
 }

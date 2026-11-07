@@ -634,5 +634,19 @@
   "cliArgCompletionShell": "کمپلیشن بنان لئی شیل: {shells}",
   "cliCompletionUnknownShell": "نامعلوم شیل {shell}۔ سپورٹ والے شیل: {shells}",
   "siteRestoreUnreadable": "آرکائیو دی لسٹ اندراج وار نئیں پڑھی جا سکی",
-  "siteRestoreInvalidSiteJson": "آرکائیو دی site.json درست HAX سائٹ نئیں، ایس لئی کجھ نئیں بدلیا"
+  "siteRestoreInvalidSiteJson": "آرکائیو دی site.json درست HAX سائٹ نئیں، ایس لئی کجھ نئیں بدلیا",
+  "cliCmdAlias": "`hax @name ...` لئی ناں والیاں سائٹاں (عرفی ناں) دی لسٹ وکھاؤ",
+  "cliArgAliasAction": "list (ڈیفالٹ) یا show",
+  "cliArgAliasName": "وکھان والا عرفی ناں، @ نال یا بنا",
+  "aliasFileInvalid": "عرفی ناں دی فائل {file} پڑھی نئیں جا سکی: {reason}",
+  "aliasNotAMap": "عرفی ناواں دا میپ چاہیدا سی",
+  "aliasBadName": "{file} وچ عرفی ناں {name} وچ صرف اکھر، ہندسے، ., _ تے - ای ورتے جا سکدے نیں",
+  "aliasBadEntry": "{file} وچ عرفی ناں {name} نوں root، rsync یا url چاہیدا اے",
+  "aliasUnknown": "انجان عرفی ناں {alias}۔ جانے پچھانے عرفی ناں: {known}",
+  "aliasNoneDefined": "کوئی نئیں (اوہناں نوں ~/.haxtheweb/aliases.yml یا hax.aliases.yml وچ جوڑو)",
+  "aliasRemoteNotYet": "عرفی ناں {alias} دا کوئی لوکل root نئیں؛ ریموٹ عرفی ناں حالے سپورٹ نئیں",
+  "aliasWithRoot": "{alias} پہلاں ای سائٹ فولڈر سیٹ کردا اے؛ --root ہٹاؤ",
+  "aliasUnknownAction": "انجان عرفی ناں کارروائی {action}؛ list یا show ورتو",
+  "aliasNoneFound": "کوئی عرفی ناں نئیں بنیا۔ پڑھیاں گئیاں عرفی ناں فائلاں: {files}",
+  "aliasMissingRoot": "فولڈر غائب اے"
 }

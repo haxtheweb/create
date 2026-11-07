@@ -634,5 +634,19 @@
   "cliArgCompletionShell": "കംപ്ലീഷൻ സൃഷ്ടിക്കേണ്ട ഷെൽ: {shells}",
   "cliCompletionUnknownShell": "അറിയാത്ത ഷെൽ {shell}. പിന്തുണയുള്ള ഷെല്ലുകൾ: {shells}",
   "siteRestoreUnreadable": "ആർക്കൈവ് ലിസ്റ്റിംഗ് എൻട്രി തോറും വായിക്കാൻ കഴിഞ്ഞില്ല",
-  "siteRestoreInvalidSiteJson": "ആർക്കൈവിലെ site.json സാധുവായ HAX സൈറ്റ് അല്ല, അതിനാൽ ഒന്നും മാറ്റിയില്ല"
+  "siteRestoreInvalidSiteJson": "ആർക്കൈവിലെ site.json സാധുവായ HAX സൈറ്റ് അല്ല, അതിനാൽ ഒന്നും മാറ്റിയില്ല",
+  "cliCmdAlias": "`hax @name ...` എന്നതിനായി പേരുള്ള സൈറ്റുകൾ (അലിയാസുകൾ) പട്ടികപ്പെടുത്തുക",
+  "cliArgAliasAction": "list (സ്ഥിരം) അല്ലെങ്കിൽ show",
+  "cliArgAliasName": "കാണിക്കേണ്ട അലിയാസ്, @ ഉള്ളതോ ഇല്ലാത്തതോ",
+  "aliasFileInvalid": "അലിയാസ് ഫയൽ {file} വായിക്കാനായില്ല: {reason}",
+  "aliasNotAMap": "അലിയാസ് പേരുകളുടെ ഒരു മാപ്പ് പ്രതീക്ഷിച്ചു",
+  "aliasBadName": "{file} ലെ അലിയാസ് പേര് {name} ൽ അക്ഷരങ്ങൾ, അക്കങ്ങൾ, ., _, - എന്നിവ മാത്രമേ പാടുള്ളൂ",
+  "aliasBadEntry": "{file} ലെ അലിയാസ് {name} ന് root, rsync അല്ലെങ്കിൽ url ആവശ്യമാണ്",
+  "aliasUnknown": "അജ്ഞാത അലിയാസ് {alias}. അറിയപ്പെടുന്ന അലിയാസുകൾ: {known}",
+  "aliasNoneDefined": "ഒന്നുമില്ല (~/.haxtheweb/aliases.yml അല്ലെങ്കിൽ hax.aliases.yml ൽ ചേർക്കുക)",
+  "aliasRemoteNotYet": "അലിയാസ് {alias} ന് ലോക്കൽ root ഇല്ല; റിമോട്ട് അലിയാസുകൾ ഇതുവരെ പിന്തുണയ്ക്കുന്നില്ല",
+  "aliasWithRoot": "{alias} ഇതിനകം സൈറ്റ് ഫോൾഡർ സജ്ജമാക്കുന്നു; --root ഒഴിവാക്കുക",
+  "aliasUnknownAction": "അജ്ഞാത അലിയാസ് പ്രവർത്തനം {action}; list അല്ലെങ്കിൽ show ഉപയോഗിക്കുക",
+  "aliasNoneFound": "അലിയാസുകളൊന്നും നിർവചിച്ചിട്ടില്ല. വായിച്ച അലിയാസ് ഫയലുകൾ: {files}",
+  "aliasMissingRoot": "ഫോൾഡർ കാണുന്നില്ല"
 }

@@ -634,5 +634,19 @@
   "cliArgCompletionShell": "Powłoka, dla której wygenerować uzupełnianie: {shells}",
   "cliCompletionUnknownShell": "Nieznana powłoka {shell}. Obsługiwane powłoki: {shells}",
   "siteRestoreUnreadable": "Nie udało się odczytać listy archiwum wpis po wpisie",
-  "siteRestoreInvalidSiteJson": "Plik site.json z archiwum nie jest prawidłową witryną HAX, więc nic nie zostało zmienione"
+  "siteRestoreInvalidSiteJson": "Plik site.json z archiwum nie jest prawidłową witryną HAX, więc nic nie zostało zmienione",
+  "cliCmdAlias": "Wyświetl nazwane witryny (aliasy) dla `hax @name ...`",
+  "cliArgAliasAction": "list (domyślnie) lub show",
+  "cliArgAliasName": "alias do wyświetlenia, z @ lub bez",
+  "aliasFileInvalid": "Nie można odczytać pliku aliasów {file}: {reason}",
+  "aliasNotAMap": "oczekiwano mapy nazw aliasów",
+  "aliasBadName": "Nazwa aliasu {name} w {file} może zawierać tylko litery, cyfry, ., _ i -",
+  "aliasBadEntry": "Alias {name} w {file} wymaga root, rsync lub url",
+  "aliasUnknown": "Nieznany alias {alias}. Znane aliasy: {known}",
+  "aliasNoneDefined": "brak (dodaj je do ~/.haxtheweb/aliases.yml lub hax.aliases.yml)",
+  "aliasRemoteNotYet": "Alias {alias} nie ma lokalnego root; zdalne aliasy nie są jeszcze obsługiwane",
+  "aliasWithRoot": "{alias} już ustawia folder witryny; usuń --root",
+  "aliasUnknownAction": "Nieznana akcja aliasu {action}; użyj list lub show",
+  "aliasNoneFound": "Brak zdefiniowanych aliasów. Odczytane pliki aliasów: {files}",
+  "aliasMissingRoot": "brak folderu"
 }

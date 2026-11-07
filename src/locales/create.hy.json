@@ -634,5 +634,19 @@
   "cliArgCompletionShell": "Shell, որի համար ստեղծել լրացում՝ {shells}",
   "cliCompletionUnknownShell": "Անհայտ shell՝ {shell}։ Աջակցվող shell-եր՝ {shells}",
   "siteRestoreUnreadable": "Արխիվի ցուցակը հնարավոր չեղավ կարդալ գրառում առ գրառում",
-  "siteRestoreInvalidSiteJson": "Արխիվի site.json-ը վավեր HAX կայք չէ, ուստի ոչինչ չի փոխվել"
+  "siteRestoreInvalidSiteJson": "Արխիվի site.json-ը վավեր HAX կայք չէ, ուստի ոչինչ չի փոխվել",
+  "cliCmdAlias": "Ցուցակել անվանված կայքերը (ալիասները) `hax @name ...`-ի համար",
+  "cliArgAliasAction": "list (լռելյայն) կամ show",
+  "cliArgAliasName": "ցուցադրվող ալիաս՝ @-ով կամ առանց",
+  "aliasFileInvalid": "Չհաջողվեց կարդալ ալիասների ֆայլը {file}: {reason}",
+  "aliasNotAMap": "սպասվում էր ալիասների անունների քարտեզ",
+  "aliasBadName": "{file}-ում {name} ալիասի անունը կարող է պարունակել միայն տառեր, թվեր, ., _ և -",
+  "aliasBadEntry": "{file}-ում {name} ալիասին անհրաժեշտ է root, rsync կամ url",
+  "aliasUnknown": "Անհայտ ալիաս {alias}: Հայտնի ալիասներ՝ {known}",
+  "aliasNoneDefined": "չկան (ավելացրեք դրանք ~/.haxtheweb/aliases.yml կամ hax.aliases.yml ֆայլում)",
+  "aliasRemoteNotYet": "{alias} ալիասը տեղային root չունի. հեռավոր ալիասները դեռ չեն աջակցվում",
+  "aliasWithRoot": "{alias}-ն արդեն սահմանում է կայքի թղթապանակը. հեռացրեք --root-ը",
+  "aliasUnknownAction": "Անհայտ ալիասի գործողություն {action}. օգտագործեք list կամ show",
+  "aliasNoneFound": "Ալիասներ սահմանված չեն: Կարդացված ալիասների ֆայլեր՝ {files}",
+  "aliasMissingRoot": "թղթապանակը բացակայում է"
 }
