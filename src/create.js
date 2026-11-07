@@ -672,7 +672,7 @@ async function main() {
           commandRun.options.template = "monorepo";
           // assumed if monorepo
           if (commandRun.command === "audit") {
-            runAuditCommand(commandRun, null, process.cwd());
+            await runAuditCommand(commandRun, null, process.cwd());
           } else {
             commandRun.command = "webcomponent";
             commandRun.options.path = path.join(
@@ -802,7 +802,7 @@ async function main() {
     if (inSite && fs.existsSync(`${process.cwd()}/custom`)) {
       customPath = path.join(process.cwd(), "custom");
     }
-    runAuditCommand(commandRun, customPath, process.cwd());
+    await runAuditCommand(commandRun, customPath, process.cwd());
   } else if (commandRun.command === "party") {
     // Security (R2-L-2): keep an explicit (validated) --author; only fall back
     // to git user.name. party.js validates the final value as a GitHub user.

@@ -19,14 +19,20 @@ import { t } from "../i18n.js";
  * Schema audits: "is this built correctly for HAX?" checks backed by the
  * validators published from the HAX schema repositories. Each validator is
  * resolved from a local install (the audited project, then the CLI itself)
- * and otherwise run through `npx -p <package>`. Nothing is run through a
- * shell; file paths are passed as arguments.
+ * and otherwise run through `npx -p <package>@<version>`. Nothing is run
+ * through a shell; file paths are passed as arguments.
+ *
+ * Security: the npx path downloads and executes code from the registry, so
+ * every package is pinned to an exact version (`version`, bumped on purpose
+ * alongside CLI releases, never a range or "latest") and the download is
+ * confirmed first unless --y was passed or there is no TTY to ask.
  */
 export const SCHEMA_VALIDATORS = {
   site: {
     label: "HAXcms site.json (JSON Outline Schema)",
     labelKey: "auditSchemaLabelSite",
     pkg: "@haxtheweb/json-outline-schema-spec",
+    version: "26.8.1",
     bin: "jos-validate",
     args: ["--type", "site"],
   },
@@ -34,6 +40,7 @@ export const SCHEMA_VALIDATORS = {
     label: "HAXcms site skeletons",
     labelKey: "auditSchemaLabelSkeleton",
     pkg: "@haxtheweb/json-outline-schema-spec",
+    version: "26.8.1",
     bin: "jos-validate",
     args: ["--type", "skeleton"],
   },
@@ -41,6 +48,7 @@ export const SCHEMA_VALIDATORS = {
     label: "haxProperties (element HAX integration)",
     labelKey: "auditSchemaLabelHaxProperties",
     pkg: "@haxtheweb/hax-schema",
+    version: "26.8.1",
     bin: "haxproperties-validate",
     args: [],
   },
@@ -48,6 +56,7 @@ export const SCHEMA_VALIDATORS = {
     label: "demoSchema entries (HAXElementSchema)",
     labelKey: "auditSchemaLabelDemoSchema",
     pkg: "@haxtheweb/hax-element-schema",
+    version: "26.8.1",
     bin: "hax-element-validate",
     args: [],
   },
@@ -55,6 +64,7 @@ export const SCHEMA_VALIDATORS = {
     label: "appstore payloads",
     labelKey: "auditSchemaLabelAppstore",
     pkg: "@haxtheweb/appstore-spec",
+    version: "26.8.1",
     bin: "appstore-validate",
     args: [],
   },
@@ -62,10 +72,49 @@ export const SCHEMA_VALIDATORS = {
     label: "Merlin commands in JS source",
     labelKey: "auditSchemaLabelMerlin",
     pkg: "@haxtheweb/merlin-schema",
+    version: "26.8.1",
     bin: "merlin-validate",
     args: ["--scan"],
   },
 };
+
+/**
+ * @description Exact `name@version` spec npx is given for a validator.
+ */
+export function validatorNpxSpec(kind) {
+  const v = SCHEMA_VALIDATORS[kind];
+  if (!v || !/^\d+\.\d+\.\d+(-[0-9A-Za-z.-]+)?$/.test(v.version)) {
+    throw new Error(`schema validator "${kind}" has no exact pinned version`);
+  }
+  return `${v.pkg}@${v.version}`;
+}
+
+/**
+ * @description Ask before the npx fallback downloads a validator. Mirrors
+ * execNpxHaxcmsNodejsFallback in site.js: skipped with --y or when there is
+ * no TTY to answer (npx's own gating applies there). One answer per package
+ * is remembered for the run so site + skeleton don't ask twice.
+ * @returns {Promise<boolean>} whether the download may proceed
+ */
+export async function confirmNpxValidator(
+  kind,
+  { assumeYes = false, isTTY = process.stdin.isTTY, memo = new Map() } = {},
+) {
+  const spec = validatorNpxSpec(kind);
+  if (memo.has(spec)) {
+    return memo.get(spec);
+  }
+  let approved = true;
+  if (!assumeYes && isTTY) {
+    const answer = await p.confirm({
+      message: t("auditSchemaNpxConfirm", { command: `npx -p ${spec}` }),
+      initialValue: true,
+    });
+    approved = !p.isCancel(answer) && answer === true;
+  }
+  memo.set(spec, approved);
+  return approved;
+}
 
 /**
  * @description Write all of `text` to stdout synchronously. writeSync on a
@@ -204,10 +253,16 @@ export function resolveLocalValidator(pkg, bin, searchFrom = []) {
  * @description Run one validator over a list of files and return its JSON report.
  * @returns {{ok: boolean, reports?: object[], error?: string, via?: string}}
  */
-export function runValidator(
+export async function runValidator(
   kind,
   files,
-  { root = process.cwd(), spawn = spawnSync } = {},
+  {
+    root = process.cwd(),
+    spawn = spawnSync,
+    assumeYes = false,
+    isTTY = process.stdin.isTTY,
+    npxMemo = new Map(),
+  } = {},
 ) {
   const v = SCHEMA_VALIDATORS[kind];
   const searchFrom = [
@@ -216,6 +271,26 @@ export function runValidator(
   ];
   const local = resolveLocalValidator(v.pkg, v.bin, searchFrom);
   const args = ["--json", ...v.args, ...files];
+  const via = local ? "local" : "npx";
+  let spec = null;
+  if (!local) {
+    spec = validatorNpxSpec(kind);
+    const approved = await confirmNpxValidator(kind, {
+      assumeYes,
+      isTTY,
+      memo: npxMemo,
+    });
+    if (!approved) {
+      return {
+        ok: false,
+        via,
+        error: t("auditSchemaNpxDeclined", {
+          pkg: v.pkg,
+          install: `npm i -D ${spec}`,
+        }),
+      };
+    }
+  }
   const result = local
     ? spawn(process.execPath, [local, ...args], {
         encoding: "utf8",
@@ -223,10 +298,9 @@ export function runValidator(
       })
     : spawn(
         process.platform === "win32" ? "npx.cmd" : "npx",
-        ["--yes", "-p", v.pkg, v.bin, ...args],
+        ["--yes", "-p", spec, v.bin, ...args],
         { encoding: "utf8", maxBuffer: 64 * 1024 * 1024 },
       );
-  const via = local ? "local" : "npx";
   if (result.error) {
     return { ok: false, via, error: result.error.message };
   }
@@ -242,7 +316,7 @@ export function runValidator(
       return {
         ok: false,
         via,
-        error: `could not run ${v.pkg} through npx (offline or not published?). Install it with: npm i -D ${v.pkg}`,
+        error: `could not run ${spec} through npx (offline or not published?). Install it with: npm i -D ${spec}`,
       };
     }
     const detail = (result.stderr || result.stdout || "")
@@ -263,12 +337,14 @@ export function runValidator(
  * @param commandRun CLI state; options.strict treats warnings as failures, options.format === 'json' prints a JSON summary
  * @param root directory to audit (defaults to cwd)
  * @param deps injectable runner for tests
- * @returns {{passed: boolean, results: object}} (does not exit the process)
+ * @returns {Promise<{passed: boolean, results: object}>} (does not exit the process)
  */
-export function auditSchemaCommand(commandRun, root = null, deps = {}) {
+export async function auditSchemaCommand(commandRun, root = null, deps = {}) {
   const options = (commandRun && commandRun.options) || {};
   const projectRoot = root || process.cwd();
   const run = deps.runValidator || runValidator;
+  // one confirm per npx package for the whole run
+  const npxMemo = new Map();
   const asJson = options.format === "json";
   const strict = !!options.strict;
   const targets = discoverSchemaTargets(projectRoot);
@@ -298,7 +374,11 @@ export function auditSchemaCommand(commandRun, root = null, deps = {}) {
     }
   }
   for (const kind of kinds) {
-    const outcome = run(kind, targets[kind], { root: projectRoot });
+    const outcome = await run(kind, targets[kind], {
+      root: projectRoot,
+      assumeYes: !!options.y,
+      npxMemo,
+    });
     let errors = 0;
     let warnings = 0;
     if (outcome.ok) {
@@ -404,8 +484,10 @@ export function runAuditCommand(commandRun, dddPath, schemaRoot, deps = {}) {
     return auditDDD(commandRun, dddPath);
   }
   if (type === "schema") {
-    const r = auditSchema(commandRun, schemaRoot);
-    return exit(r.passed ? 0 : 1);
+    // async: the npx fallback may ask before downloading a validator
+    return Promise.resolve(auditSchema(commandRun, schemaRoot)).then((r) =>
+      exit(r.passed ? 0 : 1),
+    );
   }
   if (type === "i18n") {
     const r = auditI18n(commandRun, schemaRoot);
@@ -425,9 +507,10 @@ export function runAuditCommand(commandRun, dddPath, schemaRoot, deps = {}) {
   }
   if (type === "all") {
     const dddPassed = auditDDD(commandRun, dddPath, false);
-    const r = auditSchema(commandRun, schemaRoot);
-    const i18n = auditI18n(commandRun, schemaRoot);
-    return exit(dddPassed && r.passed && i18n.passed ? 0 : 1);
+    return Promise.resolve(auditSchema(commandRun, schemaRoot)).then((r) => {
+      const i18n = auditI18n(commandRun, schemaRoot);
+      return exit(dddPassed && r.passed && i18n.passed ? 0 : 1);
+    });
   }
   console.error(color.red(t("auditUnknownType", { type })));
   return exit(1);
