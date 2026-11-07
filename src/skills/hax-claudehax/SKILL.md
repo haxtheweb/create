@@ -5,7 +5,7 @@ description: >
   Use when the user wants to add pages, create courses, update content, add assessments, add quizzes,
   add videos, use HAX web components, analyze existing HAX sites, or suggest improvements using
   the ClaudeHAX /hax slash command or HAX CLI directly.
-version: 1.1.0
+version: 1.2.0
 license: Apache-2.0
 metadata:
   author: haxtheweb
@@ -100,6 +100,11 @@ When operating outside the `/hax` slash command, use the HAX CLI directly:
 - `hax serve` — Development server at http://localhost
 - `hax webcomponent <name> --y` — Scaffold a new component
 - `hax site <name> --y --no-i` — Create a new HAXsite
+- `hax site site:validate --format json` — check a site's structure and content; exits 1 on errors
+- `hax site site:archive` / `hax site site:restore --source <file>` — snapshot a site and put it back
+- `hax site site:rebuild` — regenerate feeds, sitemap, search index, `llms.txt` and managed files
+- `hax site site:list` — list the sites in a folder or a HAXcms `_sites/` root
+- `hax list --format json` — every command, action and option as JSON, so you can discover the CLI without parsing `--help`
 - `hax audit` — DDD compliance audit
 - `hax audit schema` — validate site.json, skeletons, haxProperties, appstore.json and Merlin commands against the HAX schemas
 - `hax audit i18n` — find English hardcoded in Lit templates that should come from `this.t`
@@ -158,6 +163,8 @@ If a site root is provided, use it. Otherwise default to `--root .`.
 ## Safety Guidelines
 
 Before destructive operations (deleting pages, overwriting large amounts of content, restructuring a site, publishing changes), explain the planned changes and request confirmation.
+
+Before any bulk or destructive change, run `hax site site:archive --y --no-i --agent` so the site can be restored, and run `hax site site:validate --format json --y --no-i` before and after the change. Errors that appear only after your change are yours to fix.
 
 For non-destructive operations (adding pages, creating content, adding components, analyzing sites, exporting content), proceed without requiring additional confirmation.
 
