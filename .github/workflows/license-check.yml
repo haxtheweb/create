@@ -1,0 +1,76 @@
+name: license-check
+# haxtheweb/issues#3262: dependency license gate for the create (HAX CLI)
+# package, which is Apache-2.0.
+#
+# pull_request: runs only when the dependency manifests change and fails if a
+# dependency (direct or transitive) that is NEW in package-lock.json compared
+# with the base branch has a license that is incompatible with Apache-2.0
+# (GPL, AGPL, SSPL, BUSL, Commons Clause), unknown / unlicensed, or needs
+# review (LGPL, MPL). The rules live in scripts/license-check.mjs; reviewed
+# and accepted packages go in .github/license-review.json.
+#
+# schedule (weekly, Sunday): sweeps the whole dependency tree and checks that
+# LICENSE.md and package.json are still Apache-2.0. Findings go to the job
+# summary and fail the run.
+#
+# Licenses are read from each installed package's own package.json (with
+# `npm ci --ignore-scripts`, so no dependency code runs). GitHub's
+# dependency-review-action was not used because it does not fail on
+# dependencies with no detectable license, which this gate must do.
+on:
+  pull_request:
+    paths:
+      - package.json
+      - package-lock.json
+      - yarn.lock
+      - scripts/license-check.mjs
+      - .github/license-review.json
+      - .github/workflows/license-check.yml
+  schedule:
+    - cron: "37 23 * * 0" # weekly, Sunday 23:37 UTC
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  new-dependencies:
+    name: "New dependency licenses"
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Checkout base branch lockfile
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          path: .license-base
+          sparse-checkout: package-lock.json
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+      - name: Install (no lifecycle scripts)
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Check licenses of new dependencies
+        run: node scripts/license-check.mjs --base-lock .license-base/package-lock.json
+  sweep:
+    name: "Full dependency tree and project license"
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+      - name: Install (no lifecycle scripts)
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Check project license and every dependency license
+        run: node scripts/license-check.mjs --license-file --all

@@ -5,7 +5,9 @@ on:
   # No branch filter: stacked PRs (base is another feature branch) must run too.
   pull_request:
   schedule:
-    - cron: "30 3 * * 1" # weekly, Monday 03:30 UTC
+    # Nightly (haxtheweb/issues#3262), so new queries and advisories surface
+    # without waiting for a code change.
+    - cron: "34 6 * * *" # nightly, 06:34 UTC
 permissions:
   contents: read
 jobs:

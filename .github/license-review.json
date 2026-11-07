@@ -1,0 +1,4 @@
+{
+  "about": "Dependencies a maintainer reviewed and accepted although scripts/license-check.mjs flags their license. Each entry: {\"name\": \"<npm package>\", \"license\": \"<exact license string the check reports>\", \"reason\": \"<why it is acceptable>\"}. See haxtheweb/issues#3262.",
+  "reviewed": []
+}
