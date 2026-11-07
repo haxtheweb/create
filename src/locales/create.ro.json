@@ -634,5 +634,19 @@
   "cliArgCompletionShell": "Shell-ul pentru care se generează completarea: {shells}",
   "cliCompletionUnknownShell": "Shell necunoscut {shell}. Shell-uri acceptate: {shells}",
   "siteRestoreUnreadable": "Lista arhivei nu a putut fi citită intrare cu intrare",
-  "siteRestoreInvalidSiteJson": "site.json din arhivă nu este un site HAX valid, așa că nu s-a modificat nimic"
+  "siteRestoreInvalidSiteJson": "site.json din arhivă nu este un site HAX valid, așa că nu s-a modificat nimic",
+  "cliCmdAlias": "Listează site-urile denumite (aliasuri) pentru `hax @name ...`",
+  "cliArgAliasAction": "list (implicit) sau show",
+  "cliArgAliasName": "aliasul de afișat, cu sau fără @",
+  "aliasFileInvalid": "Fișierul de aliasuri {file} nu a putut fi citit: {reason}",
+  "aliasNotAMap": "se aștepta o hartă de nume de aliasuri",
+  "aliasBadName": "Numele de alias {name} din {file} poate conține doar litere, cifre, ., _ și -",
+  "aliasBadEntry": "Aliasul {name} din {file} necesită root, rsync sau url",
+  "aliasUnknown": "Alias necunoscut {alias}. Aliasuri cunoscute: {known}",
+  "aliasNoneDefined": "niciunul (adăugați-le în ~/.haxtheweb/aliases.yml sau hax.aliases.yml)",
+  "aliasRemoteNotYet": "Aliasul {alias} nu are root local; aliasurile la distanță nu sunt încă acceptate",
+  "aliasWithRoot": "{alias} setează deja folderul site-ului; eliminați --root",
+  "aliasUnknownAction": "Acțiune de alias necunoscută {action}; folosiți list sau show",
+  "aliasNoneFound": "Niciun alias definit. Fișiere de aliasuri citite: {files}",
+  "aliasMissingRoot": "folder lipsă"
 }

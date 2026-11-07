@@ -634,5 +634,19 @@
   "cliArgCompletionShell": "Dop om voltooiing voor te genereer: {shells}",
   "cliCompletionUnknownShell": "Onbekende dop {shell}. Ondersteunde doppe: {shells}",
   "siteRestoreUnreadable": "Die argieflys kon nie inskrywing vir inskrywing gelees word nie",
-  "siteRestoreInvalidSiteJson": "Die argief se site.json is nie 'n geldige HAX-werf nie, dus is niks verander nie"
+  "siteRestoreInvalidSiteJson": "Die argief se site.json is nie 'n geldige HAX-werf nie, dus is niks verander nie",
+  "cliCmdAlias": "Lys benoemde werwe (aliasse) vir `hax @name ...`",
+  "cliArgAliasAction": "list (verstek) of show",
+  "cliArgAliasName": "alias om te wys, met of sonder @",
+  "aliasFileInvalid": "Aliaslêer {file} kon nie gelees word nie: {reason}",
+  "aliasNotAMap": "het 'n kaart van aliasname verwag",
+  "aliasBadName": "Aliasnaam {name} in {file} mag slegs letters, syfers, ., _ en - gebruik",
+  "aliasBadEntry": "Alias {name} in {file} benodig 'n root, rsync of url",
+  "aliasUnknown": "Onbekende alias {alias}. Bekende aliasse: {known}",
+  "aliasNoneDefined": "geen (voeg dit by ~/.haxtheweb/aliases.yml of hax.aliases.yml)",
+  "aliasRemoteNotYet": "Alias {alias} het geen plaaslike root nie; afgeleë aliasse word nog nie ondersteun nie",
+  "aliasWithRoot": "{alias} stel reeds die werfgids; laat --root weg",
+  "aliasUnknownAction": "Onbekende alias-aksie {action}; gebruik list of show",
+  "aliasNoneFound": "Geen aliasse gedefinieer nie. Aliaslêers gelees: {files}",
+  "aliasMissingRoot": "gids ontbreek"
 }

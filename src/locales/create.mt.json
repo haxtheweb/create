@@ -634,5 +634,19 @@
   "cliArgCompletionShell": "Shell li għaliha tiġi ġġenerata l-kompletazzjoni: {shells}",
   "cliCompletionUnknownShell": "Shell mhux magħrufa {shell}. Shells appoġġjati: {shells}",
   "siteRestoreUnreadable": "Il-lista tal-arkivju ma setgħetx tinqara entrata b'entrata",
-  "siteRestoreInvalidSiteJson": "Is-site.json tal-arkivju mhuwiex sit HAX validu, għalhekk ma nbidel xejn"
+  "siteRestoreInvalidSiteJson": "Is-site.json tal-arkivju mhuwiex sit HAX validu, għalhekk ma nbidel xejn",
+  "cliCmdAlias": "Elenka s-siti bl-isem (alias) għal `hax @name ...`",
+  "cliArgAliasAction": "list (default) jew show",
+  "cliArgAliasName": "alias li għandu jintwera, b'@ jew mingħajru",
+  "aliasFileInvalid": "Il-fajl tal-alias {file} ma setax jinqara: {reason}",
+  "aliasNotAMap": "kienet mistennija mappa ta' ismijiet tal-alias",
+  "aliasBadName": "L-isem tal-alias {name} f'{file} jista' juża biss ittri, numri, ., _ u -",
+  "aliasBadEntry": "L-alias {name} f'{file} jeħtieġ root, rsync jew url",
+  "aliasUnknown": "Alias mhux magħruf {alias}. Alias magħrufa: {known}",
+  "aliasNoneDefined": "xejn (żidhom f'~/.haxtheweb/aliases.yml jew hax.aliases.yml)",
+  "aliasRemoteNotYet": "L-alias {alias} m'għandux root lokali; l-alias remoti għadhom mhumiex appoġġjati",
+  "aliasWithRoot": "{alias} diġà jissettja l-folder tas-sit; neħħi --root",
+  "aliasUnknownAction": "Azzjoni tal-alias mhux magħrufa {action}; uża list jew show",
+  "aliasNoneFound": "L-ebda alias ma huwa definit. Fajls tal-alias moqrija: {files}",
+  "aliasMissingRoot": "il-folder nieqes"
 }

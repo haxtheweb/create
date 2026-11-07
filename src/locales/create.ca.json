@@ -634,5 +634,19 @@
   "cliArgCompletionShell": "Intèrpret d'ordres per al qual generar la compleció: {shells}",
   "cliCompletionUnknownShell": "Intèrpret d'ordres desconegut {shell}. Intèrprets admesos: {shells}",
   "siteRestoreUnreadable": "No s'ha pogut llegir la llista de l'arxiu entrada per entrada",
-  "siteRestoreInvalidSiteJson": "El site.json de l'arxiu no és un lloc HAX vàlid, així que no s'ha canviat res"
+  "siteRestoreInvalidSiteJson": "El site.json de l'arxiu no és un lloc HAX vàlid, així que no s'ha canviat res",
+  "cliCmdAlias": "Llista els llocs amb nom (àlies) per a `hax @name ...`",
+  "cliArgAliasAction": "list (per defecte) o show",
+  "cliArgAliasName": "àlies a mostrar, amb @ o sense",
+  "aliasFileInvalid": "No s'ha pogut llegir el fitxer d'àlies {file}: {reason}",
+  "aliasNotAMap": "s'esperava un mapa de noms d'àlies",
+  "aliasBadName": "El nom d'àlies {name} a {file} només pot contenir lletres, números, ., _ i -",
+  "aliasBadEntry": "L'àlies {name} a {file} necessita un root, rsync o url",
+  "aliasUnknown": "Àlies desconegut {alias}. Àlies coneguts: {known}",
+  "aliasNoneDefined": "cap (afegiu-los a ~/.haxtheweb/aliases.yml o hax.aliases.yml)",
+  "aliasRemoteNotYet": "L'àlies {alias} no té cap root local; els àlies remots encara no són compatibles",
+  "aliasWithRoot": "{alias} ja defineix la carpeta del lloc; traieu --root",
+  "aliasUnknownAction": "Acció d'àlies desconeguda {action}; useu list o show",
+  "aliasNoneFound": "No hi ha àlies definits. Fitxers d'àlies llegits: {files}",
+  "aliasMissingRoot": "falta la carpeta"
 }

@@ -1250,3 +1250,57 @@ test(
     }
   },
 );
+
+// haxtheweb/issues#3229: `hax @name` runs against a named site from anywhere
+test(
+  "CLI resolves a project alias for site commands and alias list",
+  { ...smokeOpts, timeout: 240000 },
+  () => {
+    const work = fs.mkdtempSync(path.join(os.tmpdir(), "hax-alias-smoke-"));
+    const flags = ["--y", "--no-i"];
+    try {
+      const created = runCli(
+        [
+          "site",
+          "--name",
+          "aliased",
+          "--path",
+          work,
+          "--theme",
+          "clean-one",
+          ...flags,
+          "--no-extras",
+        ],
+        work,
+      );
+      assert.equal(created.status, 0, `stderr: ${created.stderr}`);
+      const project = path.join(work, "project");
+      fs.mkdirSync(project);
+      fs.writeFileSync(
+        path.join(project, "hax.aliases.yml"),
+        "course:\n  root: ../aliased\n",
+      );
+
+      const listed = runCli(["alias", "list", "--format", "json"], project);
+      assert.equal(listed.status, 0, `stderr: ${listed.stderr}`);
+      const rows = JSON.parse(listed.stdout).aliases;
+      assert.deepEqual(
+        rows.map((r) => [r.name, r.rootExists]),
+        [["@course", true]],
+      );
+
+      const items = runCli(
+        ["@course", "site:items", "--format", "json", ...flags],
+        project,
+      );
+      assert.equal(items.status, 0, `stderr: ${items.stderr}`);
+      assert.equal(JSON.parse(items.stdout).length, 1);
+
+      const unknown = runCli(["@missing", "site:items", ...flags], project);
+      assert.equal(unknown.status, 1);
+      assert.match(unknown.stderr, /@missing/);
+    } finally {
+      fs.rmSync(work, { recursive: true, force: true });
+    }
+  },
+);

@@ -638,5 +638,19 @@
   "cliArgCompletionShell": "要生成补全的 shell：{shells}",
   "cliCompletionUnknownShell": "未知的 shell {shell}。支持的 shell：{shells}",
   "siteRestoreUnreadable": "无法逐条读取归档清单",
-  "siteRestoreInvalidSiteJson": "归档中的 site.json 不是有效的 HAX 站点，因此未做任何更改"
+  "siteRestoreInvalidSiteJson": "归档中的 site.json 不是有效的 HAX 站点，因此未做任何更改",
+  "cliCmdAlias": "列出用于 `hax @name ...` 的命名站点（别名）",
+  "cliArgAliasAction": "list（默认）或 show",
+  "cliArgAliasName": "要显示的别名，可带或不带 @",
+  "aliasFileInvalid": "无法读取别名文件 {file}：{reason}",
+  "aliasNotAMap": "应为别名名称的映射",
+  "aliasBadName": "{file} 中的别名名称 {name} 只能使用字母、数字、., _ 和 -",
+  "aliasBadEntry": "{file} 中的别名 {name} 需要 root、rsync 或 url",
+  "aliasUnknown": "未知别名 {alias}。已知别名：{known}",
+  "aliasNoneDefined": "无（请添加到 ~/.haxtheweb/aliases.yml 或 hax.aliases.yml）",
+  "aliasRemoteNotYet": "别名 {alias} 没有本地 root；暂不支持远程别名",
+  "aliasWithRoot": "{alias} 已设置站点文件夹；请去掉 --root",
+  "aliasUnknownAction": "未知的别名操作 {action}；请使用 list 或 show",
+  "aliasNoneFound": "未定义任何别名。已读取的别名文件：{files}",
+  "aliasMissingRoot": "文件夹缺失"
 }

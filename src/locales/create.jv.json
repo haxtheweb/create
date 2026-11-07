@@ -634,5 +634,19 @@
   "cliArgCompletionShell": "Shell sing arep digawekake completion: {shells}",
   "cliCompletionUnknownShell": "Shell {shell} ora dikenal. Shell sing didhukung: {shells}",
   "siteRestoreUnreadable": "Dhaptar isi arsip ora bisa diwaca siji-siji per entri",
-  "siteRestoreInvalidSiteJson": "site.json ing arsip dudu situs HAX sing sah, mula ora ana sing diganti"
+  "siteRestoreInvalidSiteJson": "site.json ing arsip dudu situs HAX sing sah, mula ora ana sing diganti",
+  "cliCmdAlias": "Dhaptar situs sing dijenengi (alias) kanggo `hax @name ...`",
+  "cliArgAliasAction": "list (gawan) utawa show",
+  "cliArgAliasName": "alias sing arep ditampilake, nganggo utawa tanpa @",
+  "aliasFileInvalid": "Berkas alias {file} ora bisa diwaca: {reason}",
+  "aliasNotAMap": "dikarepake peta jeneng alias",
+  "aliasBadName": "Jeneng alias {name} ing {file} mung oleh nganggo aksara, angka, ., _ lan -",
+  "aliasBadEntry": "Alias {name} ing {file} butuh root, rsync utawa url",
+  "aliasUnknown": "Alias ora dikenal {alias}. Alias sing dikenal: {known}",
+  "aliasNoneDefined": "ora ana (tambahake menyang ~/.haxtheweb/aliases.yml utawa hax.aliases.yml)",
+  "aliasRemoteNotYet": "Alias {alias} ora duwe root lokal; alias remote durung didhukung",
+  "aliasWithRoot": "{alias} wis nemtokake folder situs; busak --root",
+  "aliasUnknownAction": "Tumindak alias ora dikenal {action}; gunakake list utawa show",
+  "aliasNoneFound": "Ora ana alias sing ditetepake. Berkas alias sing diwaca: {files}",
+  "aliasMissingRoot": "folder ora ana"
 }

@@ -634,5 +634,19 @@
   "cliArgCompletionShell": "要生成补全个 shell：{shells}",
   "cliCompletionUnknownShell": "勿认得个 shell {shell}。支持个 shell：{shells}",
   "siteRestoreUnreadable": "归档清单呒没办法一条一条读出来",
-  "siteRestoreInvalidSiteJson": "归档里个 site.json 勿是有效个 HAX 站点，所以啥也呒没改"
+  "siteRestoreInvalidSiteJson": "归档里个 site.json 勿是有效个 HAX 站点，所以啥也呒没改",
+  "cliCmdAlias": "列出 `hax @name ...` 用个命名站点（别名）",
+  "cliArgAliasAction": "list（默认）或者 show",
+  "cliArgAliasName": "要显示个别名，带勿带 @ 侪可以",
+  "aliasFileInvalid": "别名文件 {file} 读勿出：{reason}",
+  "aliasNotAMap": "应该是别名名字个映射",
+  "aliasBadName": "{file} 里向个别名名字 {name} 只好用字母、数字、., _ 搭 -",
+  "aliasBadEntry": "{file} 里向个别名 {name} 需要 root、rsync 或者 url",
+  "aliasUnknown": "勿认得个别名 {alias}。已知别名：{known}",
+  "aliasNoneDefined": "呒没（加到 ~/.haxtheweb/aliases.yml 或者 hax.aliases.yml）",
+  "aliasRemoteNotYet": "别名 {alias} 呒没本地 root；远程别名还勿支持",
+  "aliasWithRoot": "{alias} 已经设定了站点文件夹；拿 --root 去脱",
+  "aliasUnknownAction": "勿认得个别名操作 {action}；用 list 或者 show",
+  "aliasNoneFound": "呒没定义别名。读过个别名文件：{files}",
+  "aliasMissingRoot": "文件夹缺脱"
 }

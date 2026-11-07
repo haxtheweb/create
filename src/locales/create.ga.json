@@ -634,5 +634,19 @@
   "cliArgCompletionShell": "An blaosc dá nginfear críochnú: {shells}",
   "cliCompletionUnknownShell": "Blaosc anaithnid {shell}. Blaoscanna a dtacaítear leo: {shells}",
   "siteRestoreUnreadable": "Níorbh fhéidir liosta na cartlainne a léamh iontráil ar iontráil",
-  "siteRestoreInvalidSiteJson": "Ní suíomh HAX bailí é site.json na cartlainne, mar sin níor athraíodh aon rud"
+  "siteRestoreInvalidSiteJson": "Ní suíomh HAX bailí é site.json na cartlainne, mar sin níor athraíodh aon rud",
+  "cliCmdAlias": "Liostaigh suíomhanna ainmnithe (ailiasanna) do `hax @name ...`",
+  "cliArgAliasAction": "list (réamhshocrú) nó show",
+  "cliArgAliasName": "ailias le taispeáint, le @ nó gan é",
+  "aliasFileInvalid": "Níorbh fhéidir comhad ailiasanna {file} a léamh: {reason}",
+  "aliasNotAMap": "bhíothas ag súil le mapa d'ainmneacha ailiasanna",
+  "aliasBadName": "Ní féidir ach litreacha, uimhreacha, ., _ agus - a úsáid in ainm ailiais {name} in {file}",
+  "aliasBadEntry": "Tá root, rsync nó url de dhíth ar ailias {name} in {file}",
+  "aliasUnknown": "Ailias anaithnid {alias}. Ailiasanna aitheanta: {known}",
+  "aliasNoneDefined": "dada (cuir le ~/.haxtheweb/aliases.yml nó hax.aliases.yml iad)",
+  "aliasRemoteNotYet": "Níl root áitiúil ag ailias {alias}; ní thacaítear le hailiasanna cianda fós",
+  "aliasWithRoot": "Socraíonn {alias} fillteán an tsuímh cheana; fág --root ar lár",
+  "aliasUnknownAction": "Gníomh ailiais anaithnid {action}; úsáid list nó show",
+  "aliasNoneFound": "Níl aon ailiasanna sainithe. Comhaid ailiasanna a léadh: {files}",
+  "aliasMissingRoot": "fillteán ar iarraidh"
 }

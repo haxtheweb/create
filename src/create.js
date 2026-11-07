@@ -42,6 +42,12 @@ import {
   siteListOutput,
 } from "./lib/programs/site.js";
 import {
+  loadAliases,
+  resolveAliasArgv,
+  describeAliases,
+  isAliasToken,
+} from "./lib/site-aliases.js";
+import {
   buildCliManifest,
   formatCliManifest,
   completionScript,
@@ -492,6 +498,20 @@ async function main() {
         options: {},
       };
     });
+  // haxtheweb/issues#3229: named sites, `hax @name site:stats`
+  program
+    .command("alias")
+    .description(t("cliCmdAlias"))
+    .argument("[action]", t("cliArgAliasAction"))
+    .argument("[name]", t("cliArgAliasName"))
+    .option("--format <char>", t("cliOptFormat"))
+    .action((action, name) => {
+      commandRun = {
+        command: "alias",
+        arguments: { action: action || "list", name: name },
+        options: {},
+      };
+    });
   program
     .command("completion")
     .description(t("cliCmdCompletion"))
@@ -508,6 +528,20 @@ async function main() {
     });
 
   // process program arguments
+  // haxtheweb/issues#3229: `@name` arguments become --root / rsync targets
+  // before commander sees them, so every command works with an alias
+  if (
+    process.argv.slice(2).some((arg) => isAliasToken(arg) || /=@/.test(arg))
+  ) {
+    try {
+      const loaded = loadAliases();
+      loaded.problems.forEach((problem) => console.warn(color.yellow(problem)));
+      process.argv = resolveAliasArgv(process.argv, loaded.aliases).argv;
+    } catch (e) {
+      console.error(color.red(e.message));
+      process.exit(1);
+    }
+  }
   program.parse();
   commandRun.options = { ...commandRun.options, ...program.opts() };
   // --format json|yaml: keep stdout for the data payload only so scripts and
@@ -755,6 +789,58 @@ async function main() {
     program.error(color.red(e.message));
   }
   // haxtheweb/issues#3228: these describe or survey the CLI and work anywhere
+  if (commandRun.command === "alias") {
+    const loaded = loadAliases();
+    let rows = describeAliases(loaded);
+    if (commandRun.arguments.action === "show") {
+      const name = String(commandRun.arguments.name || "").replace(/^@/, "");
+      rows = rows.filter((row) => row.name === `@${name}`);
+      if (rows.length === 0) {
+        program.error(
+          color.red(
+            t("aliasUnknown", {
+              alias: `@${name}`,
+              known:
+                describeAliases(loaded)
+                  .map((row) => row.name)
+                  .join(", ") || t("aliasNoneDefined"),
+            }),
+          ),
+        );
+      }
+    } else if (commandRun.arguments.action !== "list") {
+      program.error(
+        color.red(
+          t("aliasUnknownAction", { action: commandRun.arguments.action }),
+        ),
+      );
+    }
+    if (isStructuredFormat(commandRun.options.format)) {
+      const data = {
+        aliases: rows,
+        files: loaded.files,
+        problems: loaded.problems,
+      };
+      writeData(
+        commandRun.options.format === "yaml"
+          ? dump(data)
+          : JSON.stringify(data, null, 2),
+      );
+    } else if (rows.length === 0) {
+      writeData(t("aliasNoneFound", { files: loaded.files.join(", ") || "-" }));
+    } else {
+      writeData(
+        rows
+          .map(
+            (row) =>
+              `${row.name}\t${row.root || "-"}${row.root && !row.rootExists ? " (" + t("aliasMissingRoot") + ")" : ""}\t${row.rsync || "-"}\t${row.file}`,
+          )
+          .join("\n"),
+      );
+      loaded.problems.forEach((problem) => console.warn(color.yellow(problem)));
+    }
+    process.exit(0);
+  }
   if (commandRun.command === "list" || commandRun.command === "completion") {
     const manifest = cliManifest();
     if (commandRun.command === "completion") {

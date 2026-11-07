@@ -634,5 +634,19 @@
   "cliArgCompletionShell": "Shell барои сохтани пуркунии худкор: {shells}",
   "cliCompletionUnknownShell": "Shell-и номаълум {shell}. Shell-ҳои дастгиришаванда: {shells}",
   "siteRestoreUnreadable": "Рӯйхати бойгониро сабт ба сабт хондан ғайриимкон шуд",
-  "siteRestoreInvalidSiteJson": "site.json-и бойгонӣ сайти дурусти HAX нест, бинобар ин ҳеҷ чиз тағйир дода нашуд"
+  "siteRestoreInvalidSiteJson": "site.json-и бойгонӣ сайти дурусти HAX нест, бинобар ин ҳеҷ чиз тағйир дода нашуд",
+  "cliCmdAlias": "Рӯйхати сомонаҳои номдор (тахаллусҳо) барои `hax @name ...`",
+  "cliArgAliasAction": "list (пешфарз) ё show",
+  "cliArgAliasName": "тахаллус барои намоиш, бо @ ё бе он",
+  "aliasFileInvalid": "Файли тахаллусҳо {file} хонда нашуд: {reason}",
+  "aliasNotAMap": "харитаи номҳои тахаллус интизор буд",
+  "aliasBadName": "Номи тахаллус {name} дар {file} метавонад танҳо ҳарфҳо, рақамҳо, ., _ ва - дошта бошад",
+  "aliasBadEntry": "Тахаллуси {name} дар {file} root, rsync ё url талаб мекунад",
+  "aliasUnknown": "Тахаллуси номаълум {alias}. Тахаллусҳои маълум: {known}",
+  "aliasNoneDefined": "ҳеҷ (онҳоро ба ~/.haxtheweb/aliases.yml ё hax.aliases.yml илова кунед)",
+  "aliasRemoteNotYet": "Тахаллуси {alias} root-и маҳаллӣ надорад; тахаллусҳои дурдаст ҳоло дастгирӣ намешаванд",
+  "aliasWithRoot": "{alias} аллакай ҷузвдони сомонаро муайян мекунад; --root-ро хориҷ кунед",
+  "aliasUnknownAction": "Амали номаълуми тахаллус {action}; list ё show-ро истифода баред",
+  "aliasNoneFound": "Ягон тахаллус муайян нашудааст. Файлҳои хондашудаи тахаллус: {files}",
+  "aliasMissingRoot": "ҷузвдон мавҷуд нест"
 }

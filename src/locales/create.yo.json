@@ -634,5 +634,19 @@
   "cliArgCompletionShell": "Shell láti ṣẹ̀dá ìparí-aládàáṣe fún: {shells}",
   "cliCompletionUnknownShell": "Shell tí a kò mọ̀ {shell}. Àwọn shell tí a ṣe àtìlẹ́yìn fún: {shells}",
   "siteRestoreUnreadable": "A kò lè ka àkójọ àpamọ́ náà ní ẹyọ-ẹyọ",
-  "siteRestoreInvalidSiteJson": "site.json inú àpamọ́ náà kì í ṣe ojúlé HAX tó tọ́, nítorí náà a kò yí nǹkan kan padà"
+  "siteRestoreInvalidSiteJson": "site.json inú àpamọ́ náà kì í ṣe ojúlé HAX tó tọ́, nítorí náà a kò yí nǹkan kan padà",
+  "cliCmdAlias": "Ṣe àkójọ àwọn ojú-òpó tí a sọ lórúkọ (alias) fún `hax @name ...`",
+  "cliArgAliasAction": "list (àìyípadà) tàbí show",
+  "cliArgAliasName": "alias láti fi hàn, pẹ̀lú @ tàbí láìsí",
+  "aliasFileInvalid": "Kò ṣeé ka fáìlì alias {file}: {reason}",
+  "aliasNotAMap": "a ń retí máàpù àwọn orúkọ alias",
+  "aliasBadName": "Orúkọ alias {name} nínú {file} lè lo lẹ́tà, nọ́mbà, ., _ àti - nìkan",
+  "aliasBadEntry": "Alias {name} nínú {file} nílò root, rsync tàbí url",
+  "aliasUnknown": "Alias tí a kò mọ̀ {alias}. Àwọn alias tí a mọ̀: {known}",
+  "aliasNoneDefined": "kò sí (fi wọ́n kún ~/.haxtheweb/aliases.yml tàbí hax.aliases.yml)",
+  "aliasRemoteNotYet": "Alias {alias} kò ní root àdúgbò; a kò tíì ṣe àtìlẹ́yìn fún àwọn alias jíjìnnà",
+  "aliasWithRoot": "{alias} ti ṣètò àpò-ìwé ojú-òpó tẹ́lẹ̀; yọ --root kúrò",
+  "aliasUnknownAction": "Ìṣe alias tí a kò mọ̀ {action}; lo list tàbí show",
+  "aliasNoneFound": "Kò sí alias tí a ṣàlàyé. Àwọn fáìlì alias tí a kà: {files}",
+  "aliasMissingRoot": "àpò-ìwé kò sí"
 }

@@ -634,5 +634,19 @@
   "cliArgCompletionShell": "Te anga hei waihanga whakaoti mōna: {shells}",
   "cliCompletionUnknownShell": "Anga tē mōhiotia {shell}. Ngā anga e tautokona ana: {shells}",
   "siteRestoreUnreadable": "Kāore i taea te pānui i te rārangi pūranga i ia tāurunga, i ia tāurunga",
-  "siteRestoreInvalidSiteJson": "Ehara te site.json o te pūranga i te pae HAX whaimana, nō reira kāore he mea i hurihia"
+  "siteRestoreInvalidSiteJson": "Ehara te site.json o te pūranga i te pae HAX whaimana, nō reira kāore he mea i hurihia",
+  "cliCmdAlias": "Rārangihia ngā pae kua tapaina (ingoa kārangaranga) mō `hax @name ...`",
+  "cliArgAliasAction": "list (taunoa) rānei show",
+  "cliArgAliasName": "ingoa kārangaranga hei whakaatu, me te @ kore rānei",
+  "aliasFileInvalid": "Kāore i taea te pānui i te kōnae ingoa kārangaranga {file}: {reason}",
+  "aliasNotAMap": "i tūmanakohia he mahere o ngā ingoa kārangaranga",
+  "aliasBadName": "Ko te ingoa kārangaranga {name} i {file} me whakamahi pū, nama, ., _ me - anake",
+  "aliasBadEntry": "Me whai root, rsync, url rānei te ingoa kārangaranga {name} i {file}",
+  "aliasUnknown": "Ingoa kārangaranga kāore e mōhiotia {alias}. Ngā ingoa e mōhiotia ana: {known}",
+  "aliasNoneDefined": "kore (tāpirihia ki ~/.haxtheweb/aliases.yml, hax.aliases.yml rānei)",
+  "aliasRemoteNotYet": "Kāore he root ā-rohe o te ingoa kārangaranga {alias}; kāore anō kia tautokona ngā ingoa kārangaranga mamao",
+  "aliasWithRoot": "Kua tautuhia kētia e {alias} te kōpaki pae; tangohia te --root",
+  "aliasUnknownAction": "Mahi ingoa kārangaranga kāore e mōhiotia {action}; whakamahia te list, te show rānei",
+  "aliasNoneFound": "Kāore he ingoa kārangaranga kua tautuhia. Ngā kōnae kua pānuitia: {files}",
+  "aliasMissingRoot": "kāore te kōpaki"
 }

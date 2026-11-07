@@ -634,5 +634,19 @@
   "cliArgCompletionShell": "Shell, jolle täydennys luodaan: {shells}",
   "cliCompletionUnknownShell": "Tuntematon shell {shell}. Tuetut shellit: {shells}",
   "siteRestoreUnreadable": "Arkiston sisältöluetteloa ei voitu lukea merkintä kerrallaan",
-  "siteRestoreInvalidSiteJson": "Arkiston site.json ei ole kelvollinen HAX-sivusto, joten mitään ei muutettu"
+  "siteRestoreInvalidSiteJson": "Arkiston site.json ei ole kelvollinen HAX-sivusto, joten mitään ei muutettu",
+  "cliCmdAlias": "Listaa nimetyt sivustot (aliakset) komennolle `hax @name ...`",
+  "cliArgAliasAction": "list (oletus) tai show",
+  "cliArgAliasName": "näytettävä alias, @-merkin kanssa tai ilman",
+  "aliasFileInvalid": "Aliastiedostoa {file} ei voitu lukea: {reason}",
+  "aliasNotAMap": "odotettiin aliasnimien karttaa",
+  "aliasBadName": "Aliaksen nimi {name} tiedostossa {file} saa sisältää vain kirjaimia, numeroita, ., _ ja -",
+  "aliasBadEntry": "Alias {name} tiedostossa {file} tarvitsee root-, rsync- tai url-arvon",
+  "aliasUnknown": "Tuntematon alias {alias}. Tunnetut aliakset: {known}",
+  "aliasNoneDefined": "ei mitään (lisää ne tiedostoon ~/.haxtheweb/aliases.yml tai hax.aliases.yml)",
+  "aliasRemoteNotYet": "Aliaksella {alias} ei ole paikallista root-arvoa; etäaliaksia ei vielä tueta",
+  "aliasWithRoot": "{alias} määrittää jo sivuston kansion; jätä --root pois",
+  "aliasUnknownAction": "Tuntematon alias-toiminto {action}; käytä list tai show",
+  "aliasNoneFound": "Aliaksia ei ole määritetty. Luetut aliastiedostot: {files}",
+  "aliasMissingRoot": "kansio puuttuu"
 }

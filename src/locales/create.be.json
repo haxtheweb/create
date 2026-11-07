@@ -634,5 +634,19 @@
   "cliArgCompletionShell": "Абалонка, для якой стварыць аўтадапаўненне: {shells}",
   "cliCompletionUnknownShell": "Невядомая абалонка {shell}. Падтрымліваемыя абалонкі: {shells}",
   "siteRestoreUnreadable": "Не ўдалося прачытаць спіс архіва па асобных запісах",
-  "siteRestoreInvalidSiteJson": "site.json у архіве не з'яўляецца сапраўдным сайтам HAX, таму нічога не зменена"
+  "siteRestoreInvalidSiteJson": "site.json у архіве не з'яўляецца сапраўдным сайтам HAX, таму нічога не зменена",
+  "cliCmdAlias": "Спіс названых сайтаў (аліясаў) для `hax @name ...`",
+  "cliArgAliasAction": "list (па змаўчанні) або show",
+  "cliArgAliasName": "аліяс для паказу, з @ або без",
+  "aliasFileInvalid": "Не ўдалося прачытаць файл аліясаў {file}: {reason}",
+  "aliasNotAMap": "чакалася мапа імёнаў аліясаў",
+  "aliasBadName": "Імя аліяса {name} у {file} можа змяшчаць толькі літары, лічбы, ., _ і -",
+  "aliasBadEntry": "Аліясу {name} у {file} патрэбны root, rsync або url",
+  "aliasUnknown": "Невядомы аліяс {alias}. Вядомыя аліясы: {known}",
+  "aliasNoneDefined": "няма (дадайце іх у ~/.haxtheweb/aliases.yml або hax.aliases.yml)",
+  "aliasRemoteNotYet": "Аліяс {alias} не мае лакальнага root; аддаленыя аліясы пакуль не падтрымліваюцца",
+  "aliasWithRoot": "{alias} ужо задае каталог сайта; прыбярыце --root",
+  "aliasUnknownAction": "Невядомае дзеянне аліяса {action}; выкарыстоўвайце list або show",
+  "aliasNoneFound": "Аліясы не вызначаны. Прачытаныя файлы аліясаў: {files}",
+  "aliasMissingRoot": "каталог адсутнічае"
 }

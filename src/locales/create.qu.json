@@ -634,5 +634,19 @@
   "cliArgCompletionShell": "Hunt'anata paqarichinapaq shell: {shells}",
   "cliCompletionUnknownShell": "Mana riqsisqa shell {shell}. Yanapasqa shellkuna: {shells}",
   "siteRestoreUnreadable": "Waqaychasqap listanqa mana yaykuy yaykuy ñawinchakuyta atikurqanchu",
-  "siteRestoreInvalidSiteJson": "Waqaychasqap site.json-nin mana allin HAX sitiochu, chayrayku mana imapas tikrasqachu"
+  "siteRestoreInvalidSiteJson": "Waqaychasqap site.json-nin mana allin HAX sitiochu, chayrayku mana imapas tikrasqachu",
+  "cliCmdAlias": "`hax @name ...` nisqapaq sutiyuq siteskunata (aliaskunata) qillqay",
+  "cliArgAliasAction": "list (ñawpaqmanta) utaq show",
+  "cliArgAliasName": "rikuchinapaq alias, @-wan utaq mana",
+  "aliasFileInvalid": "Alias willañiqi {file} mana ñawinchakuyta atikurqanchu: {reason}",
+  "aliasNotAMap": "alias sutikunap mapanta suyarqan",
+  "aliasBadName": "{file}-pi alias suti {name} sapalla qillqakunata, yupaykunata, ., _ hinallataq - nisqata llamk'achinman",
+  "aliasBadEntry": "{file}-pi alias {name} root, rsync utaq url nisqata munan",
+  "aliasUnknown": "Mana riqsisqa alias {alias}. Riqsisqa aliaskuna: {known}",
+  "aliasNoneDefined": "mana kanchu (~/.haxtheweb/aliases.yml utaq hax.aliases.yml-man yapay)",
+  "aliasRemoteNotYet": "Alias {alias} mana kaypi root-niyuqchu; karu aliaskunaqa manaraq yanapasqachu",
+  "aliasWithRoot": "{alias} ñam site carpetata churan; --root nisqata qichuy",
+  "aliasUnknownAction": "Mana riqsisqa alias ruray {action}; list utaq show llamk'achiy",
+  "aliasNoneFound": "Mana alias kanchu. Ñawinchasqa alias willañiqikuna: {files}",
+  "aliasMissingRoot": "carpeta mana kanchu"
 }

@@ -634,5 +634,19 @@
   "cliArgCompletionShell": "Шел, за който да се генерира автодовършване: {shells}",
   "cliCompletionUnknownShell": "Неизвестен шел {shell}. Поддържани шелове: {shells}",
   "siteRestoreUnreadable": "Списъкът на архива не можа да бъде прочетен запис по запис",
-  "siteRestoreInvalidSiteJson": "site.json в архива не е валиден HAX сайт, затова нищо не е променено"
+  "siteRestoreInvalidSiteJson": "site.json в архива не е валиден HAX сайт, затова нищо не е променено",
+  "cliCmdAlias": "Списък с именувани сайтове (псевдоними) за `hax @name ...`",
+  "cliArgAliasAction": "list (по подразбиране) или show",
+  "cliArgAliasName": "псевдоним за показване, със или без @",
+  "aliasFileInvalid": "Файлът с псевдоними {file} не можа да бъде прочетен: {reason}",
+  "aliasNotAMap": "очаква се карта с имена на псевдоними",
+  "aliasBadName": "Името на псевдонима {name} в {file} може да съдържа само букви, цифри, ., _ и -",
+  "aliasBadEntry": "Псевдонимът {name} в {file} изисква root, rsync или url",
+  "aliasUnknown": "Непознат псевдоним {alias}. Известни псевдоними: {known}",
+  "aliasNoneDefined": "няма (добавете ги в ~/.haxtheweb/aliases.yml или hax.aliases.yml)",
+  "aliasRemoteNotYet": "Псевдонимът {alias} няма локален root; отдалечените псевдоними все още не се поддържат",
+  "aliasWithRoot": "{alias} вече задава директорията на сайта; премахнете --root",
+  "aliasUnknownAction": "Непознато действие за псевдоним {action}; използвайте list или show",
+  "aliasNoneFound": "Няма дефинирани псевдоними. Прочетени файлове с псевдоними: {files}",
+  "aliasMissingRoot": "директорията липсва"
 }

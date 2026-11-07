@@ -634,5 +634,19 @@
   "cliArgCompletionShell": "Shell om oanfolling foar te generearjen: {shells}",
   "cliCompletionUnknownShell": "Unbekende shell {shell}. Stipe shells: {shells}",
   "siteRestoreUnreadable": "De argyflist koe net yngong foar yngong lêzen wurde",
-  "siteRestoreInvalidSiteJson": "De site.json fan it argyf is gjin jildige HAX-site, dus der is neat feroare"
+  "siteRestoreInvalidSiteJson": "De site.json fan it argyf is gjin jildige HAX-site, dus der is neat feroare",
+  "cliCmdAlias": "Neamde sites (aliassen) foar `hax @name ...` opsomme",
+  "cliArgAliasAction": "list (standert) of show",
+  "cliArgAliasName": "alias om sjen te litten, mei of sûnder @",
+  "aliasFileInvalid": "Aliasbestân {file} koe net lêzen wurde: {reason}",
+  "aliasNotAMap": "ferwachte in map fan aliasnammen",
+  "aliasBadName": "Aliasnamme {name} yn {file} mei allinnich letters, sifers, ., _ en - brûke",
+  "aliasBadEntry": "Alias {name} yn {file} hat in root, rsync of url nedich",
+  "aliasUnknown": "Unbekende alias {alias}. Bekende aliassen: {known}",
+  "aliasNoneDefined": "gjin (foegje se ta oan ~/.haxtheweb/aliases.yml of hax.aliases.yml)",
+  "aliasRemoteNotYet": "Alias {alias} hat gjin lokale root; aliassen op ôfstân wurde noch net stipe",
+  "aliasWithRoot": "{alias} stelt de sitemap al yn; lit --root fuort",
+  "aliasUnknownAction": "Unbekende aliasaksje {action}; brûk list of show",
+  "aliasNoneFound": "Gjin aliassen definiearre. Lêzen aliasbestannen: {files}",
+  "aliasMissingRoot": "map ûntbrekt"
 }

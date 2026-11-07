@@ -634,5 +634,19 @@
   "cliArgCompletionShell": "ಕಂಪ್ಲೀಷನ್ ರಚಿಸಬೇಕಾದ ಶೆಲ್: {shells}",
   "cliCompletionUnknownShell": "ಅಜ್ಞಾತ ಶೆಲ್ {shell}. ಬೆಂಬಲಿತ ಶೆಲ್‌ಗಳು: {shells}",
   "siteRestoreUnreadable": "ಆರ್ಕೈವ್ ಪಟ್ಟಿಯನ್ನು ನಮೂದುವಾರು ಓದಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ",
-  "siteRestoreInvalidSiteJson": "ಆರ್ಕೈವ್‌ನ site.json ಮಾನ್ಯ HAX ಸೈಟ್ ಅಲ್ಲ, ಆದ್ದರಿಂದ ಏನನ್ನೂ ಬದಲಾಯಿಸಲಾಗಿಲ್ಲ"
+  "siteRestoreInvalidSiteJson": "ಆರ್ಕೈವ್‌ನ site.json ಮಾನ್ಯ HAX ಸೈಟ್ ಅಲ್ಲ, ಆದ್ದರಿಂದ ಏನನ್ನೂ ಬದಲಾಯಿಸಲಾಗಿಲ್ಲ",
+  "cliCmdAlias": "`hax @name ...` ಗಾಗಿ ಹೆಸರಿಸಿದ ಸೈಟ್‌ಗಳನ್ನು (ಅಲಿಯಾಸ್‌ಗಳು) ಪಟ್ಟಿ ಮಾಡಿ",
+  "cliArgAliasAction": "list (ಡೀಫಾಲ್ಟ್) ಅಥವಾ show",
+  "cliArgAliasName": "ತೋರಿಸಬೇಕಾದ ಅಲಿಯಾಸ್, @ ಸಹಿತ ಅಥವಾ ರಹಿತ",
+  "aliasFileInvalid": "ಅಲಿಯಾಸ್ ಫೈಲ್ {file} ಓದಲಾಗಲಿಲ್ಲ: {reason}",
+  "aliasNotAMap": "ಅಲಿಯಾಸ್ ಹೆಸರುಗಳ ನಕ್ಷೆಯನ್ನು ನಿರೀಕ್ಷಿಸಲಾಗಿತ್ತು",
+  "aliasBadName": "{file} ನಲ್ಲಿನ ಅಲಿಯಾಸ್ ಹೆಸರು {name} ಅಕ್ಷರಗಳು, ಸಂಖ್ಯೆಗಳು, ., _ ಮತ್ತು - ಮಾತ್ರ ಬಳಸಬಹುದು",
+  "aliasBadEntry": "{file} ನಲ್ಲಿನ ಅಲಿಯಾಸ್ {name} ಗೆ root, rsync ಅಥವಾ url ಬೇಕು",
+  "aliasUnknown": "ಅಜ್ಞಾತ ಅಲಿಯಾಸ್ {alias}. ತಿಳಿದಿರುವ ಅಲಿಯಾಸ್‌ಗಳು: {known}",
+  "aliasNoneDefined": "ಯಾವುದೂ ಇಲ್ಲ (ಅವುಗಳನ್ನು ~/.haxtheweb/aliases.yml ಅಥವಾ hax.aliases.yml ಗೆ ಸೇರಿಸಿ)",
+  "aliasRemoteNotYet": "ಅಲಿಯಾಸ್ {alias} ಗೆ ಸ್ಥಳೀಯ root ಇಲ್ಲ; ರಿಮೋಟ್ ಅಲಿಯಾಸ್‌ಗಳು ಇನ್ನೂ ಬೆಂಬಲಿತವಾಗಿಲ್ಲ",
+  "aliasWithRoot": "{alias} ಈಗಾಗಲೇ ಸೈಟ್ ಫೋಲ್ಡರ್ ಅನ್ನು ಹೊಂದಿಸುತ್ತದೆ; --root ತೆಗೆದುಹಾಕಿ",
+  "aliasUnknownAction": "ಅಜ್ಞಾತ ಅಲಿಯಾಸ್ ಕ್ರಿಯೆ {action}; list ಅಥವಾ show ಬಳಸಿ",
+  "aliasNoneFound": "ಯಾವುದೇ ಅಲಿಯಾಸ್‌ಗಳನ್ನು ವ್ಯಾಖ್ಯಾನಿಸಲಾಗಿಲ್ಲ. ಓದಿದ ಅಲಿಯಾಸ್ ಫೈಲ್‌ಗಳು: {files}",
+  "aliasMissingRoot": "ಫೋಲ್ಡರ್ ಕಾಣೆಯಾಗಿದೆ"
 }

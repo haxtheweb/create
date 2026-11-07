@@ -634,5 +634,19 @@
   "cliArgCompletionShell": "සම්පූර්ණ කිරීම ජනනය කළ යුතු shell: {shells}",
   "cliCompletionUnknownShell": "නොදන්නා shell {shell}. සහාය දක්වන shell: {shells}",
   "siteRestoreUnreadable": "සංරක්ෂිත ලැයිස්තුව ඇතුළත් කිරීමෙන් ඇතුළත් කිරීමට කියවිය නොහැකි විය",
-  "siteRestoreInvalidSiteJson": "සංරක්ෂිතයේ site.json වලංගු HAX අඩවියක් නොවේ, එබැවින් කිසිවක් වෙනස් නොකෙරිණි"
+  "siteRestoreInvalidSiteJson": "සංරක්ෂිතයේ site.json වලංගු HAX අඩවියක් නොවේ, එබැවින් කිසිවක් වෙනස් නොකෙරිණි",
+  "cliCmdAlias": "`hax @name ...` සඳහා නම් කළ අඩවි (අන්වර්ථ) ලැයිස්තුගත කරන්න",
+  "cliArgAliasAction": "list (පෙරනිමි) හෝ show",
+  "cliArgAliasName": "පෙන්විය යුතු අන්වර්ථය, @ සමඟ හෝ නැතිව",
+  "aliasFileInvalid": "අන්වර්ථ ගොනුව {file} කියවිය නොහැකි විය: {reason}",
+  "aliasNotAMap": "අන්වර්ථ නාම සිතියමක් අපේක්ෂා කළා",
+  "aliasBadName": "{file} හි අන්වර්ථ නාමය {name} සඳහා අකුරු, ඉලක්කම්, ., _ සහ - පමණක් භාවිත කළ හැක",
+  "aliasBadEntry": "{file} හි අන්වර්ථය {name} සඳහා root, rsync හෝ url අවශ්‍යයි",
+  "aliasUnknown": "නොදන්නා අන්වර්ථය {alias}. දන්නා අන්වර්ථ: {known}",
+  "aliasNoneDefined": "කිසිවක් නැත (ඒවා ~/.haxtheweb/aliases.yml හෝ hax.aliases.yml වෙත එක් කරන්න)",
+  "aliasRemoteNotYet": "අන්වර්ථය {alias} හට දේශීය root නැත; දුරස්ථ අන්වර්ථ තවම සහාය නොදක්වයි",
+  "aliasWithRoot": "{alias} දැනටමත් අඩවි ෆෝල්ඩරය සකසයි; --root ඉවත් කරන්න",
+  "aliasUnknownAction": "නොදන්නා අන්වර්ථ ක්‍රියාව {action}; list හෝ show භාවිත කරන්න",
+  "aliasNoneFound": "අන්වර්ථ කිසිවක් නිර්වචනය කර නැත. කියවූ අන්වර්ථ ගොනු: {files}",
+  "aliasMissingRoot": "ෆෝල්ඩරය නැත"
 }

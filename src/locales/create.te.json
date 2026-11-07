@@ -634,5 +634,19 @@
   "cliArgCompletionShell": "కంప్లీషన్ రూపొందించాల్సిన shell: {shells}",
   "cliCompletionUnknownShell": "తెలియని shell {shell}. మద్దతు ఉన్న shellలు: {shells}",
   "siteRestoreUnreadable": "ఆర్కైవ్ జాబితాను ఎంట్రీ వారీగా చదవలేకపోయాము",
-  "siteRestoreInvalidSiteJson": "ఆర్కైవ్ యొక్క site.json చెల్లుబాటు అయ్యే HAX సైట్ కాదు, కాబట్టి ఏమీ మార్చబడలేదు"
+  "siteRestoreInvalidSiteJson": "ఆర్కైవ్ యొక్క site.json చెల్లుబాటు అయ్యే HAX సైట్ కాదు, కాబట్టి ఏమీ మార్చబడలేదు",
+  "cliCmdAlias": "`hax @name ...` కోసం పేరున్న సైట్‌లను (అలియాస్‌లు) జాబితా చేయండి",
+  "cliArgAliasAction": "list (డిఫాల్ట్) లేదా show",
+  "cliArgAliasName": "చూపించాల్సిన అలియాస్, @ తో లేదా లేకుండా",
+  "aliasFileInvalid": "అలియాస్ ఫైల్ {file} చదవలేకపోయాము: {reason}",
+  "aliasNotAMap": "అలియాస్ పేర్ల మ్యాప్ ఆశించబడింది",
+  "aliasBadName": "{file} లోని అలియాస్ పేరు {name} లో అక్షరాలు, అంకెలు, ., _ మరియు - మాత్రమే ఉండాలి",
+  "aliasBadEntry": "{file} లోని అలియాస్ {name} కు root, rsync లేదా url అవసరం",
+  "aliasUnknown": "తెలియని అలియాస్ {alias}. తెలిసిన అలియాస్‌లు: {known}",
+  "aliasNoneDefined": "ఏదీ లేదు (వాటిని ~/.haxtheweb/aliases.yml లేదా hax.aliases.yml కు జోడించండి)",
+  "aliasRemoteNotYet": "అలియాస్ {alias} కు లోకల్ root లేదు; రిమోట్ అలియాస్‌లకు ఇంకా మద్దతు లేదు",
+  "aliasWithRoot": "{alias} ఇప్పటికే సైట్ ఫోల్డర్‌ను సెట్ చేస్తుంది; --root తీసివేయండి",
+  "aliasUnknownAction": "తెలియని అలియాస్ చర్య {action}; list లేదా show ఉపయోగించండి",
+  "aliasNoneFound": "అలియాస్‌లు ఏవీ నిర్వచించబడలేదు. చదివిన అలియాస్ ఫైల్‌లు: {files}",
+  "aliasMissingRoot": "ఫోల్డర్ లేదు"
 }

@@ -179,6 +179,21 @@ Actions to perform include:
 .B list
 [\-\-format json|yaml] \- List every command, action and option for tools and agents
 .PP
+.B alias
+[list|show] [name] [\-\-format json] \- List named sites. Aliases live in ~/.haxtheweb/aliases.yml and in hax.aliases.yml files from the current folder upward (nearest wins). Each alias has a
+.B root
+(local folder, relative to its file; ~ allowed) and optionally an
+.B rsync
+target.
+.B hax @name <action>
+runs
+.B hax site <action>
+in that site from anywhere, and
+.B \-\-source @name
+/
+.B \-\-destination @name
+use the alias's rsync target (or its root)
+.PP
 .B completion
 [bash|zsh] \- Print a shell completion script. Add
 .B source <(hax completion bash)
@@ -444,6 +459,12 @@ Snapshot a site, then restore it (the current state is archived first)
 .TP
 .B hax site node:generate \--count 20 \--parent unit-1
 Add 20 placeholder pages under unit-1 for theme testing
+.TP
+.B hax @course site:validate \--y
+Validate the site named course in hax.aliases.yml, from any folder
+.TP
+.B hax @course site:rsync \--destination @prod \--y
+Push the course site to the rsync target of the prod alias
 .TP
 .B hax list \--format json
 Machine-readable list of every command and action

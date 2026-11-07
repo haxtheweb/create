@@ -634,5 +634,19 @@
   "cliArgCompletionShell": "هغه shell چې بشپړول ورته جوړېږي: {shells}",
   "cliCompletionUnknownShell": "نامعلوم shell {shell}. ملاتړ شوي shellونه: {shells}",
   "siteRestoreUnreadable": "د آرشیف لیست ننوتنه په ننوتنه ونه لوستل شو",
-  "siteRestoreInvalidSiteJson": "د آرشیف site.json سم HAX سایټ نه دی، نو هېڅ شی بدل نه شو"
+  "siteRestoreInvalidSiteJson": "د آرشیف site.json سم HAX سایټ نه دی، نو هېڅ شی بدل نه شو",
+  "cliCmdAlias": "د `hax @name ...` لپاره نوم لرونکې سایټونه (الیاسونه) لیست کړئ",
+  "cliArgAliasAction": "list (ډیفالټ) یا show",
+  "cliArgAliasName": "د ښودلو الیاس، له @ سره یا پرته",
+  "aliasFileInvalid": "د الیاس فایل {file} ونه لوستل شو: {reason}",
+  "aliasNotAMap": "د الیاس نومونو نقشه تمه کېده",
+  "aliasBadName": "په {file} کې د الیاس نوم {name} یوازې توري، شمېرې، ., _ او - کارولی شي",
+  "aliasBadEntry": "په {file} کې الیاس {name} ته root، rsync یا url اړین دی",
+  "aliasUnknown": "نامعلوم الیاس {alias}. پېژندل شوي الیاسونه: {known}",
+  "aliasNoneDefined": "هیڅ (هغوی ~/.haxtheweb/aliases.yml یا hax.aliases.yml ته ورزیات کړئ)",
+  "aliasRemoteNotYet": "الیاس {alias} محلي root نه لري؛ لرې الیاسونه لا نه دي ملاتړ شوي",
+  "aliasWithRoot": "{alias} دمخه د سایټ فولډر ټاکي؛ --root لرې کړئ",
+  "aliasUnknownAction": "نامعلوم الیاس عمل {action}؛ list یا show وکاروئ",
+  "aliasNoneFound": "هیڅ الیاس نه دی تعریف شوی. لوستل شوي الیاس فایلونه: {files}",
+  "aliasMissingRoot": "فولډر نشته"
 }

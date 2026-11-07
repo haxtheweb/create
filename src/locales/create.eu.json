@@ -634,5 +634,19 @@
   "cliArgCompletionShell": "Osaketa sortzeko shell-a: {shells}",
   "cliCompletionUnknownShell": "{shell} shell ezezaguna. Onartutako shell-ak: {shells}",
   "siteRestoreUnreadable": "Artxiboaren zerrenda ezin izan da sarreraz sarrera irakurri",
-  "siteRestoreInvalidSiteJson": "Artxiboko site.json ez da baliozko HAX gune bat; beraz, ez da ezer aldatu"
+  "siteRestoreInvalidSiteJson": "Artxiboko site.json ez da baliozko HAX gune bat; beraz, ez da ezer aldatu",
+  "cliCmdAlias": "Izendatutako guneak (aliasak) zerrendatu `hax @name ...`-rako",
+  "cliArgAliasAction": "list (lehenetsia) edo show",
+  "cliArgAliasName": "erakutsi beharreko aliasa, @ ikurrarekin edo gabe",
+  "aliasFileInvalid": "Ezin izan da {file} alias fitxategia irakurri: {reason}",
+  "aliasNotAMap": "alias izenen mapa bat espero zen",
+  "aliasBadName": "{file} fitxategiko {name} alias izenak letrak, zenbakiak, ., _ eta - soilik erabil ditzake",
+  "aliasBadEntry": "{file} fitxategiko {name} aliasak root, rsync edo url bat behar du",
+  "aliasUnknown": "Alias ezezaguna {alias}. Alias ezagunak: {known}",
+  "aliasNoneDefined": "bat ere ez (gehitu ~/.haxtheweb/aliases.yml edo hax.aliases.yml fitxategira)",
+  "aliasRemoteNotYet": "{alias} aliasak ez du tokiko root-ik; urruneko aliasak ez dira oraindik onartzen",
+  "aliasWithRoot": "{alias} aliasak dagoeneko ezartzen du gunearen karpeta; kendu --root",
+  "aliasUnknownAction": "Alias ekintza ezezaguna {action}; erabili list edo show",
+  "aliasNoneFound": "Ez dago aliasik definituta. Irakurritako alias fitxategiak: {files}",
+  "aliasMissingRoot": "karpeta falta da"
 }

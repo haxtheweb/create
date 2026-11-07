@@ -634,5 +634,19 @@
   "cliArgCompletionShell": "Shell yoti ipangire zomaliza: {shells}",
   "cliCompletionUnknownShell": "Shell {shell} sikudziwika. Ma shell othandizidwa: {shells}",
   "siteRestoreUnreadable": "Mndandanda wa archive sunawerengedwe cholowa ndi cholowa",
-  "siteRestoreInvalidSiteJson": "site.json ya archive si site ya HAX yovomerezeka, choncho palibe chomwe chasinthidwa"
+  "siteRestoreInvalidSiteJson": "site.json ya archive si site ya HAX yovomerezeka, choncho palibe chomwe chasinthidwa",
+  "cliCmdAlias": "Lembani masamba okhala ndi mayina (ma alias) a `hax @name ...`",
+  "cliArgAliasAction": "list (yokhazikika) kapena show",
+  "cliArgAliasName": "alias yoti iwonetsedwe, ndi @ kapena popanda",
+  "aliasFileInvalid": "Fayilo ya alias {file} sinathe kuwerengedwa: {reason}",
+  "aliasNotAMap": "timayembekezera mapu a mayina a alias",
+  "aliasBadName": "Dzina la alias {name} mu {file} lingagwiritse ntchito zilembo, manambala, ., _ ndi - okha",
+  "aliasBadEntry": "Alias {name} mu {file} ikufunika root, rsync kapena url",
+  "aliasUnknown": "Alias yosadziwika {alias}. Ma alias odziwika: {known}",
+  "aliasNoneDefined": "palibe (onjezani ku ~/.haxtheweb/aliases.yml kapena hax.aliases.yml)",
+  "aliasRemoteNotYet": "Alias {alias} ilibe root yapafupi; ma alias akutali sakuthandizidwa pakadali pano",
+  "aliasWithRoot": "{alias} yakhazikitsa kale foda ya tsamba; chotsani --root",
+  "aliasUnknownAction": "Ntchito ya alias yosadziwika {action}; gwiritsani ntchito list kapena show",
+  "aliasNoneFound": "Palibe ma alias amene afotokozedwa. Mafayilo a alias owerengedwa: {files}",
+  "aliasMissingRoot": "foda palibe"
 }

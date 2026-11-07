@@ -634,5 +634,19 @@
   "cliArgCompletionShell": "Shell der skal genereres fuldførelse til: {shells}",
   "cliCompletionUnknownShell": "Ukendt shell {shell}. Understøttede shells: {shells}",
   "siteRestoreUnreadable": "Arkivets indholdsliste kunne ikke læses post for post",
-  "siteRestoreInvalidSiteJson": "Arkivets site.json er ikke et gyldigt HAX-site, så intet blev ændret"
+  "siteRestoreInvalidSiteJson": "Arkivets site.json er ikke et gyldigt HAX-site, så intet blev ændret",
+  "cliCmdAlias": "Vis navngivne sites (aliasser) til `hax @name ...`",
+  "cliArgAliasAction": "list (standard) eller show",
+  "cliArgAliasName": "alias der skal vises, med eller uden @",
+  "aliasFileInvalid": "Aliasfilen {file} kunne ikke læses: {reason}",
+  "aliasNotAMap": "forventede et map af aliasnavne",
+  "aliasBadName": "Aliasnavnet {name} i {file} må kun bruge bogstaver, tal, ., _ og -",
+  "aliasBadEntry": "Aliasset {name} i {file} skal have en root, rsync eller url",
+  "aliasUnknown": "Ukendt alias {alias}. Kendte aliasser: {known}",
+  "aliasNoneDefined": "ingen (tilføj dem i ~/.haxtheweb/aliases.yml eller hax.aliases.yml)",
+  "aliasRemoteNotYet": "Aliasset {alias} har ingen lokal root; fjernaliasser understøttes endnu ikke",
+  "aliasWithRoot": "{alias} angiver allerede sitets mappe; udelad --root",
+  "aliasUnknownAction": "Ukendt aliashandling {action}; brug list eller show",
+  "aliasNoneFound": "Ingen aliasser defineret. Læste aliasfiler: {files}",
+  "aliasMissingRoot": "mappe mangler"
 }

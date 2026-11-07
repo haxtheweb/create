@@ -638,5 +638,19 @@
   "cliArgCompletionShell": "Shell para la que generar el autocompletado: {shells}",
   "cliCompletionUnknownShell": "Shell desconocida {shell}. Shells compatibles: {shells}",
   "siteRestoreUnreadable": "No se pudo leer la lista del archivo comprimido entrada por entrada",
-  "siteRestoreInvalidSiteJson": "El site.json del archivo comprimido no es un sitio HAX válido, así que no se cambió nada"
+  "siteRestoreInvalidSiteJson": "El site.json del archivo comprimido no es un sitio HAX válido, así que no se cambió nada",
+  "cliCmdAlias": "Lista los sitios con nombre (alias) para `hax @name ...`",
+  "cliArgAliasAction": "list (predeterminado) o show",
+  "cliArgAliasName": "alias a mostrar, con o sin @",
+  "aliasFileInvalid": "No se pudo leer el archivo de alias {file}: {reason}",
+  "aliasNotAMap": "se esperaba un mapa de nombres de alias",
+  "aliasBadName": "El nombre de alias {name} en {file} solo puede usar letras, números, ., _ y -",
+  "aliasBadEntry": "El alias {name} en {file} necesita un root, rsync o url",
+  "aliasUnknown": "Alias desconocido {alias}. Alias conocidos: {known}",
+  "aliasNoneDefined": "ninguno (agrégalos a ~/.haxtheweb/aliases.yml o hax.aliases.yml)",
+  "aliasRemoteNotYet": "El alias {alias} no tiene root local; los alias remotos aún no son compatibles",
+  "aliasWithRoot": "{alias} ya define la carpeta del sitio; quita --root",
+  "aliasUnknownAction": "Acción de alias desconocida {action}; usa list o show",
+  "aliasNoneFound": "No hay alias definidos. Archivos de alias leídos: {files}",
+  "aliasMissingRoot": "falta la carpeta"
 }

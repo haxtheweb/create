@@ -634,5 +634,19 @@
   "cliArgCompletionShell": "shell, რომლისთვისაც გენერირდება ავტოშევსება: {shells}",
   "cliCompletionUnknownShell": "უცნობი shell {shell}. მხარდაჭერილი shell-ები: {shells}",
   "siteRestoreUnreadable": "არქივის სიის ჩანაწერ-ჩანაწერ წაკითხვა ვერ მოხერხდა",
-  "siteRestoreInvalidSiteJson": "არქივის site.json არ არის სწორი HAX საიტი, ამიტომ არაფერი შეცვლილა"
+  "siteRestoreInvalidSiteJson": "არქივის site.json არ არის სწორი HAX საიტი, ამიტომ არაფერი შეცვლილა",
+  "cliCmdAlias": "დასახელებული საიტების (ალიასების) სია `hax @name ...`-ისთვის",
+  "cliArgAliasAction": "list (ნაგულისხმევი) ან show",
+  "cliArgAliasName": "საჩვენებელი ალიასი, @-ით ან მის გარეშე",
+  "aliasFileInvalid": "ალიასების ფაილის {file} წაკითხვა ვერ მოხერხდა: {reason}",
+  "aliasNotAMap": "მოსალოდნელი იყო ალიასების სახელების რუკა",
+  "aliasBadName": "ალიასის სახელი {name} ფაილში {file} შეიძლება შეიცავდეს მხოლოდ ასოებს, ციფრებს, ., _ და -",
+  "aliasBadEntry": "ალიასს {name} ფაილში {file} სჭირდება root, rsync ან url",
+  "aliasUnknown": "უცნობი ალიასი {alias}. ცნობილი ალიასები: {known}",
+  "aliasNoneDefined": "არცერთი (დაამატეთ ~/.haxtheweb/aliases.yml ან hax.aliases.yml ფაილში)",
+  "aliasRemoteNotYet": "ალიასს {alias} არ აქვს ლოკალური root; დისტანციური ალიასები ჯერ არ არის მხარდაჭერილი",
+  "aliasWithRoot": "{alias} უკვე განსაზღვრავს საიტის საქაღალდეს; მოაშორეთ --root",
+  "aliasUnknownAction": "ალიასის უცნობი მოქმედება {action}; გამოიყენეთ list ან show",
+  "aliasNoneFound": "ალიასები არ არის განსაზღვრული. წაკითხული ალიასების ფაილები: {files}",
+  "aliasMissingRoot": "საქაღალდე არ არსებობს"
 }

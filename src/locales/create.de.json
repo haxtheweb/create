@@ -638,5 +638,19 @@
   "cliArgCompletionShell": "Shell, für die die Vervollständigung erzeugt werden soll: {shells}",
   "cliCompletionUnknownShell": "Unbekannte Shell {shell}. Unterstützte Shells: {shells}",
   "siteRestoreUnreadable": "Die Archivliste konnte nicht Eintrag für Eintrag gelesen werden",
-  "siteRestoreInvalidSiteJson": "Die site.json im Archiv ist keine gültige HAX-Site, daher wurde nichts geändert"
+  "siteRestoreInvalidSiteJson": "Die site.json im Archiv ist keine gültige HAX-Site, daher wurde nichts geändert",
+  "cliCmdAlias": "Benannte Sites (Aliase) für `hax @name ...` auflisten",
+  "cliArgAliasAction": "list (Standard) oder show",
+  "cliArgAliasName": "anzuzeigender Alias, mit oder ohne @",
+  "aliasFileInvalid": "Alias-Datei {file} konnte nicht gelesen werden: {reason}",
+  "aliasNotAMap": "Zuordnung von Alias-Namen erwartet",
+  "aliasBadName": "Alias-Name {name} in {file} darf nur Buchstaben, Ziffern, ., _ und - enthalten",
+  "aliasBadEntry": "Alias {name} in {file} benötigt root, rsync oder url",
+  "aliasUnknown": "Unbekannter Alias {alias}. Bekannte Aliase: {known}",
+  "aliasNoneDefined": "keine (in ~/.haxtheweb/aliases.yml oder hax.aliases.yml hinzufügen)",
+  "aliasRemoteNotYet": "Alias {alias} hat kein lokales root; Remote-Aliase werden noch nicht unterstützt",
+  "aliasWithRoot": "{alias} legt den Site-Ordner bereits fest; --root weglassen",
+  "aliasUnknownAction": "Unbekannte Alias-Aktion {action}; list oder show verwenden",
+  "aliasNoneFound": "Keine Aliase definiert. Gelesene Alias-Dateien: {files}",
+  "aliasMissingRoot": "Ordner fehlt"
 }

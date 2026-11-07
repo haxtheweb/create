@@ -634,5 +634,19 @@
   "cliArgCompletionShell": "Shell, pro který vygenerovat doplňování: {shells}",
   "cliCompletionUnknownShell": "Neznámý shell {shell}. Podporované shelly: {shells}",
   "siteRestoreUnreadable": "Seznam archivu nebylo možné přečíst položku po položce",
-  "siteRestoreInvalidSiteJson": "site.json v archivu není platný web HAX, proto nebylo nic změněno"
+  "siteRestoreInvalidSiteJson": "site.json v archivu není platný web HAX, proto nebylo nic změněno",
+  "cliCmdAlias": "Vypsat pojmenované weby (aliasy) pro `hax @name ...`",
+  "cliArgAliasAction": "list (výchozí) nebo show",
+  "cliArgAliasName": "alias k zobrazení, s @ nebo bez",
+  "aliasFileInvalid": "Soubor aliasů {file} nelze přečíst: {reason}",
+  "aliasNotAMap": "očekávána mapa názvů aliasů",
+  "aliasBadName": "Název aliasu {name} v {file} smí obsahovat pouze písmena, číslice, ., _ a -",
+  "aliasBadEntry": "Alias {name} v {file} potřebuje root, rsync nebo url",
+  "aliasUnknown": "Neznámý alias {alias}. Známé aliasy: {known}",
+  "aliasNoneDefined": "žádné (přidejte je do ~/.haxtheweb/aliases.yml nebo hax.aliases.yml)",
+  "aliasRemoteNotYet": "Alias {alias} nemá místní root; vzdálené aliasy zatím nejsou podporovány",
+  "aliasWithRoot": "{alias} již nastavuje složku webu; vynechte --root",
+  "aliasUnknownAction": "Neznámá akce aliasu {action}; použijte list nebo show",
+  "aliasNoneFound": "Nejsou definovány žádné aliasy. Přečtené soubory aliasů: {files}",
+  "aliasMissingRoot": "složka chybí"
 }

@@ -634,5 +634,19 @@
   "cliArgCompletionShell": "Ŝelo por kiu generi kompletigon: {shells}",
   "cliCompletionUnknownShell": "Nekonata ŝelo {shell}. Subtenataj ŝeloj: {shells}",
   "siteRestoreUnreadable": "La listo de la arĥivo ne povis esti legita ero post ero",
-  "siteRestoreInvalidSiteJson": "La site.json de la arĥivo ne estas valida HAX-retejo, do nenio estis ŝanĝita"
+  "siteRestoreInvalidSiteJson": "La site.json de la arĥivo ne estas valida HAX-retejo, do nenio estis ŝanĝita",
+  "cliCmdAlias": "Listigi nomitajn retejojn (kaŝnomojn) por `hax @name ...`",
+  "cliArgAliasAction": "list (defaŭlte) aŭ show",
+  "cliArgAliasName": "montrota kaŝnomo, kun aŭ sen @",
+  "aliasFileInvalid": "Ne eblis legi kaŝnoman dosieron {file}: {reason}",
+  "aliasNotAMap": "atendis mapon de kaŝnomoj",
+  "aliasBadName": "Kaŝnomo {name} en {file} rajtas uzi nur literojn, ciferojn, ., _ kaj -",
+  "aliasBadEntry": "Kaŝnomo {name} en {file} bezonas root, rsync aŭ url",
+  "aliasUnknown": "Nekonata kaŝnomo {alias}. Konataj kaŝnomoj: {known}",
+  "aliasNoneDefined": "neniu (aldonu ilin al ~/.haxtheweb/aliases.yml aŭ hax.aliases.yml)",
+  "aliasRemoteNotYet": "Kaŝnomo {alias} ne havas lokan root; foraj kaŝnomoj ankoraŭ ne estas subtenataj",
+  "aliasWithRoot": "{alias} jam difinas la retejan dosierujon; forigu --root",
+  "aliasUnknownAction": "Nekonata kaŝnoma ago {action}; uzu list aŭ show",
+  "aliasNoneFound": "Neniuj kaŝnomoj difinitaj. Legitaj kaŝnomaj dosieroj: {files}",
+  "aliasMissingRoot": "dosierujo mankas"
 }

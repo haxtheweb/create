@@ -634,5 +634,19 @@
   "cliArgCompletionShell": "جس شیل کے لیے کمپلیشن بنانی ہے: {shells}",
   "cliCompletionUnknownShell": "نامعلوم شیل {shell}۔ معاون شیلز: {shells}",
   "siteRestoreUnreadable": "آرکائیو کی فہرست اندراج بہ اندراج نہیں پڑھی جا سکی",
-  "siteRestoreInvalidSiteJson": "آرکائیو کی site.json درست HAX سائٹ نہیں ہے، اس لیے کچھ تبدیل نہیں کیا گیا"
+  "siteRestoreInvalidSiteJson": "آرکائیو کی site.json درست HAX سائٹ نہیں ہے، اس لیے کچھ تبدیل نہیں کیا گیا",
+  "cliCmdAlias": "`hax @name ...` کے لیے نام والی سائٹس (عرفی نام) کی فہرست دکھائیں",
+  "cliArgAliasAction": "list (ڈیفالٹ) یا show",
+  "cliArgAliasName": "دکھانے کے لیے عرفی نام، @ کے ساتھ یا اس کے بغیر",
+  "aliasFileInvalid": "عرفی نام کی فائل {file} پڑھی نہیں جا سکی: {reason}",
+  "aliasNotAMap": "عرفی ناموں کا میپ متوقع تھا",
+  "aliasBadName": "{file} میں عرفی نام {name} میں صرف حروف، اعداد، ., _ اور - استعمال ہو سکتے ہیں",
+  "aliasBadEntry": "{file} میں عرفی نام {name} کو root، rsync یا url درکار ہے",
+  "aliasUnknown": "نامعلوم عرفی نام {alias}۔ معلوم عرفی نام: {known}",
+  "aliasNoneDefined": "کوئی نہیں (انہیں ~/.haxtheweb/aliases.yml یا hax.aliases.yml میں شامل کریں)",
+  "aliasRemoteNotYet": "عرفی نام {alias} کا کوئی مقامی root نہیں؛ ریموٹ عرفی نام ابھی سپورٹ نہیں ہیں",
+  "aliasWithRoot": "{alias} پہلے ہی سائٹ فولڈر سیٹ کرتا ہے؛ --root ہٹائیں",
+  "aliasUnknownAction": "نامعلوم عرفی نام کارروائی {action}؛ list یا show استعمال کریں",
+  "aliasNoneFound": "کوئی عرفی نام متعین نہیں۔ پڑھی گئی عرفی نام فائلیں: {files}",
+  "aliasMissingRoot": "فولڈر موجود نہیں"
 }

@@ -634,5 +634,19 @@
   "cliArgCompletionShell": "Κέλυφος για το οποίο θα δημιουργηθεί αυτόματη συμπλήρωση: {shells}",
   "cliCompletionUnknownShell": "Άγνωστο κέλυφος {shell}. Υποστηριζόμενα κελύφη: {shells}",
   "siteRestoreUnreadable": "Η λίστα του αρχείου αρχειοθέτησης δεν μπόρεσε να διαβαστεί καταχώριση προς καταχώριση",
-  "siteRestoreInvalidSiteJson": "Το site.json του αρχείου αρχειοθέτησης δεν είναι έγκυρος ιστότοπος HAX, οπότε δεν άλλαξε τίποτα"
+  "siteRestoreInvalidSiteJson": "Το site.json του αρχείου αρχειοθέτησης δεν είναι έγκυρος ιστότοπος HAX, οπότε δεν άλλαξε τίποτα",
+  "cliCmdAlias": "Λίστα ονομασμένων ιστότοπων (ψευδωνύμων) για `hax @name ...`",
+  "cliArgAliasAction": "list (προεπιλογή) ή show",
+  "cliArgAliasName": "ψευδώνυμο προς εμφάνιση, με ή χωρίς @",
+  "aliasFileInvalid": "Δεν ήταν δυνατή η ανάγνωση του αρχείου ψευδωνύμων {file}: {reason}",
+  "aliasNotAMap": "αναμενόταν αντιστοίχιση ονομάτων ψευδωνύμων",
+  "aliasBadName": "Το όνομα ψευδωνύμου {name} στο {file} μπορεί να περιέχει μόνο γράμματα, αριθμούς, ., _ και -",
+  "aliasBadEntry": "Το ψευδώνυμο {name} στο {file} χρειάζεται root, rsync ή url",
+  "aliasUnknown": "Άγνωστο ψευδώνυμο {alias}. Γνωστά ψευδώνυμα: {known}",
+  "aliasNoneDefined": "κανένα (προσθέστε τα στο ~/.haxtheweb/aliases.yml ή hax.aliases.yml)",
+  "aliasRemoteNotYet": "Το ψευδώνυμο {alias} δεν έχει τοπικό root· τα απομακρυσμένα ψευδώνυμα δεν υποστηρίζονται ακόμη",
+  "aliasWithRoot": "Το {alias} ορίζει ήδη τον φάκελο του ιστότοπου· αφαιρέστε το --root",
+  "aliasUnknownAction": "Άγνωστη ενέργεια ψευδωνύμου {action}· χρησιμοποιήστε list ή show",
+  "aliasNoneFound": "Δεν έχουν οριστεί ψευδώνυμα. Αρχεία ψευδωνύμων που διαβάστηκαν: {files}",
+  "aliasMissingRoot": "ο φάκελος λείπει"
 }

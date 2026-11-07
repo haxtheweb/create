@@ -634,5 +634,19 @@
   "cliArgCompletionShell": "ਕੰਪਲੀਸ਼ਨ ਬਣਾਉਣ ਲਈ ਸ਼ੈੱਲ: {shells}",
   "cliCompletionUnknownShell": "ਅਣਜਾਣ ਸ਼ੈੱਲ {shell}। ਸਮਰਥਿਤ ਸ਼ੈੱਲ: {shells}",
   "siteRestoreUnreadable": "ਆਰਕਾਈਵ ਸੂਚੀ ਐਂਟਰੀ-ਦਰ-ਐਂਟਰੀ ਪੜ੍ਹੀ ਨਹੀਂ ਜਾ ਸਕੀ",
-  "siteRestoreInvalidSiteJson": "ਆਰਕਾਈਵ ਦੀ site.json ਵੈਧ HAX ਸਾਈਟ ਨਹੀਂ ਹੈ, ਇਸ ਲਈ ਕੁਝ ਨਹੀਂ ਬਦਲਿਆ ਗਿਆ"
+  "siteRestoreInvalidSiteJson": "ਆਰਕਾਈਵ ਦੀ site.json ਵੈਧ HAX ਸਾਈਟ ਨਹੀਂ ਹੈ, ਇਸ ਲਈ ਕੁਝ ਨਹੀਂ ਬਦਲਿਆ ਗਿਆ",
+  "cliCmdAlias": "`hax @name ...` ਲਈ ਨਾਮ ਵਾਲੀਆਂ ਸਾਈਟਾਂ (ਏਲੀਅਸ) ਦੀ ਸੂਚੀ ਦਿਖਾਓ",
+  "cliArgAliasAction": "list (ਡਿਫੌਲਟ) ਜਾਂ show",
+  "cliArgAliasName": "ਦਿਖਾਉਣ ਲਈ ਏਲੀਅਸ, @ ਨਾਲ ਜਾਂ ਬਿਨਾਂ",
+  "aliasFileInvalid": "ਏਲੀਅਸ ਫਾਈਲ {file} ਪੜ੍ਹੀ ਨਹੀਂ ਜਾ ਸਕੀ: {reason}",
+  "aliasNotAMap": "ਏਲੀਅਸ ਨਾਮਾਂ ਦੇ ਮੈਪ ਦੀ ਉਮੀਦ ਸੀ",
+  "aliasBadName": "{file} ਵਿੱਚ ਏਲੀਅਸ ਨਾਮ {name} ਵਿੱਚ ਸਿਰਫ਼ ਅੱਖਰ, ਅੰਕ, ., _ ਅਤੇ - ਹੀ ਵਰਤੇ ਜਾ ਸਕਦੇ ਹਨ",
+  "aliasBadEntry": "{file} ਵਿੱਚ ਏਲੀਅਸ {name} ਨੂੰ root, rsync ਜਾਂ url ਚਾਹੀਦਾ ਹੈ",
+  "aliasUnknown": "ਅਣਜਾਣ ਏਲੀਅਸ {alias}। ਜਾਣੇ-ਪਛਾਣੇ ਏਲੀਅਸ: {known}",
+  "aliasNoneDefined": "ਕੋਈ ਨਹੀਂ (ਉਹਨਾਂ ਨੂੰ ~/.haxtheweb/aliases.yml ਜਾਂ hax.aliases.yml ਵਿੱਚ ਜੋੜੋ)",
+  "aliasRemoteNotYet": "ਏਲੀਅਸ {alias} ਦਾ ਕੋਈ ਲੋਕਲ root ਨਹੀਂ; ਰਿਮੋਟ ਏਲੀਅਸ ਅਜੇ ਸਮਰਥਿਤ ਨਹੀਂ ਹਨ",
+  "aliasWithRoot": "{alias} ਪਹਿਲਾਂ ਹੀ ਸਾਈਟ ਫੋਲਡਰ ਸੈੱਟ ਕਰਦਾ ਹੈ; --root ਹਟਾਓ",
+  "aliasUnknownAction": "ਅਣਜਾਣ ਏਲੀਅਸ ਕਾਰਵਾਈ {action}; list ਜਾਂ show ਵਰਤੋ",
+  "aliasNoneFound": "ਕੋਈ ਏਲੀਅਸ ਪਰਿਭਾਸ਼ਿਤ ਨਹੀਂ। ਪੜ੍ਹੀਆਂ ਗਈਆਂ ਏਲੀਅਸ ਫਾਈਲਾਂ: {files}",
+  "aliasMissingRoot": "ਫੋਲਡਰ ਗੁੰਮ ਹੈ"
 }

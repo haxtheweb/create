@@ -634,5 +634,19 @@
   "cliArgCompletionShell": "جنهن shell لاءِ مڪمل ڪرڻ ٺاهڻو آهي: {shells}",
   "cliCompletionUnknownShell": "اڻڄاتل shell {shell}. سهائتا ٿيل shell: {shells}",
   "siteRestoreUnreadable": "آرڪائيو جي فهرست داخلا وار نه پڙهي سگهجي",
-  "siteRestoreInvalidSiteJson": "آرڪائيو جي site.json صحيح HAX سائيٽ ناهي، تنهن ڪري ڪجهه به تبديل نه ٿيو"
+  "siteRestoreInvalidSiteJson": "آرڪائيو جي site.json صحيح HAX سائيٽ ناهي، تنهن ڪري ڪجهه به تبديل نه ٿيو",
+  "cliCmdAlias": "`hax @name ...` لاءِ نالي وارين سائيٽن (عرفن) جي لسٽ ڏيکاريو",
+  "cliArgAliasAction": "list (ڊيفالٽ) يا show",
+  "cliArgAliasName": "ڏيکارڻ لاءِ عرف، @ سان يا ان کان سواءِ",
+  "aliasFileInvalid": "عرف فائل {file} پڙهي نه سگهي: {reason}",
+  "aliasNotAMap": "عرف نالن جو نقشو متوقع هو",
+  "aliasBadName": "{file} ۾ عرف جو نالو {name} صرف اکر، انگ، ., _ ۽ - استعمال ڪري سگهي ٿو",
+  "aliasBadEntry": "{file} ۾ عرف {name} کي root، rsync يا url گهرجي",
+  "aliasUnknown": "اڻڄاتل عرف {alias}. ڄاتل عرف: {known}",
+  "aliasNoneDefined": "ڪوبه نه (انهن کي ~/.haxtheweb/aliases.yml يا hax.aliases.yml ۾ شامل ڪريو)",
+  "aliasRemoteNotYet": "عرف {alias} وٽ مقامي root ناهي؛ ريموٽ عرف اڃا سپورٽ ٿيل ناهن",
+  "aliasWithRoot": "{alias} اڳ ۾ ئي سائيٽ فولڊر مقرر ڪري ٿو؛ --root هٽايو",
+  "aliasUnknownAction": "اڻڄاتل عرف عمل {action}؛ list يا show استعمال ڪريو",
+  "aliasNoneFound": "ڪوبه عرف بيان ٿيل ناهي. پڙهيل عرف فائلون: {files}",
+  "aliasMissingRoot": "فولڊر غائب آهي"
 }
