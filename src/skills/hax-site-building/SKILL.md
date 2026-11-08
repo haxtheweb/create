@@ -40,6 +40,8 @@ Build and maintain HAXcms sites with proper structure, themes, and JSON Outline 
 
 Always create pages through the `hax` CLI, never by manually creating page directories or hand-editing `site.json`. Manual page creation bypasses the CLI's page-id generation, slug/location management, and atomic `site.json` updates, which corrupts the JSON Outline Schema structure and breaks the site in production. The CLI owns page structure; you only own page content.
 
+As an agent, add `--agent` to every `hax site` command below (or set `HAX_ACTOR=agent`) so the site's history records your changes as agent changes instead of a person's.
+
 Two supported CLI paths, run from inside the site directory:
 
 - Single page: `hax site node:add --title "<title>" --slug "<slug>" --parent <parent-id-or-slug> --content <path-to-html-or-md-file> --y --no-i`. Without `--order` the page is appended after its siblings. The output includes the new item id.

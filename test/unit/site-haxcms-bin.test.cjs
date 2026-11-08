@@ -44,6 +44,12 @@ utils.exec = async (cmd, cmdOpts) => {
   execCalls.push({ cmd, opts: cmdOpts });
   return { stdout: "stub-stdout", stderr: "" };
 };
+// the npx fallback runs through runCommand (no shell string); record it in the
+// same shape so the assertions read the full command line
+utils.runCommand = async (cmd, args, cmdOpts) => {
+  execCalls.push({ cmd: [cmd, ...args].join(" "), args, opts: cmdOpts });
+  return { stdout: "stub-stdout", stderr: "" };
+};
 const spawnCalls = [];
 utils.spawn = (cmd, args, spawnOpts) => {
   spawnCalls.push({ cmd, args, opts: spawnOpts });
@@ -109,7 +115,7 @@ test(
 );
 
 test(
-  "execNpxHaxcmsNodejsFallback delegates to exec with the npx command and cwd/env",
+  "execNpxHaxcmsNodejsFallback runs npx through runCommand with cwd/env",
   opts,
   async () => {
     execCalls.length = 0;
@@ -118,6 +124,8 @@ test(
     const range =
       require("../../package.json").dependencies["@haxtheweb/haxcms-nodejs"];
     assert.equal(execCalls[0].cmd, `npx @haxtheweb/haxcms-nodejs@${range}`);
+    // the spec is one argument, never spliced into a shell string
+    assert.deepEqual(execCalls[0].args, [`@haxtheweb/haxcms-nodejs@${range}`]);
     assert.deepEqual(execCalls[0].opts, {
       cwd: "/some/cwd",
       env: { PORT: "8080" },

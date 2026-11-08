@@ -759,7 +759,7 @@ test("the text report prints the status table, causes, hints and debug rows", as
             tag: "x-b",
             ok: true,
             file: path.join(root, "pkg/b.js"),
-            html: shadow("<slot></slot>"),
+            html: shadow("<slot></slot>", "x-b"),
           },
           {
             tag: "x-c",
@@ -787,8 +787,7 @@ test("the text report prints the status table, causes, hints and debug rows", as
     assert.ok(recorded.warn[0].includes("shell (1): x-b"));
     assert.ok(
       recorded.message.some(
-        (line) =>
-          line.includes("thrown at") && line.includes("pkg/c.js:9 (1)"),
+        (line) => line.includes("thrown at") && line.includes("pkg/c.js:9 (1)"),
       ),
     );
     // x-b is a shell whose source fetches data: the hint explains why
@@ -796,9 +795,12 @@ test("the text report prints the status table, causes, hints and debug rows", as
     assert.ok(
       recorded.message.some((line) => line.includes("TypeError: boom")),
     );
-    // totals, sizes, style share, fallback rescue, resolver fallbacks
-    assert.equal(recorded.info.length, 5);
-    assert.equal(result.summary.resolverFallbacks.examples[0].from, "pkg/helper.js");
+    // progress line, totals, sizes, style share, fallback rescue, resolver fallbacks
+    assert.equal(recorded.info.length, 6);
+    assert.equal(
+      result.summary.resolverFallbacks.examples[0].from,
+      "pkg/helper.js",
+    );
     assert.equal(outros.length, 1);
   } finally {
     Object.assign(stub.log, savedLog);
@@ -843,7 +845,10 @@ test("the text report explains a missing registry and a filtered-out selection",
 });
 
 test("shadowRootContent tolerates a truncated template", () => {
-  assert.equal(shadowRootContent('<x-a><template shadowroot="open"', "x-a"), null);
+  assert.equal(
+    shadowRootContent('<x-a><template shadowroot="open"', "x-a"),
+    null,
+  );
   assert.equal(
     shadowRootContent(
       '<x-a><template shadowroot="open" shadowrootmode="open"><p>hi</p>',

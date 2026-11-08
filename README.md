@@ -48,6 +48,7 @@ hax start
 - `hax audit schema` - Validates `site.json`, skeletons, `haxProperties` (and their `demoSchema` / locales), `appstore.json`, Merlin commands and HAXcms plugins (`plugin.yaml` and its registries) against the HAX schemas
 - `hax audit i18n` - Finds English hardcoded in Lit templates (text and attributes like `aria-label`, `title`, `placeholder`) that should come from `this.t` so it can be translated
 - `hax audit all` - Runs all three
+- `hax audit theme` - Checks HAXcms theme source (a site's `custom/src/`, or theme files under the current directory) against the theme contract: extends `HAXCMSLitElementTheme`, `static get tag()` + `customElements.define`, `#contentcontainer > #slot > <slot>` for the HAX editor, a skip-link rendered first, `super.styles`, dark mode (`light-dark()` needs `color-scheme`), a responsive `@media` fallback, `site-region` names the Appearance dialog can assign, `globalThis` and no optional chaining. Each finding's rule id matches a `@hax-theme-contract` marker in the `starter` template. Errors fail; warnings fail with `--strict`. `--format json` gives rule, severity, file, line, message and fix for agents. Not part of `all`
 - `hax audit ssr` - Report-only: server-renders every element in `wc-registry.json` with `@lit-labs/ssr` and buckets the result (rendered / shell / empty / no shadow root / threw) with output and style sizes. Never fails on render problems and is not part of `all`. Runs with a small inert DOM environment (`window`, event target, observers, element query/child/class/style APIs as no-ops) so elements fail only for their own reasons; `--no-shim` turns that off to show what elements manage unaided. Also reports elements that supply their own `progressiveEnhancement` fallback markup and the size of a primitive-tag stylesheet that covers it, and flags HTML boolean attributes written as `="false"` (a `.checked=${value}` property binding on a native input renders as `checked="false"`, which browsers read as on until hydration; use `?checked=${value}`) or a native element's address bound as a property in the element's own source (`<iframe .src=${url}>`, which Lit SSR does not write; use `src=${url}`). Options: `--only <tags>`, `--timeout <ms>`, `--save-html <dir>`, `--no-shim`, `--format json`
 - `hax update` - HAX CLI self update
 - `hax party` - Display options to join the HAX community and get involved!
@@ -73,6 +74,7 @@ This CLI ships interface skills in `src/skills/` (compiled to `dist/skills/`) th
 - `hax-claudehax` — ClaudeHAX plugin, `/hax` slash command, CLI operation
 - `hax-webcomponent-dev` — `hax webcomponent`, HAXSchema, component scaffolding
 - `hax-ecosystem-onboarding` — environment setup, first scaffold, repo cloning
+- `hax-rpg-character` — extending the rpg-character avatar with new pixel-art pieces
 
 Install them for your agents:
 
@@ -118,6 +120,8 @@ cd my-hax-site && hax serve
 - Inside a site, run `hax site` (or `hax site --format json`) first. It reports the site, its key files, which files are managed, and the scriptable commands.
 - With `--format json` or `--format yaml`, stdout carries only the data, so it can be piped straight into `jq` or a parser. Progress messages go to stderr.
 - A mistyped action (for example `hax site node:ad`) exits with status 1 and suggests the closest action.
+- `hax list --format json` describes every command, action and option, so you can discover the CLI without parsing `--help`.
+- `hax site site:validate` exits 1 when a site has structural errors; run it before and after bulk changes.
 - Every site ships `AGENTS.md`, `llms.txt` and `.well-known/agent-skills/index.json`. Read those before changing anything.
 
 See the AI integration page on the [HAX documentation site](https://haxtheweb.org/) for the full guide.
@@ -151,6 +155,7 @@ Options:
   --org <char>                        organization for package.json
   --author <char>                     author for site / package.json
   --writeHaxProperties                Write haxProperties for the element
+  --no-docs                           in a monorepo, leave out the docs data step
   --import-site <char>                URL of site to import
   --import-structure <char>           import method to use:
                                       pressbooksToSite
@@ -175,7 +180,7 @@ Options:
   --items-import <char>               import items from a file / site
   --custom-theme-name <char>          custom theme name
   --custom-theme-template <char>      custom theme template; (options: base,
-                                      polaris-flex, polaris-sidebar)
+                                      starter, polaris-flex, polaris-sidebar)
   --skeleton-file <char>              path to skeleton JSON file
   --skeleton-machine-name <char>      skeleton machine name (installed template)
                                       to create a site from
@@ -211,6 +216,11 @@ Commands:
                                       translatable text, or all of them
   party [options] [action]            Party time! Join the HAX community and
                                       get involved!
+  skills [options] [action] [name]    List and install bundled agent skills for
+                                      HAX ecosystem agents
+  list [options]                      List every command, action and option
+                                      (--format json for tools and agents)
+  completion [shell]                  Print a shell completion script
   help [command]                      display help for command
 
 ```

@@ -4,6 +4,7 @@
 >
 > - Inside a HAX site, read `llms.txt` and `.well-known/agent-skills/index.json` first, then run `hax site` for an orientation of the site and its scriptable commands.
 > - Always pass `--y --no-i` when scripting. With no TTY (sandboxes, CI) the CLI implies `--no-i` automatically.
+> - As an agent, also pass `--agent` to `hax site` commands (or set `HAX_ACTOR=agent`) so your changes are recorded as agent changes in the site's git history and revision panel.
 > - Use the global `hax` command, never `npx hax` (a different npm package).
 
 This file provides comprehensive instructions for AI coding agents working within the HAX ecosystem. HAX (Headless Authoring eXperience) is a comprehensive web development ecosystem that enables rapid creation of accessible, performant web components and static sites. Follow these guidelines to set up, develop, test, and contribute effectively to HAX projects.
@@ -216,6 +217,7 @@ The HAX ecosystem uses a sophisticated build pipeline optimized for unbundled Ja
   hax audit schema            # add --strict to fail on warnings, --format json for a report
   hax audit i18n              # English hardcoded in Lit templates instead of this.t
   hax audit all               # DDD + schema + i18n
+  hax audit theme             # HAXcms theme contract (editor wiring, skip-link, dark mode, regions); --format json for agents
   hax audit ssr               # report-only: how each wc-registry element server-renders (never fails, not in all; --no-shim to skip the inert DOM environment)
   ```
   - **Required** before submitting theme components
@@ -268,7 +270,7 @@ LICENSE
   - Run `npm run precheck` before every push or PR. It runs the same Prettier and ESLint checks CI runs, on the files you changed. Fix everything it reports and re-run until it passes (`npm run precheck:fix` auto-fixes formatting and fixable lint). A Claude Code hook in `.claude/` blocks `git push` and `gh pr create` until it passes.
   - Run `npm test` to ensure all tests pass.
   - Run `npm run lint` to verify code style.
-  - Run `hax audit` for web components to confirm DDD compliance, `hax audit schema` when you change haxProperties, site.json, skeletons or appstore files, and `hax audit i18n` when you add or change UI text.
+  - Run `hax audit` for web components to confirm DDD compliance, `hax audit schema` when you change haxProperties, site.json, skeletons or appstore files, `hax audit i18n` when you add or change UI text, and `hax audit theme` when you create or change a HAXcms theme (start new custom themes from `--custom-theme-template starter`).
 - **Commit Guidelines**:
   - Use clear, descriptive commit messages (e.g., "Add i18n support to my-element").
   - Include relevant changes to tests or documentation.

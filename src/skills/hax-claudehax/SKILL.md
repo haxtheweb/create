@@ -103,6 +103,7 @@ When operating outside the `/hax` slash command, use the HAX CLI directly:
 - `hax audit` — DDD compliance audit
 - `hax audit schema` — validate site.json, skeletons, haxProperties, appstore.json and Merlin commands against the HAX schemas
 - `hax audit i18n` — find English hardcoded in Lit templates that should come from `this.t`
+- `hax audit theme` — check a custom theme against the HAXcms theme contract (`--format json` for rule, line and fix)
 - `hax skills list` — List bundled agent skills
 - `hax skills install <name|--all>` — Install bundled skills into `.agents/skills/`
 - `hax update` — Update HAX CLI
