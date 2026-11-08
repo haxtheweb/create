@@ -112,15 +112,11 @@
     "aliasOf": [
       {
         "hook": "entity.before.create",
-        "entities": [
-          "page"
-        ]
+        "entities": ["page"]
       },
       {
         "hook": "entity.before.update",
-        "entities": [
-          "page"
-        ]
+        "entities": ["page"]
       }
     ],
     "subject": "the page: `{ id, siteId, title, location, slug, parent, order, content, metadata }` as submitted",
@@ -140,15 +136,11 @@
     "aliasOf": [
       {
         "hook": "entity.after.create",
-        "entities": [
-          "page"
-        ]
+        "entities": ["page"]
       },
       {
         "hook": "entity.after.update",
-        "entities": [
-          "page"
-        ]
+        "entities": ["page"]
       }
     ],
     "subject": "the page: `{ id, siteId, title, location, slug, parent, order, content, metadata }` as written",
@@ -168,9 +160,7 @@
     "aliasOf": [
       {
         "hook": "entity.before.delete",
-        "entities": [
-          "page"
-        ]
+        "entities": ["page"]
       }
     ],
     "subject": "the page: `{ id, siteId, title, location, slug, parent, order, content, metadata }` as stored",
@@ -189,9 +179,7 @@
     "aliasOf": [
       {
         "hook": "entity.after.delete",
-        "entities": [
-          "page"
-        ]
+        "entities": ["page"]
       }
     ],
     "subject": "the page: `{ id, siteId, title, location, slug, parent, order, content, metadata }` as it was before deletion",
@@ -211,9 +199,7 @@
     "aliasOf": [
       {
         "hook": "entity.before.update",
-        "entities": [
-          "site"
-        ]
+        "entities": ["site"]
       }
     ],
     "subject": "the site manifest: the full `site.json` object (`{ id, title, author, metadata, items: [...] }`) as it will be written",
@@ -232,9 +218,7 @@
     "aliasOf": [
       {
         "hook": "entity.after.update",
-        "entities": [
-          "site"
-        ]
+        "entities": ["site"]
       }
     ],
     "subject": "the site manifest: the full `site.json` object (`{ id, title, author, metadata, items: [...] }`) as written",
@@ -254,12 +238,8 @@
     "aliasOf": [
       {
         "hook": "entity.before.update",
-        "entities": [
-          "site"
-        ],
-        "changed": [
-          "metadata.theme"
-        ]
+        "entities": ["site"],
+        "changed": ["metadata.theme"]
       }
     ],
     "subject": "`{ siteId, theme, settings }` (the new theme and its settings)",
@@ -278,12 +258,8 @@
     "aliasOf": [
       {
         "hook": "entity.after.update",
-        "entities": [
-          "site"
-        ],
-        "changed": [
-          "metadata.theme"
-        ]
+        "entities": ["site"],
+        "changed": ["metadata.theme"]
       }
     ],
     "subject": "`{ siteId, theme, settings }`",
@@ -302,15 +278,11 @@
     "aliasOf": [
       {
         "hook": "entity.before.create",
-        "entities": [
-          "file"
-        ]
+        "entities": ["file"]
       },
       {
         "hook": "entity.before.update",
-        "entities": [
-          "file"
-        ]
+        "entities": ["file"]
       }
     ],
     "subject": "the file record: `{ id, siteId, path, name, mimeType, size, alt?, ext: {...} }` as submitted, with the upload in ctx.upload",
@@ -329,15 +301,11 @@
     "aliasOf": [
       {
         "hook": "entity.after.create",
-        "entities": [
-          "file"
-        ]
+        "entities": ["file"]
       },
       {
         "hook": "entity.after.update",
-        "entities": [
-          "file"
-        ]
+        "entities": ["file"]
       }
     ],
     "subject": "the file record: `{ id, siteId, path, name, mimeType, size, alt?, ext: {...} }` as stored",
@@ -356,9 +324,7 @@
     "aliasOf": [
       {
         "hook": "entity.before.delete",
-        "entities": [
-          "file"
-        ]
+        "entities": ["file"]
       }
     ],
     "subject": "the file record: `{ id, siteId, path, name, mimeType, size, alt?, ext: {...} }` as stored",
@@ -377,9 +343,7 @@
     "aliasOf": [
       {
         "hook": "entity.after.delete",
-        "entities": [
-          "file"
-        ]
+        "entities": ["file"]
       }
     ],
     "subject": "the file record: `{ id, siteId, path, name, mimeType, size, alt?, ext: {...} }` as it was before deletion",
@@ -1149,11 +1113,7 @@
     "detachable": false,
     "comment": "last chance to alter the final document; store it in a cache. Stages: `transform` changes the document (minify, rewrite links), `seal` computes things over the final bytes (CSP hashes, signatures), `store` keeps the result (page caches, static publish)",
     "example": "**page-cache** stores the final document; **minify** compresses it",
-    "stages": [
-      "transform",
-      "seal",
-      "store"
-    ]
+    "stages": ["transform", "seal", "store"]
   },
   {
     "name": "rebuild.before",
