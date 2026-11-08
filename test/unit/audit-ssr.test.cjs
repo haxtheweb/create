@@ -482,8 +482,6 @@ test("--save-html also writes the primitive stylesheet and fallbacks", async () 
   );
 });
 
-
-
 // A child process stand-in whose stdin.end() plays the scripted worker output,
 // so runSsrWorker's line protocol can be exercised without spawning node.
 function fakeSpawn(scripts) {
