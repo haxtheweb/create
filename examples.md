@@ -111,6 +111,13 @@ Create a new site called `zombocom`, that has a custom theme called `custom-zomb
 hax site zombocom --theme "custom-theme" --custom-theme-name "custom-zombocom-theme" --custom-theme-template "base" --y
 ```
 
+Same, but start from the `starter` template: the full HAXcms theme contract (skip-link, editor wiring, menu, breadcrumb, regions, dark mode, palettes, mobile breakpoint) with each required block marked, which is the best starting point for an AI agent. Then check it with `hax audit theme`
+
+```bash
+hax site zombocom --theme "custom-theme" --custom-theme-name "custom-zombocom-theme" --custom-theme-template "starter" --y --no-i
+cd zombocom && hax audit theme --format json
+```
+
 # site - existing site
 
 `--root ./zombocom` - implies to run the command as if it was executed from the `./zombocom` folder
@@ -191,6 +198,14 @@ Delete a specific node, skip confirmation
 hax site node:delete --item-id item-ac247e47-5dcf-4a98-814a-03f2e70151c8 --y
 ```
 
+## node:generate
+
+Add 20 placeholder pages (headings, paragraphs, lists) for theme testing or a class demo, nested under the page with slug `unit-1`
+
+```bash
+hax site node:generate --count 20 --parent unit-1 --y
+```
+
 ## site operations
 
 List stats for the current site
@@ -227,6 +242,44 @@ Search site content with selector mode for HTML queries
 
 ```bash
 hax site site:search --search "video-player[src]" --search-selector
+```
+
+Check site.json and every page for duplicate ids or slugs, missing parents, missing page files, dead internal links, missing `files/` references and unknown elements. Exits 1 when there are errors, so it can gate CI or a publish (`site:doctor` works too)
+
+```bash
+hax site site:validate --format json --y --no-i
+```
+
+Rebuild generated files (RSS/Atom, sitemap, search index, llms.txt, managed files, agent skills), or only some of them
+
+```bash
+hax site site:rebuild --y
+hax site site:rebuild --only search,llms --y
+```
+
+Archive the whole site (including its git history, without node_modules) to `~/.haxtheweb/archives/<site>/`, or to a file you name
+
+```bash
+hax site site:archive --y
+hax site site:archive --to-file ../backups/mysite.tar.gz --y
+```
+
+Restore a site from an archive. The current state is archived first, and the CLI's managed symlinks are kept
+
+```bash
+hax site site:restore --source ../backups/mysite.tar.gz --y
+```
+
+Show the 20 most recent CLI log entries that mention "publish"
+
+```bash
+hax site site:logs --search publish --search-limit 20
+```
+
+List the sites in a folder or a HAXcms multi-site root (works outside a site)
+
+```bash
+hax site site:list --format json
 ```
 
 Change theme, interactively
@@ -415,4 +468,21 @@ Run the DDD, schema and i18n audits together
 
 ```bash
 hax audit all
+```
+
+## list and completion
+
+Machine-readable description of every command, action and option, for tools and agents
+
+```bash
+hax list --format json
+```
+
+Shell completion for commands, site / wc / skills actions and flags
+
+```bash
+# bash: add to ~/.bashrc
+source <(hax completion bash)
+# zsh: add to ~/.zshrc after compinit
+source <(hax completion zsh)
 ```

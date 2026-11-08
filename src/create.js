@@ -20,7 +20,9 @@ import {
   logger,
   isStructuredFormat,
   enableStructuredOutput,
+  writeData,
 } from "./lib/logging.js";
+import { dump } from "js-yaml";
 import { auditCommandDetected } from "./lib/programs/audit.js";
 import { runAuditCommand as runAuditCommandWith } from "./lib/programs/audit-schema.js";
 import { partyCommandDetected } from "./lib/programs/party.js";
@@ -37,11 +39,19 @@ import {
   siteCommandDetected,
   siteThemeList,
   siteSkeletonList,
+  siteListOutput,
 } from "./lib/programs/site.js";
+import {
+  buildCliManifest,
+  formatCliManifest,
+  completionScript,
+  COMPLETION_SHELLS,
+} from "./lib/cli-manifest.js";
 import { skillsCommandDetected, skillsActions } from "./lib/programs/skills.js";
 import {
   camelToDash,
   exec,
+  runCommand,
   interactiveExec,
   writeConfigFile,
   readConfigFile,
@@ -82,6 +92,31 @@ exec("which git", (error) => {
   }
 });
 
+// haxtheweb/issues#3228: `hax list` / `hax completion` read the program itself
+function cliManifest() {
+  const auditTypes = {
+    ddd: "cliArgAuditDdd",
+    schema: "cliArgAuditSchema",
+    i18n: "cliArgAuditI18n",
+    ssr: "cliArgAuditSsr",
+    theme: "cliArgAuditTheme",
+    all: "cliArgAuditAll",
+  };
+  return buildCliManifest(
+    program,
+    {
+      site: siteActions(),
+      wc: webcomponentActions(),
+      skills: skillsActions(),
+      audit: Object.keys(auditTypes).map((type) => ({
+        value: type,
+        label: t(auditTypes[type]),
+      })),
+    },
+    packageJson.version,
+  );
+}
+
 async function main() {
   let wcReg = {};
   let regPath = path.join(__dirname, "./lib/wc-registry.json");
@@ -105,6 +140,7 @@ async function main() {
     .option("--quiet", t("cliOptQuiet"))
     .option("--auto", t("cliOptAuto"))
     .option("--no-i", t("cliOptNoI"))
+    .option("--agent", t("cliOptAgent"))
     .option("--to-file <char>", t("cliOptToFile"))
     .option("--no-extras", t("cliOptNoExtras"))
     .option("--root <char>", t("cliOptRoot"))
@@ -116,13 +152,14 @@ async function main() {
     .option("--author <char>", t("cliOptAuthor"))
     .option("--template <char>", t("cliOptTemplate"))
     .option("--writeHaxProperties", t("cliOptWriteHaxProperties"))
+    .option("--no-docs", t("cliOptNoDocs"))
     .option("--force", t("cliOptForce"))
 
     // options for site
     .option("--import-site <char>", t("cliOptImportSite"))
     .option(
       "--import-structure <char>",
-      `${t("cliOptImportStructure")}\n\rpressbooksToSite\n\relmslnToSite\n\rhaxcmsToSite\n\rnotionToSite\n\rgitbookToSite\n\revolutionToSite\n\rploneToSite\n\rwordpressPagesToSite\n\rdrupalToSite\n\ropenstaxToSite\n\rvitepressToSite\n\rhtmlToSite\n\rdocxToSite\n\rxlsxToSite`,
+      `${t("cliOptImportStructure")}\n\rpressbooksToSite\n\relmslnToSite\n\rhaxcmsToSite\n\rnotionToSite\n\rgitbookToSite\n\revolutionToSite\n\rploneToSite\n\rwordpressPagesToSite\n\rdrupalToSite\n\ropenstaxToSite\n\rvitepressToSite\n\rquartoToSite\n\rhtmlToSite\n\rdocxToSite\n\rxlsxToSite`,
     )
     .option("--node-op <char>", t("cliOptNodeOp"))
     .option("--item-id <char>", t("cliOptItemId"))
@@ -166,6 +203,9 @@ async function main() {
     .option("--replace <char>", t("cliOptReplace"))
     .option("--confirm", t("cliOptConfirm"))
     .option("--destroy-confirm", t("cliOptDestroyConfirm"))
+    // haxtheweb/issues#3228
+    .option("--only <char>", t("cliOptOnly"))
+    .option("--count <char>", t("cliOptCount"))
 
     .version(packageJson.version)
     .helpCommand(true);
@@ -237,6 +277,7 @@ async function main() {
     .option("--quiet", t("cliOptQuiet"))
     .option("--auto", t("cliOptAuto"))
     .option("--no-i", t("cliOptNoI"))
+    .option("--agent", t("cliOptAgent"))
     .option("--to-file <char>", t("cliOptToFile"))
     .option("--no-extras", t("cliOptNoExtras"))
     .option("--root <char>", t("cliOptRoot"))
@@ -244,7 +285,7 @@ async function main() {
     .option("--import-site <char>", t("cliOptImportSite"))
     .option(
       "--import-structure <char>",
-      `${t("cliOptImportStructure")}\n\rpressbooksToSite\n\relmslnToSite\n\rhaxcmsToSite\n\rnotionToSite\n\rgitbookToSite\n\revolutionToSite\n\rploneToSite\n\rwordpressPagesToSite\n\rdrupalToSite\n\ropenstaxToSite\n\rvitepressToSite\n\rhtmlToSite\n\rdocxToSite\n\rxlsxToSite`,
+      `${t("cliOptImportStructure")}\n\rpressbooksToSite\n\relmslnToSite\n\rhaxcmsToSite\n\rnotionToSite\n\rgitbookToSite\n\revolutionToSite\n\rploneToSite\n\rwordpressPagesToSite\n\rdrupalToSite\n\ropenstaxToSite\n\rvitepressToSite\n\rquartoToSite\n\rhtmlToSite\n\rdocxToSite\n\rxlsxToSite`,
     )
     .option("--name <char>", t("cliOptSiteName"))
     .option("--domain <char>", t("cliOptDomain"))
@@ -278,6 +319,8 @@ async function main() {
     .option("--replace <char>", t("cliOptReplace"))
     .option("--confirm", t("cliOptConfirm"))
     .option("--destroy-confirm", t("cliOptDestroyConfirm"))
+    .option("--only <char>", t("cliOptOnly"))
+    .option("--count <char>", t("cliOptCount"))
     .version(packageJson.version);
   let siteNodeOps = siteNodeOperations();
   for (let i in siteNodeOps) {
@@ -322,6 +365,7 @@ async function main() {
     .option("--author <char>", t("cliOptAuthor"))
     .option("--name <char>", t("cliOptWcName"))
     .option("--writeHaxProperties", t("cliOptWriteHaxProperties"))
+    .option("--no-docs", t("cliOptNoDocs"))
     .option("--template <char>", t("cliOptTemplate"))
     .option("--to-file <char>", t("cliOptToFile"))
     .option("--no-extras", t("cliOptNoExtras"))
@@ -350,6 +394,9 @@ async function main() {
         "\n\r" +
         "ssr - " +
         t("cliArgAuditSsr") +
+        "\n\r" +
+        "theme - " +
+        t("cliArgAuditTheme") +
         "\n\r" +
         "all - " +
         t("cliArgAuditAll"),
@@ -432,6 +479,33 @@ async function main() {
     .option("--format <char>", t("cliOptFormat"))
     .option("--quiet", t("cliOptQuiet"))
     .version(packageJson.version);
+
+  // haxtheweb/issues#3228: machine-readable command manifest + shell completion
+  program
+    .command("list")
+    .description(t("cliCmdList"))
+    .option("--format <char>", t("cliOptFormat"))
+    .action(() => {
+      commandRun = {
+        command: "list",
+        arguments: {},
+        options: {},
+      };
+    });
+  program
+    .command("completion")
+    .description(t("cliCmdCompletion"))
+    .argument(
+      "[shell]",
+      t("cliArgCompletionShell", { shells: COMPLETION_SHELLS.join(", ") }),
+    )
+    .action((shell) => {
+      commandRun = {
+        command: "completion",
+        arguments: { shell: shell || "bash" },
+        options: {},
+      };
+    });
 
   // process program arguments
   program.parse();
@@ -517,7 +591,7 @@ async function main() {
   let author = "";
   // should be able to grab if not predefined
   try {
-    let value = await exec(`git config user.name`);
+    let value = await runCommand("git", ["config", "user.name"]);
     author = value.stdout.trim();
   } catch {
     log(
@@ -680,6 +754,41 @@ async function main() {
   } catch (e) {
     program.error(color.red(e.message));
   }
+  // haxtheweb/issues#3228: these describe or survey the CLI and work anywhere
+  if (commandRun.command === "list" || commandRun.command === "completion") {
+    const manifest = cliManifest();
+    if (commandRun.command === "completion") {
+      const shell = commandRun.arguments.shell;
+      if (!COMPLETION_SHELLS.includes(shell)) {
+        program.error(
+          color.red(
+            t("cliCompletionUnknownShell", {
+              shell: shell,
+              shells: COMPLETION_SHELLS.join(", "),
+            }),
+          ),
+        );
+      }
+      writeData(completionScript(shell, manifest));
+    } else if (isStructuredFormat(commandRun.options.format)) {
+      writeData(
+        commandRun.options.format === "yaml"
+          ? dump(manifest)
+          : JSON.stringify(manifest, null, 2),
+      );
+    } else {
+      writeData(formatCliManifest(manifest));
+    }
+    process.exit(0);
+  }
+  if (
+    commandRun.command === "site" &&
+    commandRun.arguments.action === "site:list" &&
+    !(await systemStructureContext())
+  ) {
+    siteListOutput(commandRun, process.cwd());
+    process.exit(0);
+  }
   // test for updating to latest or just run the command
   if (commandRun.command === "webcomponent" && commandRun.options.search) {
     await elementsSearchCommand(commandRun);
@@ -746,9 +855,13 @@ async function main() {
       // failure (network unreachable, timeout, non-zero exit) is swallowed
       // and simply skips the "updates available" notice.
       try {
-        let execOut = await exec(`npm view @haxtheweb/create version`, {
-          timeout: 3000,
-        });
+        let execOut = await runCommand(
+          "npm",
+          ["view", "@haxtheweb/create", "version"],
+          {
+            timeout: 3000,
+          },
+        );
         let updateCheck = execOut.stdout.trim();
         if (updateCheck !== packageJson.version && !commandRun.options.quiet) {
           p.intro(
@@ -1339,6 +1452,7 @@ async function main() {
               if (results.theme === "custom-theme") {
                 const options = [
                   { value: "base", label: t("cliThemeTemplateBase") },
+                  { value: "starter", label: t("cliThemeTemplateStarter") },
                   {
                     value: "polaris-flex",
                     label: t("cliThemeTemplatePolarisFlex"),
@@ -1525,9 +1639,13 @@ export async function testForUpdates(commandRun) {
   // with a timeout and report a friendly message instead of crashing.
   let execOut;
   try {
-    execOut = await exec(`npm view @haxtheweb/create version`, {
-      timeout: 3000,
-    });
+    execOut = await runCommand(
+      "npm",
+      ["view", "@haxtheweb/create", "version"],
+      {
+        timeout: 3000,
+      },
+    );
   } catch {
     if (!commandRun.options.quiet) {
       p.intro(

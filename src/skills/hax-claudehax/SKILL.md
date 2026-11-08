@@ -103,6 +103,7 @@ When operating outside the `/hax` slash command, use the HAX CLI directly:
 - `hax audit` — DDD compliance audit
 - `hax audit schema` — validate site.json, skeletons, haxProperties, appstore.json and Merlin commands against the HAX schemas
 - `hax audit i18n` — find English hardcoded in Lit templates that should come from `this.t`
+- `hax audit theme` — check a custom theme against the HAXcms theme contract (`--format json` for rule, line and fix)
 - `hax skills list` — List bundled agent skills
 - `hax skills install <name|--all>` — Install bundled skills into `.agents/skills/`
 - `hax update` — Update HAX CLI
@@ -170,4 +171,4 @@ If the user is starting from an OpenStax book, use the `hax-openstax2hax` skill 
 - HAX CLI package: `https://www.npmjs.com/package/@haxtheweb/create`
 - HAX Documentation: `https://haxtheweb.org/`
 - HAX web components: `https://github.com/haxtheweb/webcomponents/tree/master/elements`
-- PRAW RULES.md: `~/Documents/git/haxtheweb/praw/RULES.md` (canonical ecosystem rules referenced by Rule ID)
+- PRAW RULES.md: `https://github.com/haxtheweb/praw/blob/main/RULES.md` (canonical ecosystem rules referenced by Rule ID)

@@ -35,11 +35,24 @@ import {
 import { t } from "../i18n.js";
 import { normalizeSiteLanguage } from "../language-registry.js";
 import { apiMessage, annotateApiBody } from "../api-messages.js";
+import {
+  validateSite,
+  parseRebuildTargets,
+  defaultArchivePath,
+  createSiteArchive,
+  restoreSiteArchive,
+  assertArchiveRestorable,
+  readCliLogs,
+  listSites,
+  generateCount,
+  placeholderPageHtml,
+} from "../site-tools.js";
 
 // Security (Stream-A): the deprecated @haxtheweb/open-apis npm dependency was
 // removed; converter calls now route in-process through haxcms-nodejs handlers
 // via invokeRoute() (same pattern as download-skeleton below), so no cloud
 // (open-apis.hax.cloud) URLs are referenced and the xlsx advisory is gone.
+import packageJson from "../../../package.json" with { type: "json" };
 import * as haxcmsLib from "@haxtheweb/haxcms-nodejs/dist/lib/HAXCMS.js";
 import * as allRoutesLib from "@haxtheweb/haxcms-nodejs/dist/lib/allRoutes.js";
 import * as josfile from "@haxtheweb/haxcms-nodejs/dist/lib/JSONOutlineSchema.js";
@@ -237,20 +250,112 @@ async function invokeRoute(routeHandler, body = {}, query = {}, params = {}) {
         securityLevel: "authenticated-site",
       }
     : undefined;
-  await routeHandler(
-    {
-      body: body,
-      query: query,
-      params: params,
-      headers: {
-        "x-haxcms-user-token": query.user_token || "fakeToken",
-        "x-haxcms-site-token": query.site_token || "fakeToken",
+  const run = () =>
+    routeHandler(
+      {
+        body: body,
+        query: query,
+        params: params,
+        headers: {
+          "x-haxcms-user-token": query.user_token || "fakeToken",
+          "x-haxcms-site-token": query.site_token || "fakeToken",
+          "x-hax-actor": cliActor(),
+        },
+        haxcmsSiteApiAuth: siteAuthContext,
       },
-      haxcmsSiteApiAuth: siteAuthContext,
-    },
-    res,
-  );
+      res,
+    );
+  // haxtheweb/issues#3191: route handlers run in-process here, so the web
+  // server's commit wrapper never sees them; give their commits the same
+  // "[actor:operationId:txn]" prefix it would.
+  const commitContext = cliCommitContextFor(routeHandler);
+  if (commitContext) {
+    await commitContextLib.runWithCommitContext(commitContext, run);
+  } else {
+    await run();
+  }
   return res;
+}
+
+// haxtheweb/issues#3191: HAXcms records who made each change in a site's git
+// history. Older haxcms-nodejs releases have no commitContext module; then
+// commits are simply not prefixed, as before.
+let commitContextLib = null;
+try {
+  // optional: only in haxcms-nodejs releases with commit op codes
+  // eslint-disable-next-line n/no-missing-require
+  commitContextLib = require("@haxtheweb/haxcms-nodejs/dist/lib/commitContext.js");
+} catch {
+  commitContextLib = null;
+}
+// a person ran the CLI unless --agent / HAX_ACTOR=agent says an agent did
+export function cliActor() {
+  return String(process.env.HAX_ACTOR || "").toLowerCase() === "agent"
+    ? "agent"
+    : "human";
+}
+let routeOperationIndex = null;
+// handler function -> the write route it is registered for, so invokeRoute
+// callers do not have to pass route keys around. A handler registered for
+// more than one route, or for a read as well (e.g. GET and POST skeletons),
+// is ambiguous: invokeRoute cannot tell which call it is, so it gets no
+// context rather than a wrong one.
+function routeFor(handler) {
+  if (!routeOperationIndex) {
+    const routes = new Map();
+    const all = allRoutesLib.allRoutes || {};
+    for (const scope of ["system", "site"]) {
+      const map = all[scope] && all[scope].map ? all[scope].map : {};
+      for (const method of Object.keys(map)) {
+        for (const key of Object.keys(map[method])) {
+          const fn = map[method][key];
+          if (!routes.has(fn)) {
+            routes.set(fn, []);
+          }
+          routes.get(fn).push({ scope: scope, method: method, key: key });
+        }
+      }
+    }
+    routeOperationIndex = new Map();
+    for (const [fn, list] of routes) {
+      if (list.length === 1 && list[0].method !== "get") {
+        routeOperationIndex.set(fn, list[0]);
+      }
+    }
+  }
+  return routeOperationIndex.get(handler) || null;
+}
+// the commit context for one in-process write route call, or null for reads,
+// ambiguous handlers, and when the installed haxcms-nodejs has no commit op
+// codes. The operationId is looked up only if the call actually commits
+// (the first lookup reads both OpenAPI specs).
+export function cliCommitContextFor(handler) {
+  if (!commitContextLib) {
+    return null;
+  }
+  const route = routeFor(handler);
+  if (!route) {
+    return null;
+  }
+  const context = commitContextLib.createRequestCommitContext(
+    { headers: { "x-hax-actor": cliActor() } },
+    "",
+  );
+  let op = null;
+  Object.defineProperty(context, "op", {
+    enumerable: true,
+    get() {
+      if (op === null) {
+        op = commitContextLib.getOperationId(
+          route.scope,
+          route.method,
+          route.key,
+        );
+      }
+      return op;
+    },
+  });
+  return context;
 }
 // Security (Stream-A): map --import-structure names to on-prem haxcms-nodejs
 // route handlers (replaces the deprecated @haxtheweb/open-apis broker). Platform
@@ -268,6 +373,7 @@ export const IMPORT_STRUCTURE_MAP = {
   drupalToSite: { platform: "drupal" },
   openstaxToSite: { platform: "openstax" },
   vitepressToSite: { platform: "vitepress" },
+  quartoToSite: { platform: "quarto" },
   htmlToSite: { platform: "html" },
   docxToSite: { routeKey: "actions/import-docx" },
   xlsxToSite: { routeKey: "actions/import-xlsx" },
@@ -388,18 +494,35 @@ export function resolveHaxcmsNodejsBin() {
   }
 }
 
-export function execNpxHaxcmsNodejsFallback(cwd, env) {
-  return exec(`npx @haxtheweb/haxcms-nodejs`, { cwd, env });
+// Security: the npx fallback downloads and runs code from the registry, so it
+// is pinned to the same semver range this package depends on rather than
+// whatever "latest" is, and the user is asked first (skipped with --y or when
+// there is no TTY to answer, where npx's own install gating applies).
+export const HAXCMS_NODEJS_FALLBACK_SPEC = `@haxtheweb/haxcms-nodejs@${packageJson.dependencies["@haxtheweb/haxcms-nodejs"]}`;
+
+export async function execNpxHaxcmsNodejsFallback(cwd, env, assumeYes) {
+  if (!assumeYes && process.stdin.isTTY) {
+    const approved = await p.confirm({
+      message: t("siteNpxFallbackConfirm", {
+        command: `npx ${HAXCMS_NODEJS_FALLBACK_SPEC}`,
+      }),
+      initialValue: true,
+    });
+    if (p.isCancel(approved) || !approved) {
+      throw new Error(t("siteNpxFallbackDeclined"));
+    }
+  }
+  return runCommand("npx", [HAXCMS_NODEJS_FALLBACK_SPEC], { cwd, env });
 }
 
 // Launches the local HAXcms server for site:start/site:serve/site creation's
 // launch-on-create flow. Prefers spawning the already-installed dependency
 // in-process (no network required); only falls back to `npx` if that isn't
 // possible.
-export function spawnHaxcmsNodejs(cwd, env) {
+export function spawnHaxcmsNodejs(cwd, env, assumeYes) {
   const resolvedBin = resolveHaxcmsNodejsBin();
   if (!resolvedBin) {
-    return execNpxHaxcmsNodejsFallback(cwd, env);
+    return execNpxHaxcmsNodejsFallback(cwd, env, assumeYes);
   }
   return new Promise((resolve, reject) => {
     let settled = false;
@@ -415,7 +538,7 @@ export function spawnHaxcmsNodejs(cwd, env) {
       settled = true;
       // local resolution succeeded but spawning node directly failed for some
       // reason (permissions, corrupted install, etc); fall back to npx.
-      execNpxHaxcmsNodejsFallback(cwd, env).then(resolve, reject);
+      execNpxHaxcmsNodejsFallback(cwd, env, assumeYes).then(resolve, reject);
     });
     child.on("exit", (code) => {
       if (settled) {
@@ -928,6 +1051,7 @@ export function siteHiddenActions() {
     "site:files-upload",
     "site:files-delete",
     "site:search-replace",
+    "site:doctor",
     "quit",
   ];
 }
@@ -984,6 +1108,7 @@ export function siteActions() {
     { value: "node:add", label: t("siteActionNodeAdd") },
     { value: "node:edit", label: t("siteActionNodeEdit") },
     { value: "node:delete", label: t("siteActionNodeDelete") },
+    { value: "node:generate", label: t("siteActionNodeGenerate") },
     { value: "site:stats", label: t("siteActionSiteStats") },
     { value: "site:items", label: t("siteActionSiteItems") },
     { value: "site:items-import", label: t("siteActionSiteItemsImport") },
@@ -993,6 +1118,12 @@ export function siteActions() {
     { value: "site:blocks", label: t("siteActionSiteBlocks") },
     { value: "site:analytics", label: t("siteActionSiteAnalytics") },
     { value: "site:revisions", label: t("siteActionSiteRevisions") },
+    { value: "site:validate", label: t("siteActionSiteValidate") },
+    { value: "site:rebuild", label: t("siteActionSiteRebuild") },
+    { value: "site:archive", label: t("siteActionSiteArchive") },
+    { value: "site:restore", label: t("siteActionSiteRestore") },
+    { value: "site:logs", label: t("siteActionSiteLogs") },
+    { value: "site:list", label: t("siteActionSiteList") },
     { value: "site:export", label: t("siteActionSiteExport") },
     { value: "site:theme", label: t("siteActionSiteTheme") },
     { value: "site:element", label: t("siteActionSiteElement") },
@@ -1398,11 +1529,15 @@ export async function siteCommandDetected(commandRun) {
           // Issue #2993: spawn the locally-resolved haxcms-nodejs bin
           // directly (no npx/network round-trip); falls back to npx only
           // if local resolution fails.
-          await spawnHaxcmsNodejs(activeHaxsite.directory, {
-            ...process.env,
-            PORT: `${port}`,
-            HAXCMS_DISABLE_JWT_CHECKS: "true",
-          });
+          await spawnHaxcmsNodejs(
+            activeHaxsite.directory,
+            {
+              ...process.env,
+              PORT: `${port}`,
+              HAXCMS_DISABLE_JWT_CHECKS: "true",
+            },
+            commandRun.options.y,
+          );
         } catch (e) {
           log(formatErrorForLogging(e), "error");
         }
@@ -1418,12 +1553,16 @@ export async function siteCommandDetected(commandRun) {
           }
           // Security (M-4 / R2-H-1): same loopback-only, scoped JWT-disable as start.
           // Issue #2993: same in-process spawn (with npx fallback) as start.
-          await spawnHaxcmsNodejs(activeHaxsite.directory, {
-            ...process.env,
-            PORT: `${port}`,
-            HAXCMS_DISABLE_JWT_CHECKS: "true",
-            NODE_ENV: "development",
-          });
+          await spawnHaxcmsNodejs(
+            activeHaxsite.directory,
+            {
+              ...process.env,
+              PORT: `${port}`,
+              HAXCMS_DISABLE_JWT_CHECKS: "true",
+              NODE_ENV: "development",
+            },
+            commandRun.options.y,
+          );
         } catch (e) {
           log(formatErrorForLogging(e), "error");
         }
@@ -2173,6 +2312,7 @@ export async function siteCommandDetected(commandRun) {
             if (!commandRun.options.customThemeTemplate) {
               const options = [
                 { value: "base", label: t("siteThemeTemplateBase") },
+                { value: "starter", label: t("siteThemeTemplateStarter") },
                 {
                   value: "polaris-flex",
                   label: t("siteThemeTemplatePolarisFlex"),
@@ -2359,7 +2499,7 @@ export async function siteCommandDetected(commandRun) {
 
           if (!project.author) {
             try {
-              let value = await exec(`git config user.name`);
+              let value = await runCommand("git", ["config", "user.name"]);
               project.author = value.stdout.trim();
             } catch {
               log(
@@ -3401,6 +3541,235 @@ export async function siteCommandDetected(commandRun) {
         }
         break;
       }
+      // haxtheweb/issues#3228: drush-inspired site commands
+      case "site:doctor":
+      case "site:validate": {
+        const report = validateSite(
+          activeHaxsite.siteDirectory,
+          activeHaxsite.manifest,
+          loadElementRegistry(activeHaxsite.siteDirectory),
+        );
+        if (commandRun.options.format || commandRun.options.quiet) {
+          logStructuredOutput(commandRun, report);
+        } else {
+          report.errors.forEach((e) => log(e.message, "error"));
+          report.warnings.forEach((w) => log(w.message, "warn"));
+          p.outro(
+            t("siteValidateSummary", {
+              errors: report.summary.errors,
+              warnings: report.summary.warnings,
+              pages: report.summary.pagesChecked,
+            }),
+          );
+        }
+        if (commandRun.options.toFile) {
+          fs.writeFileSync(
+            commandRun.options.toFile,
+            formatStructuredOutput(commandRun, report),
+          );
+        }
+        if (report.errors.length > 0) {
+          process.exitCode = 1;
+        }
+        break;
+      }
+      case "site:rebuild": {
+        try {
+          const targets = parseRebuildTargets(commandRun.options.only);
+          const rebuilt = await rebuildSiteTargets(activeHaxsite, targets);
+          await cliSiteCommit(
+            activeHaxsite,
+            // commit messages stay English, like logs
+            `Rebuilt ${rebuilt.join(" ")}`,
+            "upgradeManagedFiles",
+          );
+          if (commandRun.options.format) {
+            logStructuredOutput(commandRun, { rebuilt: rebuilt });
+          } else if (!commandRun.options.quiet) {
+            p.outro(
+              `${color.green("✓")} ${t("siteRebuildDone", { targets: rebuilt.join(", ") })}`,
+            );
+          }
+        } catch (e) {
+          log(formatErrorForLogging(e), "error");
+          process.exitCode = 1;
+        }
+        break;
+      }
+      case "site:archive": {
+        try {
+          const target = commandRun.options.toFile
+            ? resolveLocalPath(commandRun.options.toFile)
+            : defaultArchivePath(activeHaxsite.name);
+          const file = await createSiteArchive(
+            activeHaxsite.siteDirectory,
+            target,
+          );
+          if (commandRun.options.format) {
+            logStructuredOutput(commandRun, { archive: file });
+          } else if (!commandRun.options.quiet) {
+            p.outro(
+              `${color.green("✓")} ${t("siteArchiveDone", { path: file })}`,
+            );
+          }
+        } catch (e) {
+          log(formatErrorForLogging(e), "error");
+          process.exitCode = 1;
+        }
+        break;
+      }
+      case "site:restore": {
+        try {
+          let source = commandRun.options.source;
+          if (
+            !source &&
+            commandRun.options.i !== false &&
+            !commandRun.options.y
+          ) {
+            source = await p.text({
+              message: t("siteRestoreSourcePrompt"),
+              validate: (value) => {
+                if (!value) return t("siteRestoreSourceRequired");
+              },
+            });
+          }
+          if (!source || p.isCancel(source)) {
+            log(t("siteRestoreSourceRequired"), "error");
+            process.exitCode = 1;
+            break;
+          }
+          source = resolveLocalPath(source);
+          if (!fs.existsSync(source) || !fs.statSync(source).isFile()) {
+            log(t("siteRestoreSourceMissing", { path: source }), "error");
+            process.exitCode = 1;
+            break;
+          }
+          let confirmed = !!(
+            commandRun.options.y || commandRun.options.confirm
+          );
+          if (!confirmed && commandRun.options.i !== false) {
+            const answer = await p.confirm({
+              message: t("siteRestoreConfirm", {
+                site: activeHaxsite.name,
+                path: source,
+              }),
+              initialValue: false,
+            });
+            confirmed = answer === true;
+          }
+          if (!confirmed) {
+            log(t("siteRestoreNeedsConfirm"), "error");
+            process.exitCode = 1;
+            break;
+          }
+          // refuse a bad archive before anything is touched
+          await assertArchiveRestorable(source);
+          // always keep the current state before replacing it
+          const safety = await createSiteArchive(
+            activeHaxsite.siteDirectory,
+            defaultArchivePath(`${activeHaxsite.name}-pre-restore`),
+          );
+          const restored = await restoreSiteArchive(
+            source,
+            activeHaxsite.siteDirectory,
+          );
+          if (commandRun.options.format) {
+            logStructuredOutput(commandRun, {
+              restored: source,
+              safetyArchive: safety,
+              skippedLinks: restored.skippedLinks,
+            });
+          } else if (!commandRun.options.quiet) {
+            p.outro(
+              `${color.green("✓")} ${t("siteRestoreDone", { path: source, safety: safety })}`,
+            );
+          }
+        } catch (e) {
+          log(formatErrorForLogging(e), "error");
+          process.exitCode = 1;
+        }
+        break;
+      }
+      case "site:logs": {
+        const entries = readCliLogs({
+          search: commandRun.options.search,
+          limit: commandRun.options.searchLimit,
+        });
+        if (commandRun.options.format) {
+          logStructuredOutput(commandRun, entries);
+        } else if (entries.length === 0) {
+          p.outro(t("siteLogsEmpty"));
+        } else {
+          writeData(
+            entries
+              .map((e) => `${e.timestamp || "-"} ${e.level} ${e.message}`)
+              .join("\n"),
+          );
+        }
+        if (commandRun.options.toFile) {
+          fs.writeFileSync(
+            commandRun.options.toFile,
+            formatStructuredOutput(commandRun, entries),
+          );
+        }
+        break;
+      }
+      case "site:list":
+        siteListOutput(commandRun, process.cwd());
+        break;
+      case "node:generate": {
+        const count = generateCount(commandRun.options.count);
+        const prefix = titleWasProvided
+          ? commandRun.options.title
+          : t("siteGenerateDefaultTitle");
+        let parent = null;
+        if (commandRun.options.parent && commandRun.options.parent !== "") {
+          const parentNode = findNodeByIdOrSlug(
+            activeHaxsite,
+            commandRun.options.parent,
+          );
+          parent = parentNode ? parentNode.id : commandRun.options.parent;
+        }
+        let order = nextSiblingOrder(activeHaxsite.manifest.items, parent);
+        const created = [];
+        try {
+          const cliBridge = await getHaxcmsNodejsCli();
+          for (let i = 1; i <= count; i++) {
+            const body = {
+              site: activeHaxsite,
+              node: {
+                title: `${prefix} ${i}`,
+                contents: placeholderPageHtml(i),
+              },
+              order: order++,
+            };
+            if (parent) {
+              body.parent = parent;
+            }
+            const resp = await cliBridge.cliBridge("v1/items", body, "post");
+            const data = resp && resp.res ? resp.res.data : null;
+            if (!data || (data.status && data.status >= 400)) {
+              throw new Error(
+                t("siteNodeAddFailed", {
+                  reason: apiMessage(data, t("siteNoApiResponse")),
+                }),
+              );
+            }
+            created.push(
+              data.data && data.data.id ? data.data.id : body.node.title,
+            );
+          }
+        } catch (e) {
+          log(formatErrorForLogging(e), "error");
+          process.exitCode = 1;
+        }
+        if (commandRun.options.format) {
+          logStructuredOutput(commandRun, { created: created });
+        } else if (!commandRun.options.quiet) {
+          p.outro(t("siteGenerateDone", { count: created.length }));
+        }
+        break;
+      }
       case "issue:general":
         // open the issues
         p.intro(
@@ -3481,6 +3850,90 @@ export async function siteCommandDetected(commandRun) {
   if (!commandRun.options.quiet) {
     communityStatement();
   }
+}
+
+// haxtheweb/issues#3228: element registry for site:validate. A site's own
+// wc-registry.json wins; otherwise the registry this CLI ships with.
+export function loadElementRegistry(siteDirectory) {
+  const candidates = [
+    siteDirectory ? path.join(siteDirectory, "wc-registry.json") : null,
+    path.join(__dirname, "../wc-registry.json"),
+  ].filter(Boolean);
+  for (const file of candidates) {
+    try {
+      return JSON.parse(fs.readFileSync(file, "utf8"));
+    } catch {
+      // missing or unreadable: try the next registry
+    }
+  }
+  return {};
+}
+
+// regenerate derived files through the same HAXcms site methods a save uses
+export async function rebuildSiteTargets(site, targets) {
+  const done = [];
+  for (const target of targets) {
+    if (["rss", "sitemap", "search", "llms"].includes(target)) {
+      await site.updateAlternateFormats(target);
+    } else if (target === "managed") {
+      await site.rebuildManagedFiles();
+    } else if (target === "skills") {
+      if (typeof site.rebuildAgentSkills === "function") {
+        await site.rebuildAgentSkills();
+      }
+    }
+    done.push(target);
+  }
+  return done;
+}
+
+// commit a CLI-made change with the same [actor:op:txn] prefix as route calls
+export async function cliSiteCommit(site, message, op) {
+  if (!site || typeof site.gitCommit !== "function") {
+    return;
+  }
+  const run = async () => {
+    try {
+      await site.gitCommit(message, op);
+    } catch {
+      // nothing changed, or no git: a rebuild never fails on its commit
+    }
+  };
+  if (commitContextLib) {
+    const context = commitContextLib.createRequestCommitContext(
+      { headers: { "x-hax-actor": cliActor() } },
+      op,
+    );
+    await commitContextLib.runWithCommitContext(context, run);
+  } else {
+    await run();
+  }
+}
+
+// site:list works inside a site, in a folder of sites, or a HAXcms root
+export function siteListOutput(commandRun, directory) {
+  const sites = listSites(directory);
+  if (commandRun.options.format) {
+    logStructuredOutput(commandRun, sites);
+  } else if (sites.length === 0) {
+    log(t("siteListEmpty", { path: directory }));
+  } else {
+    writeData(
+      sites
+        .map(
+          (s) =>
+            `${s.name}\t${s.title || "-"}\t${s.theme || "-"}\t${s.pages}\t${s.updated || "-"}`,
+        )
+        .join("\n"),
+    );
+  }
+  if (commandRun.options.toFile) {
+    fs.writeFileSync(
+      commandRun.options.toFile,
+      formatStructuredOutput(commandRun, sites),
+    );
+  }
+  return sites;
 }
 
 // haxtheweb/issues#3127: order for a new node so it lands after its siblings
@@ -4429,10 +4882,14 @@ ${color.underline(color.cyan(`http://localhost:${port}`))}
       // Issue #2993: spawn the locally-resolved haxcms-nodejs bin directly
       // (no npx/network round-trip); falls back to npx only if local
       // resolution fails.
-      await spawnHaxcmsNodejs(optionPath, {
-        ...process.env,
-        HAXCMS_DISABLE_JWT_CHECKS: "true",
-      });
+      await spawnHaxcmsNodejs(
+        optionPath,
+        {
+          ...process.env,
+          HAXCMS_DISABLE_JWT_CHECKS: "true",
+        },
+        commandRun.options.y,
+      );
     } catch {
       // don't log bc output is weird
     }
@@ -4686,7 +5143,7 @@ async function customSiteTheme(commandRun, project) {
 
   if (!project.author) {
     try {
-      let value = await exec(`git config user.name`);
+      let value = await runCommand("git", ["config", "user.name"]);
       project.author = value.stdout.trim();
     } catch {
       log(
@@ -4715,6 +5172,13 @@ async function customSiteTheme(commandRun, project) {
       `${sitePath}/custom/src/sidebar-theme.js`,
     );
     await fs.renameSync(`${sitePath}/custom/src/sidebar-theme.js`, filePath);
+  } else if (themeTemplate === "starter") {
+    // full theme contract, marked up for `hax audit theme`
+    await fs.copyFileSync(
+      `${process.mainModule.path}/templates/sitetheme/starter-theme.js`,
+      `${sitePath}/custom/src/starter-theme.js`,
+    );
+    await fs.renameSync(`${sitePath}/custom/src/starter-theme.js`, filePath);
   } else {
     // vanilla theme is default
     await fs.copyFileSync(

@@ -73,6 +73,9 @@ utils.exec = async (cmd, cmdOpts) => {
   }
   return execResult;
 };
+// commands now run as argument arrays via runCommand (no shell string)
+utils.runCommand = async (cmd, args = [], cmdOpts) =>
+  utils.exec(`${cmd} ${args.join(" ")}`, cmdOpts);
 utils.interactiveExec = async (cmd, args, cmdOpts) => {
   interactiveCalls.push({ cmd, args, opts: cmdOpts });
 };

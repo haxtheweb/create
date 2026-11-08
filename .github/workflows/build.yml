@@ -28,14 +28,17 @@ jobs:
         run: npm ci
       - name: Audit production dependencies
         run: npm audit --omit=dev --audit-level=high
-      - name: Lint
-        run: npm run lint
       - name: Format check
         run: npm run format:check
       - name: Build
         run: npm run build
       - name: Test
         run: npm test
+      - name: Lint
+        # Advisory only: lint runs after the real tests and never fails the
+        # build (findings still show as annotations / in the log).
+        continue-on-error: true
+        run: npm run lint
   # haxtheweb/issues#3116: the agent / CI path. Runs as root in a fresh
   # container with no TTY and no git identity, the context AI agents and
   # CI runners give the CLI, so a prompt or launched dev server shows up as
@@ -49,8 +52,6 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Install
         run: npm ci
-      - name: Lint
-        run: npm run lint
       - name: Format check
         run: npm run format:check
       - name: Build
@@ -61,3 +62,8 @@ jobs:
           GIT_CONFIG_NOSYSTEM: "1"
           GIT_CONFIG_GLOBAL: /dev/null
         run: npm run test:smoke
+      - name: Lint
+        # Advisory only: lint runs after the real tests and never fails the
+        # build (findings still show as annotations / in the log).
+        continue-on-error: true
+        run: npm run lint

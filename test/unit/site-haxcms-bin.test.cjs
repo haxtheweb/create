@@ -44,6 +44,12 @@ utils.exec = async (cmd, cmdOpts) => {
   execCalls.push({ cmd, opts: cmdOpts });
   return { stdout: "stub-stdout", stderr: "" };
 };
+// the npx fallback runs through runCommand (no shell string); record it in the
+// same shape so the assertions read the full command line
+utils.runCommand = async (cmd, args, cmdOpts) => {
+  execCalls.push({ cmd: [cmd, ...args].join(" "), args, opts: cmdOpts });
+  return { stdout: "stub-stdout", stderr: "" };
+};
 const spawnCalls = [];
 utils.spawn = (cmd, args, spawnOpts) => {
   spawnCalls.push({ cmd, args, opts: spawnOpts });
@@ -109,13 +115,17 @@ test(
 );
 
 test(
-  "execNpxHaxcmsNodejsFallback delegates to exec with the npx command and cwd/env",
+  "execNpxHaxcmsNodejsFallback runs npx through runCommand with cwd/env",
   opts,
   async () => {
     execCalls.length = 0;
-    await execNpxHaxcmsNodejsFallback("/some/cwd", { PORT: "8080" });
+    await execNpxHaxcmsNodejsFallback("/some/cwd", { PORT: "8080" }, true);
     assert.equal(execCalls.length, 1);
-    assert.equal(execCalls[0].cmd, "npx @haxtheweb/haxcms-nodejs");
+    const range =
+      require("../../package.json").dependencies["@haxtheweb/haxcms-nodejs"];
+    assert.equal(execCalls[0].cmd, `npx @haxtheweb/haxcms-nodejs@${range}`);
+    // the spec is one argument, never spliced into a shell string
+    assert.deepEqual(execCalls[0].args, [`@haxtheweb/haxcms-nodejs@${range}`]);
     assert.deepEqual(execCalls[0].opts, {
       cwd: "/some/cwd",
       env: { PORT: "8080" },
@@ -187,7 +197,7 @@ test(
     });
     await promise;
     assert.equal(execCalls.length, 1);
-    assert.equal(execCalls[0].cmd, "npx @haxtheweb/haxcms-nodejs");
+    assert.match(execCalls[0].cmd, /^npx @haxtheweb\/haxcms-nodejs@\^?\d/);
     assert.equal(execCalls[0].opts.cwd, "/site/cwd");
   },
 );
@@ -209,7 +219,7 @@ test(
       await spawnHaxcmsNodejs("/site/cwd", { PORT: "3002" });
       assert.equal(spawnCalls.length, 0, "no direct spawn attempted");
       assert.equal(execCalls.length, 1);
-      assert.equal(execCalls[0].cmd, "npx @haxtheweb/haxcms-nodejs");
+      assert.match(execCalls[0].cmd, /^npx @haxtheweb\/haxcms-nodejs@\^?\d/);
     } finally {
       Module._resolveFilename = originalResolveFilename;
     }

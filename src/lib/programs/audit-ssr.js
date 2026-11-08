@@ -191,6 +191,85 @@ function stripBlocks(markup) {
 }
 const MEDIA = /<(?:img|svg|canvas|video|audio|picture|iframe|object|embed)\b/gi;
 
+// HTML boolean attributes switch on by being present, whatever their value, so
+// a server render of checked="false" still shows the control as checked
+const BOOLEAN_ATTRIBUTES = [
+  "autofocus",
+  "autoplay",
+  "checked",
+  "controls",
+  "disabled",
+  "hidden",
+  "inert",
+  "loop",
+  "multiple",
+  "muted",
+  "novalidate",
+  "open",
+  "readonly",
+  "required",
+  "reversed",
+  "selected",
+];
+const FALSE_BOOLEAN = new RegExp(
+  `\\s(${BOOLEAN_ATTRIBUTES.join("|")})=(?:"false"|'false')`,
+  "gi",
+);
+
+/**
+ * @description HTML boolean attributes that the server render wrote out as
+ * "false". Lit SSR serializes a property binding on a native element
+ * (`.checked=${false}`) as an attribute, and the browser reads the attribute's
+ * presence as true until the element hydrates. The fix is a boolean attribute
+ * binding (`?checked=${value}`), which is omitted when false.
+ * @param markup the string @lit-labs/ssr produced
+ * @returns {string[]} attribute names, sorted, each once
+ */
+export function falseBooleanAttributes(markup) {
+  const names = new Set();
+  for (const m of String(markup || "").matchAll(FALSE_BOOLEAN)) {
+    names.add(m[1].toLowerCase());
+  }
+  return [...names].sort();
+}
+
+// native elements whose address is lost when it is bound as a property
+const ADDRESSED_TAGS = [
+  "a",
+  "audio",
+  "embed",
+  "iframe",
+  "img",
+  "link",
+  "object",
+  "source",
+  "track",
+  "video",
+];
+const PROPERTY_ADDRESS = new RegExp(
+  `<(${ADDRESSED_TAGS.join("|")})(?=\\s)(?:[^<>"'$]|"[^"]*"|'[^']*'|\\$\\{[^}]*\\}|\\$)*?\\s\\.(src|href|srcset|data)=["']?\\$\\{`,
+  "gi",
+);
+
+/**
+ * @description Native elements in a Lit template that bind their address as a
+ * property (`<iframe .src=${url}>`). Lit SSR does not write a property binding
+ * on a native element, so the server HTML has the element with no address and
+ * crawlers, RSS and readers without JavaScript get nothing. The fix is an
+ * attribute binding (`src=${url}`, with `ifDefined` when it can be undefined).
+ * Reads the element's own source file, so addresses bound in other files are
+ * not seen.
+ * @param source the element's JavaScript source
+ * @returns {string[]} such as "iframe .src", sorted, each once
+ */
+export function propertyBoundAddresses(source) {
+  const found = new Set();
+  for (const m of String(source || "").matchAll(PROPERTY_ADDRESS)) {
+    found.add(`${m[1].toLowerCase()} .${m[2].toLowerCase()}`);
+  }
+  return [...found].sort();
+}
+
 /**
  * @description The markup inside the first declarative shadow root of the
  * outer element, or null when the element rendered without one.
@@ -226,7 +305,7 @@ export function shadowRootContent(markup, tag) {
  * @description Measure SSR output and classify it.
  * @param markup the string @lit-labs/ssr produced
  * @param tag the element that was rendered
- * @returns {{status: string, bytes: number, shadowRoots: number, textChars: number, elements: number, slots: number, media: number, styleBytes: number, uniqueStyleBytes: number, styleBlocks: Array<{hash: string, bytes: number}>, styleRules: Object<string, number>}}
+ * @returns {{status: string, bytes: number, shadowRoots: number, textChars: number, elements: number, slots: number, media: number, styleBytes: number, uniqueStyleBytes: number, styleBlocks: Array<{hash: string, bytes: number}>, styleRules: Object<string, number>, falseBooleanAttrs: string[]}}
  */
 export function analyzeSsrOutput(markup, tag) {
   const bytes = Buffer.byteLength(markup);
@@ -264,11 +343,13 @@ export function analyzeSsrOutput(markup, tag) {
     uniqueStyleBytes,
     styleBlocks,
     styleRules: Object.fromEntries(ruleSizes),
+    falseBooleanAttrs: [],
   };
   if (inner === null) {
     return result;
   }
   const body = stripBlocks(inner);
+  result.falseBooleanAttrs = falseBooleanAttributes(body);
   const text = body
     .replace(/<[^>]*>/g, " ")
     .replace(/&[a-z]+;|&#\d+;/gi, " ")
@@ -466,6 +547,16 @@ export function summarizeSsr(results, extras = {}) {
       .sort((a, b) => b.count - a.count),
     hints: [...hinted.values()].sort((a, b) => b.tags.length - a.tags.length),
     fallback,
+    // elements whose server output has boolean attributes written as "false"
+    falseBooleanAttrs: results
+      .filter((r) => r.falseBooleanAttrs && r.falseBooleanAttrs.length)
+      .map((r) => ({ tag: r.tag, attrs: r.falseBooleanAttrs })),
+    // elements whose source binds a native element's address as a property
+    propertyBoundAddresses: results
+      .filter(
+        (r) => r.propertyBoundAddresses && r.propertyBoundAddresses.length,
+      )
+      .map((r) => ({ tag: r.tag, bindings: r.propertyBoundAddresses })),
     primitiveStyles: { bytes: Buffer.byteLength(extras.primitiveCss || "") },
     size: {
       measured: rendered,
@@ -784,6 +875,10 @@ export async function auditSsrCommand(commandRun, root = null, deps = {}) {
       styleBytes: a.styleBytes,
       uniqueStyleBytes: a.uniqueStyleBytes,
       styleRules: a.styleRules,
+      falseBooleanAttrs: a.falseBooleanAttrs,
+      propertyBoundAddresses: doc.file
+        ? propertyBoundAddresses(readSource(doc.file))
+        : [],
       hints,
       truncated: Boolean(doc.truncated),
       fallback: doc.progressive ? analyzeFallback(doc.progressive) : null,
@@ -864,6 +959,30 @@ export async function auditSsrCommand(commandRun, root = null, deps = {}) {
         `${color.bold(status)} (${tags.length}): ${options.debug ? tags.join(", ") : tags.slice(0, 15).join(", ") + (tags.length > 15 ? ", …" : "")}`,
       );
     }
+  }
+  if (summary.falseBooleanAttrs.length) {
+    const list = summary.falseBooleanAttrs
+      .map((r) => `${r.tag} (${r.attrs.join(", ")})`)
+      .slice(0, options.debug ? 100 : 15)
+      .join(", ");
+    p.log.warn(
+      t("auditSsrFalseBoolean", {
+        count: summary.falseBooleanAttrs.length,
+        list,
+      }),
+    );
+  }
+  if (summary.propertyBoundAddresses.length) {
+    const list = summary.propertyBoundAddresses
+      .map((r) => `${r.tag} (${r.bindings.join(", ")})`)
+      .slice(0, options.debug ? 100 : 15)
+      .join(", ");
+    p.log.warn(
+      t("auditSsrPropertyAddress", {
+        count: summary.propertyBoundAddresses.length,
+        list,
+      }),
+    );
   }
   if (summary.size.measured) {
     p.log.info(
