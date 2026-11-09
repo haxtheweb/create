@@ -34,6 +34,8 @@
   "auditSchemaWarningTag": "warning",
   "auditSchemaPassed": "HAX schema checks passed",
   "auditSchemaProblems": "Schema problems found. Re-run with {debug} to see warnings, or {strict} to fail on them.",
+  "auditSchemaNpxConfirm": "Validator not installed locally. Download and run it from the npm registry with {command}?",
+  "auditSchemaNpxDeclined": "{pkg} is not installed and the npx download was declined. Install it with: {install}",
   "auditUnknownType": "Unknown audit type \"{type}\". Use ddd, schema, i18n, ssr, theme or all.",
   "auditI18nStart": "Auditing translatable text: {path}",
   "auditI18nParseError": "Could not parse {file}: {error}",
