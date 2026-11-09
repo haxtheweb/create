@@ -7,6 +7,10 @@
 // This file is deliberately `.js` (still CommonJS: package.json has no
 // "type": "module"). OpenSSF Scorecard's Fuzzing check only scans *.js/*.jsx
 // files for `require("fast-check")`, so a `.cjs` name hides it from Scorecard.
+//
+// Seed and run count follow the HAX fuzz convention (test/_helpers/fuzz-config.cjs):
+// `npm test` uses a fixed seed; `npm run test:fuzz` hunts with a random seed;
+// HAX_FUZZ_SEED=<seed> HAX_FUZZ_PATH=<path> replays a reported failure.
 "use strict";
 
 require("@babel/register");
@@ -28,7 +32,9 @@ const {
 } = require("../../src/lib/utils.js");
 const { resolveLocalPath } = require("../../src/lib/site-security.js");
 
-const RUNS = { numRuns: 300 };
+const { fuzzConfig } = require("../_helpers/fuzz-config.cjs");
+
+const RUNS = fuzzConfig({ defaultSeed: 20261109 });
 
 const throws = (fn) => {
   try {

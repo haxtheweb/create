@@ -30,6 +30,8 @@ npm run precheck && npm run lint                # required gate before any commi
 ## Regression guards (must stay green)
 
 - `test/unit/security-helpers-fuzz.test.js` — fuzzes the validators/sanitizers
+  (fixed seed in `npm test`; `npm run test:fuzz` hunts on a random seed, and
+  `HAX_FUZZ_SEED`/`HAX_FUZZ_PATH` replay a reported failure)
 - `test/unit/site-security.test.cjs` — SSRF / sanitization / path-traversal helpers
 - Seam A unit tests over the `src/lib/utils.js` validators
 
