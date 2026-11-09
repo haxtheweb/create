@@ -184,6 +184,56 @@ export function docsStepFor(commandRun, project) {
   );
 }
 
+// a monorepo with this workflow blocks non-English locale files in PRs and
+// translates new elements nightly (haxtheweb/issues#3262)
+const LOCALE_GUARD = ".github/workflows/locale-guard.yml";
+
+/**
+ * @description Whether a new element should ship English-only: only in a
+ * monorepo whose root has the locale guard, which rejects the template's
+ * translated stubs and fills them in its nightly translation PR instead.
+ */
+export function englishOnlyLocalesFor(commandRun, project) {
+  const options = (commandRun && commandRun.options) || {};
+  if (!options.isMonorepo || !project.path) {
+    return false;
+  }
+  return fs.existsSync(
+    path.join(path.resolve(project.path, ".."), LOCALE_GUARD),
+  );
+}
+
+/**
+ * @description Remove every locale file that isn't English (en, en-*, en_*)
+ * from a new element's locales folder; returns the names removed.
+ */
+export function removeNonEnglishLocales(localesDir) {
+  if (!fs.existsSync(localesDir)) {
+    return [];
+  }
+  const removed = [];
+  fs.readdirSync(localesDir).forEach((file) => {
+    if (!file.endsWith(".json")) {
+      return;
+    }
+    const parts = file.slice(0, -".json".length).split(".");
+    // <namespace>.<lang>.json; a file without a language part is not a translation
+    if (parts.length < 2) {
+      return;
+    }
+    const lang = parts[parts.length - 1];
+    if (lang === "en" || lang.startsWith("en-") || lang.startsWith("en_")) {
+      return;
+    }
+    fs.unlinkSync(path.join(localesDir, file));
+    removed.push(file);
+  });
+  if (fs.readdirSync(localesDir).length === 0) {
+    fs.rmdirSync(localesDir);
+  }
+  return removed;
+}
+
 export async function webcomponentProcess(commandRun, project, port = "8000") {
   // Security (M-2): defense-in-depth re-check of --npm-client at the point it
   // is interpolated into exec() shell strings. create.js validates earlier,
@@ -302,6 +352,11 @@ export async function webcomponentProcess(commandRun, project, port = "8000") {
     `${project.path}/${project.name}/lib/webcomponent.haxProperties.json`,
     `${project.path}/${project.name}/lib/${project.name}.haxProperties.json`,
   );
+  // monorepos with the locale guard take English only; translations come in
+  // their nightly translation PR
+  if (englishOnlyLocalesFor(commandRun, project)) {
+    removeNonEnglishLocales(`${project.path}/${project.name}/locales`);
+  }
   // loop through and rename all the localization files
   if (fs.existsSync(`${project.path}/${project.name}/locales/`)) {
     fs.readdirSync(`${project.path}/${project.name}/locales/`).forEach(
