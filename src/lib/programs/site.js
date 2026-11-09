@@ -988,12 +988,179 @@ export function removeStaticLlmsFull(siteDirectory) {
   }
 }
 
-export function prepareSiteForStaticPublish(siteDirectory) {
-  let prepared = false;
+// Local build artifacts that must not be shipped to a static host. They are
+// moved aside (never deleted) for the duration of the publish and moved back
+// afterwards: `build/` can be a real directory holding a user's unbundled
+// build, and wc-registry.json / assets/babel* are regenerated only by a full
+// rebuild, so deleting them from the live site was data loss when a publish
+// was declined or crashed. Nothing in this flow ever rm's a real directory.
+const STATIC_PUBLISH_ARTIFACTS = ["build", "wc-registry.json"];
+const STATIC_PUBLISH_ASSETS_PREFIX = "babel";
+
+/**
+ * Sibling directory (outside the site, so it can't be published) where the
+ * artifacts are parked during a static publish. Deterministic so a restore
+ * can find a stash left behind by a crashed run.
+ */
+export function staticPublishStashDir(siteDirectory) {
+  const resolved = path.resolve(siteDirectory);
+  return path.join(
+    path.dirname(resolved),
+    `.${path.basename(resolved)}.hax-publish-stash`,
+  );
+}
+
+function lexists(target) {
   try {
-    if (!fs.existsSync(siteDirectory)) {
-      return false;
+    fs.lstatSync(target);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+// rename src -> dest without ever overwriting an existing dest; returns
+// true on success, false if left in place.
+function moveAside(src, dest) {
+  if (!lexists(src) || lexists(dest)) {
+    return false;
+  }
+  try {
+    fs.mkdirSync(path.dirname(dest), { recursive: true });
+    fs.renameSync(src, dest);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Move the local-only build artifacts out of the site into the stash dir.
+ * Returns { stashDir, moved: [relative paths], skipped: [relative paths] };
+ * skipped entries were left in place untouched (never deleted).
+ */
+export function stashStaticPublishArtifacts(siteDirectory) {
+  const stashDir = staticPublishStashDir(siteDirectory);
+  const result = { stashDir, moved: [], skipped: [] };
+  const candidates = [...STATIC_PUBLISH_ARTIFACTS];
+  try {
+    const assetsDir = path.join(siteDirectory, "assets");
+    if (fs.existsSync(assetsDir) && fs.statSync(assetsDir).isDirectory()) {
+      for (const item of fs.readdirSync(assetsDir)) {
+        if (item.startsWith(STATIC_PUBLISH_ASSETS_PREFIX)) {
+          candidates.push(path.join("assets", item));
+        }
+      }
     }
+  } catch {
+    // unreadable assets dir: nothing to stash from it
+  }
+  for (const rel of candidates) {
+    const src = path.join(siteDirectory, rel);
+    if (!lexists(src)) {
+      continue;
+    }
+    if (moveAside(src, path.join(stashDir, rel))) {
+      result.moved.push(rel);
+    } else {
+      result.skipped.push(rel);
+    }
+  }
+  return result;
+}
+
+/**
+ * Move everything in the stash dir back into the site. Existing files in
+ * the site are never overwritten; anything that can't go back stays in the
+ * stash (and the stash dir is kept) so nothing is lost. Returns the number
+ * of entries moved back.
+ */
+export function unstashStaticPublishArtifacts(siteDirectory) {
+  const stashDir = staticPublishStashDir(siteDirectory);
+  let restored = 0;
+  if (!lexists(stashDir)) {
+    return restored;
+  }
+  const entries = [];
+  try {
+    for (const item of fs.readdirSync(stashDir)) {
+      if (item === "assets") {
+        const stashedAssets = path.join(stashDir, "assets");
+        try {
+          for (const asset of fs.readdirSync(stashedAssets)) {
+            entries.push(path.join("assets", asset));
+          }
+        } catch {
+          // not a directory; treat as a plain entry
+          entries.push(item);
+        }
+      } else {
+        entries.push(item);
+      }
+    }
+  } catch {
+    return restored;
+  }
+  for (const rel of entries) {
+    if (moveAside(path.join(stashDir, rel), path.join(siteDirectory, rel))) {
+      restored++;
+    }
+  }
+  // only an empty stash is removed (rmdirSync refuses non-empty dirs)
+  for (const dir of [path.join(stashDir, "assets"), stashDir]) {
+    try {
+      fs.rmdirSync(dir);
+    } catch {
+      // non-empty or already gone; leave it
+    }
+  }
+  return restored;
+}
+
+function logStaticPublishPrepared(state, commandRun) {
+  if (!state || commandRun.options.quiet) {
+    return;
+  }
+  const parts = [];
+  if (state.indexSwapped) {
+    parts.push("ghpages.html → index.html");
+  }
+  if (state.stash && state.stash.moved.length > 0) {
+    parts.push(`moved aside: ${state.stash.moved.join(", ")}`);
+  }
+  if (parts.length > 0) {
+    log(`Prepared site for static publish (${parts.join("; ")})`, "info");
+  }
+  if (state.stash && state.stash.skipped.length > 0) {
+    log(
+      `Left in place (could not be moved aside): ${state.stash.skipped.join(", ")}`,
+      "warn",
+    );
+  }
+}
+
+/**
+ * Prepare a live HAXcms site directory for a static host: swap ghpages.html
+ * in as index.html (backing the original up), write llms-full.txt, and move
+ * local-only build artifacts aside. Returns false only when the directory
+ * does not exist; otherwise { indexSwapped, stash } so the caller can log
+ * what happened and MUST call restoreSiteAfterStaticPublish() in a finally.
+ */
+export function prepareSiteForStaticPublish(siteDirectory) {
+  if (!fs.existsSync(siteDirectory)) {
+    return false;
+  }
+  const state = {
+    indexSwapped: false,
+    stash: {
+      stashDir: staticPublishStashDir(siteDirectory),
+      moved: [],
+      skipped: [],
+    },
+  };
+  try {
+    // a stash left behind by a crashed/killed earlier publish goes back first
+    unstashStaticPublishArtifacts(siteDirectory);
     // static hosts have no server to answer llms-full.txt (#3104)
     writeStaticLlmsFull(siteDirectory);
     const indexPath = path.join(siteDirectory, "index.html");
@@ -1007,46 +1174,24 @@ export function prepareSiteForStaticPublish(siteDirectory) {
       }
       // Copy ghpages.html to index.html so the host serves it as the entry point
       fs.copyFileSync(ghpagesPath, indexPath);
-      prepared = true;
+      state.indexSwapped = true;
     }
-    // Remove local build artifacts that won't exist on a static host
-    const buildDir = path.join(siteDirectory, "build");
-    const wcRegistryPath = path.join(siteDirectory, "wc-registry.json");
-    if (fs.existsSync(buildDir)) {
-      try {
-        fs.rmSync(buildDir, { recursive: true, force: true });
-      } catch {
-        // best-effort removal
-      }
-    }
-    if (fs.existsSync(wcRegistryPath)) {
-      try {
-        fs.unlinkSync(wcRegistryPath);
-      } catch {
-        // best-effort removal
-      }
-    }
-    // Remove babel* files in assets directory
-    try {
-      const assetsDir = path.join(siteDirectory, "assets");
-      if (fs.existsSync(assetsDir)) {
-        const items = fs.readdirSync(assetsDir);
-        for (const item of items) {
-          if (item.startsWith("babel")) {
-            fs.unlinkSync(path.join(assetsDir, item));
-          }
-        }
-      }
-    } catch {
-      // best-effort removal
-    }
+    // Park local build artifacts that won't exist on a static host; they
+    // come back in restoreSiteAfterStaticPublish (never deleted)
+    state.stash = stashStaticPublishArtifacts(siteDirectory);
   } catch {
     // Silent failure; prep is best-effort
   }
-  return prepared;
+  return state;
 }
 
+/**
+ * Undo prepareSiteForStaticPublish: remove the static llms-full.txt, put the
+ * original index.html back and move the stashed build artifacts home.
+ * Returns true when anything was restored.
+ */
 export function restoreSiteAfterStaticPublish(siteDirectory) {
+  let restored = false;
   try {
     if (!fs.existsSync(siteDirectory)) {
       return false;
@@ -1058,12 +1203,19 @@ export function restoreSiteAfterStaticPublish(siteDirectory) {
     if (fs.existsSync(backupPath)) {
       fs.copyFileSync(backupPath, indexPath);
       fs.unlinkSync(backupPath);
-      return true;
+      restored = true;
     }
   } catch {
     // Silent failure; restore is best-effort
   }
-  return false;
+  try {
+    if (unstashStaticPublishArtifacts(siteDirectory) > 0) {
+      restored = true;
+    }
+  } catch {
+    // best-effort; the stash dir is left on disk if anything went wrong
+  }
+  return restored;
 }
 
 // actions the site dispatcher accepts that are not listed in siteActions()
@@ -2594,12 +2746,7 @@ export async function siteCommandDetected(commandRun) {
           }
           // Prepare for static publish: swap ghpages.html in as index.html and clean local artifacts
           surgePrepared = prepareSiteForStaticPublish(activeHaxsite.directory);
-          if (surgePrepared && !commandRun.options.quiet) {
-            log(
-              `Prepared site for static publish (ghpages.html → index.html, build removed)`,
-              "info",
-            );
-          }
+          logStaticPublishPrepared(surgePrepared, commandRun);
           // attempt to install; implies they asked to publish with surge but
           // system test did not see it globally
           if (!sysSurge) {
@@ -2701,7 +2848,10 @@ export async function siteCommandDetected(commandRun) {
               activeHaxsite.directory,
             );
             if (restored && !commandRun.options.quiet) {
-              log(`Restored original index.html after publish`, "info");
+              log(
+                `Restored original index.html and local build artifacts after publish`,
+                "info",
+              );
             }
           }
         }
@@ -2732,12 +2882,7 @@ export async function siteCommandDetected(commandRun) {
           netlifyPrepared = prepareSiteForStaticPublish(
             activeHaxsite.directory,
           );
-          if (netlifyPrepared && !commandRun.options.quiet) {
-            log(
-              `Prepared site for static publish (ghpages.html → index.html, build removed)`,
-              "info",
-            );
-          }
+          logStaticPublishPrepared(netlifyPrepared, commandRun);
           // attempt to install; implies they asked to publish with netlify but
           // system test did not see it globally
           if (!sysNetlify) {
@@ -2786,7 +2931,10 @@ export async function siteCommandDetected(commandRun) {
               activeHaxsite.directory,
             );
             if (restored && !commandRun.options.quiet) {
-              log(`Restored original index.html after publish`, "info");
+              log(
+                `Restored original index.html and local build artifacts after publish`,
+                "info",
+              );
             }
           }
         }
@@ -2815,12 +2963,7 @@ export async function siteCommandDetected(commandRun) {
           }
           // Prepare for static publish: swap ghpages.html in as index.html and clean local artifacts
           vercelPrepared = prepareSiteForStaticPublish(activeHaxsite.directory);
-          if (vercelPrepared && !commandRun.options.quiet) {
-            log(
-              `Prepared site for static publish (ghpages.html → index.html, build removed)`,
-              "info",
-            );
-          }
+          logStaticPublishPrepared(vercelPrepared, commandRun);
           // attempt to install; implies they asked to publish with vercel but
           // system test did not see it globally
           if (!sysVercel) {
@@ -2868,7 +3011,10 @@ export async function siteCommandDetected(commandRun) {
               activeHaxsite.directory,
             );
             if (restored && !commandRun.options.quiet) {
-              log(`Restored original index.html after publish`, "info");
+              log(
+                `Restored original index.html and local build artifacts after publish`,
+                "info",
+              );
             }
           }
         }
