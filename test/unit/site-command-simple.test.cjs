@@ -442,6 +442,9 @@ test(
     );
     assert.equal(record.opts.cwd, SITE_DIR);
     assert.equal(record.opts.env.HAXCMS_DISABLE_JWT_CHECKS, "true");
+    // Security: the no-login server must be pinned to loopback by the CLI,
+    // not left to the server's defaults.
+    assert.equal(record.opts.env.HAXCMS_HOST, "127.0.0.1");
     assert.ok(parseInt(record.opts.env.PORT, 10) > 0, "a port was selected");
   },
 );
