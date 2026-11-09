@@ -1,6 +1,10 @@
 // For format details, see https://aka.ms/devcontainer.json.
 {
   "name": "haxtheweb/create Dev Container",
+  // Security: pin this image by digest once the current one is known, e.g.
+  //   docker manifest inspect ghcr.io/haxtheweb/devcontainer-nodejs:latest
+  // then use "ghcr.io/haxtheweb/devcontainer-nodejs@sha256:<digest>" so a
+  // re-pushed :latest cannot silently change the dev environment.
   "image": "ghcr.io/haxtheweb/devcontainer-nodejs:latest",
   // Compatibility with SELinux
   "runArgs": ["--security-opt", "label=disable"],
