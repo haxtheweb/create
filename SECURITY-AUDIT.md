@@ -5,9 +5,8 @@ Entry point for recurring security audits of this repo. `create` is one of five 
 ## Read order (do this first)
 
 1. `CONTEXT.md` — module map, test seams (A: pure functions, B: fs fixtures, C: CLI smoke), domain vocabulary
-2. `security_best_practices_report.md` — canonical current state: findings, verified hardening, dependency posture
-3. `security_best_practices_report_YYYY-MM-DD.md` — archived rounds; the inline `Security (H-x/M-x/L-x/R2-x)` comments in `src/` reference these finding IDs
-4. `SECURITY.md` — disclosure policy (private advisory at `haxtheweb/issues`, never public issues)
+2. `docs/security-invariants.md` — the rules this code keeps, one row per invariant with the helper that enforces it and the test that guards it; every inline `Security (<name>)` comment in `src/` names a row
+3. `SECURITY.md` — disclosure policy (private advisory at `haxtheweb/issues`, never public issues)
 
 ## Scope
 
@@ -39,7 +38,7 @@ A security fix without a matching test here is incomplete.
 
 ## Reporting convention
 
-- `security_best_practices_report.md` (undated) is always the canonical current state — update it in place
-- Completed audit rounds are archived as `security_best_practices_report_YYYY-MM-DD.md`
-- Cite findings as `file:line`; mark fixes with inline `Security (H-x/M-x/L-x/R2-x)` comments referencing the finding ID
+- `security_best_practices_report.md` (undated) is the auditor's working report for the current round; it and the dated archives `security_best_practices_report_YYYY-MM-DD.md` are gitignored and never committed
+- Cite findings as `file:line` in the working report only; the committed record is the rule, not the finding
+- Mark the code that enforces a rule with an inline `Security (<invariant-name>)` comment; a fix that introduces a new class of rule adds a row to `docs/security-invariants.md` (rule, enforcing helper, guarding test) in the same PR
 - Report vulnerabilities via `SECURITY.md` (private advisory), never public issues

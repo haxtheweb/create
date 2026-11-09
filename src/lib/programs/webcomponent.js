@@ -25,6 +25,7 @@ import {
   githubRepoLink,
   rejectShellMetacharacters,
   rejectLeadingDash,
+  validateTemplateName,
 } from "../utils.js";
 import * as haxcmsLib from "@haxtheweb/haxcms-nodejs/dist/lib/HAXCMS.js";
 const HAXCMS = haxcmsLib.HAXCMS;
@@ -186,7 +187,7 @@ export function docsStepFor(commandRun, project) {
 }
 
 export async function webcomponentProcess(commandRun, project, port = "8000") {
-  // Security (M-2): defense-in-depth re-check of --npm-client at the point it
+  // Security (npm-client-allowlist): defense-in-depth re-check of --npm-client at the point it
   // is interpolated into exec() shell strings. create.js validates earlier,
   // but the site/webcomponent subcommand option paths can bypass that check.
   if (commandRun.options.npmClient) {
@@ -226,7 +227,7 @@ export async function webcomponentProcess(commandRun, project, port = "8000") {
         message: t("wcGitRepoLocation"),
         placeholder: `https://github.com/${project.author}/${project.name}.git`,
         initialValue: `https://github.com/${project.author}/${project.name}.git`,
-        // Security (R2-L-3): same checks as the --git-repo flag
+        // Security (validated-cli-options): same checks as the --git-repo flag
         validate: (value) => {
           try {
             rejectShellMetacharacters(value, "git-repo");
@@ -250,12 +251,26 @@ export async function webcomponentProcess(commandRun, project, port = "8000") {
   }
   let s = quietAwareSpinner(commandRun);
   s.start(merlinSays(t("wcCopyingProjectFiles")));
-  // leverage this little helper from HAXcms
-  let templateDir = project.template || "compliant";
-  await HAXCMS.recurseCopy(
-    `${process.mainModule.path}/templates/${project.type}/${templateDir}/`,
-    `${project.path}/${project.name}`,
+  // Security: the template name picks a directory under templates/<type>/;
+  // re-validate here (prompt answers and programmatic callers bypass the
+  // CLI boundary check) and confirm the copy produced a project before the
+  // rename/rewrite steps run against a possibly empty directory.
+  // __dirname is lib/programs in both src/ and dist/, so ../../templates is
+  // the shipped templates directory regardless of how the CLI was launched.
+  const templatesRoot = path.join(__dirname, "../../templates");
+  const templateDir = validateTemplateName(
+    project.template || "compliant",
+    templatesRoot,
+    project.type,
   );
+  const templateSource = path.join(templatesRoot, project.type, templateDir);
+  const projectDir = path.join(project.path, project.name);
+  await HAXCMS.recurseCopy(`${templateSource}/`, projectDir);
+  // every shipped template has webcomponent.js (renamed to <name>.js below)
+  if (!fs.existsSync(path.join(projectDir, "webcomponent.js"))) {
+    s.stop(color.red(t("wcTemplateCopyFailed", { template: templateDir })));
+    throw new Error(t("wcTemplateCopyFailed", { template: templateDir }));
+  }
   // rename gitignore to improve copy cross platform compat
   const renameIfExists = (src, dest) => {
     if (fs.existsSync(src)) {
@@ -382,7 +397,7 @@ export async function webcomponentProcess(commandRun, project, port = "8000") {
     try {
       // haxtheweb/issues#3119: with no git identity (fresh containers / CI) the
       // commit failed silently, leaving staged files and no commit.
-      // Security (R2-L-1): no shell string around the path / remote URL.
+      // Security (no-shell-strings): no shell string around the path / remote URL.
       await initGitRepo(path.join(project.path, project.name), project.gitRepo);
     } catch {
       // non-fatal: scaffold still succeeds without a local git history
@@ -433,7 +448,7 @@ ${color.underline(color.cyan(`http://localhost:${port}`))}
     // at least a second to see the message print at all
     await setTimeout(1000);
     try {
-      // Security (R2-L-1): cwd instead of `cd ${optionPath} && ...`
+      // Security (no-shell-strings): cwd instead of `cd ${optionPath} && ...`
       await runCommand(commandRun.options.npmClient, ["start"], {
         cwd: optionPath,
       });
@@ -1125,7 +1140,7 @@ export async function webcomponentRename(commandRun, packageData) {
     merlinSays(t("wcRegeneratingCem", { file: "custom-elements.json" })),
   );
   try {
-    // Security (R2-L-1): cwd instead of `cd ${newDir} && ...`
+    // Security (no-shell-strings): cwd instead of `cd ${newDir} && ...`
     await runCommand(
       validateNpmClient(commandRun.options.npmClient || "npm"),
       ["run", "analyze"],

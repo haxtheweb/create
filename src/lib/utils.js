@@ -12,7 +12,7 @@ const execFilePromise = util.promisify(child_process.execFile);
 
 /**
  * Run a program with an argument array and an explicit cwd — no shell string.
- * Security (R2-L-1): values passed as args / cwd can never be parsed as shell
+ * Security (no-shell-strings): values passed as args / cwd can never be parsed as shell
  * syntax, unlike exec(`cd ${dir} && cmd ${arg}`). On Windows the npm/yarn/
  * surge/netlify/vercel shims are .cmd files, which Node only runs through a
  * shell (same approach interactiveExec already uses); paths travel in `cwd`
@@ -329,7 +329,7 @@ const ALLOWED_NPM_CLIENTS = new Set(["npm", "yarn", "pnpm"]);
 
 /**
  * Validate --npm-client against a strict allowlist.
- * Security (M-2): npmClient is interpolated into many exec() shell strings;
+ * Security (npm-client-allowlist): npmClient is interpolated into many exec() shell strings;
  * an unvalidated value like "npm; rm -rf ~" would be command injection.
  * Returns the client if allowed, otherwise throws.
  * @param {string} client
@@ -374,11 +374,13 @@ export function githubRepoLink(gitRepo) {
   return candidate.replace(/\.git$/, "");
 }
 
-// Security (M-1): characters that are dangerous when a value is interpolated
+// Security (validated-cli-options): characters that are dangerous when a value is interpolated
 // into an exec() shell string. Rejecting these at the option boundary closes
 // the command-injection vector at every exec(...${opt}...) call site without
 // requiring a full exec()->spawn() migration of the publish/clone flows.
-const SHELL_METACHARACTER_RE = /[;&|`$<>!(){}#\n\r\\]/;
+// `%` and `^` are cmd.exe's variable-expansion and escape characters
+// (Windows hosts run the same publish flows through cmd).
+const SHELL_METACHARACTER_RE = /[;&|`$<>!(){}#%^\n\r\\]/;
 
 /**
  * Reject shell metacharacters in a value that will be interpolated into a
@@ -400,7 +402,7 @@ export function rejectShellMetacharacters(value, optionName) {
 /**
  * Reject values that start with "-" so they can't be read as an option by the
  * program they're passed to (e.g. rsync `-e <cmd>` runs a command).
- * Security (R2-M-1): argument injection, which the metacharacter check above
+ * Security (no-leading-dash): argument injection, which the metacharacter check above
  * does not cover.
  * @param {string} value
  * @param {string} optionName
@@ -416,7 +418,7 @@ export function rejectLeadingDash(value, optionName) {
   return value;
 }
 
-// Security (R2-H-2 / R2-M-2): characters never allowed in site, element or
+// Security (strict-names): characters never allowed in site, element or
 // theme names. Names end up in file paths, generated JS (import statements,
 // class names) and child process cwd values, so anything beyond a plain
 // lowercase slug (/, ., quotes, ;, $, whitespace incl. tabs, ...) is refused.
@@ -434,7 +436,7 @@ export function hasNameSpecialCharacters(value) {
 }
 
 // GitHub user / org / repo names: letters, digits, hyphen (repos also allow
-// dot and underscore). Security (R2-L-2): these are interpolated into clone
+// dot and underscore). Security (validated-github-targets): these are interpolated into clone
 // URLs, so they're restricted to the characters GitHub itself accepts.
 const GITHUB_OWNER_RE = /^[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})$/;
 const GITHUB_REPO_RE = /^[A-Za-z0-9._-]{1,100}$/;
@@ -450,7 +452,7 @@ export function isValidGithubRepo(value) {
   );
 }
 
-// Security (M-1): allowlist for --domain / --site (surge/netlify/vercel deploy
+// Security (validated-cli-options): allowlist for --domain / --site (surge/netlify/vercel deploy
 // targets). Hostnames, ports, and dotted domain labels only.
 const DOMAIN_RE = /^[A-Za-z0-9.\-:]+$/;
 
@@ -465,6 +467,47 @@ export function validateDomain(value) {
   }
   if (typeof value !== "string" || !DOMAIN_RE.test(value)) {
     throw new Error(t("utilInvalidDomain"));
+  }
+  // Security (no-leading-dash): the charset allows "-", so "--help" / "-x" would pass
+  // and be read as an option by the publish CLI it is handed to.
+  rejectLeadingDash(value, "domain");
+  return value;
+}
+
+// Security: --template picks a directory under src/templates/<type>/, so it
+// must be one of the shipped names, never a path. Resolved against the
+// templates root at call time so the allowlist can't drift from what ships.
+export function listTemplateNames(templatesRoot, type) {
+  try {
+    return fs
+      .readdirSync(path.join(templatesRoot, type), { withFileTypes: true })
+      .filter((d) => d.isDirectory() && !d.name.startsWith("."))
+      .map((d) => d.name)
+      .sort();
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Validate a --template value against the template directories that ship
+ * with the CLI. Returns the value, or throws naming the valid choices.
+ * @param {string} value
+ * @param {string} templatesRoot absolute path to src/dist templates dir
+ * @param {string} type "webcomponent" (the only templated project type)
+ */
+export function validateTemplateName(value, templatesRoot, type) {
+  if (value === undefined || value === null || value === "") {
+    return value;
+  }
+  const allowed = listTemplateNames(templatesRoot, type);
+  if (typeof value !== "string" || !allowed.includes(value)) {
+    throw new Error(
+      t("utilInvalidTemplate", {
+        option: "template",
+        choices: allowed.join(", "),
+      }),
+    );
   }
   return value;
 }
@@ -544,7 +587,7 @@ export async function gitIdentityFallbackArgs(cwd = process.cwd()) {
       return "";
     }
   };
-  // Security (R2-L-1): returned as an argument array for runCommand("git", ...)
+  // Security (no-shell-strings): returned as an argument array for runCommand("git", ...)
   // instead of a string spliced into a shell command.
   let args = [];
   if (!process.env.GIT_AUTHOR_NAME && !(await configValue("user.name"))) {
@@ -567,7 +610,7 @@ export async function gitIdentityFallbackArgs(cwd = process.cwd()) {
 
 /**
  * git init + first commit (+ optional origin remote) for a new project.
- * Security (R2-H-2 / R2-L-1): replaces `cd ${dir} && git init && ...` shell
+ * Security (strict-names, no-shell-strings): replaces `cd ${dir} && git init && ...` shell
  * strings, which ran any shell syntax in the project name or path. The remote
  * URL is passed as one argument and may not start with "-" (git option).
  * @param {string} dir project directory

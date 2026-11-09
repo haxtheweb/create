@@ -727,6 +727,20 @@ for (const publisher of ["surge", "netlify", "vercel"]) {
       assert.equal(exitCode, 0);
       const publish = execCalls.find((c) => c.cmd.includes(publisher));
       assert.ok(publish, `${publisher} publish executed`);
+      // Security (R2-M-1): netlify/vercel get the domain in --opt=<value>
+      // form so it can never be parsed as a separate option
+      if (publisher === "netlify") {
+        assert.ok(
+          publish.cmd.includes("--site=my-site.example.com"),
+          `netlify --site=<domain>: ${publish.cmd}`,
+        );
+      }
+      if (publisher === "vercel") {
+        assert.ok(
+          publish.cmd.includes("--name=my-site.example.com"),
+          `vercel --name=<domain>: ${publish.cmd}`,
+        );
+      }
       // the publish swapped ghpages.html in; the finally block restored it
       // (restore copies the .bak back over index.html and removes the .bak)
       assert.equal(

@@ -8,14 +8,14 @@ import * as sanitizeContentLib from "@haxtheweb/haxcms-nodejs/dist/lib/sanitizeC
 import { t } from "./i18n.js";
 const sanitizeHTMLForStorage = sanitizeContentLib.sanitizeHTMLForStorage;
 
-// Security (H-1/H-2/H-3): true when an error thrown by safeFetch/
+// Security (ssrf-guarded-fetch): true when an error thrown by safeFetch/
 // assertUrlNotSSRF is an SSRF rejection (stable .code prefix) rather than a
 // generic network error, so callers can surface a clear message.
 export function isSSRFError(e) {
   return Boolean(e && typeof e.code === "string" && e.code.startsWith("SSRF_"));
 }
 
-// Security (H-5): sanitize remote-derived HTML before it is written into page
+// Security (sanitize-remote-html): sanitize remote-derived HTML before it is written into page
 // content. Non-string values (e.g. parsed JSON/YAML objects from --format) and
 // empty strings pass through unchanged so non-HTML import formats are unaffected.
 export function sanitizeIfString(html) {
@@ -24,7 +24,7 @@ export function sanitizeIfString(html) {
     : html;
 }
 
-// Security (L-1): canonicalize a local filesystem path and reject null bytes
+// Security (safe-local-paths): canonicalize a local filesystem path and reject null bytes
 // (a classic fs-path-injection vector). No fixed base is enforced because these
 // options legitimately point anywhere on the user's filesystem; path.resolve is
 // a harmless normalization that does not change which file is read.
