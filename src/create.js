@@ -412,6 +412,10 @@ async function main() {
       if (cmdOptions && cmdOptions.search) {
         commandRun.options.search = cmdOptions.search;
       }
+      // `hax wc rename --dry-run`: plan the rename without writing anything
+      if (cmdOptions && cmdOptions.dryRun) {
+        commandRun.options.dryRun = true;
+      }
     })
     .option("--path <char>", t("cliOptWcPath"))
     .option("--org <char>", t("cliOptOrg"))
@@ -426,6 +430,7 @@ async function main() {
     .option("--root <char>", t("cliOptRoot"))
     .option("--force", t("cliOptForce"))
     .option("--search <char>", t("cliOptWcSearch"))
+    .option("--dry-run", t("cliOptWcDryRun"))
     .version(packageJson.version);
 
   // audit program

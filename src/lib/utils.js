@@ -168,16 +168,159 @@ export function camelToDash(str) {
     .toLowerCase();
 }
 
-// read in all files recursively for rewriting
-export function* readAllFiles(dir) {
+// Version-control and generated directories a bulk rewrite must never
+// descend into: rewriting .git/ objects corrupts the repository.
+export const REWRITE_SKIP_DIRS = new Set([
+  ".git",
+  ".hg",
+  ".svn",
+  ".bzr",
+  "node_modules",
+  "dist",
+  "public",
+]);
+
+// read in all files recursively for rewriting. Symlinks are yielded as
+// themselves (never followed) and VCS/generated directories are skipped.
+export function* readAllFiles(dir, skipDirs = REWRITE_SKIP_DIRS) {
   const files = fs.readdirSync(dir, { withFileTypes: true });
   for (const file of files) {
     if (file.isDirectory()) {
-      yield* readAllFiles(path.join(dir, file.name));
+      if (skipDirs.has(file.name)) {
+        continue;
+      }
+      yield* readAllFiles(path.join(dir, file.name), skipDirs);
     } else {
       yield path.join(dir, file.name);
     }
   }
+}
+
+// File extensions a bulk text rewrite may touch. Anything else is treated
+// as binary unless its content is clearly text (see isProbablyTextBuffer).
+export const TEXT_FILE_EXTENSIONS = new Set([
+  ".js",
+  ".mjs",
+  ".cjs",
+  ".jsx",
+  ".ts",
+  ".mts",
+  ".cts",
+  ".tsx",
+  ".json",
+  ".json5",
+  ".jsonc",
+  ".html",
+  ".htm",
+  ".xml",
+  ".svg",
+  ".css",
+  ".scss",
+  ".sass",
+  ".less",
+  ".md",
+  ".mdx",
+  ".markdown",
+  ".txt",
+  ".yml",
+  ".yaml",
+  ".toml",
+  ".ini",
+  ".cfg",
+  ".conf",
+  ".env",
+  ".sh",
+  ".bash",
+  ".zsh",
+  ".bat",
+  ".cmd",
+  ".ps1",
+  ".twig",
+  ".ejs",
+  ".hbs",
+  ".njk",
+  ".vue",
+  ".svelte",
+  ".csv",
+  ".tsv",
+  ".graphql",
+  ".gql",
+  ".map",
+  ".lock",
+  ".editorconfig",
+  ".gitignore",
+  ".gitattributes",
+  ".npmignore",
+  ".npmrc",
+  ".nvmrc",
+  ".prettierrc",
+  ".eslintrc",
+  ".babelrc",
+  ".dddignore",
+  ".surgeignore",
+  ".netlifyignore",
+  ".vercelignore",
+  ".htaccess",
+]);
+
+// Extensionless files that are conventionally text.
+const TEXT_FILE_BASENAMES = new Set([
+  "LICENSE",
+  "README",
+  "CHANGELOG",
+  "CONTRIBUTING",
+  "CODEOWNERS",
+  "Dockerfile",
+  "Makefile",
+  "CNAME",
+  "llms.txt",
+]);
+
+export const BINARY_SNIFF_BYTES = 8192;
+
+/**
+ * Heuristic: a NUL byte in the first 8 KB means binary. Text files, even in
+ * UTF-16-free codebases like this one, never contain NUL.
+ */
+export function isProbablyTextBuffer(buffer) {
+  const limit = Math.min(buffer.length, BINARY_SNIFF_BYTES);
+  for (let i = 0; i < limit; i++) {
+    if (buffer[i] === 0) {
+      return false;
+    }
+  }
+  return true;
+}
+
+/**
+ * True when a file may be rewritten as UTF-8 text. The extension/basename
+ * allowlist decides first; anything not on it is left alone unless its
+ * content is NUL-free AND round-trips through UTF-8 byte-for-byte, which
+ * rules out fonts, images, archives, PDFs and git objects. `buffer` is the
+ * file's content (passed in so the caller reads each file once).
+ */
+export function isRewritableTextFile(filePath, buffer) {
+  const base = path.basename(filePath);
+  const ext = path.extname(base).toLowerCase();
+  const allowlisted =
+    TEXT_FILE_EXTENSIONS.has(ext) ||
+    TEXT_FILE_EXTENSIONS.has(base.toLowerCase()) ||
+    TEXT_FILE_BASENAMES.has(base) ||
+    (ext === "" && base.startsWith("."));
+  if (!isProbablyTextBuffer(buffer)) {
+    return false;
+  }
+  if (!allowlisted) {
+    return false;
+  }
+  return utf8RoundTrips(buffer);
+}
+
+// A buffer is only safe to rewrite as a JS string if decoding and
+// re-encoding it as UTF-8 yields the identical bytes; otherwise invalid
+// sequences would be replaced with U+FFFD and the file silently corrupted.
+export function utf8RoundTrips(buffer) {
+  return Buffer.from(buffer.toString("utf8"), "utf8").equals(buffer);
 }
 
 // Allowed npm clients that get interpolated into shell commands (M-2).
