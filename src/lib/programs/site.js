@@ -1181,11 +1181,17 @@ export function siteAgentOrientation(siteDirectory) {
       'hax site node:add --title "Page" --slug page --content ./page.html --y --no-i',
       'hax site node:edit --item-id page --title "New title" --content ./page.html --y --no-i',
       "hax site site:items-import --items-import ./items.json --y --no-i",
+      "hax site site:validate --format json --y --no-i",
+      "hax site site:archive --y --no-i",
+      "hax site site:rebuild --y --no-i",
       "hax site site:export --y --no-i",
       "hax serve",
     ],
     tips: [
       "Always pass --y --no-i in scripts; without a TTY the CLI now implies --no-i",
+      "Before bulk changes run site:archive, and site:validate before and after; it exits 1 on structural errors",
+      "Regenerate llms.txt, feeds, sitemap and the search index with site:rebuild instead of editing them",
+      "`hax list --format json` lists every command, action and option",
       "Use the global `hax` command, not `npx hax` (a different npm package)",
     ],
   };
