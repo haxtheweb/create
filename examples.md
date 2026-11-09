@@ -489,7 +489,19 @@ source <(hax completion zsh)
 
 ## site aliases
 
-Name your sites once and use them from any folder. Put personal aliases in `~/.haxtheweb/aliases.yml`, or check a `hax.aliases.yml` into a project; the nearest file wins for a name. Paths are relative to the file they're in, and `~` works.
+Name your sites once and use them from any folder. Aliases are only ever created on request (nothing is discovered automatically), so `@name` always means exactly the folder someone chose.
+
+```bash
+cd sites/course && hax alias add course          # this site, saved to ~/.haxtheweb/aliases.yml
+hax alias add course --root sites/course --project   # saved to ./hax.aliases.yml (relative path, check it in)
+hax alias add prod --root ~/deploy/course --rsync user@example.org:/var/www/course/
+hax alias add course --root sites/course-v2 --y      # replace an existing alias
+hax alias remove course --project
+```
+
+An interactive `hax site <name>` also offers to add an alias for the new site; scripted runs (`--y`, `--no-i`) never do.
+
+The files are plain YAML you can also edit by hand. The nearest `hax.aliases.yml` (from the current folder upward) wins over `~/.haxtheweb/aliases.yml` for a name. Paths are relative to the file they're in, and `~` works.
 
 ```yaml
 course:

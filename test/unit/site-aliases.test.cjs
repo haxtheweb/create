@@ -227,3 +227,155 @@ test("loadAliases reads the user file then project files, nearest wins", () => {
     fs.rmSync(tmp, { recursive: true, force: true });
   }
 });
+
+// ---------- hax alias add / remove ----------
+
+test("normalizeAliasName strips @ and refuses unsafe names", () => {
+  assert.equal(aliases.normalizeAliasName("@music109"), "music109");
+  for (const bad of ["", "@", "../x", "a/b", ".hidden", "a b"]) {
+    assert.throws(() => aliases.normalizeAliasName(bad), /may only use/, bad);
+  }
+});
+
+test("removeAliasBlock removes one block and keeps comments and order", () => {
+  const text = [
+    "# my sites",
+    "a:",
+    "  root: ./a # inline",
+    "",
+    "b:",
+    "  root: ./b",
+    "  # note inside b",
+    "  rsync: x:/y/",
+    "c:",
+    "  root: ./c",
+    "",
+  ].join("\n");
+  const { text: out, removed } = aliases.removeAliasBlock(text, "b");
+  assert.equal(removed, true);
+  assert.equal(
+    out,
+    [
+      "# my sites",
+      "a:",
+      "  root: ./a # inline",
+      "",
+      "c:",
+      "  root: ./c",
+      "",
+    ].join("\n"),
+  );
+  assert.equal(aliases.removeAliasBlock(text, "zzz").removed, false);
+  // quoted keys count too
+  assert.equal(
+    aliases.removeAliasBlock("'q':\n  root: x\n", "q").removed,
+    true,
+  );
+});
+
+test("storedRoot is relative in a project file and absolute in the user file", () => {
+  const file = path.resolve("/work/hax.aliases.yml");
+  assert.equal(
+    aliases.storedRoot(path.resolve("/work/sites/a"), file, true),
+    "./sites/a",
+  );
+  assert.equal(
+    aliases.storedRoot(path.resolve("/other/b"), file, true),
+    "../other/b",
+  );
+  assert.equal(aliases.storedRoot(path.resolve("/work"), file, true), ".");
+  assert.equal(
+    aliases.storedRoot(path.resolve("/work/sites/a"), file, false),
+    path.resolve("/work/sites/a"),
+  );
+  assert.equal(aliases.storedRoot(null, file, true), null);
+});
+
+test("addAlias creates, refuses duplicates, replaces with overwrite, keeps the rest", () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "hax-alias-add-"));
+  try {
+    const file = path.join(dir, "hax.aliases.yml");
+    fs.mkdirSync(path.join(dir, "site"));
+    fs.writeFileSync(file, "# keep\nother:\n  root: ./o # keep too\n");
+    const added = aliases.addAlias({
+      file: file,
+      name: "@course",
+      root: path.join(dir, "site"),
+      project: true,
+    });
+    assert.equal(added.name, "@course");
+    assert.equal(added.replaced, false);
+    assert.equal(added.alias.root, path.join(dir, "site"));
+    assert.throws(
+      () =>
+        aliases.addAlias({
+          file: file,
+          name: "course",
+          root: dir,
+          project: true,
+        }),
+      /already defined/,
+    );
+    const replaced = aliases.addAlias({
+      file: file,
+      name: "course",
+      root: path.join(dir, "site"),
+      rsync: 'u@h:/var/www/"x"/',
+      project: true,
+      overwrite: true,
+    });
+    assert.equal(replaced.replaced, true);
+    const text = fs.readFileSync(file, "utf8");
+    assert.match(text, /^# keep\nother:\n {2}root: \.\/o # keep too\n/);
+    const loaded = aliases.parseAliasFile(text, file, HOME);
+    assert.deepEqual(loaded.problems, []);
+    assert.equal(loaded.aliases.course.rsync, 'u@h:/var/www/"x"/');
+    assert.equal(loaded.aliases.other.root, path.join(dir, "o"));
+    // creates the folder and file for a first alias
+    const fresh = path.join(dir, "home", ".haxtheweb", "aliases.yml");
+    aliases.addAlias({ file: fresh, name: "x", rsync: "u@h:/p/" });
+    assert.match(
+      fs.readFileSync(fresh, "utf8"),
+      /^x:\n {2}rsync: "u@h:\/p\/"\n$/,
+    );
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("addAlias needs a target and won't rewrite a file it can't read", () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "hax-alias-add-"));
+  try {
+    const file = path.join(dir, "hax.aliases.yml");
+    assert.throws(() => aliases.addAlias({ file: file, name: "x" }), /--root/);
+    fs.writeFileSync(file, "broken: [\n");
+    assert.throws(
+      () => aliases.addAlias({ file: file, name: "x", root: dir }),
+      /could not be read/,
+    );
+    assert.equal(fs.readFileSync(file, "utf8"), "broken: [\n");
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("removeAlias removes a defined alias and reports a missing one", () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "hax-alias-rm-"));
+  try {
+    const file = path.join(dir, "hax.aliases.yml");
+    fs.writeFileSync(file, "a:\n  root: ./a\nb:\n  root: ./b\n");
+    assert.equal(aliases.removeAlias({ file: file, name: "@a" }).name, "@a");
+    assert.equal(fs.readFileSync(file, "utf8"), "b:\n  root: ./b\n");
+    assert.throws(
+      () => aliases.removeAlias({ file: file, name: "a" }),
+      /not defined/,
+    );
+    assert.throws(
+      () =>
+        aliases.removeAlias({ file: path.join(dir, "none.yml"), name: "a" }),
+      /not defined/,
+    );
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});

@@ -235,3 +235,156 @@ export function describeAliases(loaded) {
       };
     });
 }
+
+// ---------- hax alias add / remove ----------
+
+export function normalizeAliasName(value) {
+  const name = String(value || "").replace(/^@/, "");
+  if (!NAME.test(name)) {
+    throw new Error(t("aliasBadNameArg", { name: name || "-" }));
+  }
+  return name;
+}
+
+function topLevelKey(line) {
+  if (line === "" || /^\s/.test(line) || line.startsWith("#")) {
+    return null;
+  }
+  const match = /^(['"]?)([^'":]+)\1\s*:/.exec(line);
+  return match ? match[2] : null;
+}
+
+/**
+ * Remove one alias's block from alias-file text, leaving every other line
+ * (and comment) as written. Pure. Returns { text, removed }.
+ */
+export function removeAliasBlock(text, name) {
+  const lines = String(text || "").split("\n");
+  const out = [];
+  let removed = false;
+  let skipping = false;
+  for (const line of lines) {
+    const key = topLevelKey(line);
+    if (skipping) {
+      // the block is the key line plus everything indented under it
+      if (key === null && (line === "" || /^\s/.test(line))) {
+        continue;
+      }
+      skipping = false;
+    }
+    if (key === name) {
+      skipping = true;
+      removed = true;
+      continue;
+    }
+    out.push(line);
+  }
+  let result = out.join("\n");
+  if (
+    String(text || "").endsWith("\n") &&
+    !result.endsWith("\n") &&
+    result !== ""
+  ) {
+    result += "\n";
+  }
+  return { text: result, removed: removed };
+}
+
+// one alias as YAML; values are double-quoted JSON strings, which YAML reads
+// back exactly
+export function aliasEntryYaml(name, entry) {
+  const lines = [`${name}:`];
+  if (entry.root) {
+    lines.push(`  root: ${JSON.stringify(entry.root)}`);
+  }
+  if (entry.rsync) {
+    lines.push(`  rsync: ${JSON.stringify(entry.rsync)}`);
+  }
+  return lines.join("\n") + "\n";
+}
+
+// a root as it should be written into `file`: relative (with /) in a
+// project file so the file can be checked in, absolute in the user file
+export function storedRoot(root, file, project) {
+  if (!root) {
+    return null;
+  }
+  if (!project) {
+    return path.resolve(root);
+  }
+  const rel = path.relative(path.dirname(file), path.resolve(root));
+  const posix = rel.split(path.sep).join("/");
+  return posix === "" ? "." : posix.startsWith(".") ? posix : `./${posix}`;
+}
+
+function readText(file) {
+  try {
+    return fs.readFileSync(file, "utf8");
+  } catch (e) {
+    if (e && e.code === "ENOENT") {
+      return "";
+    }
+    throw e;
+  }
+}
+
+/**
+ * Add (or with overwrite, replace) an alias in an alias file, creating the
+ * file if needed. Existing entries and comments are kept.
+ * { file, name, root, rsync, project, overwrite, homeDir }
+ */
+export function addAlias(options) {
+  const name = normalizeAliasName(options.name);
+  if (!options.root && !options.rsync) {
+    throw new Error(t("aliasAddNeedsTarget"));
+  }
+  const text = readText(options.file);
+  const existing = parseAliasFile(text, options.file, options.homeDir);
+  if (existing.problems.length > 0 && text.trim() !== "") {
+    // never rewrite a file we can't read cleanly
+    throw new Error(existing.problems.join("\n"));
+  }
+  const without = removeAliasBlock(text, name);
+  if (without.removed && !options.overwrite) {
+    throw new Error(
+      t("aliasExists", { alias: `@${name}`, file: options.file }),
+    );
+  }
+  let body = without.text;
+  if (body !== "" && !body.endsWith("\n")) {
+    body += "\n";
+  }
+  body += aliasEntryYaml(name, {
+    root: storedRoot(options.root, options.file, options.project),
+    rsync: options.rsync || null,
+  });
+  // the result must still parse to the same alias before it is written
+  const check = parseAliasFile(body, options.file, options.homeDir);
+  if (check.problems.length > 0 || !check.aliases[name]) {
+    throw new Error(
+      check.problems.join("\n") ||
+        t("aliasBadEntry", { name: name, file: options.file }),
+    );
+  }
+  fs.mkdirSync(path.dirname(options.file), { recursive: true });
+  fs.writeFileSync(options.file, body);
+  return {
+    name: `@${name}`,
+    file: options.file,
+    replaced: without.removed,
+    alias: check.aliases[name],
+  };
+}
+
+export function removeAlias(options) {
+  const name = normalizeAliasName(options.name);
+  const text = readText(options.file);
+  const without = removeAliasBlock(text, name);
+  if (!without.removed) {
+    throw new Error(
+      t("aliasNotInFile", { alias: `@${name}`, file: options.file }),
+    );
+  }
+  fs.writeFileSync(options.file, without.text);
+  return { name: `@${name}`, file: options.file };
+}

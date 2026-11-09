@@ -36,6 +36,12 @@ import { t } from "../i18n.js";
 import { normalizeSiteLanguage } from "../language-registry.js";
 import { apiMessage, annotateApiBody } from "../api-messages.js";
 import {
+  addAlias,
+  userAliasFile,
+  PROJECT_ALIAS_FILE,
+  normalizeAliasName,
+} from "../site-aliases.js";
+import {
   validateSite,
   parseRebuildTargets,
   defaultArchivePath,
@@ -4857,6 +4863,7 @@ export async function siteProcess(commandRun, project, port = "3000") {
   }
   // options for install, git and other extras
   // can't launch if we didn't install first so launch implies installation
+  await offerSiteAlias(commandRun, project);
   if (
     project.extras &&
     project.extras.includes &&
@@ -4904,6 +4911,80 @@ ${color.underline(color.cyan(`http://localhost:${port}`))}
     let nextSteps = `cd ${project.path}/${project.name} && hax serve`;
     p.note(t("siteReadyToGo", { name: project.name }));
     p.outro(nextSteps);
+  }
+}
+
+// haxtheweb/issues#3229: after an interactive `hax site <name>`, offer (never
+// assume) an alias for the new site. Scripted runs (--y / --no-i) skip this;
+// they can call `hax alias add` themselves.
+export async function offerSiteAlias(commandRun, project) {
+  if (
+    commandRun.options.y ||
+    commandRun.options.i === false ||
+    commandRun.options.quiet ||
+    !process.stdin.isTTY
+  ) {
+    return null;
+  }
+  const wanted = await p.confirm({
+    message: t("aliasOfferPrompt", { name: project.name }),
+    initialValue: false,
+  });
+  if (p.isCancel(wanted) || wanted !== true) {
+    return null;
+  }
+  const name = await p.text({
+    message: t("aliasOfferName"),
+    initialValue: project.name,
+    validate: (value) => {
+      try {
+        normalizeAliasName(value);
+      } catch (e) {
+        return e.message;
+      }
+    },
+  });
+  if (p.isCancel(name)) {
+    return null;
+  }
+  const where = await p.select({
+    message: t("aliasOfferWhere"),
+    options: [
+      { value: "user", label: t("aliasOfferUser", { file: userAliasFile() }) },
+      {
+        value: "project",
+        label: t("aliasOfferProject", {
+          file: path.join(project.path, PROJECT_ALIAS_FILE),
+        }),
+      },
+    ],
+  });
+  if (p.isCancel(where)) {
+    return null;
+  }
+  try {
+    const result = addAlias({
+      file:
+        where === "project"
+          ? path.join(project.path, PROJECT_ALIAS_FILE)
+          : userAliasFile(),
+      name: name,
+      root: path.join(project.path, project.name),
+      project: where === "project",
+      overwrite: false,
+    });
+    p.note(
+      t("aliasAdded", {
+        alias: result.name,
+        root: result.alias.root,
+        file: result.file,
+      }),
+    );
+    return result;
+  } catch (e) {
+    // an alias is a convenience; never fail site creation over it
+    log(e.message, "warn");
+    return null;
   }
 }
 

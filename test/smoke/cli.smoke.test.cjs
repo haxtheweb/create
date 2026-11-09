@@ -1299,6 +1299,47 @@ test(
       const unknown = runCli(["@missing", "site:items", ...flags], project);
       assert.equal(unknown.status, 1);
       assert.match(unknown.stderr, /@missing/);
+
+      // hax alias add / remove write only where asked, and only explicit targets
+      const added = runCli(
+        [
+          "alias",
+          "add",
+          "second",
+          "--root",
+          "../aliased",
+          "--project",
+          "--format",
+          "json",
+        ],
+        project,
+      );
+      assert.equal(added.status, 0, `stderr: ${added.stderr}`);
+      assert.equal(JSON.parse(added.stdout).name, "@second");
+      const dup = runCli(
+        ["alias", "add", "second", "--root", "../aliased", "--project"],
+        project,
+      );
+      assert.equal(dup.status, 1, "an existing alias needs --y to replace");
+      const noTarget = runCli(
+        ["alias", "add", "nothing", "--project"],
+        project,
+      );
+      assert.equal(noTarget.status, 1, "no --root outside a site is an error");
+      const viaSecond = runCli(
+        ["@second", "site:items", "--format", "json", ...flags],
+        project,
+      );
+      assert.equal(viaSecond.status, 0, `stderr: ${viaSecond.stderr}`);
+      const removed = runCli(
+        ["alias", "remove", "@second", "--project"],
+        project,
+      );
+      assert.equal(removed.status, 0, `stderr: ${removed.stderr}`);
+      assert.equal(
+        fs.readFileSync(path.join(project, "hax.aliases.yml"), "utf8"),
+        "course:\n  root: ../aliased\n",
+      );
     } finally {
       fs.rmSync(work, { recursive: true, force: true });
     }
