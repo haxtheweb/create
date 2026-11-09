@@ -10,8 +10,9 @@ on:
     branches: [main]
   pull_request:
   schedule:
-    # Weekly, so newly published advisories surface without a code change.
-    - cron: "17 6 * * 1"
+    # Nightly (haxtheweb/issues#3262), so newly published advisories surface
+    # without a code change.
+    - cron: "17 7 * * *"
   workflow_dispatch:
 permissions:
   contents: read

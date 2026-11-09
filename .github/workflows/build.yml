@@ -5,6 +5,12 @@ on:
   # No branch filter: stacked PRs (base is another feature branch, not main)
   # must run the tests too, otherwise they merge with no CI signal.
   pull_request:
+  # haxtheweb/issues#3262: nightly regression run of the same tests on the
+  # default branch, so breakage from a dependency release (for example a new
+  # @haxtheweb/haxcms-nodejs) shows up even on days with no commits.
+  schedule:
+    - cron: "53 8 * * *" # nightly, 08:53 UTC
+  workflow_dispatch:
 permissions:
   contents: read
 jobs:
