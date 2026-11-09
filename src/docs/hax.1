@@ -179,6 +179,35 @@ Actions to perform include:
 .B list
 [\-\-format json|yaml] \- List every command, action and option for tools and agents
 .PP
+.B alias
+[list|show|add|remove] [name] [\-\-format json] \- List, add and remove named sites.
+.B hax alias add <name>
+saves the current site, or the folder given with
+.B \-\-root
+(and/or an
+.B \-\-rsync
+target), to ~/.haxtheweb/aliases.yml, or with
+.B \-\-project
+to hax.aliases.yml in the current folder (stored relative so it can be checked in); an existing name needs
+.B \-\-y
+to replace it.
+.B hax alias remove <name> [\-\-project]
+removes one. Comments and other entries in the file are kept. Aliases are never created or discovered automatically; an interactive
+.B hax site <name>
+offers to add one. Aliases live in ~/.haxtheweb/aliases.yml and in hax.aliases.yml files from the current folder upward (nearest wins). Each alias has a
+.B root
+(local folder, relative to its file; ~ allowed) and optionally an
+.B rsync
+target.
+.B hax @name <action>
+runs
+.B hax site <action>
+in that site from anywhere, and
+.B \-\-source @name
+/
+.B \-\-destination @name
+use the alias's rsync target (or its root)
+.PP
 .B completion
 [bash|zsh] \- Print a shell completion script. Add
 .B source <(hax completion bash)
@@ -335,6 +364,12 @@ site:rebuild targets to rebuild, comma separated (rss, sitemap, search, llms, ma
 \--count <char>
 number of pages for node:generate (default 10, max 200)
 .TP
+\--rsync <char>
+rsync target to store with hax alias add (user@host:/path)
+.TP
+\--project
+with hax alias add|remove, use hax.aliases.yml in this folder instead of ~/.haxtheweb/aliases.yml
+.TP
 \--search\-mode <char>
 search mode override (text or selector)
 .TP
@@ -444,6 +479,12 @@ Snapshot a site, then restore it (the current state is archived first)
 .TP
 .B hax site node:generate \--count 20 \--parent unit-1
 Add 20 placeholder pages under unit-1 for theme testing
+.TP
+.B hax @course site:validate \--y
+Validate the site named course in hax.aliases.yml, from any folder
+.TP
+.B hax @course site:rsync \--destination @prod \--y
+Push the course site to the rsync target of the prod alias
 .TP
 .B hax list \--format json
 Machine-readable list of every command and action
