@@ -187,7 +187,7 @@ export function docsStepFor(commandRun, project) {
 }
 
 export async function webcomponentProcess(commandRun, project, port = "8000") {
-  // Security (M-2): defense-in-depth re-check of --npm-client at the point it
+  // Security (npm-client-allowlist): defense-in-depth re-check of --npm-client at the point it
   // is interpolated into exec() shell strings. create.js validates earlier,
   // but the site/webcomponent subcommand option paths can bypass that check.
   if (commandRun.options.npmClient) {
@@ -227,7 +227,7 @@ export async function webcomponentProcess(commandRun, project, port = "8000") {
         message: t("wcGitRepoLocation"),
         placeholder: `https://github.com/${project.author}/${project.name}.git`,
         initialValue: `https://github.com/${project.author}/${project.name}.git`,
-        // Security (R2-L-3): same checks as the --git-repo flag
+        // Security (validated-cli-options): same checks as the --git-repo flag
         validate: (value) => {
           try {
             rejectShellMetacharacters(value, "git-repo");
@@ -397,7 +397,7 @@ export async function webcomponentProcess(commandRun, project, port = "8000") {
     try {
       // haxtheweb/issues#3119: with no git identity (fresh containers / CI) the
       // commit failed silently, leaving staged files and no commit.
-      // Security (R2-L-1): no shell string around the path / remote URL.
+      // Security (no-shell-strings): no shell string around the path / remote URL.
       await initGitRepo(path.join(project.path, project.name), project.gitRepo);
     } catch {
       // non-fatal: scaffold still succeeds without a local git history
@@ -448,7 +448,7 @@ ${color.underline(color.cyan(`http://localhost:${port}`))}
     // at least a second to see the message print at all
     await setTimeout(1000);
     try {
-      // Security (R2-L-1): cwd instead of `cd ${optionPath} && ...`
+      // Security (no-shell-strings): cwd instead of `cd ${optionPath} && ...`
       await runCommand(commandRun.options.npmClient, ["start"], {
         cwd: optionPath,
       });
@@ -1140,7 +1140,7 @@ export async function webcomponentRename(commandRun, packageData) {
     merlinSays(t("wcRegeneratingCem", { file: "custom-elements.json" })),
   );
   try {
-    // Security (R2-L-1): cwd instead of `cd ${newDir} && ...`
+    // Security (no-shell-strings): cwd instead of `cd ${newDir} && ...`
     await runCommand(
       validateNpmClient(commandRun.options.npmClient || "npm"),
       ["run", "analyze"],

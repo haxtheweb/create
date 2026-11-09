@@ -5,7 +5,7 @@ Entry point for recurring security audits of this repo. `create` is one of five 
 ## Read order (do this first)
 
 1. `CONTEXT.md` — module map, test seams (A: pure functions, B: fs fixtures, C: CLI smoke), domain vocabulary
-2. `docs/security-findings-key.md` — what each `Security (H-x/M-x/L-x/R2-x)` ID in the inline `src/` comments refers to, one line per finding (the full reports are gitignored working files, see Reporting convention)
+2. `docs/security-invariants.md` — the rules this code keeps, one row per invariant with the helper that enforces it and the test that guards it; every inline `Security (<name>)` comment in `src/` names a row
 3. `SECURITY.md` — disclosure policy (private advisory at `haxtheweb/issues`, never public issues)
 
 ## Scope
@@ -39,6 +39,6 @@ A security fix without a matching test here is incomplete.
 ## Reporting convention
 
 - `security_best_practices_report.md` (undated) is the auditor's working report for the current round; it and the dated archives `security_best_practices_report_YYYY-MM-DD.md` are gitignored and never committed
-- Cite findings as `file:line`; mark fixes with inline `Security (H-x/M-x/L-x/R2-x)` comments referencing the finding ID
-- Every ID used in a `src/` comment gets a one-line entry in `docs/security-findings-key.md` (the committed record), so the comments stay resolvable without the report
+- Cite findings as `file:line` in the working report only; the committed record is the rule, not the finding
+- Mark the code that enforces a rule with an inline `Security (<invariant-name>)` comment; a fix that introduces a new class of rule adds a row to `docs/security-invariants.md` (rule, enforcing helper, guarding test) in the same PR
 - Report vulnerabilities via `SECURITY.md` (private advisory), never public issues

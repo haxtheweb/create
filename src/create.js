@@ -625,7 +625,7 @@ async function main() {
       );
     }
   }
-  // Security (M-2): validate the CLI-provided --npm-client early, before the
+  // Security (npm-client-allowlist): validate the CLI-provided --npm-client early, before the
   // packageData loop below can overwrite it. The loop unconditionally resets
   // npmClient from the local package.json (or 'npm'), so a malicious CLI
   // value would be clobbered before the post-loop check — validate it here
@@ -639,7 +639,7 @@ async function main() {
       program.error(color.red(e.message));
     }
   }
-  // Security (M-1/L-5): validate --root before chdir so a missing/invalid
+  // Security (validated-cli-options): validate --root before chdir so a missing/invalid
   // root fails with a clear message instead of a process.chdir exception.
   // --root is not shell-interpolated, but the metacharacter check is kept
   // as defense-in-depth.
@@ -785,7 +785,7 @@ async function main() {
   if (commandRun.options.debug) {
     log(packageData, "debug");
   }
-  // Security (M-2): validate --npm-client against a strict allowlist before it
+  // Security (npm-client-allowlist): validate --npm-client against a strict allowlist before it
   // can be interpolated into any exec() shell string downstream. This runs
   // after the packageData merge so a monorepo's npmClient is also covered.
   if (commandRun.options.npmClient) {
@@ -797,7 +797,7 @@ async function main() {
       program.error(color.red(e.message));
     }
   }
-  // Security (M-1): reject shell metacharacters in options that are
+  // Security (validated-cli-options): reject shell metacharacters in options that are
   // interpolated into exec() shell strings across site.js/webcomponent.js/
   // party.js (publish targets, git remote, rsync source/dest, excludes).
   // --domain additionally gets a strict hostname charset. --path must be an
@@ -812,11 +812,11 @@ async function main() {
     rejectShellMetacharacters(commandRun.options.gitRepo, "git-repo");
     rejectShellMetacharacters(commandRun.options.source, "source");
     rejectShellMetacharacters(commandRun.options.destination, "destination");
-    // Security (R2-M-1): a value starting with "-" would be parsed by rsync
+    // Security (no-leading-dash): a value starting with "-" would be parsed by rsync
     // as an option (e.g. -e <cmd> runs a program).
     rejectLeadingDash(commandRun.options.source, "source");
     rejectLeadingDash(commandRun.options.destination, "destination");
-    // Security: --template selects a directory under templates/webcomponent,
+    // Security (template-allowlist): --template selects a directory under templates/webcomponent,
     // so it must be one of the shipped names (never a path). The monorepo
     // detection above sets "monorepo" itself, which is on the list.
     if (commandRun.options.template && commandRun.command !== "site") {
@@ -984,7 +984,7 @@ async function main() {
     }
     await runAuditCommand(commandRun, customPath, process.cwd());
   } else if (commandRun.command === "party") {
-    // Security (R2-L-2): keep an explicit (validated) --author; only fall back
+    // Security (validated-github-targets): keep an explicit (validated) --author; only fall back
     // to git user.name. party.js validates the final value as a GitHub user.
     if (!commandRun.options.author) {
       commandRun.options.author = author;
@@ -1316,7 +1316,7 @@ async function main() {
                   program.error(color.red(t("cliNameNoSpaces")));
                   process.exit(1);
                 }
-                // Security (R2-H-2): the non-interactive path must enforce the
+                // Security (strict-names): the non-interactive path must enforce the
                 // same special-character rule as the prompt above; the name
                 // reaches file paths and child process calls.
                 if (hasNameSpecialCharacters(value)) {
@@ -1596,7 +1596,7 @@ async function main() {
                     if (value.indexOf(" ") !== -1) {
                       return t("cliThemeNameNoSpaces");
                     }
-                    // Security (R2-M-2): theme name becomes a file path and a
+                    // Security (strict-names): theme name becomes a file path and a
                     // JS import / class name; no /, ., quotes, etc.
                     if (hasNameSpecialCharacters(value)) {
                       return t("cliNameNoSpecialChars");
@@ -1622,7 +1622,7 @@ async function main() {
                 if (value.indexOf(" ") !== -1) {
                   program.error(color.red(t("cliThemeNameNoSpaces")));
                 }
-                // Security (R2-M-2): same rule as the prompt above
+                // Security (strict-names): same rule as the prompt above
                 if (hasNameSpecialCharacters(value)) {
                   program.error(color.red(t("cliNameNoSpecialChars")));
                 }

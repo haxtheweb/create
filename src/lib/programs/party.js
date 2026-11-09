@@ -65,7 +65,7 @@ export function isRepoAlreadyExistsError(error) {
 // dependencies, given the npm client and the base directory repos were
 // cloned into. Extracted from the inline switch in cloneHAXRepositories so
 // the per-repo dependency logic can be unit tested without exec()/network.
-// Security (R2-L-1): returns { command, args, cwd } for runCommand instead of
+// Security (no-shell-strings): returns { command, args, cwd } for runCommand instead of
 // `cd ${baseDir}/${repo} && ...` shell strings.
 export function resolveInstallCommands(repoName, npmClient, baseDir) {
   const repoDir = path.join(baseDir, repoName);
@@ -378,7 +378,7 @@ ${t("partyGhSelectOptions", { sshOption: color.cyan(`Generate a new SSH key`), b
     await runCommand("npm", ["install", "--global", YARN_PACKAGE]);
   }
 
-  // Security (R2-L-2): the clone owner must be a GitHub username, not the
+  // Security (validated-github-targets): the clone owner must be a GitHub username, not the
   // free-form `git config user.name` ("Jane Doe"), and it's restricted to the
   // characters GitHub allows because it becomes part of the clone URL. Prefer
   // the authenticated gh login when the GitHub CLI is available.
@@ -411,7 +411,7 @@ ${t("partyGhSelectOptions", { sshOption: color.cyan(`Generate a new SSH key`), b
   }
 
   for (const item of commandRun.options.repos) {
-    // Security (R2-L-2): --repos values become part of clone/fork targets
+    // Security (validated-github-targets): --repos values become part of clone/fork targets
     if (!isValidGithubRepo(item)) {
       console.error(color.red(t("partyInvalidRepo", { repo: `${item}` })));
       continue;

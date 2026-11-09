@@ -54,7 +54,7 @@ import {
   placeholderPageHtml,
 } from "../site-tools.js";
 
-// Security (Stream-A): the deprecated @haxtheweb/open-apis npm dependency was
+// Security (in-process-converters): the deprecated @haxtheweb/open-apis npm dependency was
 // removed; converter calls now route in-process through haxcms-nodejs handlers
 // via invokeRoute() (same pattern as download-skeleton below), so no cloud
 // (open-apis.hax.cloud) URLs are referenced and the xlsx advisory is gone.
@@ -63,7 +63,7 @@ import * as haxcmsLib from "@haxtheweb/haxcms-nodejs/dist/lib/HAXCMS.js";
 import * as allRoutesLib from "@haxtheweb/haxcms-nodejs/dist/lib/allRoutes.js";
 import * as josfile from "@haxtheweb/haxcms-nodejs/dist/lib/JSONOutlineSchema.js";
 const JSONOutlineSchema = josfile.default;
-// Security (H-1/H-2/H-3): reuse haxcms-nodejs' SSRF-guarded fetch wrapper so
+// Security (ssrf-guarded-fetch): reuse haxcms-nodejs' SSRF-guarded fetch wrapper so
 // import/content/image fetches reject private/loopback/link-local/metadata
 // IPs, cap redirects, and enforce timeouts — matching the server posture.
 import * as safeFetchLib from "@haxtheweb/haxcms-nodejs/dist/lib/safeFetch.js";
@@ -109,7 +109,7 @@ exec("rsync --version", (error) => {
   }
 });
 
-// Security (R2-L-4): publish CLIs are only installed globally after the user
+// Security (confirmed-pinned-installs): publish CLIs are only installed globally after the user
 // agrees (or passed --y), and pinned to the major version current when this
 // was written so a hijacked or breaking new major is never pulled in silently.
 export const PUBLISH_CLI_PACKAGES = {
@@ -138,7 +138,7 @@ export function installPublishCli(tool) {
   return runCommand("npm", ["install", "--global", PUBLISH_CLI_PACKAGES[tool]]);
 }
 
-// Security (R2-M-1 / R2-L-3): one check for rsync source / destination /
+// Security (no-leading-dash, validated-cli-options): one check for rsync source / destination /
 // exclude values, whether they come from flags or prompts. Returns an error
 // message (for prompt validate callbacks) or undefined when the value is OK.
 export function rsyncArgError(value, optionName) {
@@ -161,7 +161,7 @@ export function ensureTwigConstantFunction() {
   twigConstantFunctionRegistered = true;
   try {
     if (Twig && typeof Twig.extendFunction === "function") {
-      // Security (M-3): previously this read process.env[name] and
+      // Security (twig-constant-allowlist): previously this read process.env[name] and
       // globalThis[name], which exposed arbitrary secrets/globals to any Twig
       // template rendered in this process. The only template usage is the
       // service-worker.js template's constant('JSON_PRETTY_PRINT'), a PHP
@@ -238,7 +238,7 @@ class Res {
   }
 }
 
-// Security (Stream-A): params added so the site/import/:platform dispatcher
+// Security (in-process-converters): params added so the site/import/:platform dispatcher
 // (replacing the open-apis broker) can receive the platform name in-process.
 // Backward-compatible: existing callers omit params, defaulting to {}.
 async function invokeRoute(routeHandler, body = {}, query = {}, params = {}) {
@@ -363,7 +363,7 @@ export function cliCommitContextFor(handler) {
   });
   return context;
 }
-// Security (Stream-A): map --import-structure names to on-prem haxcms-nodejs
+// Security (in-process-converters): map --import-structure names to on-prem haxcms-nodejs
 // route handlers (replaces the deprecated @haxtheweb/open-apis broker). Platform
 // converters go through the site/import/:platform dispatcher; docx/xlsx use their
 // own actions routes. evolutionToSite (custom zip upload) is intentionally absent
@@ -521,7 +521,7 @@ export async function execNpxHaxcmsNodejsFallback(cwd, env, assumeYes) {
   return runCommand("npx", [HAXCMS_NODEJS_FALLBACK_SPEC], { cwd, env });
 }
 
-// Security (M-4 / R2-H-1): every local launch runs haxcms-nodejs with
+// Security (loopback-dev-server): every local launch runs haxcms-nodejs with
 // HAXCMS_DISABLE_JWT_CHECKS, i.e. with no login. Newer haxcms-nodejs binds
 // 127.0.0.1 on its own in that mode, but the published 26.8.x line this CLI
 // still depends on binds every interface, so the CLI pins the bind address
@@ -1592,7 +1592,7 @@ export async function siteCommandDetected(commandRun) {
             } else if (!location.endsWith("/")) {
               location = location + "/";
             }
-            // Security (H-1): fetch the remote site.json through safeFetch so
+            // Security (ssrf-guarded-fetch): fetch the remote site.json through safeFetch so
             // loopback/private/metadata IPs are rejected before the request.
             let f;
             try {
@@ -1618,7 +1618,7 @@ export async function siteCommandDetected(commandRun) {
           }
           // look on prem
           else if (fs.existsSync(location)) {
-            // Security (L-1): canonicalize + reject null bytes for local paths.
+            // Security (safe-local-paths): canonicalize + reject null bytes for local paths.
             const localPath = resolveLocalPath(location);
             let fileContents = await fs.readFileSync(localPath);
             if (location.endsWith(".json")) {
@@ -1629,7 +1629,7 @@ export async function siteCommandDetected(commandRun) {
           }
           for (let i in josImport.items) {
             if (josImport.items[i].location && !josImport.items[i].content) {
-              // Security (H-1): resolve each remote-controlled item location
+              // Security (ssrf-guarded-fetch): resolve each remote-controlled item location
               // against the import base via new URL() (so an absolute/
               // protocol-relative location can't bypass validation) and fetch
               // through safeFetch to block SSRF targets.
@@ -1678,7 +1678,7 @@ export async function siteCommandDetected(commandRun) {
               josImport.items[i].slug,
               null,
               josImport.items[i].indent,
-              // Security (H-5): sanitize remote item content before storing.
+              // Security (sanitize-remote-html): sanitize remote item content before storing.
               sanitizeIfString(josImport.items[i].content),
               josImport.items[i].order,
               josImport.items[i].metadata,
@@ -1705,7 +1705,7 @@ export async function siteCommandDetected(commandRun) {
             p.note(`🚀 ${t("siteServerRunningAt", { url: color.underline(color.cyan(`http://localhost:${port}`)) })}
 ⌨️  ${t("siteServerStopPress", { keys: color.bold(color.black(color.bgRed(` ${t("wcCtrlCOrBreak")} `))) })}`);
           }
-          // Security (M-4 / R2-H-1): HAXCMS_DISABLE_JWT_CHECKS is scoped to
+          // Security (loopback-dev-server): HAXCMS_DISABLE_JWT_CHECKS is scoped to
           // local dev only and the server is pinned to loopback via
           // HAXCMS_HOST (see localHaxcmsServerEnv), so the no-login server
           // isn't reachable from the network.
@@ -1733,7 +1733,7 @@ export async function siteCommandDetected(commandRun) {
 💻 ${t("siteServerLiveReload", { path: color.bold("custom/src") })}
 ⌨️  ${t("siteServerStopPress", { keys: color.bold(color.black(color.bgRed(` ${t("wcCtrlCOrBreak")} `))) })}`);
           }
-          // Security (M-4 / R2-H-1): same loopback-only, scoped JWT-disable as start.
+          // Security (loopback-dev-server): same loopback-only, scoped JWT-disable as start.
           // Issue #2993: same in-process spawn (with npx fallback) as start.
           await spawnHaxcmsNodejs(
             activeHaxsite.directory,
@@ -1834,7 +1834,7 @@ export async function siteCommandDetected(commandRun) {
                   break;
                 }
                 case "md": {
-                  // Security (Stream-A): on-prem haxcms-nodejs handler in-process
+                  // Security (in-process-converters): on-prem haxcms-nodejs handler in-process
                   // (replaces @haxtheweb/open-apis broker); result string now at
                   // .data.data.contents (haxcms-nodejs response envelope).
                   let resp = await invokeRoute(
@@ -2259,7 +2259,7 @@ export async function siteCommandDetected(commandRun) {
       case "site:sync":
         // @todo git sync might need other arguments / be combined with publishing
         try {
-          // Security (R2-L-1): directory travels as cwd, never shell text
+          // Security (no-shell-strings): directory travels as cwd, never shell text
           await runCommand("git", ["pull"], { cwd: activeHaxsite.directory });
           await runCommand("git", ["push"], { cwd: activeHaxsite.directory });
         } catch (e) {
@@ -2315,7 +2315,7 @@ export async function siteCommandDetected(commandRun) {
                 placeholder: "user@example.com:/var/www/html",
                 validate: (value) => {
                   if (!value) return t("siteRsyncSourceRequired");
-                  // Security (R2-L-3): same checks as --source
+                  // Security (validated-cli-options): same checks as --source
                   return rsyncArgError(value, "source");
                 },
               });
@@ -2334,7 +2334,7 @@ export async function siteCommandDetected(commandRun) {
                     : "/backup/location",
                 validate: (value) => {
                   if (!value) return t("siteRsyncDestinationRequired");
-                  // Security (R2-L-3): same checks as --destination
+                  // Security (validated-cli-options): same checks as --destination
                   return rsyncArgError(value, "destination");
                 },
               });
@@ -2345,7 +2345,7 @@ export async function siteCommandDetected(commandRun) {
               placeholder: "node_modules,.git,.DS_Store,dist,build",
               initialValue: "node_modules,.git,.DS_Store,dist,build",
               validate: (value) => {
-                // Security (R2-L-3): same checks as --exclude
+                // Security (validated-cli-options): same checks as --exclude
                 const patterns = value ? value.split(",") : [];
                 for (const pattern of patterns) {
                   const error = rsyncArgError(pattern.trim(), "exclude");
@@ -2404,7 +2404,7 @@ export async function siteCommandDetected(commandRun) {
             source += "/";
           }
 
-          // Security (R2-M-1): "--" ends option parsing so source and
+          // Security (no-leading-dash): "--" ends option parsing so source and
           // destination are always treated as paths, never as rsync options
           // like -e <cmd>.
           rsyncArgs.push("--", source, destination);
@@ -2419,7 +2419,7 @@ export async function siteCommandDetected(commandRun) {
             // Interactive execution for real-time progress
             await interactiveExec("rsync", rsyncArgs);
           } else {
-            // Silent execution. Security (R2-M-1): argument array, no shell, so
+            // Silent execution. Security (no-leading-dash): argument array, no shell, so
             // spaces/quotes in a path can't split into extra rsync options.
             const result = await runCommand("rsync", rsyncArgs);
             if (!commandRun.options.quiet && result.stdout) {
@@ -2481,7 +2481,7 @@ export async function siteCommandDetected(commandRun) {
                   if (value.indexOf(" ") !== -1) {
                     return t("siteThemeNameNoSpaces");
                   }
-                  // Security (R2-M-2): theme name becomes a file path and a
+                  // Security (strict-names): theme name becomes a file path and a
                   // JS import / class name; no /, ., quotes, etc.
                   if (hasNameSpecialCharacters(value)) {
                     return t("utilNameSpecialCharacters");
@@ -2708,7 +2708,7 @@ export async function siteCommandDetected(commandRun) {
             commandRun.options.npmClient = "npm";
           }
           if (fs.existsSync(`${project.path}/custom/custom-elements.json`)) {
-            // Security (R2-L-1): cwd instead of `cd custom && ...`
+            // Security (no-shell-strings): cwd instead of `cd custom && ...`
             await runCommand(commandRun.options.npmClient, ["run", "analyze"], {
               cwd: path.join(project.path, "custom"),
             });
@@ -2771,7 +2771,7 @@ export async function siteCommandDetected(commandRun) {
             activeHaxsite.directory,
           );
           if (!surgeDomain && rememberedDomain) {
-            // Security (M-1): the CNAME file is read from disk and interpolated
+            // Security (validated-cli-options): the CNAME file is read from disk and interpolated
             // into an exec() shell string, so it gets the same strict hostname
             // charset validation --domain receives at the option boundary.
             try {
@@ -2801,7 +2801,7 @@ export async function siteCommandDetected(commandRun) {
             // with no prompts on every surge version
             let s = p.spinner();
             s.start(merlinSays(t("siteSurgeSending")));
-            // Security (R2-L-1): directory as cwd, domain as an argument
+            // Security (no-shell-strings): directory as cwd, domain as an argument
             execOutput = await runCommand("surge", [".", surgeDomain], {
               cwd: activeHaxsite.directory,
             });
@@ -2898,12 +2898,12 @@ export async function siteCommandDetected(commandRun) {
           if (commandRun.options.y) {
             let s = p.spinner();
             s.start(merlinSays(t("siteNetlifyDeploying")));
-            // Security (R2-L-1): directory as cwd, values as arguments.
+            // Security (no-shell-strings): directory as cwd, values as arguments.
             // With --domain, deploy to that existing site; otherwise netlify
             // creates a new site or uses the existing site config.
             const netlifyArgs = ["deploy", "--prod"];
             if (commandRun.options.domain) {
-              // Security (R2-M-1): --site=<v> so the value can never be read as a
+              // Security (no-leading-dash): --site=<v> so the value can never be read as a
               // separate option by the publish CLI
               netlifyArgs.push(`--site=${commandRun.options.domain}`);
             }
@@ -2915,7 +2915,7 @@ export async function siteCommandDetected(commandRun) {
           } else {
             let netlifyArgs = ["deploy", "--prod"];
             if (commandRun.options.domain) {
-              // Security (R2-M-1): --site=<v> so the value can never be read as a
+              // Security (no-leading-dash): --site=<v> so the value can never be read as a
               // separate option by the publish CLI
               netlifyArgs.push(`--site=${commandRun.options.domain}`);
             }
@@ -2983,11 +2983,11 @@ export async function siteCommandDetected(commandRun) {
           if (commandRun.options.y) {
             let s = p.spinner();
             s.start(merlinSays(t("siteVercelDeploying")));
-            // Security (R2-L-1): directory as cwd, values as arguments.
+            // Security (no-shell-strings): directory as cwd, values as arguments.
             // --domain sets the project name; otherwise default settings.
             const vercelArgs = ["--prod"];
             if (commandRun.options.domain) {
-              // Security (R2-M-1): --name=<v>, see netlify above
+              // Security (no-leading-dash): --name=<v>, see netlify above
               vercelArgs.push(`--name=${commandRun.options.domain}`);
             }
             execOutput = await runCommand("vercel", vercelArgs, {
@@ -2998,7 +2998,7 @@ export async function siteCommandDetected(commandRun) {
           } else {
             let vercelArgs = ["--prod"];
             if (commandRun.options.domain) {
-              // Security (R2-M-1): --name=<v>, see netlify above
+              // Security (no-leading-dash): --name=<v>, see netlify above
               vercelArgs.push(`--name=${commandRun.options.domain}`);
             }
             execOutput = await interactiveExec("vercel", vercelArgs, {
@@ -3691,7 +3691,7 @@ export async function siteCommandDetected(commandRun) {
             siteContent += `<div data-jos-item-id="${items[i].id}">\n\r${await activeHaxsite.getPageContent(page)}\n\r</div>\n\r`;
           }
           if (operation.action === "site:md") {
-            // Security (Stream-A): on-prem haxcms-nodejs handler in-process
+            // Security (in-process-converters): on-prem haxcms-nodejs handler in-process
             // (replaces @haxtheweb/open-apis broker); result at .data.data.contents.
             let resp = await invokeRoute(
               allRoutesLib.allRoutes.system.map.post["actions/html-to-md"],
@@ -4204,7 +4204,7 @@ export async function resolveNodeContent(commandRun) {
     }
   }
   if (isUrl) {
-    // Security (H-2): route through safeFetch to block SSRF targets
+    // Security (ssrf-guarded-fetch): route through safeFetch to block SSRF targets
     // (private/loopback/link-local/metadata IPs) and cap redirects.
     const resp = await safeFetch(content);
     if (!resp.ok) {
@@ -4214,7 +4214,7 @@ export async function resolveNodeContent(commandRun) {
     }
     contents = await resp.text();
   } else if (isFile) {
-    // Security (L-1): canonicalize + reject null bytes for local paths.
+    // Security (safe-local-paths): canonicalize + reject null bytes for local paths.
     contents = fs.readFileSync(resolveLocalPath(content), "utf8");
     if (!format) {
       format = contentFormatFromPath(content);
@@ -4228,7 +4228,7 @@ export async function resolveNodeContent(commandRun) {
       contents = await load(contents);
       break;
     case "md": {
-      // Security (Stream-A): on-prem haxcms-nodejs handler in-process
+      // Security (in-process-converters): on-prem haxcms-nodejs handler in-process
       // (replaces @haxtheweb/open-apis broker); raw mode dropped —
       // haxcms-nodejs returns HTML at .data.data.contents.
       let resp = await invokeRoute(
@@ -4266,7 +4266,7 @@ export async function resolveNodeContent(commandRun) {
     }
     contents = contentNode.innerHTML;
   }
-  // Security (H-5): sanitize remote/scraped HTML before storing.
+  // Security (sanitize-remote-html): sanitize remote/scraped HTML before storing.
   // Objects (json/yaml format) pass through sanitizeIfString unchanged.
   return { contents: sanitizeIfString(contents), title: title };
 }
@@ -4474,7 +4474,7 @@ export function siteNodeOperations(search = null) {
   return obj;
 }
 
-// Security (Stream-A): openApiBroker() removed — the deprecated
+// Security (in-process-converters): openApiBroker() removed — the deprecated
 // @haxtheweb/open-apis broker (dynamic-importing handlers from that package's
 // dist/) was replaced by in-process invokeRoute() calls against haxcms-nodejs
 // route handlers (see IMPORT_STRUCTURE_MAP above and the string-converter
@@ -4660,7 +4660,7 @@ export async function applySiteLanguage(commandRun, project) {
 
 export async function siteProcess(commandRun, project, port = "3000") {
   // auto select operations to perform if requested
-  // Security (M-2): defense-in-depth re-check of --npm-client at the point it
+  // Security (npm-client-allowlist): defense-in-depth re-check of --npm-client at the point it
   // is interpolated into exec() shell strings. create.js validates earlier,
   // but the site/webcomponent subcommand option paths can bypass that check.
   if (commandRun.options.npmClient) {
@@ -4763,7 +4763,7 @@ export async function siteProcess(commandRun, project, port = "3000") {
       // assume hax to hax if it's not defined
       commandRun.options.importStructure = "haxcmsToSite";
     }
-    // Security (Stream-A): verify this is a valid import structure and route
+    // Security (in-process-converters): verify this is a valid import structure and route
     // it in-process to the on-prem haxcms-nodejs handler (replaces the
     // @haxtheweb/open-apis broker + MicroFrontendRegistry lookup). Platform
     // converters go through the site/import/:platform dispatcher; docx/xlsx
@@ -4819,7 +4819,7 @@ export async function siteProcess(commandRun, project, port = "3000") {
     // hidden import methodologies
     else if (commandRun.options.importStructure) {
       if (commandRun.options.importStructure === "drupal7-book-print-html") {
-        // Security (H-2): fetch the import source through safeFetch so SSRF
+        // Security (ssrf-guarded-fetch): fetch the import source through safeFetch so SSRF
         // targets (loopback/private/metadata) are rejected before the request.
         let siteContent = "";
         try {
@@ -4853,7 +4853,7 @@ export async function siteProcess(commandRun, project, port = "3000") {
               indent: depth,
               title: branch1.querySelector("h1").innerText,
               slug: itemID.replace("-", "/"),
-              // Security (H-5): sanitize scraped Drupal7 body HTML before storing.
+              // Security (sanitize-remote-html): sanitize scraped Drupal7 body HTML before storing.
               contents: sanitizeIfString(
                 branch1.querySelector(`.field.field-name-body .field-item`)
                   .innerHTML,
@@ -4873,7 +4873,7 @@ export async function siteProcess(commandRun, project, port = "3000") {
                 indent: depth,
                 title: branch2.querySelector("h1").innerText,
                 slug: itemID.replace("-", "/"),
-                // Security (H-5): sanitize scraped Drupal7 body HTML before storing.
+                // Security (sanitize-remote-html): sanitize scraped Drupal7 body HTML before storing.
                 contents: sanitizeIfString(
                   branch2.querySelector(`.field.field-name-body .field-item`)
                     .innerHTML,
@@ -4893,7 +4893,7 @@ export async function siteProcess(commandRun, project, port = "3000") {
                   indent: depth,
                   title: branch3.querySelector("h1").innerText,
                   slug: itemID.replace("-", "/"),
-                  // Security (H-5): sanitize scraped Drupal7 body HTML before storing.
+                  // Security (sanitize-remote-html): sanitize scraped Drupal7 body HTML before storing.
                   contents: sanitizeIfString(
                     branch3.querySelector(`.field.field-name-body .field-item`)
                       .innerHTML,
@@ -4908,7 +4908,7 @@ export async function siteProcess(commandRun, project, port = "3000") {
           // Obtain all images to bring along with the spider request; strip
           // leading slashes from the keys so both backends' bulk-import
           // normalizeBulkImportName() accepts them (it rejects leading '/').
-          // Security (H-3): each image URL is SSRF-validated inside the helper
+          // Security (ssrf-guarded-fetch): each image URL is SSRF-validated inside the helper
           // before being recorded.
           const importOrigin = new URL(commandRun.options.importSite).origin;
           const { files: drupalFiles, skipped: drupalSkipped } =
@@ -4992,7 +4992,7 @@ export async function siteProcess(commandRun, project, port = "3000") {
 
   if (project.gitRepo && !commandRun.options.isMonorepo) {
     try {
-      // Security (R2-H-2): no shell string, so the site name / path can't
+      // Security (strict-names): no shell string, so the site name / path can't
       // inject commands
       await initGitRepo(path.join(project.path, project.name), project.gitRepo);
     } catch {
@@ -5039,7 +5039,7 @@ export async function siteProcess(commandRun, project, port = "3000") {
     project.extras.includes("launch")
   ) {
     let optionPath = `${project.path}/${project.name}`;
-    // Security (M-4 / R2-H-1): scoped JWT-disable for local launch; the
+    // Security (loopback-dev-server): scoped JWT-disable for local launch; the
     // server is pinned to loopback via localHaxcmsServerEnv. 'command' is
     // shown to the user as the "launch later" instructions (issue #2993).
     let command = `hax serve`;
@@ -5340,7 +5340,7 @@ async function customSiteTheme(commandRun, project) {
   project.customThemeName = commandRun.options.customThemeName
     ? commandRun.options.customThemeName
     : project.customThemeName;
-  // Security (R2-M-2): the name becomes a file path, a JS import line in
+  // Security (strict-names): the name becomes a file path, a JS import line in
   // custom.js and a class name in generated code. Enforce the rule here too
   // so no caller (CLI flag, prompt, programmatic) can pass ../ or quotes.
   if (
@@ -5477,7 +5477,7 @@ async function customSiteTheme(commandRun, project) {
   activeHaxsite.manifest.save(false);
 
   // install and build theme dependencies
-  // Security (R2-H-2 / R2-L-1): site path travels as cwd, not shell text
+  // Security (strict-names, no-shell-strings): site path travels as cwd, not shell text
   const npmClient = validateNpmClient(commandRun.options.npmClient || "npm");
   const customDir = path.join(sitePath, "custom");
   await runCommand(npmClient, ["install"], { cwd: customDir });
