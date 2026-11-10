@@ -36,7 +36,7 @@
       <title>Lesson 1</title>
       <link>/item-76387ac2-0d0f-4185-a955-1d95abad8c0e</link>
       <description>
-          <![CDATA[ <h3>Lesson 1</h3><p>A page one level deep.</p><multiple-choice title="Check" question="Is this a fixture?" answers='[{"label":"Yes","correct":true},{"label":"No"}]'></multiple-choice><task-list name="Steps" tasks='[{"name":"Read"},{"name":"Try"}]'></task-list> ]]>
+          <![CDATA[ <h3>Lesson 1</h3><p>A page one level deep.</p><multiple-choice title="Check" question="Is this a fixture?" answers='[{"label":"Yes","correct":true},{"label":"No"}]'></multiple-choice> ]]>
       </description>
       <category></category>
       <guid>/item-76387ac2-0d0f-4185-a955-1d95abad8c0e</guid>

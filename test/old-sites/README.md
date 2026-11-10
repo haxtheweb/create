@@ -59,6 +59,13 @@ Run under PHP 8.3 and Node.js 22 or newer. One shim, recorded in
 library that calls `SplFixedArray::key()`, removed in PHP 8 (that commit
 required PHP 7), so the generator patches that call in its throwaway copy.
 
+One block is left out by decision: `<task-list>` was dropped when the
+elements moved from `@lrnwebcomponents` to `@haxtheweb`
+([haxtheweb/issues#1422](https://github.com/haxtheweb/issues/issues/1422)),
+so the 2022 fixture's pages (and its entry in `years.json`) no longer use
+it. The 2022 site's own `package.json` still lists
+`@lrnwebcomponents/task-list`, as that install wrote it.
+
 Things these fixtures keep because the code of that year did them: nested
 slugs (`unit-1/lesson-1`, 2021 to 2023), a stray file named `false`, every
 page at `order` 0 and the child page at `indent` 0 from the 2025 and 2026 CLI,
