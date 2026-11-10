@@ -426,7 +426,7 @@
   "siteSelectItemToDelete": "Виберіть елемент для видалення",
   "siteDeleteNothingExit": "Нічого не видаляти, вийти",
   "siteConfirmDeleteItem": "Ви впевнені, що хочете видалити {id}? (Цю дію не можна скасувати)",
-  "siteNodeDeleteNotFound": "node:delete не вдалося: \"{id} не знайдено",
+  "siteNodeDeleteNotFound": "node:delete не вдалося: \"{id}\" не знайдено",
   "siteSkeletonExportFailed": "Не вдалося експортувати каркас цього сайту",
   "siteSkeletonExportedTo": "Каркас експортовано в {path}",
   "siteTemplateInstalledAs": "Шаблон встановлено як {name} ({path})",

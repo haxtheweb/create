@@ -426,7 +426,7 @@
   "siteSelectItemToDelete": "مٹاون لئی آئٹم چنو",
   "siteDeleteNothingExit": "کجھ نہ مٹاؤ، باہر نکلو",
   "siteConfirmDeleteItem": "کیہ تسیں پکا {id} مٹاؤنا چاہندے او؟ (ایہ واپس نئیں ہو سکدا)",
-  "siteNodeDeleteNotFound": "node:delete ناکام \"{id} نئیں لبھیا",
+  "siteNodeDeleteNotFound": "node:delete ناکام \"{id}\" نئیں لبھیا",
   "siteSkeletonExportFailed": "ایس سائٹ دا سکیلیٹن ایکسپورٹ نئیں ہو سکیا",
   "siteSkeletonExportedTo": "سکیلیٹن {path} وچ ایکسپورٹ ہو گیا",
   "siteTemplateInstalledAs": "ٹیمپلیٹ {name} ({path}) وانگوں انسٹال ہو گیا",

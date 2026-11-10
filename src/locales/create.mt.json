@@ -426,7 +426,7 @@
   "siteSelectItemToDelete": "Agħżel oġġett biex tħassar",
   "siteDeleteNothingExit": "Ħassar xejn, oħroġ",
   "siteConfirmDeleteItem": "Żgur li trid tħassar {id}? (Dan ma jistax jitreġġa' lura)",
-  "siteNodeDeleteNotFound": "node:delete falla \"{id} ma nstabx",
+  "siteNodeDeleteNotFound": "node:delete falla \"{id}\" ma nstabx",
   "siteSkeletonExportFailed": "L-esportazzjoni tal-iskeletru għal dan is-sit falliet",
   "siteSkeletonExportedTo": "L-iskeletru ġie esportat f'{path}",
   "siteTemplateInstalledAs": "It-template ġie installat bħala {name} ({path})",

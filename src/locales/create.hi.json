@@ -430,7 +430,7 @@
   "siteSelectItemToDelete": "हटाने के लिए आइटम चुनें",
   "siteDeleteNothingExit": "कुछ न हटाएँ, बाहर निकलें",
   "siteConfirmDeleteItem": "क्या आप वाकई {id} को हटाना चाहते हैं? (इसे पूर्ववत नहीं किया जा सकता)",
-  "siteNodeDeleteNotFound": "node:delete विफल \"{id} नहीं मिला",
+  "siteNodeDeleteNotFound": "node:delete विफल \"{id}\" नहीं मिला",
   "siteSkeletonExportFailed": "इस साइट का स्केलेटन एक्सपोर्ट करने में विफल",
   "siteSkeletonExportedTo": "स्केलेटन {path} में एक्सपोर्ट हुआ",
   "siteTemplateInstalledAs": "टेम्पलेट {name} के रूप में इंस्टॉल हुआ ({path})",

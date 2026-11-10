@@ -426,7 +426,7 @@
   "siteSelectItemToDelete": "Izvēlieties dzēšamo vienumu",
   "siteDeleteNothingExit": "Neko nedzēst, iziet",
   "siteConfirmDeleteItem": "Vai tiešām dzēst {id}? (To nevar atsaukt)",
-  "siteNodeDeleteNotFound": "node:delete neizdevās \"{id} nav atrasts",
+  "siteNodeDeleteNotFound": "node:delete neizdevās \"{id}\" nav atrasts",
   "siteSkeletonExportFailed": "Neizdevās eksportēt šīs vietnes sagatavi",
   "siteSkeletonExportedTo": "Sagatave eksportēta uz {path}",
   "siteTemplateInstalledAs": "Veidne instalēta kā {name} ({path})",

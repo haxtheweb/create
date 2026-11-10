@@ -426,7 +426,7 @@
   "siteSelectItemToDelete": "કાઢી નાખવા આઇટમ પસંદ કરો",
   "siteDeleteNothingExit": "કંઈ કાઢી ન નાખો, બહાર નીકળો",
   "siteConfirmDeleteItem": "શું તમે ખરેખર {id} કાઢી નાખવા માંગો છો? (આ પૂર્વવત્ કરી શકાતું નથી)",
-  "siteNodeDeleteNotFound": "node:delete નિષ્ફળ \"{id} મળ્યું નહીં",
+  "siteNodeDeleteNotFound": "node:delete નિષ્ફળ \"{id}\" મળ્યું નહીં",
   "siteSkeletonExportFailed": "આ સાઇટ માટે સ્કેલેટન નિકાસ કરવામાં નિષ્ફળ",
   "siteSkeletonExportedTo": "સ્કેલેટન {path} પર નિકાસ થયું",
   "siteTemplateInstalledAs": "ટેમ્પ્લેટ {name} તરીકે ઇન્સ્ટોલ થયું ({path})",

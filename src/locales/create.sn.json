@@ -426,7 +426,7 @@
   "siteSelectItemToDelete": "Sarudza chinhu chekudzima",
   "siteDeleteNothingExit": "Usadzima chinhu, buda",
   "siteConfirmDeleteItem": "Une chokwadi here kuti unoda kudzima {id}? (Izvi hazvigoni kudzoserwa)",
-  "siteNodeDeleteNotFound": "node:delete yakundikana \"{id} haina kuwanikwa",
+  "siteNodeDeleteNotFound": "node:delete yakundikana \"{id}\" haina kuwanikwa",
   "siteSkeletonExportFailed": "Zvakundikana kuburitsa skeleton yesaiti iyi",
   "siteSkeletonExportedTo": "Skeleton yaburitswa ku{path}",
   "siteTemplateInstalledAs": "Template yaiswa se{name} ({path})",

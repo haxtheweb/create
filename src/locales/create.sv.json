@@ -426,7 +426,7 @@
   "siteSelectItemToDelete": "Välj ett objekt att ta bort",
   "siteDeleteNothingExit": "Ta inte bort något, avsluta",
   "siteConfirmDeleteItem": "Är du säker på att du vill ta bort {id}? (Detta kan inte ångras)",
-  "siteNodeDeleteNotFound": "node:delete misslyckades \"{id} hittades inte",
+  "siteNodeDeleteNotFound": "node:delete misslyckades \"{id}\" hittades inte",
   "siteSkeletonExportFailed": "Kunde inte exportera mall för denna webbplats",
   "siteSkeletonExportedTo": "Mallen exporterades till {path}",
   "siteTemplateInstalledAs": "Mallen installerades som {name} ({path})",

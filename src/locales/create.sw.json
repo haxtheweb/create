@@ -426,7 +426,7 @@
   "siteSelectItemToDelete": "Chagua kipengee cha kufuta",
   "siteDeleteNothingExit": "Usifute chochote, toka",
   "siteConfirmDeleteItem": "Una uhakika unataka kufuta {id}? (Hii haiwezi kutenduliwa)",
-  "siteNodeDeleteNotFound": "node:delete imeshindwa \"{id} haikupatikana",
+  "siteNodeDeleteNotFound": "node:delete imeshindwa \"{id}\" haikupatikana",
   "siteSkeletonExportFailed": "Imeshindwa kuhamisha kiunzi cha tovuti hii",
   "siteSkeletonExportedTo": "Kiunzi kimehamishwa hadi {path}",
   "siteTemplateInstalledAs": "Kiolezo kimesakinishwa kama {name} ({path})",

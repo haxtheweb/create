@@ -426,7 +426,7 @@
   "siteSelectItemToDelete": "Өчүрүү үчүн элементти тандаңыз",
   "siteDeleteNothingExit": "Эч нерсе өчүрбөө, чыгуу",
   "siteConfirmDeleteItem": "{id} өчүрүүнү чын эле каалайсызбы? (Муну кайтарууга болбойт)",
-  "siteNodeDeleteNotFound": "node:delete ишке ашкан жок \"{id} табылган жок",
+  "siteNodeDeleteNotFound": "node:delete ишке ашкан жок \"{id}\" табылган жок",
   "siteSkeletonExportFailed": "Бул сайт үчүн скелетти экспорттоо ишке ашкан жок",
   "siteSkeletonExportedTo": "Скелет {path} ичине экспорттолду",
   "siteTemplateInstalledAs": "Шаблон {name} катары орнотулду ({path})",

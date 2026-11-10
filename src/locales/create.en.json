@@ -474,7 +474,7 @@
   "siteSelectItemToDelete": "Select an item to delete",
   "siteDeleteNothingExit": "Delete nothing, exit",
   "siteConfirmDeleteItem": "Are you sure you want to delete {id}? (This cannot be undone)",
-  "siteNodeDeleteNotFound": "node:delete failed \"{id} not found",
+  "siteNodeDeleteNotFound": "node:delete failed \"{id}\" not found",
   "siteSkeletonExportFailed": "Failed to export skeleton for this site",
   "siteSkeletonExportedTo": "Skeleton exported to {path}",
   "siteTemplateInstalledAs": "Template installed as {name} ({path})",

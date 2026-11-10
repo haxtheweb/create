@@ -426,7 +426,7 @@
   "siteSelectItemToDelete": "Zgjidhni një element për ta fshirë",
   "siteDeleteNothingExit": "Mos fshi asgjë, dil",
   "siteConfirmDeleteItem": "Jeni i sigurt që dëshironi të fshini {id}? (Kjo nuk mund të zhbëhet)",
-  "siteNodeDeleteNotFound": "node:delete dështoi \"{id} nuk u gjet",
+  "siteNodeDeleteNotFound": "node:delete dështoi \"{id}\" nuk u gjet",
   "siteSkeletonExportFailed": "Eksportimi i skeletit për këtë sajt dështoi",
   "siteSkeletonExportedTo": "Skeleti u eksportua në {path}",
   "siteTemplateInstalledAs": "Shablloni u instalua si {name} ({path})",

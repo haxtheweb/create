@@ -426,7 +426,7 @@
   "siteSelectItemToDelete": "Waan haqxu filadhu",
   "siteDeleteNothingExit": "Homaa hin haqin, ba'i",
   "siteConfirmDeleteItem": "{id} haquu barbaaduu kee mirkanaa? (Kun deebi'uu hin danda'u)",
-  "siteNodeDeleteNotFound": "node:delete hin milkoofne \"{id} hin argamne",
+  "siteNodeDeleteNotFound": "node:delete hin milkoofne \"{id}\" hin argamne",
   "siteSkeletonExportFailed": "Lafee marsariitii kanaa erguu hin dandeenye",
   "siteSkeletonExportedTo": "Lafeen gara {path} tti ergameera",
   "siteTemplateInstalledAs": "Tempileetiin akka {name} tti fe'ameera ({path})",

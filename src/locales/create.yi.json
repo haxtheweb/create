@@ -426,7 +426,7 @@
   "siteSelectItemToDelete": "קלײַבט אַן אײַנהייט אויסצומעקן",
   "siteDeleteNothingExit": "גאָרנישט אויסמעקן, אַרויס",
   "siteConfirmDeleteItem": "זענט איר זיכער אַז איר ווילט אויסמעקן {id}? (מע קען דאָס נישט צוריקמאַכן)",
-  "siteNodeDeleteNotFound": "node:delete דורכגעפֿאַלן \"{id} נישט געפֿונען",
+  "siteNodeDeleteNotFound": "node:delete דורכגעפֿאַלן \"{id}\" נישט געפֿונען",
   "siteSkeletonExportFailed": "מע האָט נישט געקענט עקספּאָרטירן דעם שקעלעט פֿאַר דעם זײַטל",
   "siteSkeletonExportedTo": "שקעלעט עקספּאָרטירט צו {path}",
   "siteTemplateInstalledAs": "מוסטער אינסטאַלירט ווי {name} ({path})",

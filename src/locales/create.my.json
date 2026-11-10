@@ -426,7 +426,7 @@
   "siteSelectItemToDelete": "ဖျက်ရန် item တစ်ခုကို ရွေးပါ",
   "siteDeleteNothingExit": "ဘာမှမဖျက်ဘဲ ထွက်ရန်",
   "siteConfirmDeleteItem": "{id} ကို ဖျက်မှာ သေချာပါသလား? (ပြန်ပြင်၍ မရပါ)",
-  "siteNodeDeleteNotFound": "node:delete မအောင်မြင်ပါ \"{id} မတွေ့ပါ",
+  "siteNodeDeleteNotFound": "node:delete မအောင်မြင်ပါ \"{id}\" မတွေ့ပါ",
   "siteSkeletonExportFailed": "ဤ site အတွက် skeleton ကို export မလုပ်နိုင်ပါ",
   "siteSkeletonExportedTo": "Skeleton ကို {path} သို့ export လုပ်ပြီးပါပြီ",
   "siteTemplateInstalledAs": "Template ကို {name} အဖြစ် ထည့်သွင်းပြီး ({path})",

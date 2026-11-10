@@ -426,7 +426,7 @@
   "siteSelectItemToDelete": "Veldu atriði til að eyða",
   "siteDeleteNothingExit": "Eyða engu, hætta",
   "siteConfirmDeleteItem": "Ertu viss um að þú viljir eyða {id}? (Ekki er hægt að afturkalla þetta)",
-  "siteNodeDeleteNotFound": "node:delete mistókst \"{id} fannst ekki",
+  "siteNodeDeleteNotFound": "node:delete mistókst \"{id}\" fannst ekki",
   "siteSkeletonExportFailed": "Ekki tókst að flytja út grind fyrir þennan vef",
   "siteSkeletonExportedTo": "Grind flutt út í {path}",
   "siteTemplateInstalledAs": "Sniðmát uppsett sem {name} ({path})",

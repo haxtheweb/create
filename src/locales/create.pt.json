@@ -430,7 +430,7 @@
   "siteSelectItemToDelete": "Selecione um item para excluir",
   "siteDeleteNothingExit": "Não excluir nada, sair",
   "siteConfirmDeleteItem": "Tem certeza de que deseja excluir {id}? (Isso não pode ser desfeito)",
-  "siteNodeDeleteNotFound": "node:delete falhou \"{id} não encontrado",
+  "siteNodeDeleteNotFound": "node:delete falhou \"{id}\" não encontrado",
   "siteSkeletonExportFailed": "Falha ao exportar o skeleton deste site",
   "siteSkeletonExportedTo": "Skeleton exportado para {path}",
   "siteTemplateInstalledAs": "Template instalado como {name} ({path})",

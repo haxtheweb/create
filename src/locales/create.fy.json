@@ -426,7 +426,7 @@
   "siteSelectItemToDelete": "Selektearje in item om te wiskjen",
   "siteDeleteNothingExit": "Neat wiskje, ôfslute",
   "siteConfirmDeleteItem": "Binne jo wis dat jo {id} wiskje wolle? (Dit kin net ûngedien makke wurde)",
-  "siteNodeDeleteNotFound": "node:delete mislearre \"{id} net fûn",
+  "siteNodeDeleteNotFound": "node:delete mislearre \"{id}\" net fûn",
   "siteSkeletonExportFailed": "Eksportearjen fan skeleton foar dizze site mislearre",
   "siteSkeletonExportedTo": "Skeleton eksportearre nei {path}",
   "siteTemplateInstalledAs": "Sjabloan ynstallearre as {name} ({path})",

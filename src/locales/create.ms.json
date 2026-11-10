@@ -426,7 +426,7 @@
   "siteSelectItemToDelete": "Pilih item untuk dipadam",
   "siteDeleteNothingExit": "Jangan padam apa-apa, keluar",
   "siteConfirmDeleteItem": "Adakah anda pasti mahu memadam {id}? (Tindakan ini tidak boleh dibuat asal)",
-  "siteNodeDeleteNotFound": "node:delete gagal \"{id} tidak ditemui",
+  "siteNodeDeleteNotFound": "node:delete gagal \"{id}\" tidak ditemui",
   "siteSkeletonExportFailed": "Gagal mengeksport rangka untuk tapak ini",
   "siteSkeletonExportedTo": "Rangka dieksport ke {path}",
   "siteTemplateInstalledAs": "Templat dipasang sebagai {name} ({path})",

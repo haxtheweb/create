@@ -426,7 +426,7 @@
   "siteSelectItemToDelete": "Sceglite un elementu à sguassà",
   "siteDeleteNothingExit": "Ùn sguassà nunda, esce",
   "siteConfirmDeleteItem": "Site sicuru di vulè sguassà {id}? (Ùn si pò micca annullà)",
-  "siteNodeDeleteNotFound": "node:delete fiascu \"{id} ùn hè micca statu truvatu",
+  "siteNodeDeleteNotFound": "node:delete fiascu \"{id}\" ùn hè micca statu truvatu",
   "siteSkeletonExportFailed": "Fiascu di l'espurtazione di u scheletru di stu situ",
   "siteSkeletonExportedTo": "Scheletru espurtatu in {path}",
   "siteTemplateInstalledAs": "Mudellu installatu cum'è {name} ({path})",

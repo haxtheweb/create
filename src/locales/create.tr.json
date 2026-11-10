@@ -426,7 +426,7 @@
   "siteSelectItemToDelete": "Silinecek öğeyi seçin",
   "siteDeleteNothingExit": "Hiçbir şeyi silme, çık",
   "siteConfirmDeleteItem": "{id} silinsin mi? (Bu işlem geri alınamaz)",
-  "siteNodeDeleteNotFound": "node:delete başarısız \"{id} bulunamadı",
+  "siteNodeDeleteNotFound": "node:delete başarısız \"{id}\" bulunamadı",
   "siteSkeletonExportFailed": "Bu sitenin iskeleti dışa aktarılamadı",
   "siteSkeletonExportedTo": "İskelet {path} konumuna aktarıldı",
   "siteTemplateInstalledAs": "Şablon {name} olarak yüklendi ({path})",

@@ -426,7 +426,7 @@
   "siteSelectItemToDelete": "Kies een item om te verwijderen",
   "siteDeleteNothingExit": "Niets verwijderen, afsluiten",
   "siteConfirmDeleteItem": "Weet je zeker dat je {id} wilt verwijderen? (Dit kan niet ongedaan worden gemaakt)",
-  "siteNodeDeleteNotFound": "node:delete mislukt \"{id} niet gevonden",
+  "siteNodeDeleteNotFound": "node:delete mislukt \"{id}\" niet gevonden",
   "siteSkeletonExportFailed": "Exporteren van skelet voor deze site mislukt",
   "siteSkeletonExportedTo": "Skelet geëxporteerd naar {path}",
   "siteTemplateInstalledAs": "Sjabloon geïnstalleerd als {name} ({path})",

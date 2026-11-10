@@ -426,7 +426,7 @@
   "siteSelectItemToDelete": "Wielt en Element zum Läschen",
   "siteDeleteNothingExit": "Näischt läschen, ophalen",
   "siteConfirmDeleteItem": "Sidd Dir sécher, datt Dir {id} läsche wëllt? (Dat kann net réckgängeg gemaach ginn)",
-  "siteNodeDeleteNotFound": "node:delete feelgeschloen \"{id} net fonnt",
+  "siteNodeDeleteNotFound": "node:delete feelgeschloen \"{id}\" net fonnt",
   "siteSkeletonExportFailed": "Skelett fir dës Site konnt net exportéiert ginn",
   "siteSkeletonExportedTo": "Skelett exportéiert op {path}",
   "siteTemplateInstalledAs": "Template installéiert als {name} ({path})",

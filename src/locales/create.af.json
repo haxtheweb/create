@@ -426,7 +426,7 @@
   "siteSelectItemToDelete": "Kies 'n item om te skrap",
   "siteDeleteNothingExit": "Skrap niks, verlaat",
   "siteConfirmDeleteItem": "Is u seker u wil {id} skrap? (Dit kan nie ontdoen word nie)",
-  "siteNodeDeleteNotFound": "node:delete het misluk \"{id} nie gevind nie",
+  "siteNodeDeleteNotFound": "node:delete het misluk \"{id}\" nie gevind nie",
   "siteSkeletonExportFailed": "Kon nie geraamte vir hierdie werf uitvoer nie",
   "siteSkeletonExportedTo": "Geraamte uitgevoer na {path}",
   "siteTemplateInstalledAs": "Sjabloon geïnstalleer as {name} ({path})",

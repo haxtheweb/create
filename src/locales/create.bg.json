@@ -426,7 +426,7 @@
   "siteSelectItemToDelete": "Изберете елемент за изтриване",
   "siteDeleteNothingExit": "Без изтриване, изход",
   "siteConfirmDeleteItem": "Сигурни ли сте, че искате да изтриете {id}? (Това е необратимо)",
-  "siteNodeDeleteNotFound": "node:delete е неуспешно \"{id} не е намерен",
+  "siteNodeDeleteNotFound": "node:delete е неуспешно \"{id}\" не е намерен",
   "siteSkeletonExportFailed": "Неуспешен експорт на скелет за този сайт",
   "siteSkeletonExportedTo": "Скелетът е експортиран в {path}",
   "siteTemplateInstalledAs": "Шаблонът е инсталиран като {name} ({path})",

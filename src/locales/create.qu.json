@@ -426,7 +426,7 @@
   "siteSelectItemToDelete": "Qichunapaq huk itemta akllay",
   "siteDeleteNothingExit": "Ama imatapas qichuychu, lluqsiy",
   "siteConfirmDeleteItem": "Cheqaqtachu {id} qichuyta munanki? (Kayqa mana kutichikunmanchu)",
-  "siteNodeDeleteNotFound": "node:delete pantan \"{id} mana tarikunchu",
+  "siteNodeDeleteNotFound": "node:delete pantan \"{id}\" mana tarikunchu",
   "siteSkeletonExportFailed": "Mana kay sitiopa tullunta lluqsichiyta atikunchu",
   "siteSkeletonExportedTo": "Tullu {path} nisqaman lluqsichisqa",
   "siteTemplateInstalledAs": "Plantilla {name} hina churasqa ({path})",

@@ -426,7 +426,7 @@
   "siteSelectItemToDelete": "حذف کرنے کے لیے آئٹم منتخب کریں",
   "siteDeleteNothingExit": "کچھ حذف نہ کریں، باہر نکلیں",
   "siteConfirmDeleteItem": "کیا آپ واقعی {id} حذف کرنا چاہتے ہیں؟ (یہ واپس نہیں ہو سکتا)",
-  "siteNodeDeleteNotFound": "node:delete ناکام \"{id} نہیں ملا",
+  "siteNodeDeleteNotFound": "node:delete ناکام \"{id}\" نہیں ملا",
   "siteSkeletonExportFailed": "اس سائٹ کا اسکیلیٹن ایکسپورٹ نہیں ہو سکا",
   "siteSkeletonExportedTo": "اسکیلیٹن {path} میں ایکسپورٹ ہو گیا",
   "siteTemplateInstalledAs": "ٹیمپلیٹ {name} کے طور پر انسٹال ہو گیا ({path})",

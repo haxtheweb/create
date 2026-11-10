@@ -426,7 +426,7 @@
   "siteSelectItemToDelete": "Dewiswch eitem i'w dileu",
   "siteDeleteNothingExit": "Peidio â dileu dim, gadael",
   "siteConfirmDeleteItem": "Ydych chi'n siŵr eich bod am ddileu {id}? (Ni ellir dadwneud hyn)",
-  "siteNodeDeleteNotFound": "methodd node:delete \"{id} heb ei ganfod",
+  "siteNodeDeleteNotFound": "methodd node:delete \"{id}\" heb ei ganfod",
   "siteSkeletonExportFailed": "Methu allforio sgerbwd ar gyfer y safle hwn",
   "siteSkeletonExportedTo": "Sgerbwd wedi'i allforio i {path}",
   "siteTemplateInstalledAs": "Templed wedi'i osod fel {name} ({path})",

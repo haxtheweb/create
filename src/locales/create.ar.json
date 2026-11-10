@@ -430,7 +430,7 @@
   "siteSelectItemToDelete": "اختر عنصرًا لحذفه",
   "siteDeleteNothingExit": "عدم حذف أي شيء، خروج",
   "siteConfirmDeleteItem": "هل أنت متأكد من حذف {id}؟ (لا يمكن التراجع عن ذلك)",
-  "siteNodeDeleteNotFound": "فشل node:delete \"{id} غير موجود",
+  "siteNodeDeleteNotFound": "فشل node:delete \"{id}\" غير موجود",
   "siteSkeletonExportFailed": "فشل تصدير الهيكل لهذا الموقع",
   "siteSkeletonExportedTo": "تم تصدير الهيكل إلى {path}",
   "siteTemplateInstalledAs": "تم تثبيت القالب باسم {name} ({path})",

@@ -426,7 +426,7 @@
   "siteSelectItemToDelete": "Vælg et element, der skal slettes",
   "siteDeleteNothingExit": "Slet intet, afslut",
   "siteConfirmDeleteItem": "Er du sikker på, at du vil slette {id}? (Kan ikke fortrydes)",
-  "siteNodeDeleteNotFound": "node:delete mislykkedes \"{id} blev ikke fundet",
+  "siteNodeDeleteNotFound": "node:delete mislykkedes \"{id}\" blev ikke fundet",
   "siteSkeletonExportFailed": "Kunne ikke eksportere skeleton for dette site",
   "siteSkeletonExportedTo": "Skeleton eksporteret til {path}",
   "siteTemplateInstalledAs": "Skabelon installeret som {name} ({path})",

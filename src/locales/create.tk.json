@@ -426,7 +426,7 @@
   "siteSelectItemToDelete": "Pozmak üçin element saýlaň",
   "siteDeleteNothingExit": "Hiç zat pozma, çyk",
   "siteConfirmDeleteItem": "{id} pozmak isleýändigiňize ynanýarsyňyzmy? (Muny yzyna gaýtaryp bolmaýar)",
-  "siteNodeDeleteNotFound": "node:delete şowsuz \"{id} tapylmady",
+  "siteNodeDeleteNotFound": "node:delete şowsuz \"{id}\" tapylmady",
   "siteSkeletonExportFailed": "Bu saýt üçin skeleti eksport edip bolmady",
   "siteSkeletonExportedTo": "Skelet {path} ýoluna eksport edildi",
   "siteTemplateInstalledAs": "Şablon {name} ady bilen gurnaldy ({path})",

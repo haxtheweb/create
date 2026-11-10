@@ -426,7 +426,7 @@
   "siteSelectItemToDelete": "ಅಳಿಸಲು ಐಟಂ ಆಯ್ಕೆಮಾಡಿ",
   "siteDeleteNothingExit": "ಏನನ್ನೂ ಅಳಿಸಬೇಡಿ, ನಿರ್ಗಮಿಸಿ",
   "siteConfirmDeleteItem": "{id} ಅನ್ನು ಅಳಿಸಲು ಖಚಿತವೇ? (ಇದನ್ನು ರದ್ದುಗೊಳಿಸಲಾಗುವುದಿಲ್ಲ)",
-  "siteNodeDeleteNotFound": "node:delete ವಿಫಲವಾಗಿದೆ \"{id} ಕಂಡುಬಂದಿಲ್ಲ",
+  "siteNodeDeleteNotFound": "node:delete ವಿಫಲವಾಗಿದೆ \"{id}\" ಕಂಡುಬಂದಿಲ್ಲ",
   "siteSkeletonExportFailed": "ಈ ಸೈಟ್‌ನ ಸ್ಕೆಲಿಟನ್ ರಫ್ತು ಮಾಡಲು ವಿಫಲವಾಗಿದೆ",
   "siteSkeletonExportedTo": "ಸ್ಕೆಲಿಟನ್ ಅನ್ನು {path} ಗೆ ರಫ್ತು ಮಾಡಲಾಗಿದೆ",
   "siteTemplateInstalledAs": "ಟೆಂಪ್ಲೇಟ್ ಅನ್ನು {name} ಆಗಿ ಸ್ಥಾಪಿಸಲಾಗಿದೆ ({path})",

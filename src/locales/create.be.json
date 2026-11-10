@@ -426,7 +426,7 @@
   "siteSelectItemToDelete": "Выберыце элемент для выдалення",
   "siteDeleteNothingExit": "Нічога не выдаляць, выйсці",
   "siteConfirmDeleteItem": "Вы ўпэўнены, што хочаце выдаліць {id}? (Гэта нельга адмяніць)",
-  "siteNodeDeleteNotFound": "памылка node:delete: \"{id} не знойдзены",
+  "siteNodeDeleteNotFound": "памылка node:delete: \"{id}\" не знойдзены",
   "siteSkeletonExportFailed": "Не ўдалося экспартаваць шкілет гэтага сайта",
   "siteSkeletonExportedTo": "Шкілет экспартаваны ў {path}",
   "siteTemplateInstalledAs": "Шаблон усталяваны як {name} ({path})",

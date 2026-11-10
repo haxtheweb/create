@@ -426,7 +426,7 @@
   "siteSelectItemToDelete": "Pilih item untuk dihapus",
   "siteDeleteNothingExit": "Tidak menghapus apa pun, keluar",
   "siteConfirmDeleteItem": "Yakin ingin menghapus {id}? (Tindakan ini tidak dapat dibatalkan)",
-  "siteNodeDeleteNotFound": "node:delete gagal \"{id} tidak ditemukan",
+  "siteNodeDeleteNotFound": "node:delete gagal \"{id}\" tidak ditemukan",
   "siteSkeletonExportFailed": "Gagal mengekspor skeleton situs ini",
   "siteSkeletonExportedTo": "Skeleton diekspor ke {path}",
   "siteTemplateInstalledAs": "Templat dipasang sebagai {name} ({path})",

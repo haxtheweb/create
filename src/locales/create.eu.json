@@ -426,7 +426,7 @@
   "siteSelectItemToDelete": "Hautatu ezabatu beharreko elementua",
   "siteDeleteNothingExit": "Ez ezabatu ezer, irten",
   "siteConfirmDeleteItem": "Ziur {id} ezabatu nahi duzula? (Ezin da desegin)",
-  "siteNodeDeleteNotFound": "node:delete-k huts egin du \"{id} ez da aurkitu",
+  "siteNodeDeleteNotFound": "node:delete-k huts egin du \"{id}\" ez da aurkitu",
   "siteSkeletonExportFailed": "Ezin izan da gune honen eskeletoa esportatu",
   "siteSkeletonExportedTo": "Eskeletoa hona esportatu da: {path}",
   "siteTemplateInstalledAs": "Txantiloia {name} gisa instalatu da ({path})",

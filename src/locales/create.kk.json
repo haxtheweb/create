@@ -426,7 +426,7 @@
   "siteSelectItemToDelete": "Жоятын элементті таңдаңыз",
   "siteDeleteNothingExit": "Ештеңе жоймай, шығу",
   "siteConfirmDeleteItem": "{id} жоюға сенімдісіз бе? (Мұны қайтару мүмкін емес)",
-  "siteNodeDeleteNotFound": "node:delete сәтсіз \"{id} табылмады",
+  "siteNodeDeleteNotFound": "node:delete сәтсіз \"{id}\" табылмады",
   "siteSkeletonExportFailed": "Бұл сайттың қаңқасын экспорттау сәтсіз аяқталды",
   "siteSkeletonExportedTo": "Қаңқа {path} ішіне экспортталды",
   "siteTemplateInstalledAs": "Үлгі {name} ретінде орнатылды ({path})",

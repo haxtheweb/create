@@ -426,7 +426,7 @@
   "siteSelectItemToDelete": "Sankhani chinthu choti muchotse",
   "siteDeleteNothingExit": "Musachotse kalikonse, tulukani",
   "siteConfirmDeleteItem": "Kodi mukutsimikiza kuti mukufuna kuchotsa {id}? (Izi sizingabwezedwe)",
-  "siteNodeDeleteNotFound": "node:delete yalephera \"{id} sinapezeke",
+  "siteNodeDeleteNotFound": "node:delete yalephera \"{id}\" sinapezeke",
   "siteSkeletonExportFailed": "Zalephera kutumiza skeleton ya site iyi",
   "siteSkeletonExportedTo": "Skeleton yatumizidwa ku {path}",
   "siteTemplateInstalledAs": "Template yayikidwa ngati {name} ({path})",

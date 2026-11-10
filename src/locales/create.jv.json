@@ -426,7 +426,7 @@
   "siteSelectItemToDelete": "Pilih item sing arep dibusak",
   "siteDeleteNothingExit": "Ora mbusak apa-apa, metu",
   "siteConfirmDeleteItem": "Yakin arep mbusak {id}? (Iki ora bisa dibatalake)",
-  "siteNodeDeleteNotFound": "node:delete gagal \"{id} ora ketemu",
+  "siteNodeDeleteNotFound": "node:delete gagal \"{id}\" ora ketemu",
   "siteSkeletonExportFailed": "Gagal ngekspor skeleton kanggo situs iki",
   "siteSkeletonExportedTo": "Skeleton wis diekspor menyang {path}",
   "siteTemplateInstalledAs": "Template diinstal minangka {name} ({path})",

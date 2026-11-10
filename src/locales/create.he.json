@@ -426,7 +426,7 @@
   "siteSelectItemToDelete": "בחרו פריט למחיקה",
   "siteDeleteNothingExit": "לא למחוק דבר, יציאה",
   "siteConfirmDeleteItem": "האם אתם בטוחים שברצונכם למחוק את {id}? (לא ניתן לבטל פעולה זו)",
-  "siteNodeDeleteNotFound": "node:delete נכשל \"{id} לא נמצא",
+  "siteNodeDeleteNotFound": "node:delete נכשל \"{id}\" לא נמצא",
   "siteSkeletonExportFailed": "ייצוא השלד עבור אתר זה נכשל",
   "siteSkeletonExportedTo": "השלד יוצא אל {path}",
   "siteTemplateInstalledAs": "התבנית הותקנה בשם {name} ({path})",
