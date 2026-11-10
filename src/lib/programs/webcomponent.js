@@ -315,9 +315,22 @@ export async function webcomponentProcess(commandRun, project, port = "8000") {
   );
   const templateSource = path.join(templatesRoot, project.type, templateDir);
   const projectDir = path.join(project.path, project.name);
-  await HAXCMS.recurseCopy(`${templateSource}/`, projectDir);
+  // recurseCopy only copies inside the containment base it is given (its
+  // 4th argument) and returns false without one. The new element folder
+  // lives directly under project.path, so that is the base; make sure it
+  // exists, since the copy does not create it.
+  fs.mkdirSync(project.path, { recursive: true });
+  const copied = await HAXCMS.recurseCopy(
+    `${templateSource}/`,
+    projectDir,
+    [],
+    project.path,
+  );
   // every shipped template has webcomponent.js (renamed to <name>.js below)
-  if (!fs.existsSync(path.join(projectDir, "webcomponent.js"))) {
+  if (
+    copied === false ||
+    !fs.existsSync(path.join(projectDir, "webcomponent.js"))
+  ) {
     s.stop(color.red(t("wcTemplateCopyFailed", { template: templateDir })));
     throw new Error(t("wcTemplateCopyFailed", { template: templateDir }));
   }
