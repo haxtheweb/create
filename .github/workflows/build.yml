@@ -45,9 +45,9 @@ jobs:
         # exec() interpolation, no optional chaining) fail the build.
         run: npm run lint:security
       - name: Lint
-        # Advisory only: the full lint runs after the real tests and never
-        # fails the build (findings still show as annotations / in the log).
-        continue-on-error: true
+        # Blocking (haxtheweb/issues#3262): the full lint runs after the real
+        # tests so test results are still reported first, then any ESLint
+        # error fails the build. Warnings do not fail it.
         run: npm run lint
   # haxtheweb/issues#3116: the agent / CI path. Runs as root in a fresh
   # container with no TTY and no git identity, the context AI agents and
@@ -75,7 +75,7 @@ jobs:
       - name: Security lint (blocking)
         run: npm run lint:security
       - name: Lint
-        # Advisory only: the full lint runs after the real tests and never
-        # fails the build (findings still show as annotations / in the log).
-        continue-on-error: true
+        # Blocking (haxtheweb/issues#3262): the full lint runs after the real
+        # tests so test results are still reported first, then any ESLint
+        # error fails the build. Warnings do not fail it.
         run: npm run lint
