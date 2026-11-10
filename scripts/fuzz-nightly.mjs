@@ -50,10 +50,11 @@ function flushSummary() {
 
 // a value safe inside a markdown code span
 function code(value) {
-  // newlines would end the span and "|" would split a table cell
+  // newlines would end the span and "|" would split a table cell, so "|" is
+  // shown as a broken bar instead (no escaping, nothing to unescape)
   const text = String(value)
     .replace(/[\r\n]+/g, " ")
-    .replace(/\|/g, "\\|");
+    .replace(/\|/g, "\u00a6");
   const fence = text.includes("`") ? "``" : "`";
   return `${fence} ${text} ${fence}`;
 }
