@@ -108,10 +108,11 @@ test("node:edit --parent null moves a page to the top level", opts, () => {
   assert.equal(itemBySlug(readSite(site()), "lesson").parent, null);
   ok(["node:edit", "--item-id", "lesson", "--parent", "unit"]);
   const manifest = readSite(site());
-  assert.equal(
-    itemBySlug(manifest, "lesson").parent,
-    itemBySlug(manifest, "unit").id,
-  );
+  // haxtheweb/issues#3292: like the API's setParent, the slug is rebuilt
+  // from the new path (pathauto) because it was not set by hand in node:edit
+  const lesson = itemBySlug(manifest, "unit/lesson");
+  assert.ok(lesson, "slug follows the new parent");
+  assert.equal(lesson.parent, itemBySlug(manifest, "unit").id);
 });
 
 test("node:edit refuses to make a page its own parent", opts, () => {

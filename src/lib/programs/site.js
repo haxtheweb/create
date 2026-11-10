@@ -289,7 +289,7 @@ async function invokeRoute(routeHandler, body = {}, query = {}, params = {}) {
 let commitContextLib = null;
 try {
   // optional: only in haxcms-nodejs releases with commit op codes
-
+  // eslint-disable-next-line n/no-missing-require
   commitContextLib = require("@haxtheweb/haxcms-nodejs/dist/lib/commitContext.js");
 } catch {
   commitContextLib = null;
