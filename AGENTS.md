@@ -271,7 +271,7 @@ LICENSE
 - **Pre-commit checks**:
   - Run `npm run precheck` before every push or PR. It runs the same Prettier and ESLint checks CI runs, on the files you changed. Fix everything it reports and re-run until it passes (`npm run precheck:fix` auto-fixes formatting and fixable lint). A Claude Code hook in `.claude/` blocks `git push` and `gh pr create` until it passes.
   - Run `npm test` to ensure all tests pass.
-  - Run `npm run lint` to verify code style.
+  - Run `npm run lint` to verify code style. CI fails on any ESLint error (warnings do not fail it).
   - Run `hax audit` for web components to confirm DDD compliance, `hax audit schema` when you change haxProperties, site.json, skeletons or appstore files, `hax audit i18n` when you add or change UI text, and `hax audit theme` when you create or change a HAXcms theme (start new custom themes from `--custom-theme-template starter`).
 - **Commit Guidelines**:
   - Use clear, descriptive commit messages (e.g., "Add i18n support to my-element").
