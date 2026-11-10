@@ -24,6 +24,7 @@
 import { spawn } from "node:child_process";
 import { randomInt } from "node:crypto";
 import fs from "node:fs";
+import { Buffer } from "node:buffer";
 import https from "node:https";
 import process from "node:process";
 import { pathToFileURL } from "node:url";
