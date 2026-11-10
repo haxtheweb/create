@@ -299,7 +299,15 @@ class CliLeg extends BaseLeg {
     fs.mkdirSync(this.parentDir, { recursive: true });
     const r = await runCli(
       this.cliPath,
-      ["site", siteName, "--y", "--no-i", "--skip"],
+      [
+        "site",
+        siteName,
+        // same description the API legs send to createSite
+        "--description=Parity test site",
+        "--y",
+        "--no-i",
+        "--skip",
+      ],
       this.parentDir,
     );
     if (r.code !== 0)
