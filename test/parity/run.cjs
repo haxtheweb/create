@@ -12,7 +12,7 @@
 const fs = require("fs");
 const path = require("path");
 const { OpGenerator } = require("./ops.cjs");
-const { ApiLeg, CliLeg } = require("./legs.cjs");
+const { ApiLeg, CliLeg, SITE_DESCRIPTION } = require("./legs.cjs");
 const { snapshot, compareSnapshots, pattern } = require("./snapshot.cjs");
 const { loadConfig, seedFor } = require("./config.cjs");
 
@@ -57,6 +57,7 @@ async function runSequence(cfg, seq, nodeInfo, log = console.log) {
     seed: SEED,
     ops: N,
     siteName,
+    siteDescription: SITE_DESCRIPTION,
     strict: cfg.strict,
     snapshots: Math.min(cfg.snapshots, N),
     legs: legs.map((l) => ({ name: l.name, siteDir: l.siteDir })),

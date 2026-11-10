@@ -4,6 +4,10 @@ const path = require("path");
 const { execFile } = require("child_process");
 const { HaxClient } = require("./client.cjs");
 
+// Every leg creates its site with this description (recorded in meta.json as
+// siteDescription, so an agent leg can use the same one).
+const SITE_DESCRIPTION = "Parity test site";
+
 function readItems(siteDir) {
   const m = JSON.parse(
     fs.readFileSync(path.join(siteDir, "site.json"), "utf8"),
@@ -86,7 +90,7 @@ class ApiLeg extends BaseLeg {
   }
   async create(siteName) {
     await this.client.login();
-    const r = await this.client.createSite(siteName, "Parity test site");
+    const r = await this.client.createSite(siteName, SITE_DESCRIPTION);
     this.siteName = r.data.metadata.site.name;
     this.siteDir = path.join(this.sitesDir, this.siteName);
     await this.client.openSite(this.siteName);
@@ -303,7 +307,7 @@ class CliLeg extends BaseLeg {
         "site",
         siteName,
         // same description the API legs send to createSite
-        "--description=Parity test site",
+        "--description=" + SITE_DESCRIPTION,
         "--y",
         "--no-i",
         "--skip",
@@ -427,4 +431,11 @@ class CliLeg extends BaseLeg {
   }
 }
 
-module.exports = { ApiLeg, CliLeg, readItems, nextSiblingOrder, runCli };
+module.exports = {
+  SITE_DESCRIPTION,
+  ApiLeg,
+  CliLeg,
+  readItems,
+  nextSiblingOrder,
+  runCli,
+};

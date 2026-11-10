@@ -5,7 +5,9 @@
 // the page an addPage op created to its logical key (L1, L2, ...), snapshots
 // the agent's site with the same normalization as run.cjs, and diffs it
 // against the nodejs (reference) and scripted-CLI snapshots recorded at op N.
-// Results append to <state>/verify.jsonl (default <results>/../agent).
+// State and results go to <state> (state.json, verify.jsonl); the default is
+// ./parity-agent/<site name> in the current directory. The state directory
+// must be outside the run directory, so a downloaded run stays as recorded.
 // Report-only: exits 0 whatever it finds; 2 on bad arguments.
 const fs = require("fs");
 const path = require("path");
@@ -23,10 +25,20 @@ if (!args.site || args.op === undefined || !resultsArg) {
 const siteDir = path.resolve(args.site);
 const opNum = parseInt(args.op, 10);
 const RES = path.resolve(resultsArg);
-const OUT = path.resolve(args.state || path.join(RES, "..", "agent"));
+const meta = JSON.parse(fs.readFileSync(path.join(RES, "meta.json"), "utf8"));
+const OUT = path.resolve(
+  args.state || path.join(process.cwd(), "parity-agent", meta.siteName),
+);
+const RUN_ROOT = path.dirname(RES);
+const rel = path.relative(RUN_ROOT, OUT);
+if (rel === "" || (!rel.startsWith("..") && !path.isAbsolute(rel))) {
+  console.error(
+    `state directory ${OUT} is inside the run directory ${RUN_ROOT}; pass --state <dir> outside it`,
+  );
+  process.exit(2);
+}
 fs.mkdirSync(OUT, { recursive: true });
 const stateFile = path.join(OUT, "state.json");
-const meta = JSON.parse(fs.readFileSync(path.join(RES, "meta.json"), "utf8"));
 const warnings = [];
 
 const manifest = () =>
@@ -56,6 +68,14 @@ if (opNum === 0) {
   if (name && name.name !== meta.siteName)
     warnings.push(
       `site name is "${name.name}" but the run used "${meta.siteName}"; create the site with that name or every snapshot differs on it`,
+    );
+  const description = manifest().description;
+  if (
+    meta.siteDescription !== undefined &&
+    description !== meta.siteDescription
+  )
+    warnings.push(
+      `site description is "${description}" but the run used "${meta.siteDescription}"; create the site with that description`,
     );
 } else {
   if (opNum !== state.lastOp + 1)

@@ -102,7 +102,7 @@ variable; flags win.
   env.json              repo refs, and which haxcms-nodejs the CLI loaded
   nodejs-server.log  php-server.log
   A/  B/
-    meta.json           seed, ops, site name, each leg's site directory
+    meta.json           seed, ops, site name and description, each leg's site directory
     ops.jsonl           the ops, one JSON object per line
     log.jsonl           per op: each leg's status and diff count
     signatures.json     every difference pattern, first op, example
@@ -130,16 +130,20 @@ the difference is not a behavior difference. `--strict` shows the raw diffs.
 
 [`verify.cjs`](verify.cjs) checks an AI agent that replays a sequence A run
 on its own CLI site against the recorded snapshots. After creating the site
-(op 0) and after each op N:
+(op 0, with the `siteName` and `siteDescription` from `meta.json`) and after
+each op N:
 
 ```bash
-node create/test/parity/verify.cjs --results parity-results/A --site <agent site dir> --op N
+node create/test/parity/verify.cjs --results parity-results/A \
+  --site <agent site dir> --state <state dir> --op N
 ```
 
 It binds the page an `addPage` op created to its logical key, snapshots the
 agent's site with the same normalization, and diffs it against the nodejs and
-scripted-CLI snapshots for that op. Results go to
-`parity-results/agent/verify.jsonl`. The agent workflow is the
+scripted-CLI snapshots for that op. State and results (`state.json`,
+`verify.jsonl`) go to `--state`, by default `./parity-agent/<site name>`; a
+state directory inside the run directory is refused, so a downloaded run stays
+as recorded. The agent workflow is the
 `hax-parity-agent-leg` skill in
 [haxtheweb/praw](https://github.com/haxtheweb/praw/tree/main/skills).
 
