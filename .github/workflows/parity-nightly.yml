@@ -11,7 +11,9 @@ name: parity-nightly
 # built here; the CLI is linked to that haxcms-nodejs build, not the npm
 # release. REPORT-ONLY: divergences go to the job summary and the
 # parity-results artifact and never fail the run. Only a harness crash does.
-# Nothing is filed or commented anywhere.
+# Nothing is filed or commented anywhere. The checkouts are fixed to the
+# default branches; to test other branches, run test/parity/parity.cjs
+# locally (test/parity/README.md).
 on:
   schedule:
     - cron: "41 7 * * *" # nightly, 07:41 UTC
@@ -21,14 +23,6 @@ on:
         description: "Ops per sequence"
         required: false
         default: "1000"
-      nodejs_ref:
-        description: "haxcms-nodejs branch, tag or SHA"
-        required: false
-        default: "main"
-      php_ref:
-        description: "haxcms-php branch, tag or SHA"
-        required: false
-        default: "master"
 permissions:
   contents: read
 concurrency:
@@ -60,14 +54,14 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: haxtheweb/haxcms-nodejs
-          ref: ${{ inputs.nodejs_ref || 'main' }}
+          ref: main
           path: haxcms-nodejs
           persist-credentials: false
       - name: Checkout haxcms-php
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: haxtheweb/haxcms-php
-          ref: ${{ inputs.php_ref || 'master' }}
+          ref: master
           path: haxcms-php
           persist-credentials: false
       - name: Set up Node.js
