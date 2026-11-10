@@ -68,10 +68,9 @@
                     "tags": {
                         "h3": 1,
                         "p": 1,
-                        "multiple-choice": 1,
-                        "task-list": 1
+                        "multiple-choice": 1
                     },
-                    "elements": 4
+                    "elements": 3
                 }
             }
         },

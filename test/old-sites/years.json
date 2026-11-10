@@ -52,7 +52,7 @@
           "key": "lesson",
           "title": "Lesson 1",
           "parent": "unit",
-          "body": "<h3>Lesson 1</h3><p>A page one level deep.</p><multiple-choice title=\"Check\" question=\"Is this a fixture?\" answers='[{\"label\":\"Yes\",\"correct\":true},{\"label\":\"No\"}]'></multiple-choice><task-list name=\"Steps\" tasks='[{\"name\":\"Read\"},{\"name\":\"Try\"}]'></task-list>"
+          "body": "<h3>Lesson 1</h3><p>A page one level deep.</p><multiple-choice title=\"Check\" question=\"Is this a fixture?\" answers='[{\"label\":\"Yes\",\"correct\":true},{\"label\":\"No\"}]'></multiple-choice>"
         },
         {
           "key": "resources",

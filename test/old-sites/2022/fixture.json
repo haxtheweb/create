@@ -22,7 +22,6 @@
     "grid-plate": "@lrnwebcomponents/grid-plate/grid-plate.js",
     "media-image": "@lrnwebcomponents/media-image/media-image.js",
     "multiple-choice": "@lrnwebcomponents/multiple-choice/multiple-choice.js",
-    "task-list": "@lrnwebcomponents/task-list/task-list.js",
     "video-player": "@lrnwebcomponents/video-player/video-player.js"
   }
 }
