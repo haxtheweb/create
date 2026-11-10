@@ -1,0 +1,72 @@
+name: fuzz-nightly
+
+# Nightly fuzz hunt (haxtheweb/issues#3262). Plain scripting, no AI.
+#
+# Runs `npm run test:fuzz` with an explicit random HAX_FUZZ_SEED (in the job
+# summary, so any run can be replayed), replays each failing property with its
+# seed and path to confirm it, and fails red. With the optional
+# HAX_ISSUES_TOKEN secret (Issues: read and write on haxtheweb/issues) it also
+# opens or comments on a `[fuzz] create: <property>` issue there; without it,
+# issue filing is skipped with a note in the summary.
+#
+# Logic: scripts/fuzz-nightly.mjs (same file in haxcms-nodejs and
+# webcomponents). Seed convention: test/_helpers/fuzz-config.cjs
+# (haxtheweb/issues#3272).
+on:
+  schedule:
+    - cron: "23 8 * * *" # 3:23 AM America/New_York (EST); 4:23 AM during EDT
+  workflow_dispatch:
+    inputs:
+      seed:
+        description: "Replay a seed (integer); leave empty for a random one"
+        required: false
+        default: ""
+permissions:
+  contents: read
+concurrency:
+  group: fuzz-nightly
+  cancel-in-progress: false
+jobs:
+  fuzz:
+    name: fuzz hunt
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          cache: npm
+      - name: Install
+        id: install
+        run: |
+          set -o pipefail
+          npm ci 2>&1 | tee "$RUNNER_TEMP/install.log"
+      - name: Fuzz hunt
+        id: fuzz
+        env:
+          HAX_FUZZ_SEED_INPUT: ${{ inputs.seed }}
+          HAX_ISSUES_TOKEN: ${{ secrets.HAX_ISSUES_TOKEN }}
+        run: node scripts/fuzz-nightly.mjs -- npm run test:fuzz
+      - name: Report a failed setup step
+        if: failure() && steps.fuzz.outcome != 'failure'
+        env:
+          INSTALL_OUTCOME: ${{ steps.install.outcome }}
+        run: |
+          {
+            echo "## Nightly fuzz hunt: setup failed"
+            echo
+            echo "- Install: $INSTALL_OUTCOME"
+            if [ -f "$RUNNER_TEMP/install.log" ]; then
+              echo
+              echo "Last lines of the install output:"
+              echo
+              echo '~~~text'
+              tail -n 40 "$RUNNER_TEMP/install.log"
+              echo '~~~'
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
