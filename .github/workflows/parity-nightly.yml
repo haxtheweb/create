@@ -1,0 +1,126 @@
+name: parity-nightly
+# haxtheweb/issues#3292: nightly, report-only parity run across every surface
+# that can change a HAXcms site. The same seeded ops go to the haxcms-nodejs
+# site API (the reference), the haxcms-php site API and this repo's CLI, and
+# the sites on disk are diffed after every op (test/parity/README.md).
+#
+#   sequence A  nodejs + php + CLI, ops the CLI can express
+#   sequence B  nodejs + php, every write op the site API has
+#
+# Latest default branches of haxcms-nodejs (main) and haxcms-php (master),
+# built here; the CLI is linked to that haxcms-nodejs build, not the npm
+# release. REPORT-ONLY: divergences go to the job summary and the
+# parity-results artifact and never fail the run. Only a harness crash does.
+# Nothing is filed or commented anywhere. The checkouts are fixed to the
+# default branches; to test other branches, run test/parity/parity.cjs
+# locally (test/parity/README.md).
+on:
+  schedule:
+    - cron: "41 7 * * *" # nightly, 07:41 UTC
+  workflow_dispatch:
+    inputs:
+      ops:
+        description: "Ops per sequence"
+        required: false
+        default: "1000"
+permissions:
+  contents: read
+concurrency:
+  group: parity-nightly
+  cancel-in-progress: false
+jobs:
+  parity:
+    name: "Parity: haxcms-nodejs, haxcms-php, CLI (report-only)"
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    env:
+      # inputs are empty on the nightly schedule, so defaults apply
+      HAX_PARITY_OPS: ${{ inputs.ops || '1000' }}
+      HAX_PARITY_OUT: ${{ github.workspace }}/parity-results
+      HAX_PARITY_NODEJS_REPO: ${{ github.workspace }}/haxcms-nodejs
+      HAX_PARITY_PHP_REPO: ${{ github.workspace }}/haxcms-php
+      HAX_PARITY_PHP_USER: parity
+      GIT_AUTHOR_NAME: HAX parity
+      GIT_AUTHOR_EMAIL: parity@example.invalid
+      GIT_COMMITTER_NAME: HAX parity
+      GIT_COMMITTER_EMAIL: parity@example.invalid
+    steps:
+      - name: Checkout create
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          path: create
+          persist-credentials: false
+      - name: Checkout haxcms-nodejs
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: haxtheweb/haxcms-nodejs
+          ref: main
+          path: haxcms-nodejs
+          persist-credentials: false
+      - name: Checkout haxcms-php
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: haxtheweb/haxcms-php
+          ref: master
+          path: haxcms-php
+          persist-credentials: false
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+      - name: Set up PHP
+        uses: shivammathur/setup-php@b604ade2a87db23f8871b7182e69ec5e75effb45 # v2
+        with:
+          php-version: "8.3"
+          extensions: mbstring, xml, dom, simplexml, gd, zip, curl, intl, fileinfo, iconv, xmlreader, xmlwriter, zlib
+          ini-values: "error_reporting=E_ALL & ~E_NOTICE & ~E_DEPRECATED"
+          coverage: none
+
+      - name: Check inputs
+        run: |
+          case "$HAX_PARITY_OPS" in
+            '' | *[!0-9]*)
+              echo "::error title=ops::ops must be a whole number"
+              exit 1
+              ;;
+          esac
+          git config --global user.name "$GIT_AUTHOR_NAME"
+          git config --global user.email "$GIT_AUTHOR_EMAIL"
+
+      - name: Build haxcms-nodejs
+        working-directory: haxcms-nodejs
+        run: |
+          yarn install --frozen-lockfile
+          yarn run build
+
+      - name: Build the CLI and link the haxcms-nodejs build
+        working-directory: create
+        run: |
+          npm ci --no-audit --no-fund
+          npm run build
+          rm -rf node_modules/@haxtheweb/haxcms-nodejs
+          ln -s "$HAX_PARITY_NODEJS_REPO" node_modules/@haxtheweb/haxcms-nodejs
+          node -e 'console.log("CLI uses haxcms-nodejs at " + require("fs").realpathSync(require.resolve("@haxtheweb/haxcms-nodejs/package.json")))'
+
+      - name: Install haxcms-php
+        working-directory: haxcms-php
+        run: |
+          pass="$(openssl rand -hex 16)"
+          echo "::add-mask::$pass"
+          echo "HAX_PARITY_PHP_PASS=$pass" >> "$GITHUB_ENV"
+          TERM=xterm bash scripts/haxtheweb.sh "$HAX_PARITY_PHP_USER" "$pass" > /dev/null
+          test -f _config/config.php
+
+      - name: Run sequences A and B
+        # exits non-zero only when the harness crashes; divergences are data
+        working-directory: create
+        run: node test/parity/parity.cjs --seq A,B
+
+      - name: Upload parity results
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: parity-results
+          path: parity-results
+          if-no-files-found: warn
+          retention-days: 30

@@ -37,6 +37,7 @@
     "test": "node --require ./test/_helpers/english.cjs --test test/unit/**/*.test.cjs test/unit/**/*.test.js test/smoke/**/*.test.cjs",
     "test:unit": "node --require ./test/_helpers/english.cjs --test test/unit/**/*.test.cjs test/unit/**/*.test.js",
     "test:fuzz": "HAX_FUZZ_SEED=random HAX_FUZZ_RUNS=6000 node --require ./test/_helpers/english.cjs --test test/unit/*-fuzz.test.js",
+    "test:parity": "node test/parity/parity.cjs",
     "test:smoke": "node --require ./test/_helpers/english.cjs --test test/smoke/**/*.test.cjs",
     "test:coverage": "c8 --all --include='src/create.js' --include='src/lib/**' --exclude='test/**' --exclude='dist/**' --reporter=text --reporter=lcov --report-dir=coverage node --require ./test/_helpers/english.cjs --test test/unit/**/*.test.cjs test/unit/**/*.test.js test/smoke/**/*.test.cjs"
   },
