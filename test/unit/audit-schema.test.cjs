@@ -365,6 +365,19 @@ test("every schema validator is pinned to an exact version", () => {
   }
 });
 
+test("schema validators follow the CLI's own release version", () => {
+  // ubiquity publishes the schema packages at the release version before the
+  // CLI, so the pin must never be a hand-maintained literal that can go stale
+  const ownVersion = require("../../package.json").version;
+  for (const kind of Object.keys(SCHEMA_VALIDATORS)) {
+    assert.equal(
+      validatorNpxSpec(kind).split("@").pop(),
+      ownVersion,
+      `${kind} should be pinned to ${ownVersion}`,
+    );
+  }
+});
+
 test("confirmNpxValidator asks on a TTY, skips with --y or no TTY, and remembers per package", async () => {
   const asked = [];
   const origConfirm = stub.confirm;
