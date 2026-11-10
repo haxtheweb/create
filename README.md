@@ -121,55 +121,86 @@ See the AI integration page on the [HAX documentation site](https://haxtheweb.or
 
 ## --help
 
-Run `hax help` or `hax webcomponent --help` or `hax site --help` for up-to-date listing
+Run `hax help` or `hax webcomponent --help` or `hax site --help` for up-to-date listing. `hax list --format json` gives the same information as JSON.
 
 ```
 Usage: hax [options] [command]
 
 Options:
-  --
   --v                                 Verbose output
   --debug                             Output for developers
   --format <char>                     Output format; json (default), yaml
   --path <char>                       where to perform operation
   --name <char>                       name of the project/web component
-  --npm-client <char>                 npm client to use (must be installed)
-                                      npm, yarn, pnpm (default: "npm")
+  --npm-client <char>                 npm client to use (must be installed) npm,
+                                      yarn, pnpm (default: "npm")
   --y                                 yes to all questions
   --skip                              skip frills like animations
   --quiet                             remove console logging
   --auto                              yes to all questions, alias of y
   --no-i                              prevent interactions / sub-process, good
                                       for scripting
+  --agent                             mark changes as made by an AI agent in the
+                                      site's history (same as HAX_ACTOR=agent)
   --to-file <char>                    redirect command output to a file
   --no-extras                         skip all extra / automatic command
                                       processing
   --root <char>                       root location to execute the command from
+  --lang <char>                       Language for prompts and messages, e.g.
+                                      es, fr, ja (defaults to your system
+                                      language)
+  --site-lang <char>                  Language of a new site, e.g. en, es,
+                                      zh-CN, pt-BR (defaults to English)
   --org <char>                        organization for package.json
   --author <char>                     author for site / package.json
+  --template <char>                   template type to use (compliant, minimal,
+                                      training, monorepo)
   --writeHaxProperties                Write haxProperties for the element
-  --no-docs                           in a monorepo, leave out the docs data step
+  --no-docs                           in a monorepo, leave out the step that
+                                      writes the element's docs data
+                                      (lib/<tag>.docs.json) when it builds
+  --force                             force creation even if name exists in
+                                      registry
   --import-site <char>                URL of site to import
   --import-structure <char>           import method to use:
-                                      pressbooksToSite
-                                      elmslnToSite
-                                      haxcmsToSite
-                                      notionToSite
-                                      gitbookToSite
-                                      evolutionToSite
-                                      ploneToSite
-                                      wordpressPagesToSite
-                                      drupalToSite
-                                      openstaxToSite
-                                      vitepressToSite
-                                      quartoToSite
-                                      htmlToSite
-                                      docxToSite
+
+pressbooksToSite
+
+elmslnToSite
+
+haxcmsToSite
+
+notionToSite
+
+gitbookToSite
+
+evolutionToSite
+
+ploneToSite
+
+wordpressPagesToSite
+
+drupalToSite
+
+openstaxToSite
+
+vitepressToSite
+
+quartoToSite
+
+htmlToSite
+
+docxToSite
+
+xlsxToSite
   --node-op <char>                    node operation to perform
   --item-id <char>                    node ID to operate on
   --domain <char>                     published domain name
   --title-scrape <char>               CSS Selector for `title` in resource
   --content-scrape <char>             CSS Selector for `body` in resource
+  --content-format <char>             format of --content for node:add /
+                                      node:edit: html (default), md, json, yaml
+  --description <char>                page description for node:add / node:edit
   --items-import <char>               import items from a file / site
   --custom-theme-name <char>          custom theme name
   --custom-theme-template <char>      custom theme template; (options: base,
@@ -177,6 +208,16 @@ Options:
   --skeleton-file <char>              path to skeleton JSON file
   --skeleton-machine-name <char>      skeleton machine name (installed template)
                                       to create a site from
+  --search <char>                     search query text or simple selector (for
+                                      site:search)
+  --search-field <char>               comma-separated fields for text search
+                                      (title,slug,description,tags,content,all)
+  --search-case-sensitive             case-sensitive text search
+  --search-limit <char>               max number of site search matches to
+                                      return
+  --search-selector                   treat --search as a selector query (tag,
+                                      tag[attr], tag[attr="value"], [attr])
+  --search-mode <char>                search mode override (text or selector)
   --source <char>                     rsync source directory or remote path
   --destination <char>                rsync destination directory or remote path
   --exclude <char>                    comma-separated patterns to exclude from
@@ -184,6 +225,30 @@ Options:
   --dry-run                           perform rsync dry run
   --delete                            delete extraneous files from destination
   --repos <char...>                   repositories to clone
+  --export-format <char>              export format for site:export (pdf, docx,
+                                      epub, html, zip, markdown, skeleton)
+  --revision-id <char>                revision ID for site:revisions
+  --restore                           restore a revision (used with
+                                      site:revisions)
+  --target-path <char>                target subdirectory for files-upload
+  --file-uuid <char>                  file UUID for files-delete
+  --file-path <char>                  file path (alternative to UUID) for
+                                      files-delete
+  --replace <char>                    replacement text for search-replace
+  --confirm                           confirm destructive search-replace
+                                      operation
+  --destroy-confirm                   confirm removing matched text in
+                                      search-replace
+  --only <char>                       site:rebuild targets to rebuild, comma
+                                      separated (rss, sitemap, search, llms,
+                                      managed, skills)
+  --count <char>                      number of pages for node:generate (default
+                                      10, max 200)
+  --rsync <char>                      rsync target to store with `hax alias add`
+                                      (user@host:/path)
+  --project                           with `hax alias add|remove`, use
+                                      hax.aliases.yml in this folder instead of
+                                      ~/.haxtheweb/aliases.yml
   -V, --version                       output the version number
   --title <char>                      Title
   --content <char>                    Page content
@@ -207,18 +272,121 @@ Commands:
   audit [options] [type]              Audits for HAX compliance: DDD design
                                       system (default), HAX schemas,
                                       translatable text, or all of them
-  party [options] [action]            Party time! Join the HAX community and
-                                      get involved!
+  party [options] [action]            Party time! Join the HAX community and get
+                                      involved!
   skills [options] [action] [name]    List and install bundled agent skills for
                                       HAX ecosystem agents
-  alias [options] [action] [name]     List, add and remove named sites (aliases)
-                                      for `hax @name ...`
   list [options]                      List every command, action and option
                                       (--format json for tools and agents)
+  alias [options] [action] [name]     List, add and remove named sites (aliases)
+                                      for `hax @name ...`
   completion [shell]                  Print a shell completion script
   help [command]                      display help for command
+```
+
+`hax site --help` lists the site actions:
 
 ```
+Usage: hax site [options] [action]
+
+Arguments:
+  action                          Actions to perform on site include:
+
+start - Launch site in browser
+                                  (http://localhost)
+
+serve - Launch site in development mode
+
+node:stats - Node Stats / data
+
+node:add - Add a new page
+
+node:edit - Edit a page
+
+node:delete - Delete a page
+
+node:generate - Generate placeholder pages
+
+site:stats - Site Status / stats
+
+site:items - Site items
+
+site:items-import - Import items (JOS /
+                                  site.json)
+
+site:list-files - List site files
+
+site:search - Search site content
+
+site:tags - List site tags
+
+site:blocks - List site block usage
+
+site:analytics - Site analytics metadata
+
+site:revisions - List or restore item
+                                  revisions
+
+site:validate - Validate site structure and
+                                  content
+
+site:rebuild - Rebuild generated files
+                                  (feeds, sitemap, search, llms.txt)
+
+site:archive - Archive the whole site to a
+                                  .tar.gz
+
+site:restore - Restore the site from an
+                                  archive
+
+site:logs - Show recent CLI log entries
+
+site:list - List sites in this folder
+
+site:export - Export site in a format
+
+site:theme - Change theme
+
+site:element - Add new Lit component to
+                                  custom/src
+
+site:html - Full site as HTML
+
+site:md - Full site as Markdown
+
+site:schema - Full site as HAXElementSchema
+
+site:skeleton-export - Export site as
+                                  skeleton template
+
+site:skeleton-install - Install skeleton
+                                  template
+
+site:sync - Sync git repo
+
+site:rsync - Rsync site to remote/local
+                                  directory
+
+site:surge - Publish site to Surge.sh
+
+site:netlify - Publish site to Netlify
+
+site:vercel - Publish site to Vercel
+
+setup:github-actions - Setup GitHub Actions
+                                  deployment
+
+setup:gitlab-ci - Setup GitLab CI deployment
+
+setup:replit - Setup Replit configuration
+
+issue:general - Issue: Submit an issue or
+                                  suggestion
+
+issue:theme - Issue: Suggest custom theme
+```
+
+Pass values that start with `-` as `--flag=value` (for example `--description="-1 is the answer"`), so they are not read as another flag.
 
 ## Examples
 

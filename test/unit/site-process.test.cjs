@@ -143,7 +143,7 @@ const {
   skipReason,
   module: siteModule,
 } = require("../_helpers/site-canary.cjs");
-const { siteProcess } = available ? siteModule : {};
+const { siteProcess, newSiteRequest } = available ? siteModule : {};
 
 execCalls.length = 0;
 
@@ -193,10 +193,12 @@ test(
       assert.equal(sitesHandlerCalls.length, 1);
       const siteRequest = sitesHandlerCalls[0];
       assert.equal(siteRequest.site.name, "plain-site");
-      assert.equal(siteRequest.site.theme, "clean-one");
-      assert.equal(siteRequest.site.description, "own course");
-      assert.equal(siteRequest.build.structure, "course");
-      assert.equal(siteRequest.build.type, "own");
+      assert.equal(siteRequest.site.theme, "clean-one", "chosen theme wins");
+      // haxtheweb/issues#3292: the createSite request the dashboard sends,
+      // so the API's own defaults apply (no "own course", no build block)
+      assert.equal(siteRequest.site.description, undefined);
+      assert.equal(siteRequest.build, undefined);
+      assert.equal(siteRequest.theme, undefined);
       // dotfiles are ensured for the new site
       for (const dotfile of [
         ".gitignore",
@@ -219,6 +221,32 @@ test(
     }
   },
 );
+
+// haxtheweb/issues#3292: a CLI site is created with the API's createSite
+// defaults; only flags the user gave are sent
+test("newSiteRequest sends only what the user chose", opts, () => {
+  assert.deepEqual(newSiteRequest({}, { name: "plain" }), {
+    site: { name: "plain" },
+  });
+  assert.deepEqual(
+    newSiteRequest(
+      { theme: "polaris-flex-theme", description: "My course" },
+      { name: "flagged", theme: "clean-one" },
+    ),
+    {
+      site: {
+        name: "flagged",
+        theme: "polaris-flex-theme",
+        description: "My course",
+      },
+    },
+    "--theme wins over the prompt's theme",
+  );
+  assert.equal(
+    newSiteRequest({}, { name: "p", theme: "clean-one" }).site.theme,
+    "clean-one",
+  );
+});
 
 test("launch extra summons the local haxcms-nodejs server", opts, async () => {
   resetMocks();
@@ -671,7 +699,7 @@ test(
         1,
         "plain sites request still issued",
       );
-      assert.equal(sitesHandlerCalls[0].build.structure, "course");
+      assert.equal(sitesHandlerCalls[0].build, undefined);
     } finally {
       fs.rmSync(root, { recursive: true, force: true });
     }

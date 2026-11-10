@@ -2,8 +2,9 @@
 
 // Direct unit tests for site.js helpers that the siteCommandDetected /
 // siteProcess harness tests (site-command-*.test.cjs) do not reach:
-//   - applyNodeEdits: every field branch (content, slug, tags, published,
-//     hideInMenu, theme, parent, order, default) plus its error paths
+//   - applyNodeEdits: the backend operation each field becomes (content,
+//     slug, tags, published, hideInMenu, theme, parent, order, title) plus
+//     its error paths; pageBreakForItem and nodeEditRequests
 //   - applySiteLanguage: explicit --site-lang, prompt-defaulted English,
 //     missing language and backend failure
 //   - siteThemeList: hidden/terrible/legacy filtering and the
@@ -64,6 +65,15 @@ haxcmsLib.HAXCMS.getThemes = async () => ({
   "hidden-one": { name: "Hidden", hidden: true },
 });
 
+// patched cliBridge: node:edit runs haxcms-nodejs operations through it
+const cliModule = require("@haxtheweb/haxcms-nodejs/dist/cli.js");
+const bridgeCalls = [];
+let bridgeResponse = null;
+cliModule.cliBridge = async (route, body, method) => {
+  bridgeCalls.push({ route, body: JSON.parse(JSON.stringify(body)), method });
+  return bridgeResponse || { res: { statusCode: 200, data: { status: 200 } } };
+};
+
 const utils = require("../../src/lib/utils.js");
 utils.exec = async () => ({ stdout: "", stderr: "" });
 utils.runCommand = async () => ({ stdout: "", stderr: "" });
@@ -74,8 +84,14 @@ const {
   skipReason,
   module: siteModule,
 } = require("../_helpers/site-canary.cjs");
-const { applyNodeEdits, applySiteLanguage, nextSiblingOrder, siteThemeList } =
-  available ? siteModule : {};
+const {
+  applyNodeEdits,
+  applySiteLanguage,
+  nextSiblingOrder,
+  nodeEditRequests,
+  pageBreakForItem,
+  siteThemeList,
+} = available ? siteModule : {};
 
 const opts = { skip: skipReason, timeout: 30000 };
 
@@ -125,15 +141,17 @@ function fakeSite(overrides = {}) {
 }
 
 test.beforeEach(() => {
+  bridgeCalls.length = 0;
+  bridgeResponse = null;
   updateCalls.length = 0;
   writeLocationCalls.length = 0;
   structureContextCalls.length = 0;
 });
 
-// --- applyNodeEdits ---
+// --- applyNodeEdits (haxtheweb/issues#3292: through backend operations) ---
 
 test(
-  "applyNodeEdits slug edit slugifies, dedupes and flags overridePathauto",
+  "applyNodeEdits sends a slug through the setSlug item operation",
   opts,
   async () => {
     const site = fakeSite();
@@ -141,40 +159,33 @@ test(
     const changed = await applyNodeEdits(
       site,
       page,
-      { slug: "My New Slug" },
+      { slug: "x" },
       { options: {} },
     );
     assert.deepEqual(changed, ["slug"]);
-    assert.equal(page.slug, "my-new-slug-unique");
-    assert.equal(page.metadata.overridePathauto, true);
-    assert.equal(
-      updateCalls.length,
-      1,
-      "structure change saved via updateNode",
-    );
+    assert.equal(bridgeCalls.length, 1);
+    assert.equal(bridgeCalls[0].route, "v1/items/item-1");
+    assert.equal(bridgeCalls[0].method, "patch");
+    // the backend, not the CLI, turns the reserved "x" into "x-x"
+    assert.deepEqual(bridgeCalls[0].body, {
+      site: { name: "fakesite" },
+      operation: "setSlug",
+      slug: "x",
+    });
+    assert.equal(updateCalls.length, 0, "no direct site.json write");
   },
 );
 
-test("applyNodeEdits skips empty slugs without saving", opts, async () => {
-  const site = fakeSite();
-  const page = fakePage();
-  const changed = await applyNodeEdits(
-    site,
-    page,
-    { slug: "" },
-    { options: {} },
-  );
-  assert.deepEqual(changed, []);
-  assert.equal(page.slug, "page-one");
-  assert.equal(updateCalls.length, 0);
-});
-
 test(
-  "applyNodeEdits content writes through page.writeLocation",
+  "applyNodeEdits content goes through the content route with a page-break",
   opts,
   async () => {
     const site = fakeSite();
-    const page = fakePage();
+    const page = fakePage({
+      indent: 2,
+      parent: "item-2",
+      metadata: { hideInMenu: true, tags: "a,b", published: false },
+    });
     const changed = await applyNodeEdits(
       site,
       page,
@@ -182,13 +193,21 @@ test(
       { options: {} },
     );
     assert.deepEqual(changed, ["content"]);
-    assert.deepEqual(writeLocationCalls, ["<p>fresh body</p>"]);
-    assert.equal(updateCalls.length, 0, "content is not a structure change");
+    assert.equal(writeLocationCalls.length, 0, "saveNode writes the page");
+    assert.equal(bridgeCalls[0].route, "v1/content/item-1");
+    const content = bridgeCalls[0].body.content;
+    assert.equal(
+      content,
+      '<page-break item-id="item-1" title="Page One" slug="page-one" ' +
+        'parent="item-2" order="1" depth="2" hide-in-menu="hide-in-menu" ' +
+        'tags="a,b">' +
+        "</page-break><p>fresh body</p>",
+    );
   },
 );
 
 test(
-  "applyNodeEdits applies metadata fields as booleans and lists",
+  "applyNodeEdits sends booleans and lists to their item operations",
   opts,
   async () => {
     const site = fakeSite();
@@ -199,28 +218,35 @@ test(
       { published: "false", hideInMenu: "true", tags: "a, b" },
       { options: {} },
     );
-    assert.deepEqual(changed, ["published", "hideInMenu", "tags"]);
-    assert.equal(page.metadata.published, false);
-    assert.equal(page.metadata.hideInMenu, true);
-    assert.equal(page.metadata.tags, "a, b");
-    assert.equal(updateCalls.length, 1);
+    assert.deepEqual(changed, ["tags", "published", "hideInMenu"]);
+    assert.deepEqual(
+      bridgeCalls.map((call) => call.body.operation),
+      ["setTags", "setPublished", "setHideInMenu"],
+    );
+    assert.equal(bridgeCalls[1].body.published, false);
+    assert.equal(bridgeCalls[2].body.hideInMenu, true);
+    assert.equal(bridgeCalls[0].body.tags, "a, b");
   },
 );
 
 test(
-  "applyNodeEdits validates the theme against the registry",
+  "applyNodeEdits validates the theme and saves it as an editor save",
   opts,
   async () => {
-    const site = fakeSite();
-    const page = fakePage();
+    const site = fakeSite({
+      getPageContent: async () => "<p>existing</p>",
+    });
     const changed = await applyNodeEdits(
       site,
-      page,
+      fakePage(),
       { theme: "clean-one" },
       { options: {} },
     );
     assert.deepEqual(changed, ["theme"]);
-    assert.equal(page.metadata.theme.element, "clean-one");
+    assert.equal(bridgeCalls[0].route, "v1/content/item-1");
+    assert.match(bridgeCalls[0].body.content, /developer-theme="clean-one"/);
+    assert.ok(bridgeCalls[0].body.content.endsWith("<p>existing</p>"));
+    bridgeCalls.length = 0;
     await assert.rejects(() =>
       applyNodeEdits(
         site,
@@ -229,56 +255,159 @@ test(
         { options: {} },
       ),
     );
+    assert.equal(bridgeCalls.length, 0, "nothing sent for an unknown theme");
   },
 );
 
 test(
-  "applyNodeEdits resolves parent by id or slug and rejects bad parents",
+  "applyNodeEdits parent change appends after the new siblings",
   opts,
   async () => {
     const site = fakeSite();
-    const page = fakePage();
-    let changed = await applyNodeEdits(
+    // item-1 moves under item-2 (by slug); item-2 has no children yet
+    const changed = await applyNodeEdits(
       site,
-      page,
+      fakePage(),
       { parent: "page-two" },
       { options: {} },
     );
     assert.deepEqual(changed, ["parent"]);
-    assert.equal(page.parent, "item-2", "slug resolved to the parent id");
-    await assert.rejects(() =>
-      applyNodeEdits(site, fakePage(), { parent: "ghost" }, { options: {} }),
+    assert.deepEqual(bridgeCalls[0].body, {
+      site: { name: "fakesite" },
+      operation: "setParent",
+      parent: "item-2",
+      order: 0,
+    });
+    bridgeCalls.length = 0;
+    // a child moved to the top level lands after item-1 (order 2)
+    await applyNodeEdits(
+      site,
+      fakePage({ id: "item-2", slug: "page-two", parent: "item-1" }),
+      { parent: "null" },
+      { options: {} },
     );
-    // a node can not be its own parent
-    await assert.rejects(() =>
-      applyNodeEdits(site, fakePage(), { parent: "item-1" }, { options: {} }),
-    );
+    assert.equal(bridgeCalls[0].body.parent, null);
+    assert.equal(bridgeCalls[0].body.order, 3);
   },
 );
 
-test("applyNodeEdits rejects a non-numeric order", opts, async () => {
+test(
+  "applyNodeEdits explicit --order wins over the append rule",
+  opts,
+  async () => {
+    await applyNodeEdits(
+      fakeSite(),
+      fakePage(),
+      { parent: "item-2", order: "7" },
+      { options: {} },
+    );
+    assert.equal(bridgeCalls[0].body.parent, "item-2");
+    assert.equal(bridgeCalls[0].body.order, 7);
+  },
+);
+
+test("applyNodeEdits rejects bad parents and orders", opts, async () => {
+  await assert.rejects(() =>
+    applyNodeEdits(
+      fakeSite(),
+      fakePage(),
+      { parent: "ghost" },
+      { options: {} },
+    ),
+  );
+  // a node can not be its own parent
+  await assert.rejects(() =>
+    applyNodeEdits(
+      fakeSite(),
+      fakePage(),
+      { parent: "item-1" },
+      { options: {} },
+    ),
+  );
   await assert.rejects(() =>
     applyNodeEdits(fakeSite(), fakePage(), { order: "abc" }, { options: {} }),
   );
+  assert.equal(bridgeCalls.length, 0);
 });
 
-test(
-  "applyNodeEdits default branch sets title-style fields",
-  opts,
-  async () => {
-    const site = fakeSite();
-    const page = fakePage();
-    const changed = await applyNodeEdits(
-      site,
-      page,
-      { title: "Renamed Page" },
-      { options: {} },
-    );
-    assert.deepEqual(changed, ["title"]);
-    assert.equal(page.title, "Renamed Page");
-    assert.equal(updateCalls.length, 1);
-  },
-);
+test("applyNodeEdits reports the backend's refusal", opts, async () => {
+  bridgeResponse = {
+    res: {
+      statusCode: 403,
+      data: {
+        status: 403,
+        data: { message: "Outline operations are disabled for this site" },
+      },
+    },
+  };
+  await assert.rejects(
+    () =>
+      applyNodeEdits(
+        fakeSite(),
+        fakePage(),
+        { title: "Renamed Page" },
+        { options: {} },
+      ),
+    /Outline operations are disabled/,
+  );
+});
+
+// --- pageBreakForItem / nodeEditRequests ---
+
+test("pageBreakForItem echoes state and escapes values", opts, () => {
+  const html = pageBreakForItem({
+    id: "item-9",
+    title: 'Say "hi" & <wave>',
+    slug: "say-hi",
+    order: 3,
+    indent: 1,
+    metadata: {
+      overridePathauto: true,
+      locked: true,
+      icon: "icons:star",
+      theme: { element: "clean-one", key: "clean-one" },
+    },
+  });
+  assert.equal(
+    html,
+    '<page-break item-id="item-9" title="Say &quot;hi&quot; &amp; &lt;wave&gt;" ' +
+      'slug="say-hi" order="3" depth="1" published="published" ' +
+      'override-pathauto="override-pathauto" locked="locked" ' +
+      'icon="icons:star" developer-theme="clean-one"></page-break>',
+  );
+  // an explicit null theme drops it so saveNode removes the page theme
+  assert.doesNotMatch(
+    pageBreakForItem(
+      { id: "a", title: "A", slug: "a", metadata: { theme: { key: "x" } } },
+      { theme: null },
+    ),
+    /developer-theme/,
+  );
+});
+
+test("nodeEditRequests keeps the parent for an order-only edit", opts, () => {
+  const requests = nodeEditRequests(
+    { id: "item-2", parent: "item-1", order: 4 },
+    { order: 1 },
+    [],
+  );
+  assert.deepEqual(requests, [
+    {
+      fields: ["order"],
+      route: "v1/items/item-2",
+      body: { operation: "setParent", parent: "item-1", order: 1 },
+    },
+  ]);
+  // same parent and no order keeps the current order
+  assert.equal(
+    nodeEditRequests(
+      { id: "item-2", parent: "item-1", order: 4 },
+      { parent: "item-1" },
+      [{ id: "item-3", parent: "item-1", order: 9 }],
+    )[0].body.order,
+    4,
+  );
+});
 
 // --- applySiteLanguage ---
 

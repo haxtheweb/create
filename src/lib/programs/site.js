@@ -289,7 +289,7 @@ async function invokeRoute(routeHandler, body = {}, query = {}, params = {}) {
 let commitContextLib = null;
 try {
   // optional: only in haxcms-nodejs releases with commit op codes
-  // eslint-disable-next-line n/no-missing-require
+
   commitContextLib = require("@haxtheweb/haxcms-nodejs/dist/lib/commitContext.js");
 } catch {
   commitContextLib = null;
@@ -2517,11 +2517,13 @@ export async function siteCommandDetected(commandRun) {
 
           if (themes && commandRun.options.theme) {
             if (themes[commandRun.options.theme]) {
-              activeHaxsite.manifest.metadata.theme = withSiteThemeVariables(
-                themes[commandRun.options.theme],
-                activeHaxsite.manifest.metadata.theme,
+              // haxtheweb/issues#3292: same operation as the API's
+              // PATCH /v1/site/appearance so site.json matches
+              await setSiteThemeThroughBackend(
+                activeHaxsite,
+                commandRun.options.theme,
+                commandRun,
               );
-              activeHaxsite.manifest.save(false);
             } else if (commandRun.options.theme === "custom-theme") {
               commandRun.options.name = activeHaxsite.name;
               commandRun.options.directory = activeHaxsite.directory;
@@ -2545,6 +2547,7 @@ export async function siteCommandDetected(commandRun) {
           }
         } catch (e) {
           log(formatErrorForLogging(e), "error");
+          process.exitCode = 1;
         }
         break;
       case "site:element":
@@ -4304,128 +4307,272 @@ function toBoolean(value) {
   return Boolean(value);
 }
 
-// apply one or more field edits to a node. Content is written to the page
-// file; everything else is saved to site.json in a single update.
-export async function applyNodeEdits(activeHaxsite, page, edits, commandRun) {
-  let changed = [];
-  let structureChanged = false;
-  for (const field of Object.keys(edits)) {
+// throw when an in-process backend call (cliBridge) did not answer 2xx
+function assertBackendOk(resp, fallback) {
+  const res = resp && resp.res ? resp.res : null;
+  const data = res ? res.data : null;
+  const status =
+    data && typeof data.status === "number"
+      ? data.status
+      : res && typeof res.statusCode === "number"
+        ? res.statusCode
+        : null;
+  if (!res || data === null || (status !== null && status >= 400)) {
+    throw new Error(apiMessage(data, fallback));
+  }
+  return data;
+}
+
+function escapePageBreakAttribute(value) {
+  return String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/"/g, "&quot;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
+// haxtheweb/issues#3292: the <page-break> the HAX editor sends in front of a
+// page body on save, describing the item's current properties. saveNode
+// re-applies every attribute and resets published, hide-in-menu,
+// override-pathauto, locked, tags, icon, image... when one is absent, so a
+// content save has to echo the item's existing state. description is left out
+// on purpose: saveNode then regenerates it from the new body, as the editor
+// does. `theme` overrides the page theme (null removes it).
+export function pageBreakForItem(item, overrides = {}) {
+  const m = item && item.metadata ? item.metadata : {};
+  const attrs = [
+    ["item-id", item.id],
+    ["title", item.title],
+    ["slug", item.slug],
+  ];
+  if (item.parent) {
+    attrs.push(["parent", item.parent]);
+  }
+  attrs.push(["order", item.order === undefined ? 0 : item.order]);
+  attrs.push(["depth", item.indent === undefined ? 0 : item.indent]);
+  if (m.published !== false) {
+    attrs.push(["published", true]);
+  }
+  if (m.hideInMenu) {
+    attrs.push(["hide-in-menu", true]);
+  }
+  if (m.overridePathauto) {
+    attrs.push(["override-pathauto", true]);
+  }
+  if (m.locked) {
+    attrs.push(["locked", true]);
+  }
+  const optional = [
+    ["tags", m.tags],
+    ["icon", m.icon],
+    ["image", m.image],
+    ["page-type", m.pageType],
+    ["related-items", m.relatedItems],
+    ["accent-color", m.accentColor],
+    ["link-url", m.linkUrl],
+    ["link-target", m.linkTarget],
+  ];
+  let theme = null;
+  if (m.theme && typeof m.theme === "object") {
+    theme = m.theme.key || m.theme.element || null;
+  }
+  if (Object.prototype.hasOwnProperty.call(overrides, "theme")) {
+    theme = overrides.theme;
+  }
+  optional.push(["developer-theme", theme]);
+  for (const [name, value] of optional) {
+    if (value !== undefined && value !== null && value !== "") {
+      attrs.push([name, value]);
+    }
+  }
+  // booleans are written name="name": older haxcms-nodejs releases read a
+  // bare attribute (published) as unset
+  const html = attrs
+    .map(
+      ([name, value]) =>
+        `${name}="${escapePageBreakAttribute(value === true ? name : value)}"`,
+    )
+    .join(" ");
+  return `<page-break ${html}></page-break>`;
+}
+
+const NODE_EDIT_ITEM_OPERATIONS = [
+  ["title", "setTitle"],
+  ["slug", "setSlug"],
+  ["description", "setDescription"],
+  ["tags", "setTags"],
+  ["published", "setPublished"],
+  ["hideInMenu", "setHideInMenu"],
+];
+
+// haxtheweb/issues#3292: the backend calls node:edit makes, in order, for a
+// set of already-validated edits. Content and the page theme are one saveNode
+// (PATCH v1/content/:id) like an editor save; every other field is the item
+// PATCH operation the API runs (PATCH v1/items/:id). `body` is the page body
+// to save when content or theme changes. `parent` is an item id or null.
+export function nodeEditRequests(page, edits, items = [], body = "") {
+  const has = (field) => Object.prototype.hasOwnProperty.call(edits, field);
+  const requests = [];
+  if (has("content") || has("theme")) {
+    const fields = [];
+    if (has("content")) {
+      fields.push("content");
+    }
+    if (has("theme")) {
+      fields.push("theme");
+    }
+    requests.push({
+      fields: fields,
+      route: `v1/content/${page.id}`,
+      body: {
+        content:
+          pageBreakForItem(page, has("theme") ? { theme: edits.theme } : {}) +
+          (body === null || body === undefined ? "" : String(body)),
+      },
+    });
+  }
+  for (const [field, operation] of NODE_EDIT_ITEM_OPERATIONS) {
+    if (!has(field)) {
+      continue;
+    }
     let value = edits[field];
-    if (value === "null") {
-      value = null;
+    if (field === "published" || field === "hideInMenu") {
+      value = toBoolean(value);
+    } else if (value === null || value === undefined) {
+      value = "";
+    } else {
+      value = String(value);
     }
-    switch (field) {
-      case "content": {
-        const resolved = await resolveNodeContent({
-          options: {
-            ...commandRun.options,
-            content: value === null ? "" : value,
-          },
-        });
-        const safeContent = resolved ? resolved.contents : "";
-        if (
-          typeof safeContent === "string" &&
-          (await page.writeLocation(
-            safeContent,
-            activeHaxsite.siteDirectory || "",
-          ))
-        ) {
-          // keep pages/<id>/index.json|md|... in step with index.html
-          if (typeof activeHaxsite.writePageAlternateFormats === "function") {
-            await activeHaxsite.writePageAlternateFormats(page, safeContent);
-          }
-          changed.push("content");
-        } else {
-          throw new Error(t("siteFailedWritePageContent", { id: page.id }));
-        }
-        break;
+    requests.push({
+      fields: [field],
+      route: `v1/items/${page.id}`,
+      body: { operation: operation, [field]: value },
+    });
+  }
+  if (has("parent") || has("order")) {
+    const currentParent = page.parent ? page.parent : null;
+    const newParent = has("parent") && edits.parent ? edits.parent : null;
+    const parent = has("parent") ? newParent : currentParent;
+    let order;
+    if (has("order")) {
+      order = edits.order;
+    } else if (parent !== currentParent) {
+      // haxtheweb/issues#3127: a moved page goes after its new siblings
+      order = nextSiblingOrder(
+        (items || []).filter((item) => item && item.id !== page.id),
+        parent,
+      );
+    } else {
+      order = parseInt(page.order);
+      if (Number.isNaN(order)) {
+        order = 0;
       }
-      case "slug": {
-        const cleanSlug =
-          typeof HAXCMS.generateSlugName === "function"
-            ? HAXCMS.generateSlugName(value)
-            : value;
-        if (cleanSlug) {
-          page.slug =
-            typeof activeHaxsite.getUniqueSlugName === "function"
-              ? activeHaxsite.getUniqueSlugName(cleanSlug, page, false)
-              : cleanSlug;
-          page.metadata = page.metadata || {};
-          // a hand-set slug should not be regenerated from the title
-          page.metadata.overridePathauto = true;
-          structureChanged = true;
-          changed.push("slug");
-        }
-        break;
+    }
+    const fields = [];
+    if (has("parent")) {
+      fields.push("parent");
+    }
+    if (has("order")) {
+      fields.push("order");
+    }
+    requests.push({
+      fields: fields,
+      route: `v1/items/${page.id}`,
+      body: { operation: "setParent", parent: parent, order: order },
+    });
+  }
+  return requests;
+}
+
+// apply one or more field edits to a node through the same haxcms-nodejs
+// operations the API runs (haxtheweb/issues#3292), so a CLI edit leaves
+// site.json exactly as the same edit through the API would.
+export async function applyNodeEdits(activeHaxsite, page, edits, commandRun) {
+  const options = commandRun && commandRun.options ? commandRun.options : {};
+  const clean = {};
+  for (const field of Object.keys(edits)) {
+    clean[field] = edits[field] === "null" ? null : edits[field];
+  }
+  const has = (field) => Object.prototype.hasOwnProperty.call(clean, field);
+  // validate everything before the first write
+  if (has("parent")) {
+    if (clean.parent) {
+      const parentNode = findNodeByIdOrSlug(activeHaxsite, clean.parent);
+      if (!parentNode) {
+        throw new Error(t("siteParentNotFound", { parent: clean.parent }));
       }
-      case "tags":
-        page.metadata = page.metadata || {};
-        page.metadata.tags = value;
-        structureChanged = true;
-        changed.push("tags");
-        break;
-      case "published":
-      case "hideInMenu":
-        page.metadata = page.metadata || {};
-        page.metadata[field] = toBoolean(value);
-        structureChanged = true;
-        changed.push(field);
-        break;
-      case "theme":
-        page.metadata = page.metadata || {};
-        if (value) {
-          const themes = await HAXCMS.getThemes();
-          if (!themes[value]) {
-            throw new Error(t("siteUnknownTheme", { theme: value }));
-          }
-          page.metadata.theme = themes[value];
-        } else {
-          delete page.metadata.theme;
-        }
-        structureChanged = true;
-        changed.push("theme");
-        break;
-      case "parent":
-        if (value) {
-          const parentNode = findNodeByIdOrSlug(activeHaxsite, value);
-          if (!parentNode) {
-            throw new Error(t("siteParentNotFound", { parent: value }));
-          }
-          if (parentNode.id === page.id) {
-            throw new Error(t("siteOwnParent"));
-          }
-          page.parent = parentNode.id;
-        } else {
-          page.parent = null;
-        }
-        structureChanged = true;
-        changed.push("parent");
-        break;
-      case "order": {
-        const order = parseInt(value);
-        if (Number.isNaN(order)) {
-          throw new Error(t("siteOrderNotNumber", { flag: "--order", value }));
-        }
-        page.order = order;
-        structureChanged = true;
-        changed.push("order");
-        break;
+      if (parentNode.id === page.id) {
+        throw new Error(t("siteOwnParent"));
       }
-      default:
-        // title, description
-        page[field] = value;
-        structureChanged = true;
-        changed.push(field);
-        break;
+      clean.parent = parentNode.id;
+    } else {
+      clean.parent = null;
     }
   }
-  if (structureChanged) {
-    let resp = await activeHaxsite.updateNode(page);
-    if (commandRun.options.v) {
-      log(resp, "silly");
+  if (has("order")) {
+    const order = parseInt(clean.order);
+    if (Number.isNaN(order)) {
+      throw new Error(
+        t("siteOrderNotNumber", { flag: "--order", value: clean.order }),
+      );
+    }
+    clean.order = order;
+  }
+  if (has("theme")) {
+    if (clean.theme) {
+      const themes = await HAXCMS.getThemes();
+      if (!themes || !themes[clean.theme]) {
+        throw new Error(t("siteUnknownTheme", { theme: clean.theme }));
+      }
+    } else {
+      clean.theme = null;
     }
   }
-  if (changed.length > 0 && !commandRun.options.quiet) {
+  let body = "";
+  if (has("content")) {
+    const resolved = await resolveNodeContent({
+      options: {
+        ...options,
+        content: clean.content === null ? "" : clean.content,
+      },
+    });
+    body = resolved ? resolved.contents : "";
+    if (typeof body !== "string") {
+      throw new Error(t("siteFailedWritePageContent", { id: page.id }));
+    }
+  } else if (has("theme")) {
+    // a theme change is an editor save of the unchanged body
+    body = await activeHaxsite.getPageContent(page);
+  }
+  const items =
+    activeHaxsite.manifest && Array.isArray(activeHaxsite.manifest.items)
+      ? activeHaxsite.manifest.items
+      : [];
+  const requests = nodeEditRequests(page, clean, items, body);
+  const changed = [];
+  if (requests.length === 0) {
+    return changed;
+  }
+  const cliBridge = await getHaxcmsNodejsCli();
+  const site = { name: activeHaxsite.name };
+  for (const request of requests) {
+    const resp = await cliBridge.cliBridge(
+      request.route,
+      { site: site, ...request.body },
+      "patch",
+    );
+    const data = assertBackendOk(
+      resp,
+      request.fields.includes("content")
+        ? t("siteFailedWritePageContent", { id: page.id })
+        : t("siteNoApiResponse"),
+    );
+    if (options.v) {
+      log(data, "silly");
+    }
+    changed.push(...request.fields);
+  }
+  if (changed.length > 0 && !options.quiet) {
     log(
       `node:edit updated ${changed.join(", ")} on "${page.title}" (${page.id})`,
     );
@@ -4658,6 +4805,24 @@ export async function applySiteLanguage(commandRun, project) {
   }
 }
 
+// haxtheweb/issues#3292: the createSite request for a new site. Flags the
+// user gave (--theme, --description) are sent; everything else is
+// left to the API's createSite so a CLI-made site matches a dashboard-made one.
+export function newSiteRequest(options = {}, project = {}) {
+  const site = { name: project.name };
+  const theme = options.theme ? options.theme : project.theme;
+  if (theme) {
+    site.theme = theme;
+  }
+  const description = options.description
+    ? options.description
+    : project.description;
+  if (typeof description === "string" && description !== "") {
+    site.description = description;
+  }
+  return { site: site };
+}
+
 export async function siteProcess(commandRun, project, port = "3000") {
   // auto select operations to perform if requested
   // Security (npm-client-allowlist): defense-in-depth re-check of --npm-client at the point it
@@ -4676,27 +4841,10 @@ export async function siteProcess(commandRun, project, port = "3000") {
       project.extras = ["launch"];
     }
   }
-  let siteRequest = {
-    site: {
-      name: project.name,
-      description: "own course",
-      theme: commandRun.options.theme
-        ? commandRun.options.theme
-        : project.theme
-          ? project.theme
-          : "clean-one",
-    },
-    build: {
-      type: "own",
-      structure: "course",
-      items: null,
-      files: null,
-    },
-    theme: {
-      color: "green",
-      icon: "av:library-add",
-    },
-  };
+  // haxtheweb/issues#3292: the same request the API's createSite gets from
+  // the dashboard. Only what the user chose is sent; createSite fills in its
+  // own defaults (clean-two theme, a "Welcome" page, no build block).
+  let siteRequest = newSiteRequest(commandRun.options, project);
   let skeletonFilePath = commandRun.options.skeletonFile
     ? commandRun.options.skeletonFile
     : project.skeletonFile
@@ -4722,10 +4870,12 @@ export async function siteProcess(commandRun, project, port = "3000") {
     throw new Error(t("siteSkeletonNoImport", { flag: "--import-site" }));
   }
   if (skeletonFilePath || skeletonMachineName) {
-    siteRequest.build.structure = "from-skeleton";
-    siteRequest.build.type = "skeleton";
-    siteRequest.build.items = [];
-    siteRequest.build.files = [];
+    siteRequest.build = {
+      structure: "from-skeleton",
+      type: "skeleton",
+      items: [],
+      files: [],
+    };
     if (skeletonMachineName) {
       const normalizedMachineName =
         normalizeSkeletonMachineName(skeletonMachineName);
@@ -4803,13 +4953,16 @@ export async function siteProcess(commandRun, project, port = "3000") {
         );
       }
       if (importedData && importedData.items) {
+        siteRequest.build = siteRequest.build || {};
         siteRequest.build.structure = "import";
         siteRequest.build.items = importedData.items;
       }
       if (importedData && importedData.files) {
+        siteRequest.build = siteRequest.build || {};
         siteRequest.build.files = importedData.files;
       }
       if (importedData && importedData.siteFiles) {
+        siteRequest.build = siteRequest.build || {};
         siteRequest.build.siteFiles = importedData.siteFiles;
       }
       if (importedData && importedData.site) {
@@ -4920,9 +5073,11 @@ export async function siteProcess(commandRun, project, port = "3000") {
               log(`Skipping image URL (SSRF-guarded): ${skippedUrl}`, "warn");
             }
           }
-          siteRequest.build.files = drupalFiles;
-          siteRequest.build.structure = "import";
-          siteRequest.build.items = items;
+          siteRequest.build = {
+            structure: "import",
+            items: items,
+            files: drupalFiles,
+          };
         }
       }
     }
@@ -5323,6 +5478,31 @@ export async function siteThemeList(coreOnly = true, directory = null) {
  * backends that read `theme.variables.*` never see undefined.
  * Returns a copy so the cached theme registry is never mutated.
  */
+// haxtheweb/issues#3292: switch the site theme through the appearance
+// settings operation the API's PATCH /v1/site/appearance runs.
+export function siteThemeRequest(siteName, themeKey) {
+  return {
+    site: { name: siteName },
+    manifest: {
+      theme: { "manifest-metadata-theme-element": themeKey },
+    },
+  };
+}
+
+async function setSiteThemeThroughBackend(activeHaxsite, themeKey, commandRun) {
+  const cliBridge = await getHaxcmsNodejsCli();
+  const resp = await cliBridge.cliBridge(
+    "v1/site/appearance",
+    siteThemeRequest(activeHaxsite.name, themeKey),
+    "patch",
+  );
+  assertBackendOk(resp, t("siteUnknownTheme", { theme: themeKey }));
+  if (commandRun.options.v) {
+    log(resp.res.data, "silly");
+  }
+  return resp.res.data;
+}
+
 export function withSiteThemeVariables(nextTheme, previousTheme) {
   const next = { ...(nextTheme || {}) };
   const isObj = (v) => v && typeof v === "object" && !Array.isArray(v);

@@ -831,6 +831,144 @@ test(
   },
 );
 
+function saveNodeScansFiles() {
+  try {
+    const saveNode = require.resolve(
+      "@haxtheweb/haxcms-nodejs/dist/siteRoutes/v1/routes/saveNode.js",
+    );
+    return fs.readFileSync(saveNode, "utf8").includes("rebuildPageFilesUuids");
+  } catch {
+    return false;
+  }
+}
+
+// haxtheweb/issues#3292: CLI edits run the same haxcms-nodejs operations as
+// the API, so site.json comes out the way the API would leave it.
+test(
+  "CLI site creation and edits match the API's backend operations",
+  { skip: skipReason, timeout: 180000 },
+  () => {
+    const parentDir = fs.mkdtempSync(path.join(os.tmpdir(), "hax-parity-"));
+    const siteName = "parity-site";
+    const siteDir = path.join(parentDir, siteName);
+    const run = (args, cwd) => {
+      const res = spawnSync(process.execPath, [CLI, ...args], {
+        encoding: "utf8",
+        env: ISOLATED_ENV,
+        cwd: cwd,
+        timeout: 30000,
+      });
+      assert.notEqual(res.signal, "SIGTERM", `hung: hax ${args.join(" ")}`);
+      assert.equal(
+        res.status,
+        0,
+        `hax ${args.join(" ")}\nstderr: ${res.stderr}\nstdout: ${res.stdout}`,
+      );
+      return res;
+    };
+    const edit = (...args) =>
+      run(["site", "node:edit", ...args, "--y", "--no-i", "--quiet"], siteDir);
+    const readSite = () =>
+      JSON.parse(fs.readFileSync(path.join(siteDir, "site.json"), "utf8"));
+    const byId = (id) => readSite().items.find((item) => item.id === id);
+    try {
+      run(
+        [
+          "site",
+          "--name",
+          siteName,
+          "--path",
+          parentDir,
+          "--y",
+          "--no-i",
+          "--no-extras",
+        ],
+        parentDir,
+      );
+      // new site: createSite's defaults (clean-two, "Welcome", no build)
+      let manifest = readSite();
+      assert.equal(manifest.metadata.theme.element, "clean-two");
+      assert.equal(manifest.metadata.build, undefined, "no build block");
+      assert.notEqual(manifest.description, "own course");
+      assert.deepEqual(
+        manifest.items.map((item) => item.title),
+        ["Welcome"],
+      );
+      for (const title of ["Alpha", "Beta", "Gamma"]) {
+        run(
+          ["site", "node:add", `--title=${title}`, "--y", "--no-i", "--quiet"],
+          siteDir,
+        );
+      }
+      manifest = readSite();
+      const idOf = (title) =>
+        manifest.items.find((item) => item.title === title).id;
+      const alpha = idOf("Alpha");
+      const beta = idOf("Beta");
+      const gamma = idOf("Gamma");
+
+      // content edit: saveNode fills description, readtime and media lists
+      edit(
+        `--item-id=${alpha}`,
+        "--content=<p>Fresh words for the alpha page</p>",
+      );
+      const edited = byId(alpha);
+      assert.equal(edited.description, "Fresh words for the alpha page");
+      assert.equal(edited.metadata.readtime, 1);
+      assert.deepEqual(edited.metadata.images, []);
+      assert.deepEqual(edited.metadata.videos, []);
+      // metadata.files comes from saveNode's file scan (haxcms-nodejs main;
+      // older releases have no scan, so only check it where saveNode runs one)
+      if (saveNodeScansFiles()) {
+        assert.ok(Array.isArray(edited.metadata.files), "files filled");
+      }
+      assert.equal(edited.metadata.published, true);
+      assert.equal(edited.metadata.hideInMenu, false);
+      assert.equal(edited.metadata.locked, false);
+      assert.equal(edited.metadata.overridePathauto, false);
+
+      // reserved slug: x collides with the /x/api route
+      edit(`--item-id=${beta}`, "--slug=x");
+      assert.equal(byId(beta).slug, "x-x");
+
+      // parent change: indent, slug from the new path, appended order
+      edit(`--item-id=${gamma}`, `--parent=${alpha}`);
+      edit(`--item-id=${beta}`, `--parent=${alpha}`);
+      const movedGamma = byId(gamma);
+      assert.equal(movedGamma.parent, alpha);
+      assert.equal(movedGamma.indent, 1);
+      assert.equal(movedGamma.order, 0);
+      assert.equal(movedGamma.slug, "alpha/gamma");
+      const movedBeta = byId(beta);
+      assert.equal(movedBeta.order, 1, "after the existing child");
+      assert.equal(movedBeta.slug, "x-x", "a set slug is kept");
+      // --parent=null moves to the top level, after the last top page
+      edit(`--item-id=${gamma}`, "--parent=null");
+      const topGamma = byId(gamma);
+      assert.equal(topGamma.parent, null);
+      assert.equal(topGamma.indent, 0);
+      assert.equal(topGamma.order, byId(alpha).order + 1);
+
+      // site theme: the appearance operation, no CLI-only variables
+      run(
+        ["site", "site:theme", "--theme=clean-one", "--y", "--no-i"],
+        siteDir,
+      );
+      const theme = readSite().metadata.theme;
+      assert.equal(theme.element, "clean-one");
+      for (const key of ["icon", "hexCode", "cssVariable"]) {
+        assert.equal(
+          theme.variables ? theme.variables[key] : undefined,
+          undefined,
+          `theme.variables.${key} is not written`,
+        );
+      }
+    } finally {
+      fs.rmSync(parentDir, { recursive: true, force: true });
+    }
+  },
+);
+
 // haxtheweb/issues#3119: `hax wc --search` finds existing elements (offline:
 // HAX_ELEMENTS_CATALOG points at a fixture so CI needs no network)
 test("CLI wc --search returns matching elements as JSON", smokeOpts, () => {

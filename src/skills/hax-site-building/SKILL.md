@@ -5,7 +5,7 @@ description: >
   Use when creating a new HAXsite, editing site.json, managing page content, or modifying themes
   in the HAXcms ecosystem. Use when the user says "create a site", "add pages", "edit site.json",
   or references HAXcms site structure.
-version: 1.2.0
+version: 1.3.0
 license: Apache-2.0
 metadata:
   author: haxtheweb
@@ -44,9 +44,35 @@ As an agent, add `--agent` to every `hax site` command below (or set `HAX_ACTOR=
 
 Two supported CLI paths, run from inside the site directory:
 
-- Single page: `hax site node:add --title "<title>" --slug "<slug>" --parent <parent-id-or-slug> --content <path-to-html-or-md-file> --y --no-i`. Without `--order` the page is appended after its siblings. The output includes the new item id.
-- Update an existing page: `hax site node:edit --item-id <id-or-slug> --title "<title>" --content <file-or-html> --y --no-i` (any of `--title`, `--slug`, `--content`, `--description`, `--tags`, `--parent`, `--order`, `--published`, `--hide-in-menu`, `--theme`, applied together).
+- Single page: `hax site node:add --title="<title>" --slug="<slug>" --parent=<parent-id-or-slug> --content=<path-to-html-or-md-file> --y --no-i`. Without `--order` the page is appended after its siblings. The output includes the new item id.
+- Update an existing page: `hax site node:edit --item-id=<id-or-slug> --title="<title>" --content=<file-or-html> --y --no-i`. See "Editing pages" below.
+- Delete a page: `hax site node:delete --item-id=<id-or-slug> --y --no-i` (`--y` skips the confirmation).
 - Bulk (preferred for a whole program): build a JOS items array (one object per page with `title`, `slug`, `parent`, `indent`, `order`, `metadata`, and `content`), then run `hax site site:items-import --items-import <items.json> --y --no-i`. The import remaps parent references to the newly generated ids automatically.
+
+Pass values as `--flag=value`. A value that starts with `-` (for example `--description="-1 is the answer"`) must use that form, or it is read as another flag.
+
+## Editing pages
+
+`node:edit` runs the same HAXcms operations as the site API (`PATCH /x/api/v1/items/:id` and the content save), so a CLI edit leaves `site.json` the way the same edit through the API or the HAX editor would. `--item-id` takes a page id or slug. Give any of these field flags; they are applied together:
+
+| Flag                                       | What it changes                                                                                                     |
+| ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------- |
+| `--title=<text>`                           | Title. With pathauto on, the slug follows the title unless it was set by hand.                                      |
+| `--slug=<path>`                            | Slug, marked as set by hand. The reserved `x` becomes `x-x`.                                                        |
+| `--content=<file, URL or HTML>`            | Page body (`--content-format=md` for Markdown). The description and reading time are regenerated from the new body. |
+| `--description=<text>`                     | Description.                                                                                                        |
+| `--tags=<a,b>`                             | Tags.                                                                                                               |
+| `--published=true\|false`                  | Published state.                                                                                                    |
+| `--hide-in-menu=true\|false`               | Hidden from the menu.                                                                                               |
+| `--parent=<id-or-slug>` or `--parent=null` | Parent page. `null` moves the page to the top level.                                                                |
+| `--order=<number>`                         | Position among its siblings.                                                                                        |
+| `--theme=<theme>`                          | Theme for this page only (empty removes it).                                                                        |
+
+Order rule: when `--parent` changes and no `--order` is given, the page goes after the last of its new siblings (highest sibling order + 1, the same rule `node:add` uses). Its depth follows the new parent and its slug is rebuilt from the new path unless the slug was set by hand. Pass `--order` to place it yourself.
+
+Interactive `--node-op` picks one field to edit: `title`, `content`, `slug`, `published`, `tags`, `parent`, `order`, `theme` or `hideInMenu`. Change a description with `--description`; it is not a node-op.
+
+Change the whole site's theme with `hax site site:theme --theme=<theme> --y --no-i` (same as the site API's appearance settings).
 
 To mark a page draft/private (e.g. verbatim transcripts), set `metadata.published: false` in the import item. After creation, verify with `hax site site:items`.
 

@@ -575,10 +575,11 @@ test(
 // --- theme / element ---
 
 test(
-  "site:theme switches to a known core theme and saves the manifest",
+  "site:theme switches a core theme through the appearance operation",
   opts,
   async () => {
     resetMocks();
+    fakeHaxsite.manifest.__saved = false;
     fakeHaxsite.manifest.save = () => {
       fakeHaxsite.manifest.__saved = true;
     };
@@ -587,8 +588,17 @@ test(
       arguments: { action: "site:theme" },
       options: { quiet: true, i: true, theme: "clean-one" },
     });
-    assert.equal(fakeHaxsite.manifest.metadata.theme.element, "clean-one");
-    assert.ok(fakeHaxsite.manifest.__saved, "manifest saved");
+    // haxtheweb/issues#3292: PATCH /v1/site/appearance, as the API does
+    assert.equal(cliBridgeCalls.length, 1);
+    assert.equal(cliBridgeCalls[0].route, "v1/site/appearance");
+    assert.equal(cliBridgeCalls[0].method, "patch");
+    assert.deepEqual(cliBridgeCalls[0].body, {
+      site: { name: "fakesite" },
+      manifest: {
+        theme: { "manifest-metadata-theme-element": "clean-one" },
+      },
+    });
+    assert.equal(fakeHaxsite.manifest.__saved, false, "CLI does not write");
   },
 );
 
@@ -613,27 +623,25 @@ test(
 );
 
 test(
-  "site:theme keeps the site theme variables when switching to a core theme",
+  "site:theme sends no theme variables of its own for a core theme",
   opts,
   async () => {
     resetMocks();
-    const variables = {
-      icon: "icons:record-voice-over",
-      hexCode: "#3f51b5",
-      cssVariable: "--simple-colors-default-theme-light-blue-7",
-    };
     fakeHaxsite.manifest.metadata.theme = {
       name: "clean-one",
       element: "clean-one",
-      variables,
+      variables: { icon: "icons:record-voice-over", hexCode: "#3f51b5" },
     };
     await runSite({
       command: "site",
       arguments: { action: "site:theme" },
-      options: { quiet: true, i: true, theme: "clean-two" },
+      options: { quiet: true, i: true, theme: "clean-one" },
     });
-    assert.equal(fakeHaxsite.manifest.metadata.theme.element, "clean-two");
-    assert.deepEqual(fakeHaxsite.manifest.metadata.theme.variables, variables);
+    assert.deepEqual(
+      Object.keys(cliBridgeCalls[0].body.manifest.theme),
+      ["manifest-metadata-theme-element"],
+      "only the theme element, like the API's appearance form",
+    );
   },
 );
 
@@ -663,7 +671,7 @@ test(
 );
 
 test(
-  "site:theme always writes a variables object even when the site had none",
+  "site:theme always writes a variables object for an unregistered theme",
   opts,
   async () => {
     resetMocks();
@@ -674,7 +682,7 @@ test(
     await runSite({
       command: "site",
       arguments: { action: "site:theme" },
-      options: { quiet: true, i: true, theme: "clean-two" },
+      options: { quiet: true, i: true, theme: "yet-another-theme" },
     });
     const theme = fakeHaxsite.manifest.metadata.theme;
     assert.equal(typeof theme.variables, "object");
@@ -972,56 +980,83 @@ test(
 
 // --- node operations ---
 
-test("node:edit updates a plain field through updateNode", opts, async () => {
-  resetMocks();
-  await runSite({
-    command: "site",
-    arguments: { action: "node:edit" },
-    options: {
-      quiet: true,
-      i: true,
-      itemId: "item-1",
-      nodeOp: "title",
-      title: "Renamed Page",
-    },
-  });
-  assert.equal(updateNodeCalls.length, 1);
-  assert.equal(updateNodeCalls[0].title, "Renamed Page");
-});
+test(
+  "node:edit sets the title through the setTitle item operation",
+  opts,
+  async () => {
+    resetMocks();
+    await runSite({
+      command: "site",
+      arguments: { action: "node:edit" },
+      options: {
+        quiet: true,
+        i: true,
+        itemId: "item-1",
+        nodeOp: "title",
+        title: "Renamed Page",
+      },
+    });
+    // haxtheweb/issues#3292: the API's PATCH /v1/items/:id operation, not a
+    // direct site.json write
+    assert.equal(updateNodeCalls.length, 0);
+    assert.equal(cliBridgeCalls.length, 1);
+    assert.equal(cliBridgeCalls[0].route, "v1/items/item-1");
+    assert.equal(cliBridgeCalls[0].method, "patch");
+    assert.equal(cliBridgeCalls[0].body.operation, "setTitle");
+    assert.equal(cliBridgeCalls[0].body.title, "Renamed Page");
+    assert.deepEqual(cliBridgeCalls[0].body.site, { name: "fakesite" });
+  },
+);
 
-test("node:edit updates metadata tags", opts, async () => {
-  resetMocks();
-  await runSite({
-    command: "site",
-    arguments: { action: "node:edit" },
-    options: {
-      quiet: true,
-      i: true,
-      itemId: "item-1",
-      nodeOp: "tags",
-      tags: "intro,lesson",
-    },
-  });
-  assert.equal(updateNodeCalls.length, 1);
-  assert.equal(updateNodeCalls[0].metadata.tags, "intro,lesson");
-});
+test(
+  "node:edit sets tags through the setTags item operation",
+  opts,
+  async () => {
+    resetMocks();
+    await runSite({
+      command: "site",
+      arguments: { action: "node:edit" },
+      options: {
+        quiet: true,
+        i: true,
+        itemId: "item-1",
+        nodeOp: "tags",
+        tags: "intro,lesson",
+      },
+    });
+    assert.equal(updateNodeCalls.length, 0);
+    assert.equal(cliBridgeCalls.length, 1);
+    assert.equal(cliBridgeCalls[0].body.operation, "setTags");
+    assert.equal(cliBridgeCalls[0].body.tags, "intro,lesson");
+  },
+);
 
-test("node:edit writes page content through writeLocation", opts, async () => {
-  resetMocks();
-  await runSite({
-    command: "site",
-    arguments: { action: "node:edit" },
-    options: {
-      quiet: true,
-      i: true,
-      itemId: "item-1",
-      nodeOp: "content",
-      content: "<p>updated</p>",
-    },
-  });
-  assert.equal(writeLocationCalls.length, 1);
-  assert.equal(writeLocationCalls[0], "<p>updated</p>");
-});
+test(
+  "node:edit saves page content through the content route",
+  opts,
+  async () => {
+    resetMocks();
+    await runSite({
+      command: "site",
+      arguments: { action: "node:edit" },
+      options: {
+        quiet: true,
+        i: true,
+        itemId: "item-1",
+        nodeOp: "content",
+        content: "<p>updated</p>",
+      },
+    });
+    // saveNode writes the page; the CLI no longer writes it itself
+    assert.equal(writeLocationCalls.length, 0);
+    assert.equal(cliBridgeCalls.length, 1);
+    assert.equal(cliBridgeCalls[0].route, "v1/content/item-1");
+    assert.equal(cliBridgeCalls[0].method, "patch");
+    const content = cliBridgeCalls[0].body.content;
+    assert.match(content, /^<page-break [^>]*item-id="item-1"/);
+    assert.ok(content.endsWith("</page-break><p>updated</p>"));
+  },
+);
 
 test("node:add posts a new item through the cliBridge", opts, async () => {
   resetMocks();
@@ -1067,18 +1102,46 @@ test(
       },
     });
     assert.equal(exitCode, 0);
-    assert.deepEqual(writeLocationCalls, ["<p>edited body</p>"]);
-    assert.equal(
-      updateNodeCalls.length,
-      1,
-      "one site.json update for all fields",
+    assert.equal(writeLocationCalls.length, 0);
+    assert.equal(updateNodeCalls.length, 0);
+    // content first (saveNode), then one item operation per field
+    assert.deepEqual(
+      cliBridgeCalls.map((call) => [call.route, call.body.operation || null]),
+      [
+        ["v1/content/item-1", null],
+        ["v1/items/item-1", "setTitle"],
+        ["v1/items/item-1", "setDescription"],
+        ["v1/items/item-1", "setHideInMenu"],
+        ["v1/items/item-1", "setParent"],
+      ],
     );
-    const saved = updateNodeCalls[0];
-    assert.equal(saved.id, "item-1");
-    assert.equal(saved.title, "Edited Title");
-    assert.equal(saved.description, "Edited description");
-    assert.equal(saved.order, 5);
-    assert.equal(saved.metadata.hideInMenu, false);
+    assert.ok(cliBridgeCalls[0].body.content.endsWith("<p>edited body</p>"));
+    assert.equal(cliBridgeCalls[1].body.title, "Edited Title");
+    assert.equal(cliBridgeCalls[2].body.description, "Edited description");
+    assert.equal(cliBridgeCalls[3].body.hideInMenu, false);
+    // --order alone keeps the current parent
+    assert.equal(cliBridgeCalls[4].body.parent, null);
+    assert.equal(cliBridgeCalls[4].body.order, 5);
+  },
+);
+
+test(
+  "node:edit fails when the backend refuses an operation",
+  opts,
+  async () => {
+    resetMocks();
+    cliBridgeResponse = {
+      res: {
+        statusCode: 403,
+        data: { status: 403, data: { message: "Outline operations off" } },
+      },
+    };
+    const exitCode = await runSite({
+      command: "site",
+      arguments: { action: "node:edit" },
+      options: { quiet: true, i: false, y: true, itemId: "item-1", order: "2" },
+    });
+    assert.equal(exitCode, 1);
   },
 );
 
@@ -1093,7 +1156,7 @@ test(
       options: { quiet: true, i: false, y: true, title: "Anything" },
     });
     assert.equal(exitCode, 1);
-    assert.equal(updateNodeCalls.length, 0);
+    assert.equal(cliBridgeCalls.length, 0);
   },
 );
 
@@ -1108,8 +1171,7 @@ test(
       options: { quiet: true, i: false, y: true, itemId: "item-1" },
     });
     assert.equal(exitCode, 1);
-    assert.equal(updateNodeCalls.length, 0);
-    assert.equal(writeLocationCalls.length, 0);
+    assert.equal(cliBridgeCalls.length, 0);
   },
 );
 
@@ -1121,7 +1183,7 @@ test("node:edit reports an unknown item id or slug", opts, async () => {
     options: { quiet: true, i: false, y: true, itemId: "nope", slug: "x" },
   });
   assert.equal(exitCode, 1);
-  assert.equal(updateNodeCalls.length, 0);
+  assert.equal(cliBridgeCalls.length, 0);
 });
 
 test(

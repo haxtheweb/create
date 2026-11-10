@@ -1142,10 +1142,15 @@ async function main() {
       if (["site", "webcomponent"].includes(project.type)) {
         // global spot for core themes list
         let coreThemes = await siteThemeList(true);
-        const cleanOneTheme = coreThemes.find(
-          (themeOption) => themeOption.value === "clean-one",
+        // haxtheweb/issues#3292: same default theme the API's createSite uses
+        const backendDefaultTheme =
+          haxcmsLib.HAXCMS && haxcmsLib.HAXCMS.HAXCMS_DEFAULT_THEME
+            ? haxcmsLib.HAXCMS.HAXCMS_DEFAULT_THEME
+            : "clean-two";
+        const backendTheme = coreThemes.find(
+          (themeOption) => themeOption.value === backendDefaultTheme,
         );
-        const defaultCoreTheme = cleanOneTheme ? cleanOneTheme : coreThemes[0];
+        const defaultCoreTheme = backendTheme ? backendTheme : coreThemes[0];
         let availableSkeletons = await siteSkeletonList(true);
 
         project = await p.group(
@@ -1547,8 +1552,12 @@ async function main() {
                 results.siteCreationMode !== "template" &&
                 !commandRun.options.theme
               ) {
-                // support having no theme but autoselecting
-                if (commandRun.options.auto && commandRun.options.skip) {
+                // support having no theme but autoselecting; --no-i never
+                // prompts, so it gets the same default as the API's createSite
+                if (
+                  commandRun.options.auto &&
+                  (commandRun.options.skip || commandRun.options.i === false)
+                ) {
                   commandRun.options.theme = defaultCoreTheme.value;
                 } else {
                   return p.select({
