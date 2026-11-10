@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title>old-site-2023</title>
+  <link href="/atom.xml" rel="self" />
+  <subtitle>Fixture site made by HAX code as of January 1, 2023</subtitle>
+  <updated>2026-11-10T19:58:43+00:00</updated>
+  <author>
+      <name></name>
+  </author>
+  <id>/feed</id>
+  <entry>
+    <title>Lesson 1</title>
+    <id>/item-8b17cd76-9df8-4250-9bad-16ef30eb8143</id>
+    <updated>2026-11-10T19:58:44+00:00</updated>
+    <published>2026-11-10T19:58:44+00:00</published>
+    <summary>Lesson 1A page one level deep.console.log('hello')Still here?Yes.</summary>
+    <link href="/item-8b17cd76-9df8-4250-9bad-16ef30eb8143"/>
+    
+    <content type="html">
+      <![CDATA[ <h3>Lesson 1</h3><p>A page one level deep.</p><code-sample copy-clipboard-button><template preserve-content="preserve-content">console.log('hello')</template></code-sample><self-check title="Quick check"><p slot="question">Still here?</p><p>Yes.</p></self-check> ]]>
+    </content>
+  </entry>
+  <entry>
+    <title>Resources</title>
+    <id>/item-825c7fd9-052c-43ea-b401-d80dd3955234</id>
+    <updated>2026-11-10T19:58:44+00:00</updated>
+    <published>2026-11-10T19:58:44+00:00</published>
+    <summary>ResourcesHAXTheWeb</summary>
+    <link href="/item-825c7fd9-052c-43ea-b401-d80dd3955234"/>
+    
+    <content type="html">
+      <![CDATA[ <h2>Resources</h2><ul><li><a href="https://haxtheweb.org/">HAXTheWeb</a></li></ul><license-element title="Fixture" creator="HAX" source="https://haxtheweb.org/" license-link="https://creativecommons.org/licenses/by-sa/4.0/"></license-element> ]]>
+    </content>
+  </entry>
+  <entry>
+    <title>Welcome</title>
+    <id>/item-abb83a2f-7f75-4516-8076-9b1a8c7690e1</id>
+    <updated>2026-11-10T19:58:43+00:00</updated>
+    <published>2026-11-10T19:58:43+00:00</published>
+    <summary></summary>
+    <link href="/item-abb83a2f-7f75-4516-8076-9b1a8c7690e1"/>
+    
+    <content type="html">
+      <![CDATA[ <p>
+    To get started, hit the edit pencil on the side.
+    Now this content is editable in place so select and delete it to get started!
+    If you need to learn more about the HAX editor or HAXcms check out <a href="https://haxtheweb.org/ux-concepts" target="_blank" rel="noopener noreferrer">HAXTheWeb.org</a>!
+</p> ]]>
+    </content>
+  </entry>
+  <entry>
+    <title>Getting started</title>
+    <id>/item-7b5752d5-f367-4b4b-bc58-30eec40ff7eb</id>
+    <updated>2026-11-10T19:58:43+00:00</updated>
+    <published>2026-11-10T19:58:43+00:00</published>
+    <summary>About this siteMade with HAXcms as of 2023.Main column.TipSide note.</summary>
+    <link href="/item-7b5752d5-f367-4b4b-bc58-30eec40ff7eb"/>
+    
+    <content type="html">
+      <![CDATA[ <h2>About this site</h2><p>Made with <strong>HAXcms</strong> as of 2023.</p><grid-plate layout="2-1"><div slot="col-1"><p>Main column.</p></div><div slot="col-2"><accent-card accent-color="green"><div slot="heading">Tip</div><div slot="content">Side note.</div></accent-card></div></grid-plate> ]]>
+    </content>
+  </entry>
+  <entry>
+    <title>Unit 1</title>
+    <id>/item-d844797c-943c-4d7d-8fb5-4bf61efc2ea3</id>
+    <updated>2026-11-10T19:58:44+00:00</updated>
+    <published>2026-11-10T19:58:43+00:00</published>
+    <summary>Unit 1 overviewOne lesson below.</summary>
+    <link href="/item-d844797c-943c-4d7d-8fb5-4bf61efc2ea3"/>
+    
+    <content type="html">
+      <![CDATA[ <h2>Unit 1 overview</h2><p>One lesson below.</p><video-player source="https://www.youtube.com/watch?v=LrS7dqokTLE" media-title="Intro video"></video-player> ]]>
+    </content>
+  </entry>
+</feed>

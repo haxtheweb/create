@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- generator-class="Icamys\SitemapGenerator\SitemapGenerator" -->
+<!-- generator-version="1.1.0" -->
+<!-- generated-on="2026-11-10T19:58:52+00:00" -->
+<urlset xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
+  <url>
+    <loc>/sites/old-site-2024/welcome</loc>
+    <lastmod>2026-11-10T19:58:51+00:00</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>/sites/old-site-2024/unit-1-lesson-1</loc>
+    <lastmod>2026-11-10T19:58:52+00:00</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>/sites/old-site-2024/getting-started</loc>
+    <lastmod>2026-11-10T19:58:51+00:00</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>/sites/old-site-2024/unit-1</loc>
+    <lastmod>2026-11-10T19:58:52+00:00</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>/sites/old-site-2024/resources</loc>
+    <lastmod>2026-11-10T19:58:52+00:00</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>
+</urlset>

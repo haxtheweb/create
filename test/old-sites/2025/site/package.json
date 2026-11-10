@@ -1,0 +1,20 @@
+{
+  "name": "old-site-2025",
+  "version": "10.0.1",
+  "description": "",
+  "main": "index.html",
+  "author": {
+    "name": "btopro"
+  },
+  "license": "Apache-2.0",
+  "private": false,
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "start": "npm run dev",
+    "ghpages:build": "rm dist && rm assets/babel* && rm build && rm node_modules && rm wc-registry.json",
+    "dev": "npx @haxtheweb/haxcms-nodejs",
+    "dev-theme": "cd custom && npm start"
+  }
+}

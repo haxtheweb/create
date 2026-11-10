@@ -1,0 +1,123 @@
+{
+    "id": "81133e5d-8334-4fcd-8e38-ca09335e3a6c",
+    "title": "old-site-2025",
+    "author": "",
+    "description": "own course",
+    "license": "by-sa",
+    "metadata": {
+        "author": {},
+        "site": {
+            "name": "old-site-2025",
+            "logo": "assets/banner.jpg",
+            "settings": {
+                "lang": "en-US",
+                "publishPagesOn": true
+            },
+            "created": 1735750800,
+            "updated": 1735750800,
+            "git": {
+                "vendor": "github",
+                "branch": "gh-pages"
+            }
+        },
+        "theme": {
+            "element": "clean-one",
+            "path": "@haxtheweb/clean-one/clean-one.js",
+            "name": "Clean course theme",
+            "thumbnail": "build/es6/node_modules/@haxtheweb/app-hax/lib/assets/images/BlueStyle.svg",
+            "variables": {
+                "icon": "av:library-add",
+                "hexCode": "#3f51b5",
+                "cssVariable": "--simple-colors-default-theme-light-blue-7"
+            }
+        },
+        "node": {
+            "fields": {}
+        },
+        "build": {
+            "version": "10.0.1",
+            "structure": "course",
+            "type": "own"
+        }
+    },
+    "items": [
+        {
+            "id": "item-472573b8-4f29-434f-b44c-6c9b6bdd49a2",
+            "indent": 0,
+            "location": "pages/item-472573b8-4f29-434f-b44c-6c9b6bdd49a2/index.html",
+            "slug": "welcome",
+            "order": 0,
+            "parent": null,
+            "title": "Welcome to old-site-2025",
+            "description": "",
+            "metadata": {
+                "created": 1735750800,
+                "updated": 1735750800
+            }
+        },
+        {
+            "id": "item-99494254-bae8-4dd8-9706-2157bec7ad23",
+            "indent": 0,
+            "location": "pages/item-99494254-bae8-4dd8-9706-2157bec7ad23/index.html",
+            "slug": "getting-started",
+            "order": 0,
+            "parent": null,
+            "title": "Getting started",
+            "description": "",
+            "metadata": {
+                "created": 1735750800,
+                "updated": 1735750800,
+                "images": [],
+                "videos": []
+            }
+        },
+        {
+            "id": "item-71154e97-4189-459b-9d5c-15201cbea456",
+            "indent": 0,
+            "location": "pages/item-71154e97-4189-459b-9d5c-15201cbea456/index.html",
+            "slug": "unit-1",
+            "order": 0,
+            "parent": null,
+            "title": "Unit 1",
+            "description": "",
+            "metadata": {
+                "created": 1735750800,
+                "updated": 1735750800,
+                "images": [],
+                "videos": []
+            }
+        },
+        {
+            "id": "item-228fec58-8c3c-4842-87da-bf241899cfd9",
+            "indent": 0,
+            "location": "pages/item-228fec58-8c3c-4842-87da-bf241899cfd9/index.html",
+            "slug": "lesson-1",
+            "order": 0,
+            "parent": "item-71154e97-4189-459b-9d5c-15201cbea456",
+            "title": "Lesson 1",
+            "description": "",
+            "metadata": {
+                "created": 1735750800,
+                "updated": 1735750800,
+                "images": [],
+                "videos": []
+            }
+        },
+        {
+            "id": "item-d77226f1-252c-42d0-b496-7b824ebee54c",
+            "indent": 0,
+            "location": "pages/item-d77226f1-252c-42d0-b496-7b824ebee54c/index.html",
+            "slug": "resources",
+            "order": 0,
+            "parent": null,
+            "title": "Resources",
+            "description": "",
+            "metadata": {
+                "created": 1735750800,
+                "updated": 1735750800,
+                "images": [],
+                "videos": []
+            }
+        }
+    ]
+}

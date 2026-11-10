@@ -1,0 +1,199 @@
+{
+  "description": "One fixture site per year, made by the HAX code as it stood on January 1 of that year (haxtheweb/issues#3262). generate/generate.cjs reads this file; README.md explains each field. Page content is written for these fixtures only, never copied from a real site.",
+  "years": {
+    "2021": {
+      "source": "haxcms-php",
+      "repo": "https://github.com/haxtheweb/haxcms-php.git",
+      "branch": "master",
+      "commit": "f763753e06fb6c67eee150dee1a8731483122fe7",
+      "theme": "learn-two-theme",
+      "pages": [
+        {
+          "key": "start",
+          "title": "Getting started",
+          "body": "<h2>About this course</h2><p>This site was made with <strong>HAXcms</strong> to check that sites from <em>2021</em> keep working.</p><ul><li>Read each unit in order</li><li>Try the self check at the end</li></ul><blockquote><p>Learning is not a spectator sport.</p></blockquote><img src=\"assets/banner.jpg\" alt=\"Course banner\"><video-player source=\"https://www.youtube.com/watch?v=LrS7dqokTLE\" accent-color=\"blue\" dark-transcript></video-player>"
+        },
+        {
+          "key": "unit",
+          "title": "Unit 1",
+          "body": "<h2>Unit 1 overview</h2><p>This unit has one lesson.</p><a11y-collapse><p slot=\"heading\">What you will learn</p><div slot=\"content\"><p>How old sites keep working.</p></div></a11y-collapse>"
+        },
+        {
+          "key": "lesson",
+          "title": "Lesson 1",
+          "parent": "unit",
+          "body": "<h3>Lesson 1</h3><p>A page one level deep.</p><self-check title=\"Quick check\" image=\"assets/banner.jpg\" alt=\"Banner\"><p slot=\"question\">Does this page still load?</p><p>Yes, if the check passes.</p></self-check><stop-note title=\"Note\" status=\"warning\"><span slot=\"message\">Fixture content only.</span></stop-note>"
+        },
+        {
+          "key": "resources",
+          "title": "Resources",
+          "body": "<h2>Resources</h2><ol><li><a href=\"https://hax.psu.edu/\">HAX</a></li><li><a href=\"https://haxtheweb.org/\">HAXTheWeb</a></li></ol><meme-maker alt=\"Cat\" image-url=\"assets/banner.jpg\" top-text=\"old site\" bottom-text=\"still works\"></meme-maker>"
+        }
+      ]
+    },
+    "2022": {
+      "source": "haxcms-php",
+      "repo": "https://github.com/haxtheweb/haxcms-php.git",
+      "branch": "master",
+      "commit": "21c898c51564d4a28eedbba9eba681fa3486eb81",
+      "theme": "bootstrap-theme",
+      "pages": [
+        {
+          "key": "start",
+          "title": "Getting started",
+          "body": "<h2>About this site</h2><p>Made with <strong>HAXcms</strong> as of 2022.</p><grid-plate layout=\"1-1\"><p slot=\"col-1\">Left column text.</p><p slot=\"col-2\">Right column text.</p></grid-plate><video-player source=\"https://www.youtube.com/watch?v=LrS7dqokTLE\"></video-player>"
+        },
+        {
+          "key": "unit",
+          "title": "Unit 1",
+          "body": "<h2>Unit 1 overview</h2><p>One lesson below.</p><a11y-collapse><p slot=\"heading\">Objectives</p><div slot=\"content\"><ul><li>Open the lesson</li></ul></div></a11y-collapse>"
+        },
+        {
+          "key": "lesson",
+          "title": "Lesson 1",
+          "parent": "unit",
+          "body": "<h3>Lesson 1</h3><p>A page one level deep.</p><multiple-choice title=\"Check\" question=\"Is this a fixture?\" answers='[{\"label\":\"Yes\",\"correct\":true},{\"label\":\"No\"}]'></multiple-choice><task-list name=\"Steps\" tasks='[{\"name\":\"Read\"},{\"name\":\"Try\"}]'></task-list>"
+        },
+        {
+          "key": "resources",
+          "title": "Resources",
+          "body": "<h2>Resources</h2><p>Links and a figure.</p><media-image source=\"assets/banner.jpg\" alt=\"Banner\" caption=\"Banner image\"></media-image>"
+        }
+      ]
+    },
+    "2023": {
+      "source": "haxcms-php",
+      "repo": "https://github.com/haxtheweb/haxcms-php.git",
+      "branch": "master",
+      "commit": "d7de9b1b248bb4d63bf63c912fb67774d6cd90bb",
+      "theme": "clean-two",
+      "pages": [
+        {
+          "key": "start",
+          "title": "Getting started",
+          "body": "<h2>About this site</h2><p>Made with <strong>HAXcms</strong> as of 2023.</p><grid-plate layout=\"2-1\"><div slot=\"col-1\"><p>Main column.</p></div><div slot=\"col-2\"><accent-card accent-color=\"green\"><div slot=\"heading\">Tip</div><div slot=\"content\">Side note.</div></accent-card></div></grid-plate>"
+        },
+        {
+          "key": "unit",
+          "title": "Unit 1",
+          "body": "<h2>Unit 1 overview</h2><p>One lesson below.</p><video-player source=\"https://www.youtube.com/watch?v=LrS7dqokTLE\" media-title=\"Intro video\"></video-player>"
+        },
+        {
+          "key": "lesson",
+          "title": "Lesson 1",
+          "parent": "unit",
+          "body": "<h3>Lesson 1</h3><p>A page one level deep.</p><code-sample copy-clipboard-button><template preserve-content=\"preserve-content\">console.log('hello')</template></code-sample><self-check title=\"Quick check\"><p slot=\"question\">Still here?</p><p>Yes.</p></self-check>"
+        },
+        {
+          "key": "resources",
+          "title": "Resources",
+          "body": "<h2>Resources</h2><ul><li><a href=\"https://haxtheweb.org/\">HAXTheWeb</a></li></ul><license-element title=\"Fixture\" creator=\"HAX\" source=\"https://haxtheweb.org/\" license-link=\"https://creativecommons.org/licenses/by-sa/4.0/\"></license-element>"
+        }
+      ]
+    },
+    "2024": {
+      "source": "haxcms-php",
+      "repo": "https://github.com/haxtheweb/haxcms-php.git",
+      "branch": "master",
+      "commit": "c6d6363ec6a7e0376cd4614d0e8ee623ee45f352",
+      "theme": "polaris-theme",
+      "compat": [
+        {
+          "file": "system/backend/php/vendor/icamys/php-sitemap-generator/src/SitemapGenerator.php",
+          "why": "the bundled sitemap library calls SplFixedArray::key(), removed in PHP 8; this commit required PHP ^7.1. Patched in the throwaway copy only, so it runs on PHP 8.",
+          "replace": [
+            ["$this->urls->key()", "($this->urlsKey ?? 0)"],
+            [
+              "$this->urls->next();",
+              "$this->urlsKey = ($this->urlsKey ?? 0) + 1;"
+            ]
+          ]
+        }
+      ],
+      "pages": [
+        {
+          "key": "start",
+          "title": "Getting started",
+          "body": "<h2>About this site</h2><p>Made with <strong>HAXcms</strong> as of 2024.</p><simple-cta link=\"https://haxtheweb.org/\" label=\"Learn more\"></simple-cta><grid-plate layout=\"1-1\"><p slot=\"col-1\">Left.</p><p slot=\"col-2\">Right.</p></grid-plate>"
+        },
+        {
+          "key": "unit",
+          "title": "Unit 1",
+          "body": "<h2>Unit 1 overview</h2><p>One lesson below.</p><a11y-collapse heading-button><p slot=\"heading\">Objectives</p><div slot=\"content\"><p>Open the lesson.</p></div></a11y-collapse>"
+        },
+        {
+          "key": "lesson",
+          "title": "Lesson 1",
+          "parent": "unit",
+          "body": "<h3>Lesson 1</h3><p>A page one level deep.</p><video-player source=\"https://www.youtube.com/watch?v=LrS7dqokTLE\"></video-player><multiple-choice title=\"Check\" question=\"Fixture?\" answers='[{\"label\":\"Yes\",\"correct\":true},{\"label\":\"No\"}]'></multiple-choice>"
+        },
+        {
+          "key": "resources",
+          "title": "Resources",
+          "body": "<h2>Resources</h2><media-image source=\"assets/banner.jpg\" alt=\"Banner\" caption=\"Banner image\"></media-image>"
+        }
+      ]
+    },
+    "2025": {
+      "source": "cli",
+      "repo": "https://github.com/haxtheweb/create.git",
+      "branch": "main",
+      "commit": "3a86992a6fce15f5a4022128d206d2ec6f4a163b",
+      "theme": null,
+      "themeNote": "this CLI only set a theme interactively (site:theme ignored --theme), so the site keeps the CLI default",
+      "pages": [
+        {
+          "key": "start",
+          "title": "Getting started",
+          "body": "<h2 data-accent=\"1\">About this site</h2><p data-design-treatment=\"dropCap-md\">Made with the <strong>HAX CLI</strong> as of 2025.</p><grid-plate layout=\"1-1\"><p slot=\"col-1\">Left.</p><p slot=\"col-2\">Right.</p></grid-plate><video-player source=\"https://www.youtube.com/watch?v=LrS7dqokTLE\"></video-player>"
+        },
+        {
+          "key": "unit",
+          "title": "Unit 1",
+          "body": "<h2>Unit 1 overview</h2><p data-primary=\"3\">One lesson below.</p><simple-cta link=\"https://haxtheweb.org/\" label=\"Learn more\"></simple-cta>"
+        },
+        {
+          "key": "lesson",
+          "title": "Lesson 1",
+          "parent": "unit",
+          "body": "<h3>Lesson 1</h3><p>A page one level deep.</p><a11y-collapse heading-button><p slot=\"heading\">More</p><div slot=\"content\"><p>Hidden text.</p></div></a11y-collapse><self-check title=\"Quick check\"><p slot=\"question\">Still here?</p><p>Yes.</p></self-check>"
+        },
+        {
+          "key": "resources",
+          "title": "Resources",
+          "body": "<h2>Resources</h2><ul><li><a href=\"https://haxtheweb.org/\">HAXTheWeb</a></li></ul>"
+        }
+      ]
+    },
+    "2026": {
+      "source": "cli",
+      "repo": "https://github.com/haxtheweb/create.git",
+      "branch": "main",
+      "commit": "bbf7e00c949ebc80514127a2969f7c6b6cc4c73c",
+      "theme": "journey-theme",
+      "pages": [
+        {
+          "key": "start",
+          "title": "Getting started",
+          "body": "<h2 data-accent=\"2\">About this site</h2><p data-design-treatment=\"dropCap-md\">Made with the <strong>HAX CLI</strong> as of 2026.</p><grid-plate layout=\"1-1\" data-width=\"150\"><p slot=\"col-1\">Left.</p><p slot=\"col-2\">Right.</p></grid-plate>"
+        },
+        {
+          "key": "unit",
+          "title": "Unit 1",
+          "body": "<h2>Unit 1 overview</h2><p>One lesson below.</p><a11y-collapse-group><a11y-collapse heading-button><p slot=\"heading\">Goals</p><div slot=\"content\"><p>Open the lesson.</p></div></a11y-collapse></a11y-collapse-group>"
+        },
+        {
+          "key": "lesson",
+          "title": "Lesson 1",
+          "parent": "unit",
+          "body": "<h3>Lesson 1</h3><p>A page one level deep.</p><video-player source=\"https://www.youtube.com/watch?v=LrS7dqokTLE\"></video-player><media-quote quote=\"Old sites keep working.\" author=\"HAX\"></media-quote>"
+        },
+        {
+          "key": "resources",
+          "title": "Resources",
+          "body": "<h2>Resources</h2><simple-cta link=\"https://haxtheweb.org/\" label=\"Learn more\" data-primary=\"7\"></simple-cta>"
+        }
+      ]
+    }
+  }
+}

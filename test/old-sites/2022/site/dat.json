@@ -1,0 +1,15 @@
+{
+    "title": "old-site-2022",
+    "description": "",
+    "type": [
+        "website", "HAXcms"
+    ],
+    "links": {
+        "license": [
+            {
+                "href": "https://creativecommons.org/licenses/by-sa/4.0/",
+                "title": "License: Creative Commons: Attribution Share a like"
+            }
+        ]
+    }
+}

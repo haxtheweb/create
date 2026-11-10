@@ -1,0 +1,100 @@
+name: old-sites-weekly
+# haxtheweb/issues#3262: a site made from 2021 on must never break from
+# something unforeseen. test/old-sites holds one fixture site per year, made
+# by the HAX code as it stood on January 1 of that year. Every week this
+# upgrades each one to the latest code and runs what an author does with a
+# site (test/old-sites/README.md):
+#   cli     latest CLI linked to haxcms-nodejs main: site:rebuild (the
+#           upgrade), site:validate, node:add, node:edit, site:theme
+#   nodejs  haxcms-nodejs main via its e2e harness: render home and a deep
+#           page, open the editor's API path, save content, saveOutline
+#           add / move / reorder / delete, theme and settings, render again
+#
+# Built and served on this runner only; nothing talks to a live deployment.
+# A broken fixture fails the run (red) and the job summary says what broke.
+# haxcms-php is not run here yet (follow-up); its behavior is kept identical
+# to haxcms-nodejs through the shared OpenAPI spec.
+on:
+  schedule:
+    - cron: "23 3 * * 1" # Sunday night America/New_York (Monday 03:23 UTC)
+  workflow_dispatch:
+    inputs:
+      years:
+        description: "Fixture years to run, comma separated (empty = all)"
+        required: false
+        default: ""
+permissions:
+  contents: read
+concurrency:
+  group: old-sites-weekly
+  cancel-in-progress: false
+jobs:
+  old-sites:
+    name: "Old-site compatibility (2021 on)"
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      HAX_OLD_SITES_YEARS: ${{ inputs.years }}
+      HAX_OLD_SITES_NODEJS: ${{ github.workspace }}/haxcms-nodejs
+      HAX_OLD_SITES_CLI: ${{ github.workspace }}/create/dist/create.js
+      HAX_OLD_SITES_OUT: ${{ github.workspace }}/old-sites-results
+      GIT_AUTHOR_NAME: HAX old-site check
+      GIT_AUTHOR_EMAIL: old-sites@example.invalid
+      GIT_COMMITTER_NAME: HAX old-site check
+      GIT_COMMITTER_EMAIL: old-sites@example.invalid
+    steps:
+      - name: Checkout create
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          path: create
+          persist-credentials: false
+      - name: Checkout haxcms-nodejs
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: haxtheweb/haxcms-nodejs
+          ref: main
+          path: haxcms-nodejs
+          persist-credentials: false
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+
+      - name: Check inputs
+        run: |
+          case "$HAX_OLD_SITES_YEARS" in
+            *[!0-9,]*)
+              echo "::error title=years::years must be a comma separated list of years"
+              exit 1
+              ;;
+          esac
+          git config --global user.name "$GIT_AUTHOR_NAME"
+          git config --global user.email "$GIT_AUTHOR_EMAIL"
+
+      - name: Build haxcms-nodejs
+        working-directory: haxcms-nodejs
+        run: |
+          yarn install --frozen-lockfile
+          yarn run build
+
+      - name: Build the CLI and link the haxcms-nodejs build
+        working-directory: create
+        run: |
+          npm ci --no-audit --no-fund
+          npm run build
+          rm -rf node_modules/@haxtheweb/haxcms-nodejs
+          ln -s "$HAX_OLD_SITES_NODEJS" node_modules/@haxtheweb/haxcms-nodejs
+          node -e 'console.log("CLI uses haxcms-nodejs at " + require("fs").realpathSync(require.resolve("@haxtheweb/haxcms-nodejs/package.json")))'
+
+      - name: Upgrade every fixture and run the operations
+        working-directory: create
+        run: node test/old-sites/run.cjs
+
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: old-sites-results
+          path: old-sites-results
+          if-no-files-found: warn
+          retention-days: 30

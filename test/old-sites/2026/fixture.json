@@ -1,0 +1,31 @@
+{
+  "year": 2026,
+  "siteName": "old-site-2026",
+  "source": "cli",
+  "repo": "https://github.com/haxtheweb/create.git",
+  "branch": "main",
+  "commit": "bbf7e00c949ebc80514127a2969f7c6b6cc4c73c",
+  "commitDate": "2025-10-24T12:01:12-04:00",
+  "version": "11.0.7",
+  "backend": "@haxtheweb/haxcms-nodejs 11.0.15",
+  "generatedWith": "node 22.23.4",
+  "compat": [],
+  "notSaved": [
+    ".git (the site's own git repo)",
+    "assets/babel-bottom.js -> ../../../babel/babel-bottom.js",
+    "assets/babel-top.js -> ../../../babel/babel-top.js",
+    "build -> ../../build",
+    "dist -> ../../dist",
+    "wc-registry.json -> ../../wc-registry.json"
+  ],
+  "elements": {
+    "a11y-collapse": "@haxtheweb/a11y-collapse/a11y-collapse.js",
+    "a11y-collapse-group": "@haxtheweb/a11y-collapse/lib/a11y-collapse-group.js",
+    "grid-plate": "@haxtheweb/grid-plate/grid-plate.js",
+    "media-quote": "@haxtheweb/media-quote/media-quote.js",
+    "meme-maker": "@haxtheweb/meme-maker/meme-maker.js",
+    "rpg-character": "@haxtheweb/rpg-character/rpg-character.js",
+    "simple-cta": "@haxtheweb/simple-cta/simple-cta.js",
+    "video-player": "@haxtheweb/video-player/video-player.js"
+  }
+}

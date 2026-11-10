@@ -1,0 +1,135 @@
+{
+    "id": "b8aa315a-b31a-4e28-896c-4f0704182881",
+    "title": "old-site-2024",
+    "author": "",
+    "description": "Fixture site made by HAX code as of January 1, 2024",
+    "license": "by-sa",
+    "metadata": {
+        "author": {},
+        "site": {
+            "name": "old-site-2024",
+            "logo": "assets/banner.jpg",
+            "settings": {
+                "lang": "en-US",
+                "publishPagesOn": true
+            },
+            "created": 1704128400,
+            "updated": 1704128400,
+            "git": {
+                "vendor": "github",
+                "branch": "gh-pages"
+            }
+        },
+        "theme": {
+            "element": "polaris-theme",
+            "path": "@lrnwebcomponents/polaris-theme/polaris-theme.js",
+            "name": "Polaris Website theme",
+            "thumbnail": "build/es6/node_modules/@lrnwebcomponents/app-hax/lib/assets/images/PartyStyle.svg",
+            "variables": {
+                "icon": "icons:book",
+                "hexCode": "#3f51b5",
+                "cssVariable": "--simple-colors-default-theme-light-blue-7"
+            }
+        },
+        "node": {
+            "fields": {}
+        },
+        "build": null
+    },
+    "items": [
+        {
+            "id": "item-783be396-701a-43b2-8a43-9c9a4b981037",
+            "indent": 0,
+            "location": "pages/item-783be396-701a-43b2-8a43-9c9a4b981037/index.html",
+            "slug": "welcome",
+            "order": 0,
+            "parent": null,
+            "title": "Welcome",
+            "description": "",
+            "metadata": {
+                "created": 1704128400,
+                "updated": 1704128400
+            }
+        },
+        {
+            "id": "item-363af021-08ae-46b8-bb37-e0c2fe1756a2",
+            "indent": 1,
+            "location": "pages/item-363af021-08ae-46b8-bb37-e0c2fe1756a2/index.html",
+            "slug": "unit-1-lesson-1",
+            "order": 0,
+            "parent": "item-cfbaf1b1-5bcf-4417-8060-dc24a7f4246a",
+            "title": "Lesson 1",
+            "description": "Lesson 1A page one level deep.",
+            "metadata": {
+                "created": 1704128400,
+                "updated": 1704128400,
+                "images": [],
+                "videos": [],
+                "published": true,
+                "hideInMenu": false,
+                "locked": false,
+                "readtime": 1
+            }
+        },
+        {
+            "id": "item-5ffea791-df57-4f9d-90d3-450b862eebbf",
+            "indent": 0,
+            "location": "pages/item-5ffea791-df57-4f9d-90d3-450b862eebbf/index.html",
+            "slug": "getting-started",
+            "order": 1,
+            "parent": null,
+            "title": "Getting started",
+            "description": "About this siteMade with HAXcms as of 2024.Left.Right.",
+            "metadata": {
+                "created": 1704128400,
+                "updated": 1704128400,
+                "images": [],
+                "videos": [],
+                "published": true,
+                "hideInMenu": false,
+                "locked": false,
+                "readtime": 1
+            }
+        },
+        {
+            "id": "item-cfbaf1b1-5bcf-4417-8060-dc24a7f4246a",
+            "indent": 0,
+            "location": "pages/item-cfbaf1b1-5bcf-4417-8060-dc24a7f4246a/index.html",
+            "slug": "unit-1",
+            "order": 2,
+            "parent": null,
+            "title": "Unit 1",
+            "description": "Unit 1 overviewOne lesson below.ObjectivesOpen the lesson.",
+            "metadata": {
+                "created": 1704128400,
+                "updated": 1704128400,
+                "images": [],
+                "videos": [],
+                "published": true,
+                "hideInMenu": false,
+                "locked": false,
+                "readtime": 1
+            }
+        },
+        {
+            "id": "item-dc11744d-cc32-4f55-887d-c6ab7f5d0e3a",
+            "indent": 0,
+            "location": "pages/item-dc11744d-cc32-4f55-887d-c6ab7f5d0e3a/index.html",
+            "slug": "resources",
+            "order": 3,
+            "parent": null,
+            "title": "Resources",
+            "description": "Resources",
+            "metadata": {
+                "created": 1704128400,
+                "updated": 1704128400,
+                "images": [],
+                "videos": [],
+                "published": true,
+                "hideInMenu": false,
+                "locked": false,
+                "readtime": 1
+            }
+        }
+    ]
+}

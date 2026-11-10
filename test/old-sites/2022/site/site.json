@@ -1,0 +1,168 @@
+{
+    "id": "1f6fdcdb-cb10-4ddd-bf90-05b61b450c75",
+    "title": "old-site-2022",
+    "author": "",
+    "description": "Fixture site made by HAX code as of January 1, 2022",
+    "license": "by-sa",
+    "metadata": {
+        "author": {},
+        "site": {
+            "name": "old-site-2022",
+            "logo": "assets/banner.jpg",
+            "lang": "en",
+            "created": 1641056400,
+            "updated": 1641056400,
+            "git": {
+                "vendor": "github",
+                "branch": "gh-pages"
+            }
+        },
+        "theme": {
+            "element": "bootstrap-theme",
+            "path": "@lrnwebcomponents/bootstrap-theme/bootstrap-theme.js",
+            "name": "Bootstrap theme",
+            "variables": {
+                "icon": "icons:book",
+                "hexCode": "#3f51b5",
+                "cssVariable": "--simple-colors-default-theme-light-blue-7"
+            }
+        },
+        "node": {
+            "fields": {}
+        }
+    },
+    "items": [
+        {
+            "id": "item-9b440298-e93a-4a41-93f4-59a129a4c24e",
+            "indent": 0,
+            "location": "pages/item-9b440298-e93a-4a41-93f4-59a129a4c24e/index.html",
+            "slug": "welcome",
+            "order": 0,
+            "parent": null,
+            "title": "Welcome to a new HAXcms site!",
+            "description": "",
+            "metadata": {
+                "created": 1641056400,
+                "updated": 1641056400
+            }
+        },
+        {
+            "id": "item-76387ac2-0d0f-4185-a955-1d95abad8c0e",
+            "indent": 1,
+            "location": "pages/item-76387ac2-0d0f-4185-a955-1d95abad8c0e/index.html",
+            "slug": "unit-1/lesson-1",
+            "order": 0,
+            "parent": "item-2699a88e-ef56-4d71-a6b6-a7475d6d3c28",
+            "title": "Lesson 1",
+            "description": "Lesson 1A page one level deep.",
+            "metadata": {
+                "created": 1641056400,
+                "updated": 1641056400,
+                "published": true,
+                "locked": false,
+                "readtime": 1,
+                "contentDetails": {
+                    "headings": 1,
+                    "paragraphs": 1,
+                    "schema": [],
+                    "tags": {
+                        "h3": 1,
+                        "p": 1,
+                        "multiple-choice": 1,
+                        "task-list": 1
+                    },
+                    "elements": 4
+                }
+            }
+        },
+        {
+            "id": "item-5ebd8e6f-aa77-4914-a3a5-87648750d0b7",
+            "indent": 0,
+            "location": "pages/item-5ebd8e6f-aa77-4914-a3a5-87648750d0b7/index.html",
+            "slug": "getting-started",
+            "order": 1,
+            "parent": null,
+            "title": "Getting started",
+            "description": "About this siteMade with HAXcms as of 2022.Left column text.Right column text.",
+            "metadata": {
+                "created": 1641056400,
+                "updated": 1641056400,
+                "published": true,
+                "locked": false,
+                "readtime": 1,
+                "contentDetails": {
+                    "headings": 1,
+                    "paragraphs": 3,
+                    "schema": [],
+                    "tags": {
+                        "h2": 1,
+                        "p": 3,
+                        "strong": 1,
+                        "grid-plate": 1,
+                        "video-player": 1
+                    },
+                    "elements": 7
+                }
+            }
+        },
+        {
+            "id": "item-2699a88e-ef56-4d71-a6b6-a7475d6d3c28",
+            "indent": 0,
+            "location": "pages/item-2699a88e-ef56-4d71-a6b6-a7475d6d3c28/index.html",
+            "slug": "unit-1",
+            "order": 2,
+            "parent": null,
+            "title": "Unit 1",
+            "description": "Unit 1 overviewOne lesson below.ObjectivesOpen the lesson",
+            "metadata": {
+                "created": 1641056400,
+                "updated": 1641056400,
+                "published": true,
+                "locked": false,
+                "readtime": 1,
+                "contentDetails": {
+                    "headings": 1,
+                    "paragraphs": 2,
+                    "schema": [],
+                    "tags": {
+                        "h2": 1,
+                        "p": 2,
+                        "a11y-collapse": 1,
+                        "div": 1,
+                        "ul": 1,
+                        "li": 1
+                    },
+                    "elements": 7
+                }
+            }
+        },
+        {
+            "id": "item-80093f41-10b9-45c7-802b-9850d4083332",
+            "indent": 0,
+            "location": "pages/item-80093f41-10b9-45c7-802b-9850d4083332/index.html",
+            "slug": "resources",
+            "order": 3,
+            "parent": null,
+            "title": "Resources",
+            "description": "ResourcesLinks and a figure.",
+            "metadata": {
+                "created": 1641056400,
+                "updated": 1641056400,
+                "published": true,
+                "locked": false,
+                "readtime": 1,
+                "contentDetails": {
+                    "headings": 1,
+                    "paragraphs": 1,
+                    "schema": [],
+                    "tags": {
+                        "h2": 1,
+                        "p": 1,
+                        "media-image": 1
+                    },
+                    "elements": 3
+                }
+            }
+        }
+    ]
+}

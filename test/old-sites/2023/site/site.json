@@ -1,0 +1,171 @@
+{
+    "id": "205415a6-bef3-40e7-b15a-fd084c4288bf",
+    "title": "old-site-2023",
+    "author": "",
+    "description": "Fixture site made by HAX code as of January 1, 2023",
+    "license": "by-sa",
+    "metadata": {
+        "author": {},
+        "site": {
+            "name": "old-site-2023",
+            "logo": "assets/banner.jpg",
+            "lang": "en",
+            "created": 1672592400,
+            "updated": 1672592400,
+            "git": {
+                "vendor": "github",
+                "branch": "gh-pages"
+            }
+        },
+        "theme": {
+            "element": "clean-two",
+            "path": "@lrnwebcomponents/clean-two/clean-two.js",
+            "name": "Clean two theme",
+            "thumbnail": "build/es6/node_modules/@lrnwebcomponents/app-hax/lib/assets/images/PartyStyle.svg",
+            "variables": {
+                "icon": "icons:book",
+                "hexCode": "#3f51b5",
+                "cssVariable": "--simple-colors-default-theme-light-blue-7"
+            }
+        },
+        "node": {
+            "fields": {}
+        },
+        "build": null
+    },
+    "items": [
+        {
+            "id": "item-abb83a2f-7f75-4516-8076-9b1a8c7690e1",
+            "indent": 0,
+            "location": "pages/item-abb83a2f-7f75-4516-8076-9b1a8c7690e1/index.html",
+            "slug": "welcome",
+            "order": 0,
+            "parent": null,
+            "title": "Welcome",
+            "description": "",
+            "metadata": {
+                "created": 1672592400,
+                "updated": 1672592400
+            }
+        },
+        {
+            "id": "item-8b17cd76-9df8-4250-9bad-16ef30eb8143",
+            "indent": 1,
+            "location": "pages/item-8b17cd76-9df8-4250-9bad-16ef30eb8143/index.html",
+            "slug": "unit-1/lesson-1",
+            "order": 0,
+            "parent": "item-d844797c-943c-4d7d-8fb5-4bf61efc2ea3",
+            "title": "Lesson 1",
+            "description": "Lesson 1A page one level deep.console.log('hello')Still here?Yes.",
+            "metadata": {
+                "created": 1672592400,
+                "updated": 1672592400,
+                "published": true,
+                "locked": false,
+                "readtime": 1,
+                "contentDetails": {
+                    "headings": 1,
+                    "paragraphs": 3,
+                    "schema": [],
+                    "tags": {
+                        "h3": 1,
+                        "p": 3,
+                        "code-sample": 1,
+                        "template": 1,
+                        "self-check": 1
+                    },
+                    "elements": 7
+                }
+            }
+        },
+        {
+            "id": "item-7b5752d5-f367-4b4b-bc58-30eec40ff7eb",
+            "indent": 0,
+            "location": "pages/item-7b5752d5-f367-4b4b-bc58-30eec40ff7eb/index.html",
+            "slug": "getting-started",
+            "order": 1,
+            "parent": null,
+            "title": "Getting started",
+            "description": "About this siteMade with HAXcms as of 2023.Main column.TipSide note.",
+            "metadata": {
+                "created": 1672592400,
+                "updated": 1672592400,
+                "published": true,
+                "locked": false,
+                "readtime": 1,
+                "contentDetails": {
+                    "headings": 1,
+                    "paragraphs": 2,
+                    "schema": [],
+                    "tags": {
+                        "h2": 1,
+                        "p": 2,
+                        "strong": 1,
+                        "grid-plate": 1,
+                        "div": 4,
+                        "accent-card": 1
+                    },
+                    "elements": 10
+                }
+            }
+        },
+        {
+            "id": "item-d844797c-943c-4d7d-8fb5-4bf61efc2ea3",
+            "indent": 0,
+            "location": "pages/item-d844797c-943c-4d7d-8fb5-4bf61efc2ea3/index.html",
+            "slug": "unit-1",
+            "order": 2,
+            "parent": null,
+            "title": "Unit 1",
+            "description": "Unit 1 overviewOne lesson below.",
+            "metadata": {
+                "created": 1672592400,
+                "updated": 1672592400,
+                "published": true,
+                "locked": false,
+                "readtime": 1,
+                "contentDetails": {
+                    "headings": 1,
+                    "paragraphs": 1,
+                    "schema": [],
+                    "tags": {
+                        "h2": 1,
+                        "p": 1,
+                        "video-player": 1
+                    },
+                    "elements": 3
+                }
+            }
+        },
+        {
+            "id": "item-825c7fd9-052c-43ea-b401-d80dd3955234",
+            "indent": 0,
+            "location": "pages/item-825c7fd9-052c-43ea-b401-d80dd3955234/index.html",
+            "slug": "resources",
+            "order": 3,
+            "parent": null,
+            "title": "Resources",
+            "description": "ResourcesHAXTheWeb",
+            "metadata": {
+                "created": 1672592400,
+                "updated": 1672592400,
+                "published": true,
+                "locked": false,
+                "readtime": 1,
+                "contentDetails": {
+                    "headings": 1,
+                    "paragraphs": 0,
+                    "schema": [],
+                    "tags": {
+                        "h2": 1,
+                        "ul": 1,
+                        "li": 1,
+                        "a": 1,
+                        "license-element": 1
+                    },
+                    "elements": 5
+                }
+            }
+        }
+    ]
+}

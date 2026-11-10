@@ -1,0 +1,28 @@
+{
+  "year": 2023,
+  "siteName": "old-site-2023",
+  "source": "haxcms-php",
+  "repo": "https://github.com/haxtheweb/haxcms-php.git",
+  "branch": "master",
+  "commit": "d7de9b1b248bb4d63bf63c912fb67774d6cd90bb",
+  "commitDate": "2022-12-23T11:48:55-05:00",
+  "version": "6.0.0",
+  "generatedWith": "8.3.6",
+  "compat": [],
+  "notSaved": [
+    ".git (the site's own git repo)",
+    "assets/babel-bottom.js -> ../../../babel/babel-bottom.js",
+    "assets/babel-top.js -> ../../../babel/babel-top.js",
+    "build -> ../../build",
+    "dist -> ../../dist",
+    "wc-registry.json -> ../../wc-registry.json"
+  ],
+  "elements": {
+    "accent-card": "@lrnwebcomponents/accent-card/accent-card.js",
+    "code-sample": "@lrnwebcomponents/code-sample/code-sample.js",
+    "grid-plate": "@lrnwebcomponents/grid-plate/grid-plate.js",
+    "license-element": "@lrnwebcomponents/license-element/license-element.js",
+    "self-check": "@lrnwebcomponents/self-check/self-check.js",
+    "video-player": "@lrnwebcomponents/video-player/video-player.js"
+  }
+}

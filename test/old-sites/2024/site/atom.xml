@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title>old-site-2024</title>
+  <link href="" rel="self" />
+  <subtitle>Fixture site made by HAX code as of January 1, 2024</subtitle>
+  <updated>2026-11-10T19:58:51+00:00</updated>
+  <author>
+      <name></name>
+  </author>
+  <id></id>
+  <entry>
+    <title>Welcome</title>
+    <id>item-783be396-701a-43b2-8a43-9c9a4b981037</id>
+    <updated>2026-11-10T19:58:51+00:00</updated>
+    <published>2026-11-10T19:58:51+00:00</published>
+    <summary></summary>
+    <link href="welcome"/>
+    
+    <content type="html">
+      <![CDATA[ <p>
+    To get started, hit the edit pencil on the side.
+    Now this content is editable in place so select and delete it to get started!
+    If you need to learn more about the HAX editor or HAXcms check out <a href="https://haxtheweb.org/ux-concepts" target="_blank" rel="noopener noreferrer">HAXTheWeb.org</a>!
+</p> ]]>
+    </content>
+  </entry>
+  <entry>
+    <title>Getting started</title>
+    <id>item-5ffea791-df57-4f9d-90d3-450b862eebbf</id>
+    <updated>2026-11-10T19:58:51+00:00</updated>
+    <published>2026-11-10T19:58:51+00:00</published>
+    <summary>About this siteMade with HAXcms as of 2024.Left.Right.</summary>
+    <link href="getting-started"/>
+    
+    <content type="html">
+      <![CDATA[ <h2>About this site</h2><p>Made with <strong>HAXcms</strong> as of 2024.</p><simple-cta link="https://haxtheweb.org/" label="Learn more"></simple-cta><grid-plate layout="1-1"><p slot="col-1">Left.</p><p slot="col-2">Right.</p></grid-plate> ]]>
+    </content>
+  </entry>
+  <entry>
+    <title>Lesson 1</title>
+    <id>item-363af021-08ae-46b8-bb37-e0c2fe1756a2</id>
+    <updated>2026-11-10T19:58:52+00:00</updated>
+    <published>2026-11-10T19:58:52+00:00</published>
+    <summary>Lesson 1A page one level deep.</summary>
+    <link href="unit-1-lesson-1"/>
+    
+    <content type="html">
+      <![CDATA[ <h3>Lesson 1</h3><p>A page one level deep.</p><video-player source="https://www.youtube.com/watch?v=LrS7dqokTLE"></video-player><multiple-choice title="Check" question="Fixture?" answers='[{"label":"Yes","correct":true},{"label":"No"}]'></multiple-choice> ]]>
+    </content>
+  </entry>
+  <entry>
+    <title>Unit 1</title>
+    <id>item-cfbaf1b1-5bcf-4417-8060-dc24a7f4246a</id>
+    <updated>2026-11-10T19:58:52+00:00</updated>
+    <published>2026-11-10T19:58:52+00:00</published>
+    <summary>Unit 1 overviewOne lesson below.ObjectivesOpen the lesson.</summary>
+    <link href="unit-1"/>
+    
+    <content type="html">
+      <![CDATA[ <h2>Unit 1 overview</h2><p>One lesson below.</p><a11y-collapse heading-button><p slot="heading">Objectives</p><div slot="content"><p>Open the lesson.</p></div></a11y-collapse> ]]>
+    </content>
+  </entry>
+  <entry>
+    <title>Resources</title>
+    <id>item-dc11744d-cc32-4f55-887d-c6ab7f5d0e3a</id>
+    <updated>2026-11-10T19:58:52+00:00</updated>
+    <published>2026-11-10T19:58:52+00:00</published>
+    <summary>Resources</summary>
+    <link href="resources"/>
+    
+    <content type="html">
+      <![CDATA[ <h2>Resources</h2><media-image source="assets/banner.jpg" alt="Banner" caption="Banner image"></media-image> ]]>
+    </content>
+  </entry>
+</feed>
