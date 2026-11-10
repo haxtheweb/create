@@ -378,13 +378,15 @@ async function main() {
     .version(packageJson.version);
   let siteNodeOps = siteNodeOperations();
   for (let i in siteNodeOps) {
-    program.option(
-      `--${camelToDash(siteNodeOps[i].value)} <char>`,
-      `${siteNodeOps[i].label}`,
-    );
+    // --content help spells out how the value is read (URL, file or HTML)
+    const optionHelp =
+      siteNodeOps[i].value === "content"
+        ? t("cliOptContent")
+        : `${siteNodeOps[i].label}`;
+    program.option(`--${camelToDash(siteNodeOps[i].value)} <char>`, optionHelp);
     siteProg.option(
       `--${camelToDash(siteNodeOps[i].value)} <char>`,
-      `${siteNodeOps[i].label}`,
+      optionHelp,
     );
   }
 

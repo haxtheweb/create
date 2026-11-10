@@ -246,6 +246,7 @@
   "cliOptDomain": "published domain name",
   "cliOptTitleScrape": "CSS Selector for `title` in resource",
   "cliOptContentScrape": "CSS Selector for `body` in resource",
+  "cliOptContent": "page content for node:add / node:edit: a URL (http:// or https://) is fetched, an existing file path is read, anything else is inline HTML",
   "cliOptContentFormat": "format of --content for node:add / node:edit: html (default), md, json, yaml",
   "cliOptDescription": "description of the page (node:add / node:edit) or of the new site",
   "cliOptItemsImport": "import items from a file / site",

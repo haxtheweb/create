@@ -252,7 +252,10 @@ xlsxToSite
                                       ~/.haxtheweb/aliases.yml
   -V, --version                       output the version number
   --title <char>                      Title
-  --content <char>                    Page content
+  --content <char>                    page content for node:add / node:edit: a
+                                      URL (http:// or https://) is fetched, an
+                                      existing file path is read, anything else
+                                      is inline HTML
   --slug <char>                       Path (slug)
   --published <char>                  Publishing status
   --tags <char>                       Tags
