@@ -425,7 +425,7 @@
   "siteSelectItemToDelete": "මැකීමට අයිතමයක් තෝරන්න",
   "siteDeleteNothingExit": "කිසිවක් නොමකා ඉවත් වන්න",
   "siteConfirmDeleteItem": "ඔබට {id} මැකීමට විශ්වාසද? (මෙය අහෝසි කළ නොහැක)",
-  "siteNodeDeleteNotFound": "node:delete අසාර්ථකයි \"{id} හමු නොවීය",
+  "siteNodeDeleteNotFound": "node:delete අසාර්ථකයි \"{id}\" හමු නොවීය",
   "siteSkeletonExportFailed": "මෙම අඩවිය සඳහා ඇටසැකිල්ල අපනයනය කිරීම අසාර්ථකයි",
   "siteSkeletonExportedTo": "ඇටසැකිල්ල {path} වෙත අපනයනය කළා",
   "siteTemplateInstalledAs": "අච්චුව {name} ලෙස ස්ථාපනය කළා ({path})",

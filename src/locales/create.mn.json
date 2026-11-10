@@ -425,7 +425,7 @@
   "siteSelectItemToDelete": "Устгах зүйлээ сонгоно уу",
   "siteDeleteNothingExit": "Юу ч устгахгүй, гарах",
   "siteConfirmDeleteItem": "{id}-г устгахдаа итгэлтэй байна уу? (Буцаах боломжгүй)",
-  "siteNodeDeleteNotFound": "node:delete амжилтгүй \"{id} олдсонгүй",
+  "siteNodeDeleteNotFound": "node:delete амжилтгүй \"{id}\" олдсонгүй",
   "siteSkeletonExportFailed": "Энэ сайтын skeleton-ийг экспортолж чадсангүй",
   "siteSkeletonExportedTo": "Skeleton {path} руу экспортлогдлоо",
   "siteTemplateInstalledAs": "Загвар {name} нэрээр суулгагдлаа ({path})",

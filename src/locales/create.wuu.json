@@ -425,7 +425,7 @@
   "siteSelectItemToDelete": "选一个要删脱个条目",
   "siteDeleteNothingExit": "啥也勿删，退出",
   "siteConfirmDeleteItem": "侬确定要删脱 {id} 哦？（删脱以后勿好恢复）",
-  "siteNodeDeleteNotFound": "node:delete 失败：寻勿着 \"{id}",
+  "siteNodeDeleteNotFound": "node:delete 失败：寻勿着 \"{id}\"",
   "siteSkeletonExportFailed": "搿个站点个骨架导出失败",
   "siteSkeletonExportedTo": "骨架已经导出到 {path}",
   "siteTemplateInstalledAs": "模板已经安装成 {name}（{path}）",

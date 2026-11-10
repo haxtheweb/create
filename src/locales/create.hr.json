@@ -425,7 +425,7 @@
   "siteSelectItemToDelete": "Odaberite stavku za brisanje",
   "siteDeleteNothingExit": "Ne briši ništa, izlaz",
   "siteConfirmDeleteItem": "Jeste li sigurni da želite izbrisati {id}? (Ovo se ne može poništiti)",
-  "siteNodeDeleteNotFound": "node:delete nije uspio \"{id} nije pronađen",
+  "siteNodeDeleteNotFound": "node:delete nije uspio \"{id}\" nije pronađen",
   "siteSkeletonExportFailed": "Izvoz kostura za ovo web-mjesto nije uspio",
   "siteSkeletonExportedTo": "Kostur izvezen u {path}",
   "siteTemplateInstalledAs": "Predložak instaliran kao {name} ({path})",

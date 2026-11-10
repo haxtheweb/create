@@ -425,7 +425,7 @@
   "siteSelectItemToDelete": "Chọn một mục để xóa",
   "siteDeleteNothingExit": "Không xóa gì, thoát",
   "siteConfirmDeleteItem": "Bạn có chắc muốn xóa {id}? (Không thể hoàn tác)",
-  "siteNodeDeleteNotFound": "node:delete thất bại \"{id} không tìm thấy",
+  "siteNodeDeleteNotFound": "node:delete thất bại \"{id}\" không tìm thấy",
   "siteSkeletonExportFailed": "Không thể xuất skeleton cho site này",
   "siteSkeletonExportedTo": "Đã xuất skeleton tới {path}",
   "siteTemplateInstalledAs": "Đã cài mẫu với tên {name} ({path})",

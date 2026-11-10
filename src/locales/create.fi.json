@@ -425,7 +425,7 @@
   "siteSelectItemToDelete": "Valitse poistettava kohde",
   "siteDeleteNothingExit": "Älä poista mitään, poistu",
   "siteConfirmDeleteItem": "Haluatko varmasti poistaa kohteen {id}? (Tätä ei voi perua)",
-  "siteNodeDeleteNotFound": "node:delete epäonnistui \"{id} ei löytynyt",
+  "siteNodeDeleteNotFound": "node:delete epäonnistui \"{id}\" ei löytynyt",
   "siteSkeletonExportFailed": "Sivuston skeletonin vienti epäonnistui",
   "siteSkeletonExportedTo": "Skeleton viety kohteeseen {path}",
   "siteTemplateInstalledAs": "Pohja asennettu nimellä {name} ({path})",

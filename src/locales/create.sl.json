@@ -425,7 +425,7 @@
   "siteSelectItemToDelete": "Izberite element za brisanje",
   "siteDeleteNothingExit": "Ne izbriši ničesar, izhod",
   "siteConfirmDeleteItem": "Ali res želite izbrisati {id}? (Tega ni mogoče razveljaviti)",
-  "siteNodeDeleteNotFound": "node:delete ni uspel \"{id} ni najden",
+  "siteNodeDeleteNotFound": "node:delete ni uspel \"{id}\" ni najden",
   "siteSkeletonExportFailed": "Izvoz okostja za to spletišče ni uspel",
   "siteSkeletonExportedTo": "Okostje izvoženo v {path}",
   "siteTemplateInstalledAs": "Predloga nameščena kot {name} ({path})",

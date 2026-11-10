@@ -425,7 +425,7 @@
   "siteSelectItemToDelete": "Válassza ki a törlendő elemet",
   "siteDeleteNothingExit": "Nincs törlés, kilépés",
   "siteConfirmDeleteItem": "Biztosan törli ezt: {id}? (Nem vonható vissza)",
-  "siteNodeDeleteNotFound": "node:delete sikertelen: \"{id} nem található",
+  "siteNodeDeleteNotFound": "node:delete sikertelen: \"{id}\" nem található",
   "siteSkeletonExportFailed": "Nem sikerült exportálni a webhely vázát",
   "siteSkeletonExportedTo": "Váz exportálva ide: {path}",
   "siteTemplateInstalledAs": "Sablon telepítve {name} néven ({path})",

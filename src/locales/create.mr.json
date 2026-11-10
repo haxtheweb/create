@@ -425,7 +425,7 @@
   "siteSelectItemToDelete": "हटवण्यासाठी आयटम निवडा",
   "siteDeleteNothingExit": "काहीही हटवू नका, बाहेर पडा",
   "siteConfirmDeleteItem": "तुम्हाला खात्री आहे की {id} हटवायचे आहे? (हे पूर्ववत करता येणार नाही)",
-  "siteNodeDeleteNotFound": "node:delete अयशस्वी \"{id} सापडले नाही",
+  "siteNodeDeleteNotFound": "node:delete अयशस्वी \"{id}\" सापडले नाही",
   "siteSkeletonExportFailed": "या साइटचे स्केलेटन एक्सपोर्ट करता आले नाही",
   "siteSkeletonExportedTo": "स्केलेटन {path} येथे एक्सपोर्ट झाले",
   "siteTemplateInstalledAs": "टेम्पलेट {name} म्हणून इन्स्टॉल झाले ({path})",

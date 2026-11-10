@@ -201,29 +201,20 @@ test("deleting a parent re-homes its children to the top level", opts, () => {
 test("node:delete of an unknown id warns and changes nothing", opts, () => {
   const before = readSite(site()).items.length;
   const res = run(["node:delete", "--item-id", "item-does-not-exist"]);
-  assert.match(res.output, /item-does-not-exist not found/);
+  assert.match(res.output, /"item-does-not-exist" not found/);
   assert.equal(readSite(site()).items.length, before);
 });
 
-// BUG: node:delete exits 0 when the page is not found, while node:edit and
-// node:add exit 1 on failure (src/lib/programs/site.js node:delete branch only
-// console.warn()s), so scripts cannot detect a failed delete.
-test(
-  "node:delete of an unknown id exits non-zero",
-  { ...opts, todo: "node:delete exits 0 on a missing page" },
-  () => {
-    const res = run(["node:delete", "--item-id", "item-does-not-exist"]);
-    assert.equal(res.status, 1, res.describe);
-  },
-);
+// node:delete fails like node:edit and node:add (exit 1) so scripts can tell
+test("node:delete of an unknown id exits non-zero", opts, () => {
+  const res = run(["node:delete", "--item-id", "item-does-not-exist"]);
+  assert.equal(res.status, 1, res.describe);
+});
 
-// BUG: an --item-id containing "/" builds an unknown route
-// ("v1/items/../x"); cliBridge returns undefined and the branch reads
-// resp.res, printing "Cannot read properties of undefined (reading 'res')"
-// and exiting 0 (src/lib/programs/site.js node:delete branch).
+// a path-like id is resolved locally, never reaches the backend route
 test(
   "node:delete with a path-like id fails cleanly without a TypeError",
-  { ...opts, todo: "node:delete crashes on a path-like --item-id" },
+  opts,
   () => {
     const before = readSite(site()).items.length;
     const res = run(["node:delete", "--item-id", "../../etc"]);

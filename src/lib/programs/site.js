@@ -2113,6 +2113,22 @@ export async function siteCommandDetected(commandRun) {
             });
           }
           if (commandRun.options.itemId) {
+            // resolve the page locally first (id or slug, like node:edit):
+            // an unknown or path-like id never reaches the backend, and a
+            // missing page is a failure (exit 1), not a warning
+            const page = findNodeByIdOrSlug(
+              activeHaxsite,
+              commandRun.options.itemId,
+            );
+            if (!page) {
+              console.error(
+                t("siteNodeDeleteNotFound", {
+                  id: commandRun.options.itemId,
+                }),
+              );
+              process.exitCode = 1;
+              break;
+            }
             let del = false;
             if (!commandRun.options.y) {
               del = await p.confirm({
@@ -2128,21 +2144,24 @@ export async function siteCommandDetected(commandRun) {
             if (del) {
               const cliBridge = await getHaxcmsNodejsCli();
               let resp = await cliBridge.cliBridge(
-                "v1/items/" + commandRun.options.itemId,
+                "v1/items/" + page.id,
                 {
                   site: activeHaxsite,
-                  node: { id: commandRun.options.itemId },
+                  node: { id: page.id },
                 },
                 "delete",
               );
               // D1 error envelope: failures are {status:4xx/5xx,data:{message}}
-              // objects, never the bare number 500. Match the site:export pattern.
-              if (resp.res.data && resp.res.data.status >= 400) {
-                console.warn(
+              // objects, never the bare number 500. No response at all is a
+              // failure too.
+              const respData = resp && resp.res ? resp.res.data : null;
+              if (!respData || respData.status >= 400) {
+                console.error(
                   t("siteNodeDeleteNotFound", {
                     id: commandRun.options.itemId,
                   }),
                 );
+                process.exitCode = 1;
               } else {
                 log(`"${commandRun.options.itemId}" deleted`);
               }
@@ -2152,6 +2171,7 @@ export async function siteCommandDetected(commandRun) {
           }
         } catch (e) {
           log(formatErrorForLogging(e), "error");
+          process.exitCode = 1;
         }
         break;
       case "site:skeleton-export":

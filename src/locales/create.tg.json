@@ -425,7 +425,7 @@
   "siteSelectItemToDelete": "Элементро барои нест кардан интихоб кунед",
   "siteDeleteNothingExit": "Ҳеҷ чизро нест накардан, баромад",
   "siteConfirmDeleteItem": "Шумо мутмаин ҳастед, ки {id}-ро нест кардан мехоҳед? (Бекор кардан ғайриимкон аст)",
-  "siteNodeDeleteNotFound": "node:delete ноком шуд: \"{id} ёфт нашуд",
+  "siteNodeDeleteNotFound": "node:delete ноком шуд: \"{id}\" ёфт нашуд",
   "siteSkeletonExportFailed": "Содироти скелети ин сайт ноком шуд",
   "siteSkeletonExportedTo": "Скелет ба {path} содир шуд",
   "siteTemplateInstalledAs": "Шаблон ҳамчун {name} ({path}) насб шуд",

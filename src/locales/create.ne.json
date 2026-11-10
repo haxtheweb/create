@@ -425,7 +425,7 @@
   "siteSelectItemToDelete": "मेटाउन वस्तु छान्नुहोस्",
   "siteDeleteNothingExit": "केही नमेटाउने, बाहिरिने",
   "siteConfirmDeleteItem": "के तपाईं {id} मेटाउन निश्चित हुनुहुन्छ? (यसलाई पूर्ववत गर्न सकिँदैन)",
-  "siteNodeDeleteNotFound": "node:delete असफल भयो \"{id} भेटिएन",
+  "siteNodeDeleteNotFound": "node:delete असफल भयो \"{id}\" भेटिएन",
   "siteSkeletonExportFailed": "यो साइटको स्केलेटन निर्यात गर्न असफल भयो",
   "siteSkeletonExportedTo": "स्केलेटन {path} मा निर्यात गरियो",
   "siteTemplateInstalledAs": "टेम्प्लेट {name} ({path}) को रूपमा स्थापना गरियो",

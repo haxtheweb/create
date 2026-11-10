@@ -429,7 +429,7 @@
   "siteSelectItemToDelete": "মুছে ফেলার জন্য একটি আইটেম নির্বাচন করুন",
   "siteDeleteNothingExit": "কিছু না মুছে বের হন",
   "siteConfirmDeleteItem": "আপনি কি নিশ্চিত যে {id} মুছে ফেলতে চান? (এটি আর ফেরানো যাবে না)",
-  "siteNodeDeleteNotFound": "node:delete ব্যর্থ \"{id} পাওয়া যায়নি",
+  "siteNodeDeleteNotFound": "node:delete ব্যর্থ \"{id}\" পাওয়া যায়নি",
   "siteSkeletonExportFailed": "এই সাইটের স্কেলেটন এক্সপোর্ট করা যায়নি",
   "siteSkeletonExportedTo": "স্কেলেটন {path}-এ এক্সপোর্ট হয়েছে",
   "siteTemplateInstalledAs": "টেমপ্লেট {name} হিসেবে ইনস্টল হয়েছে ({path})",

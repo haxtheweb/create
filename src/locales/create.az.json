@@ -425,7 +425,7 @@
   "siteSelectItemToDelete": "Silmək üçün element seçin",
   "siteDeleteNothingExit": "Heç nəyi silmə, çıx",
   "siteConfirmDeleteItem": "{id} silmək istədiyinizə əminsiniz? (Bu geri qaytarıla bilməz)",
-  "siteNodeDeleteNotFound": "node:delete alınmadı \"{id} tapılmadı",
+  "siteNodeDeleteNotFound": "node:delete alınmadı \"{id}\" tapılmadı",
   "siteSkeletonExportFailed": "Bu sayt üçün skeleton ixrac edilə bilmədi",
   "siteSkeletonExportedTo": "Skeleton {path} yoluna ixrac edildi",
   "siteTemplateInstalledAs": "Şablon {name} kimi quraşdırıldı ({path})",

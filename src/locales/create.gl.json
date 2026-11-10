@@ -425,7 +425,7 @@
   "siteSelectItemToDelete": "Seleccione un elemento para eliminar",
   "siteDeleteNothingExit": "Non eliminar nada, saír",
   "siteConfirmDeleteItem": "Seguro que quere eliminar {id}? (Non se pode desfacer)",
-  "siteNodeDeleteNotFound": "node:delete fallou \"{id} non atopado",
+  "siteNodeDeleteNotFound": "node:delete fallou \"{id}\" non atopado",
   "siteSkeletonExportFailed": "Non se puido exportar o esqueleto deste sitio",
   "siteSkeletonExportedTo": "Esqueleto exportado a {path}",
   "siteTemplateInstalledAs": "Modelo instalado como {name} ({path})",

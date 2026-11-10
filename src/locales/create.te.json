@@ -425,7 +425,7 @@
   "siteSelectItemToDelete": "తొలగించడానికి ఒక అంశాన్ని ఎంచుకోండి",
   "siteDeleteNothingExit": "ఏమీ తొలగించవద్దు, నిష్క్రమించు",
   "siteConfirmDeleteItem": "మీరు నిజంగా {id}‌ను తొలగించాలనుకుంటున్నారా? (దీన్ని రద్దు చేయలేరు)",
-  "siteNodeDeleteNotFound": "node:delete విఫలమైంది \"{id} కనబడలేదు",
+  "siteNodeDeleteNotFound": "node:delete విఫలమైంది \"{id}\" కనబడలేదు",
   "siteSkeletonExportFailed": "ఈ సైట్ కోసం స్కెలిటన్‌ను ఎగుమతి చేయడం విఫలమైంది",
   "siteSkeletonExportedTo": "స్కెలిటన్ {path}‌కి ఎగుమతి చేయబడింది",
   "siteTemplateInstalledAs": "టెంప్లేట్ {name}‌గా ఇన్‌స్టాల్ అయింది ({path})",

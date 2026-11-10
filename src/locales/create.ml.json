@@ -425,7 +425,7 @@
   "siteSelectItemToDelete": "ഇല്ലാതാക്കാൻ ഒരു ഇനം തിരഞ്ഞെടുക്കുക",
   "siteDeleteNothingExit": "ഒന്നും ഇല്ലാതാക്കാതെ പുറത്തുകടക്കുക",
   "siteConfirmDeleteItem": "{id} ഇല്ലാതാക്കണമെന്ന് ഉറപ്പാണോ? (ഇത് പഴയപടിയാക്കാനാവില്ല)",
-  "siteNodeDeleteNotFound": "node:delete പരാജയപ്പെട്ടു \"{id} കണ്ടെത്തിയില്ല",
+  "siteNodeDeleteNotFound": "node:delete പരാജയപ്പെട്ടു \"{id}\" കണ്ടെത്തിയില്ല",
   "siteSkeletonExportFailed": "ഈ സൈറ്റിന്റെ സ്കെലിറ്റൺ എക്സ്പോർട്ട് ചെയ്യാനായില്ല",
   "siteSkeletonExportedTo": "സ്കെലിറ്റൺ {path}-ലേക്ക് എക്സ്പോർട്ട് ചെയ്തു",
   "siteTemplateInstalledAs": "ടെംപ്ലേറ്റ് {name} ആയി ഇൻസ്റ്റാൾ ചെയ്തു ({path})",

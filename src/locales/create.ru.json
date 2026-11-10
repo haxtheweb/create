@@ -429,7 +429,7 @@
   "siteSelectItemToDelete": "Выберите элемент для удаления",
   "siteDeleteNothingExit": "Ничего не удалять, выйти",
   "siteConfirmDeleteItem": "Удалить {id}? (Это действие нельзя отменить)",
-  "siteNodeDeleteNotFound": "Ошибка node:delete: \"{id} не найден",
+  "siteNodeDeleteNotFound": "Ошибка node:delete: \"{id}\" не найден",
   "siteSkeletonExportFailed": "Не удалось экспортировать шаблон этого сайта",
   "siteSkeletonExportedTo": "Шаблон экспортирован в {path}",
   "siteTemplateInstalledAs": "Шаблон установлен как {name} ({path})",

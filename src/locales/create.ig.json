@@ -425,7 +425,7 @@
   "siteSelectItemToDelete": "Họrọ ihe a ga-ehichapụ",
   "siteDeleteNothingExit": "Ehichapụghị ihe ọ bụla, pụọ",
   "siteConfirmDeleteItem": "Ị ji n'aka na ị chọrọ ihichapụ {id}? (Enweghị ike imeghachi nke a)",
-  "siteNodeDeleteNotFound": "node:delete dara \"{id} achọtaghị",
+  "siteNodeDeleteNotFound": "node:delete dara \"{id}\" achọtaghị",
   "siteSkeletonExportFailed": "Enweghị ike ibupụ ọkpụkpụ maka saịtị a",
   "siteSkeletonExportedTo": "E bupụrụ ọkpụkpụ na {path}",
   "siteTemplateInstalledAs": "Etinyere ndebiri dị ka {name} ({path})",

@@ -425,7 +425,7 @@
   "siteSelectItemToDelete": "ជ្រើសរើសធាតុដើម្បីលុប",
   "siteDeleteNothingExit": "មិនលុបអ្វីទេ ចាកចេញ",
   "siteConfirmDeleteItem": "តើអ្នកប្រាកដថាចង់លុប {id} មែនទេ? (មិនអាចត្រឡប់វិញបានទេ)",
-  "siteNodeDeleteNotFound": "node:delete បរាជ័យ \"{id} រកមិនឃើញ",
+  "siteNodeDeleteNotFound": "node:delete បរាជ័យ \"{id}\" រកមិនឃើញ",
   "siteSkeletonExportFailed": "បរាជ័យក្នុងការនាំចេញ skeleton សម្រាប់គេហទំព័រនេះ",
   "siteSkeletonExportedTo": "Skeleton ត្រូវបាននាំចេញទៅ {path}",
   "siteTemplateInstalledAs": "គំរូត្រូវបានដំឡើងជា {name} ({path})",

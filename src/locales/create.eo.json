@@ -425,7 +425,7 @@
   "siteSelectItemToDelete": "Elektu forigotan eron",
   "siteDeleteNothingExit": "Forigi nenion, eliri",
   "siteConfirmDeleteItem": "Ĉu vi certas, ke vi volas forigi {id}? (Ĉi tio ne malfareblas)",
-  "siteNodeDeleteNotFound": "node:delete malsukcesis \"{id} ne trovita",
+  "siteNodeDeleteNotFound": "node:delete malsukcesis \"{id}\" ne trovita",
   "siteSkeletonExportFailed": "Malsukcesis eksporti skeleton por ĉi tiu retejo",
   "siteSkeletonExportedTo": "Skeleto eksportita al {path}",
   "siteTemplateInstalledAs": "Ŝablono instalita kiel {name} ({path})",

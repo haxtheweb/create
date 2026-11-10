@@ -425,7 +425,7 @@
   "siteSelectItemToDelete": "Valige kustutatav üksus",
   "siteDeleteNothingExit": "Ära kustuta midagi, välju",
   "siteConfirmDeleteItem": "Kas soovite kindlasti kustutada {id}? (Seda ei saa tagasi võtta)",
-  "siteNodeDeleteNotFound": "node:delete nurjus \"{id} ei leitud",
+  "siteNodeDeleteNotFound": "node:delete nurjus \"{id}\" ei leitud",
   "siteSkeletonExportFailed": "Selle saidi skeleti eksportimine nurjus",
   "siteSkeletonExportedTo": "Skelett eksporditi asukohta {path}",
   "siteTemplateInstalledAs": "Mall installiti nimega {name} ({path})",

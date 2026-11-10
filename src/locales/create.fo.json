@@ -425,7 +425,7 @@
   "siteSelectItemToDelete": "Vel ein lut at strika",
   "siteDeleteNothingExit": "Strika einki, enda",
   "siteConfirmDeleteItem": "Ert tú vís/ur í, at tú vilt strika {id}? (Hetta kann ikki angrast)",
-  "siteNodeDeleteNotFound": "node:delete miseydnaðist \"{id} ikki funnin",
+  "siteNodeDeleteNotFound": "node:delete miseydnaðist \"{id}\" ikki funnin",
   "siteSkeletonExportFailed": "Kundi ikki útflyta grind fyri hesa síðu",
   "siteSkeletonExportedTo": "Grind útflutt til {path}",
   "siteTemplateInstalledAs": "Skabelón innløgd sum {name} ({path})",

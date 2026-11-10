@@ -425,7 +425,7 @@
   "siteSelectItemToDelete": "நீக்க ஒரு உருப்படியைத் தேர்ந்தெடுக்கவும்",
   "siteDeleteNothingExit": "எதையும் நீக்காமல் வெளியேறு",
   "siteConfirmDeleteItem": "{id} ஐ நீக்க விரும்புகிறீர்களா? (இதைத் திரும்பப் பெற முடியாது)",
-  "siteNodeDeleteNotFound": "node:delete தோல்வியடைந்தது \"{id} கிடைக்கவில்லை",
+  "siteNodeDeleteNotFound": "node:delete தோல்வியடைந்தது \"{id}\" கிடைக்கவில்லை",
   "siteSkeletonExportFailed": "இந்தத் தளத்திற்கான skeleton ஐ ஏற்றுமதி செய்ய முடியவில்லை",
   "siteSkeletonExportedTo": "Skeleton {path} க்கு ஏற்றுமதி செய்யப்பட்டது",
   "siteTemplateInstalledAs": "வார்ப்புரு {name} ஆக நிறுவப்பட்டது ({path})",

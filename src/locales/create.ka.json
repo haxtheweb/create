@@ -425,7 +425,7 @@
   "siteSelectItemToDelete": "აირჩიეთ ელემენტი წასაშლელად",
   "siteDeleteNothingExit": "არაფრის წაშლა, გასვლა",
   "siteConfirmDeleteItem": "დარწმუნებული ხართ, რომ გსურთ {id}-ის წაშლა? (ეს შეუქცევადია)",
-  "siteNodeDeleteNotFound": "node:delete ვერ შესრულდა \"{id} ვერ მოიძებნა",
+  "siteNodeDeleteNotFound": "node:delete ვერ შესრულდა \"{id}\" ვერ მოიძებნა",
   "siteSkeletonExportFailed": "ამ საიტის ჩონჩხის ექსპორტი ვერ მოხერხდა",
   "siteSkeletonExportedTo": "ჩონჩხი ექსპორტირებულია {path}-ში",
   "siteTemplateInstalledAs": "შაბლონი დაინსტალირდა სახელით {name} ({path})",

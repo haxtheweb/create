@@ -425,7 +425,7 @@
   "siteSelectItemToDelete": "ڊليٽ ڪرڻ لاءِ آئٽم چونڊيو",
   "siteDeleteNothingExit": "ڪجهه ڊليٽ نه ڪريو، نڪرو",
   "siteConfirmDeleteItem": "ڇا توهان پڪ سان {id} ڊليٽ ڪرڻ چاهيو ٿا؟ (اهو واپس نٿو ٿي سگهي)",
-  "siteNodeDeleteNotFound": "node:delete ناڪام \"{id} نه مليو",
+  "siteNodeDeleteNotFound": "node:delete ناڪام \"{id}\" نه مليو",
   "siteSkeletonExportFailed": "هن سائيٽ جو اسڪيليٽن برآمد ڪرڻ ناڪام ٿيو",
   "siteSkeletonExportedTo": "اسڪيليٽن {path} ۾ برآمد ٿيو",
   "siteTemplateInstalledAs": "ٽيمپليٽ {name} طور انسٽال ٿيو ({path})",

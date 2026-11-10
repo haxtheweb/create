@@ -425,7 +425,7 @@
   "siteSelectItemToDelete": "Eiporavo mbaʼe emboguete hag̃ua",
   "siteDeleteNothingExit": "Ani emboguete mbaʼeve, ñesẽ",
   "siteConfirmDeleteItem": "Remboguetesepa añetehápe {id}? (Ndaikatúi oñemboʼevy)",
-  "siteNodeDeleteNotFound": "node:delete ojavy \"{id} ndojejuhúi",
+  "siteNodeDeleteNotFound": "node:delete ojavy \"{id}\" ndojejuhúi",
   "siteSkeletonExportFailed": "Ndaikatúi oñemondo ko tenda kangue",
   "siteSkeletonExportedTo": "Kangue oñemondo {path}-pe",
   "siteTemplateInstalledAs": "Techaukaha oñemohenda {name} ramo ({path})",

@@ -425,7 +425,7 @@
   "siteSelectItemToDelete": "Khetha into oza kuyicima",
   "siteDeleteNothingExit": "Ungacimi nto, phuma",
   "siteConfirmDeleteItem": "Uqinisekile ukuba ufuna ukucima {id}? (Oku akunakubuyiselwa)",
-  "siteNodeDeleteNotFound": "node:delete isilele \"{id} ayifumanekanga",
+  "siteNodeDeleteNotFound": "node:delete isilele \"{id}\" ayifumanekanga",
   "siteSkeletonExportFailed": "Kusilele ukuthumela isakhelo sale sayithi",
   "siteSkeletonExportedTo": "Isakhelo sithunyelwe kwi-{path}",
   "siteTemplateInstalledAs": "Itemplate ifakwe njenge-{name} ({path})",

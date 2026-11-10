@@ -425,7 +425,7 @@
   "siteSelectItemToDelete": "Бетерү өчен элемент сайлагыз",
   "siteDeleteNothingExit": "Берни дә бетермәү, чыгу",
   "siteConfirmDeleteItem": "{id} бетерергә телисезме? (Моны кире кайтарып булмый)",
-  "siteNodeDeleteNotFound": "node:delete уңышсыз \"{id} табылмады",
+  "siteNodeDeleteNotFound": "node:delete уңышсыз \"{id}\" табылмады",
   "siteSkeletonExportFailed": "Бу сайт өчен скелетны экспортлап булмады",
   "siteSkeletonExportedTo": "Скелет {path} эченә экспортланды",
   "siteTemplateInstalledAs": "Шаблон {name} итеп урнаштырылды ({path})",

@@ -425,7 +425,7 @@
   "siteSelectItemToDelete": "د ړنګولو لپاره یو توکی وټاکئ",
   "siteDeleteNothingExit": "هېڅ مه ړنګوئ، ووځئ",
   "siteConfirmDeleteItem": "ایا ډاډه یاست چې {id} ړنګول غواړئ؟ (دا بېرته نه شي راګرځېدای)",
-  "siteNodeDeleteNotFound": "node:delete ناکام شو \"{id} ونه موندل شو",
+  "siteNodeDeleteNotFound": "node:delete ناکام شو \"{id}\" ونه موندل شو",
   "siteSkeletonExportFailed": "د دې سایټ لپاره د skeleton صادرول ناکام شول",
   "siteSkeletonExportedTo": "Skeleton {path} ته صادر شو",
   "siteTemplateInstalledAs": "Template د {name} په توګه نصب شو ({path})",

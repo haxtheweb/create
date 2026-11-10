@@ -425,7 +425,7 @@
   "siteSelectItemToDelete": "Oʻchirish uchun elementni tanlang",
   "siteDeleteNothingExit": "Hech narsani oʻchirmaslik, chiqish",
   "siteConfirmDeleteItem": "{id} ni oʻchirishga ishonchingiz komilmi? (Buni qaytarib boʻlmaydi)",
-  "siteNodeDeleteNotFound": "node:delete bajarilmadi \"{id} topilmadi",
+  "siteNodeDeleteNotFound": "node:delete bajarilmadi \"{id}\" topilmadi",
   "siteSkeletonExportFailed": "Bu sayt uchun skeleton eksport qilinmadi",
   "siteSkeletonExportedTo": "Skeleton {path} ga eksport qilindi",
   "siteTemplateInstalledAs": "Shablon {name} sifatida oʻrnatildi ({path})",

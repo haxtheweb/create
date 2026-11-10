@@ -425,7 +425,7 @@
   "siteSelectItemToDelete": "የሚሰርዙትን ንጥል ይምረጡ",
   "siteDeleteNothingExit": "ምንም አትሰርዝ፣ ውጣ",
   "siteConfirmDeleteItem": "{id}ን መሰረዝ እንደሚፈልጉ እርግጠኛ ነዎት? (ይህ ሊቀለበስ አይችልም)",
-  "siteNodeDeleteNotFound": "node:delete አልተሳካም \"{id} አልተገኘም",
+  "siteNodeDeleteNotFound": "node:delete አልተሳካም \"{id}\" አልተገኘም",
   "siteSkeletonExportFailed": "ለዚህ ሳይት አጽም መላክ አልተሳካም",
   "siteSkeletonExportedTo": "አጽሙ ወደ {path} ተልኳል",
   "siteTemplateInstalledAs": "አብነቱ እንደ {name} ({path}) ተጭኗል",

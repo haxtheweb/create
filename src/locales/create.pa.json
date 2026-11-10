@@ -425,7 +425,7 @@
   "siteSelectItemToDelete": "ਮਿਟਾਉਣ ਲਈ ਆਈਟਮ ਚੁਣੋ",
   "siteDeleteNothingExit": "ਕੁਝ ਨਾ ਮਿਟਾਓ, ਬਾਹਰ ਜਾਓ",
   "siteConfirmDeleteItem": "ਕੀ ਤੁਸੀਂ ਯਕੀਨਨ {id} ਨੂੰ ਮਿਟਾਉਣਾ ਚਾਹੁੰਦੇ ਹੋ? (ਇਹ ਵਾਪਸ ਨਹੀਂ ਹੋ ਸਕਦਾ)",
-  "siteNodeDeleteNotFound": "node:delete ਅਸਫਲ \"{id} ਨਹੀਂ ਮਿਲਿਆ",
+  "siteNodeDeleteNotFound": "node:delete ਅਸਫਲ \"{id}\" ਨਹੀਂ ਮਿਲਿਆ",
   "siteSkeletonExportFailed": "ਇਸ ਸਾਈਟ ਲਈ ਸਕੈਲਟਨ ਐਕਸਪੋਰਟ ਕਰਨਾ ਅਸਫਲ",
   "siteSkeletonExportedTo": "ਸਕੈਲਟਨ {path} ਵਿੱਚ ਐਕਸਪੋਰਟ ਕੀਤਾ",
   "siteTemplateInstalledAs": "ਟੈਂਪਲੇਟ {name} ({path}) ਵਜੋਂ ਇੰਸਟਾਲ ਹੋਇਆ",

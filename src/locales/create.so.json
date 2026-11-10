@@ -425,7 +425,7 @@
   "siteSelectItemToDelete": "Dooro shay aad tirtirto",
   "siteDeleteNothingExit": "Waxba ha tirtirin, ka bax",
   "siteConfirmDeleteItem": "Ma hubtaa inaad rabto inaad tirtirto {id}? (Tan dib looma celin karo)",
-  "siteNodeDeleteNotFound": "node:delete waa fashilmay \"{id} lama helin",
+  "siteNodeDeleteNotFound": "node:delete waa fashilmay \"{id}\" lama helin",
   "siteSkeletonExportFailed": "Waa la waayay dhoofinta qalfoofka goobtan",
   "siteSkeletonExportedTo": "Qalfoofka waxaa loo dhoofiyay {path}",
   "siteTemplateInstalledAs": "Qaabka waxaa loo rakibay sida {name} ({path})",

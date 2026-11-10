@@ -425,7 +425,7 @@
   "siteSelectItemToDelete": "یک مورد را برای حذف انتخاب کنید",
   "siteDeleteNothingExit": "حذف نکن، خروج",
   "siteConfirmDeleteItem": "آیا مطمئنید که می‌خواهید {id} را حذف کنید؟ (این کار برگشت‌پذیر نیست)",
-  "siteNodeDeleteNotFound": "node:delete ناموفق بود \"{id} یافت نشد",
+  "siteNodeDeleteNotFound": "node:delete ناموفق بود \"{id}\" یافت نشد",
   "siteSkeletonExportFailed": "برون‌بری اسکلت این سایت ناموفق بود",
   "siteSkeletonExportedTo": "اسکلت در {path} برون‌بری شد",
   "siteTemplateInstalledAs": "قالب با نام {name} نصب شد ({path})",
