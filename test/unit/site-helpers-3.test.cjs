@@ -398,16 +398,67 @@ test("nodeEditRequests keeps the parent for an order-only edit", opts, () => {
       body: { operation: "setParent", parent: "item-1", order: 1 },
     },
   ]);
-  // same parent and no order keeps the current order
-  assert.equal(
-    nodeEditRequests(
-      { id: "item-2", parent: "item-1", order: 4 },
-      { parent: "item-1" },
-      [{ id: "item-3", parent: "item-1", order: 9 }],
-    )[0].body.order,
-    4,
-  );
 });
+
+// the API's setParent appends whenever a parent is sent without an order,
+// even when the parent does not change
+test(
+  "nodeEditRequests appends after siblings for an unchanged --parent",
+  opts,
+  () => {
+    const items = [
+      { id: "item-1", parent: null, order: 0 },
+      { id: "item-2", parent: "item-1", order: 4 },
+      { id: "item-3", parent: "item-1", order: 9 },
+      { id: "item-4", parent: null, order: 4 },
+      { id: "item-5", parent: null, order: 6 },
+    ];
+    // same parent id
+    assert.deepEqual(
+      nodeEditRequests(
+        { id: "item-2", parent: "item-1", order: 4 },
+        { parent: "item-1" },
+        items,
+      )[0].body,
+      { operation: "setParent", parent: "item-1", order: 10 },
+    );
+    // null for a page already at the top level
+    assert.deepEqual(
+      nodeEditRequests(
+        { id: "item-4", parent: null, order: 4 },
+        { parent: null },
+        items,
+      )[0].body,
+      { operation: "setParent", parent: null, order: 7 },
+    );
+  },
+);
+
+test(
+  "applyNodeEdits --parent=null on a top-level page still moves it last",
+  opts,
+  async () => {
+    // fakeSite top level: item-1 (order 2); a second top-level page at 0
+    const site = fakeSite();
+    site.manifest.items = [
+      ...site.manifest.items,
+      { id: "item-3", slug: "page-three", order: 0, parent: null },
+    ];
+    await applyNodeEdits(
+      site,
+      fakePage({ id: "item-3", slug: "page-three", order: 0 }),
+      { parent: "null" },
+      { options: {} },
+    );
+    assert.equal(bridgeCalls.length, 1);
+    assert.deepEqual(bridgeCalls[0].body, {
+      site: { name: "fakesite" },
+      operation: "setParent",
+      parent: null,
+      order: 3,
+    });
+  },
+);
 
 // --- applySiteLanguage ---
 

@@ -200,7 +200,8 @@ xlsxToSite
   --content-scrape <char>             CSS Selector for `body` in resource
   --content-format <char>             format of --content for node:add /
                                       node:edit: html (default), md, json, yaml
-  --description <char>                page description for node:add / node:edit
+  --description <char>                description of the page (node:add /
+                                      node:edit) or of the new site
   --items-import <char>               import items from a file / site
   --custom-theme-name <char>          custom theme name
   --custom-theme-template <char>      custom theme template; (options: base,

@@ -4456,8 +4456,9 @@ export function nodeEditRequests(page, edits, items = [], body = "") {
     let order;
     if (has("order")) {
       order = edits.order;
-    } else if (parent !== currentParent) {
-      // haxtheweb/issues#3127: a moved page goes after its new siblings
+    } else if (has("parent")) {
+      // haxtheweb/issues#3127: like the API's setParent, a page given a
+      // parent (even its current one) goes after the last of its siblings
       order = nextSiblingOrder(
         (items || []).filter((item) => item && item.id !== page.id),
         parent,

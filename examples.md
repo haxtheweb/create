@@ -168,7 +168,7 @@ hax site node:edit --item-id=lesson-1 --title="Lesson 1: Basics" --content=./les
 
 `node:edit` runs the same HAXcms operations as the site API, so the page ends up as an edit through the API or the HAX editor would leave it. A content edit regenerates the description and reading time. A reserved slug such as `x` becomes `x-x`. Pass values that start with `-` as `--flag=value`.
 
-Move a page under another page. Without `--order` it goes after the last of its new siblings (highest sibling order + 1), its depth follows the new parent, and its slug is rebuilt from the new path (unless the slug was set by hand).
+Move a page under another page. Whenever `--parent` is given without `--order` (even the current parent, or `null` for a top-level page), the page goes after the last of its siblings (highest sibling order + 1), the same as the API's setParent. Its depth follows the parent, and its slug is rebuilt from the path (unless the slug was set by hand).
 
 ```bash
 hax site node:edit --item-id=lesson-3 --parent=unit-1 --y --no-i

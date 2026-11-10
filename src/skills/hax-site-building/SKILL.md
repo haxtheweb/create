@@ -44,7 +44,7 @@ As an agent, add `--agent` to every `hax site` command below (or set `HAX_ACTOR=
 
 Two supported CLI paths, run from inside the site directory:
 
-- Single page: `hax site node:add --title="<title>" --slug="<slug>" --parent=<parent-id-or-slug> --content=<path-to-html-or-md-file> --y --no-i`. Without `--order` the page is appended after its siblings. The output includes the new item id.
+- Single page: `hax site node:add --title="<title>" --slug="<slug>" --parent=<parent-id-or-slug> --content=<file, URL or HTML> --description=<text> --tags=<a,b> --y --no-i`. Without `--order` the page is appended after its siblings. The output includes the new item id.
 - Update an existing page: `hax site node:edit --item-id=<id-or-slug> --title="<title>" --content=<file-or-html> --y --no-i`. See "Editing pages" below.
 - Delete a page: `hax site node:delete --item-id=<id-or-slug> --y --no-i` (`--y` skips the confirmation).
 - Bulk (preferred for a whole program): build a JOS items array (one object per page with `title`, `slug`, `parent`, `indent`, `order`, `metadata`, and `content`), then run `hax site site:items-import --items-import <items.json> --y --no-i`. The import remaps parent references to the newly generated ids automatically.
@@ -68,7 +68,7 @@ Pass values as `--flag=value`. A value that starts with `-` (for example `--desc
 | `--order=<number>`                         | Position among its siblings.                                                                                        |
 | `--theme=<theme>`                          | Theme for this page only (empty removes it).                                                                        |
 
-Order rule: when `--parent` changes and no `--order` is given, the page goes after the last of its new siblings (highest sibling order + 1, the same rule `node:add` uses). Its depth follows the new parent and its slug is rebuilt from the new path unless the slug was set by hand. Pass `--order` to place it yourself.
+Order rule: whenever `--parent` is given (even the current parent, or `null` for a page already at the top level) and no `--order` is given, the page goes after the last of its siblings (highest sibling order + 1), the same as the API's setParent. Its depth follows the parent and its slug is rebuilt from the path unless the slug was set by hand. Pass `--order` to place it yourself.
 
 Interactive `--node-op` picks one field to edit: `title`, `content`, `slug`, `published`, `tags`, `parent`, `order`, `theme` or `hideInMenu`. Change a description with `--description`; it is not a node-op.
 

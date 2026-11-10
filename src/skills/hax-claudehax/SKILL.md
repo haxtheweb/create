@@ -101,7 +101,7 @@ When operating outside the `/hax` slash command, use the HAX CLI directly:
 - `hax webcomponent <name> --y` — Scaffold a new component
 - `hax site <name> --y --no-i` — Create a new HAXsite
 - `hax site node:add --title=<title> --parent=<id-or-slug> --content=<file-or-html>` — add a page (appended after its siblings without `--order`)
-- `hax site node:edit --item-id=<id-or-slug> --title=<title> --content=<file-or-html>` — edit a page through the same operations as the site API; also `--slug`, `--description`, `--tags`, `--published=true|false`, `--hide-in-menu=true|false`, `--parent=<id-or-slug>` or `--parent=null` (top level), `--order`, `--theme`. A new parent without `--order` puts the page after its new siblings (highest sibling order + 1)
+- `hax site node:edit --item-id=<id-or-slug> --title=<title> --content=<file-or-html>` — edit a page through the same operations as the site API; also `--slug`, `--description`, `--tags`, `--published=true|false`, `--hide-in-menu=true|false`, `--parent=<id-or-slug>` or `--parent=null` (top level), `--order`, `--theme`. Whenever `--parent` is given (even the current parent, or `null` for a page already at the top level) and no `--order` is given, the page goes after the last of its siblings (highest sibling order + 1), the same as the API's setParent
 - `hax site node:delete --item-id=<id-or-slug> --y` — delete a page
 - `hax site site:theme --theme=<theme>` — change the site theme (same as the API's appearance settings)
 - `hax site site:validate --format json` — check a site's structure and content; exits 1 on errors

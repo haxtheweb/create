@@ -948,6 +948,14 @@ test(
       assert.equal(topGamma.parent, null);
       assert.equal(topGamma.indent, 0);
       assert.equal(topGamma.order, byId(alpha).order + 1);
+      // the API's setParent appends even when the parent does not change:
+      // --parent=null on a top-level page moves it after its siblings
+      edit(`--item-id=${alpha}`, "--parent=null");
+      assert.equal(byId(alpha).order, topGamma.order + 1);
+      // same for the current parent id
+      edit(`--item-id=${gamma}`, `--parent=${alpha}`);
+      edit(`--item-id=${beta}`, `--parent=${alpha}`);
+      assert.equal(byId(beta).order, byId(gamma).order + 1);
 
       // site theme: the appearance operation, no CLI-only variables
       run(
