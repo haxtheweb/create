@@ -1,0 +1,27 @@
+{
+  "year": 2021,
+  "siteName": "old-site-2021",
+  "source": "haxcms-php",
+  "repo": "https://github.com/haxtheweb/haxcms-php.git",
+  "branch": "master",
+  "commit": "f763753e06fb6c67eee150dee1a8731483122fe7",
+  "commitDate": "2020-12-18T14:38:23-05:00",
+  "version": "1.4.0",
+  "generatedWith": "8.3.6",
+  "compat": [],
+  "notSaved": [
+    ".git (the site's own git repo)",
+    "assets/babel-bottom.js -> ../../../babel/babel-bottom.js",
+    "build -> ../../build",
+    "dist -> ../../dist",
+    "wc-registry.json\n             -> ../../wc-registry.json",
+    "wc-registry.json -> ../../wc-registry.json"
+  ],
+  "elements": {
+    "a11y-collapse": "@lrnwebcomponents/a11y-collapse/a11y-collapse.js",
+    "meme-maker": "@lrnwebcomponents/meme-maker/meme-maker.js",
+    "self-check": "@lrnwebcomponents/self-check/self-check.js",
+    "stop-note": "@lrnwebcomponents/stop-note/stop-note.js",
+    "video-player": "@lrnwebcomponents/video-player/video-player.js"
+  }
+}

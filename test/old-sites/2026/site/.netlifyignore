@@ -1,0 +1,24 @@
+# Local files
+.DS_Store
+Thumbs.db
+
+# Logs
+logs
+*.log
+
+# Dependencies (usually handled by build process)
+!node_modules/
+
+# Development files
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# IDE files
+.vscode/
+.idea/
+
+# Build artifacts (if not using for deployment)
+# dist/
+# build/

@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0">
+  <channel>
+    <title>old-site-2024</title>
+    <link></link>
+    <description>Fixture site made by HAX code as of January 1, 2024</description>
+    <copyright>Copyright (C) 2026 </copyright>
+    <language>en-US</language>
+    <lastBuildDate>Tue, 10 Nov 2026 19:58:51 +0000</lastBuildDate>
+    <atom:link href="" rel="self" type="application/rss+xml"/>
+    <item>
+      <title>Welcome</title>
+      <link>welcome</link>
+      <description>
+          <![CDATA[ <p>
+    To get started, hit the edit pencil on the side.
+    Now this content is editable in place so select and delete it to get started!
+    If you need to learn more about the HAX editor or HAXcms check out <a href="https://haxtheweb.org/ux-concepts" target="_blank" rel="noopener noreferrer">HAXTheWeb.org</a>!
+</p> ]]>
+      </description>
+      <category></category>
+      <guid>item-783be396-701a-43b2-8a43-9c9a4b981037</guid>
+      <pubDate>Tue, 10 Nov 2026 19:58:51 +0000</pubDate>
+    </item>
+    <item>
+      <title>Getting started</title>
+      <link>getting-started</link>
+      <description>
+          <![CDATA[ <h2>About this site</h2><p>Made with <strong>HAXcms</strong> as of 2024.</p><simple-cta link="https://haxtheweb.org/" label="Learn more"></simple-cta><grid-plate layout="1-1"><p slot="col-1">Left.</p><p slot="col-2">Right.</p></grid-plate> ]]>
+      </description>
+      <category></category>
+      <guid>item-5ffea791-df57-4f9d-90d3-450b862eebbf</guid>
+      <pubDate>Tue, 10 Nov 2026 19:58:51 +0000</pubDate>
+    </item>
+    <item>
+      <title>Lesson 1</title>
+      <link>unit-1-lesson-1</link>
+      <description>
+          <![CDATA[ <h3>Lesson 1</h3><p>A page one level deep.</p><video-player source="https://www.youtube.com/watch?v=LrS7dqokTLE"></video-player><multiple-choice title="Check" question="Fixture?" answers='[{"label":"Yes","correct":true},{"label":"No"}]'></multiple-choice> ]]>
+      </description>
+      <category></category>
+      <guid>item-363af021-08ae-46b8-bb37-e0c2fe1756a2</guid>
+      <pubDate>Tue, 10 Nov 2026 19:58:52 +0000</pubDate>
+    </item>
+    <item>
+      <title>Unit 1</title>
+      <link>unit-1</link>
+      <description>
+          <![CDATA[ <h2>Unit 1 overview</h2><p>One lesson below.</p><a11y-collapse heading-button><p slot="heading">Objectives</p><div slot="content"><p>Open the lesson.</p></div></a11y-collapse> ]]>
+      </description>
+      <category></category>
+      <guid>item-cfbaf1b1-5bcf-4417-8060-dc24a7f4246a</guid>
+      <pubDate>Tue, 10 Nov 2026 19:58:52 +0000</pubDate>
+    </item>
+    <item>
+      <title>Resources</title>
+      <link>resources</link>
+      <description>
+          <![CDATA[ <h2>Resources</h2><media-image source="assets/banner.jpg" alt="Banner" caption="Banner image"></media-image> ]]>
+      </description>
+      <category></category>
+      <guid>item-dc11744d-cc32-4f55-887d-c6ab7f5d0e3a</guid>
+      <pubDate>Tue, 10 Nov 2026 19:58:52 +0000</pubDate>
+    </item>
+  </channel>
+</rss>

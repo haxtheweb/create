@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0">
+  <channel>
+    <title>old-site-2023</title>
+    <link>/rss.xml</link>
+    <description>Fixture site made by HAX code as of January 1, 2023</description>
+    <copyright>Copyright (C) 2026 </copyright>
+    <language>en-us</language>
+    <lastBuildDate>Tue, 10 Nov 2026 19:58:43 +0000</lastBuildDate>
+    <atom:link href="/rss.xml" rel="self" type="application/rss+xml"/>
+    <item>
+      <title>Lesson 1</title>
+      <link>/item-8b17cd76-9df8-4250-9bad-16ef30eb8143</link>
+      <description>
+          <![CDATA[ <h3>Lesson 1</h3><p>A page one level deep.</p><code-sample copy-clipboard-button><template preserve-content="preserve-content">console.log('hello')</template></code-sample><self-check title="Quick check"><p slot="question">Still here?</p><p>Yes.</p></self-check> ]]>
+      </description>
+      <category></category>
+      <guid>/item-8b17cd76-9df8-4250-9bad-16ef30eb8143</guid>
+      <pubDate>Tue, 10 Nov 2026 19:58:44 +0000</pubDate>
+    </item>
+    <item>
+      <title>Resources</title>
+      <link>/item-825c7fd9-052c-43ea-b401-d80dd3955234</link>
+      <description>
+          <![CDATA[ <h2>Resources</h2><ul><li><a href="https://haxtheweb.org/">HAXTheWeb</a></li></ul><license-element title="Fixture" creator="HAX" source="https://haxtheweb.org/" license-link="https://creativecommons.org/licenses/by-sa/4.0/"></license-element> ]]>
+      </description>
+      <category></category>
+      <guid>/item-825c7fd9-052c-43ea-b401-d80dd3955234</guid>
+      <pubDate>Tue, 10 Nov 2026 19:58:44 +0000</pubDate>
+    </item>
+    <item>
+      <title>Welcome</title>
+      <link>/item-abb83a2f-7f75-4516-8076-9b1a8c7690e1</link>
+      <description>
+          <![CDATA[ <p>
+    To get started, hit the edit pencil on the side.
+    Now this content is editable in place so select and delete it to get started!
+    If you need to learn more about the HAX editor or HAXcms check out <a href="https://haxtheweb.org/ux-concepts" target="_blank" rel="noopener noreferrer">HAXTheWeb.org</a>!
+</p> ]]>
+      </description>
+      <category></category>
+      <guid>/item-abb83a2f-7f75-4516-8076-9b1a8c7690e1</guid>
+      <pubDate>Tue, 10 Nov 2026 19:58:43 +0000</pubDate>
+    </item>
+    <item>
+      <title>Getting started</title>
+      <link>/item-7b5752d5-f367-4b4b-bc58-30eec40ff7eb</link>
+      <description>
+          <![CDATA[ <h2>About this site</h2><p>Made with <strong>HAXcms</strong> as of 2023.</p><grid-plate layout="2-1"><div slot="col-1"><p>Main column.</p></div><div slot="col-2"><accent-card accent-color="green"><div slot="heading">Tip</div><div slot="content">Side note.</div></accent-card></div></grid-plate> ]]>
+      </description>
+      <category></category>
+      <guid>/item-7b5752d5-f367-4b4b-bc58-30eec40ff7eb</guid>
+      <pubDate>Tue, 10 Nov 2026 19:58:43 +0000</pubDate>
+    </item>
+    <item>
+      <title>Unit 1</title>
+      <link>/item-d844797c-943c-4d7d-8fb5-4bf61efc2ea3</link>
+      <description>
+          <![CDATA[ <h2>Unit 1 overview</h2><p>One lesson below.</p><video-player source="https://www.youtube.com/watch?v=LrS7dqokTLE" media-title="Intro video"></video-player> ]]>
+      </description>
+      <category></category>
+      <guid>/item-d844797c-943c-4d7d-8fb5-4bf61efc2ea3</guid>
+      <pubDate>Tue, 10 Nov 2026 19:58:43 +0000</pubDate>
+    </item>
+  </channel>
+</rss>

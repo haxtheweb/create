@@ -1,0 +1,164 @@
+{
+    "id": "b640ae6f-4f32-433d-a8db-127500600c84",
+    "title": "old-site-2021",
+    "author": "",
+    "description": "Fixture site made by HAX code as of January 1, 2021",
+    "license": "by-sa",
+    "metadata": {
+        "author": {},
+        "site": {
+            "name": "old-site-2021",
+            "logo": "assets/banner.jpg",
+            "created": 1609520400,
+            "updated": 1609520400,
+            "git": {
+                "vendor": "github",
+                "branch": "gh-pages"
+            }
+        },
+        "theme": {
+            "element": "learn-two-theme",
+            "path": "@lrnwebcomponents/learn-two-theme/learn-two-theme.js",
+            "name": "Course theme 3",
+            "variables": {
+                "icon": "icons:book",
+                "hexCode": "#3f51b5",
+                "cssVariable": "--simple-colors-default-theme-light-blue-7"
+            }
+        },
+        "node": {
+            "fields": {}
+        }
+    },
+    "items": [
+        {
+            "id": "item-8cc3b0d1-9bff-4c1b-88a8-e88b2e2848dd",
+            "indent": 0,
+            "location": "pages/item-8cc3b0d1-9bff-4c1b-88a8-e88b2e2848dd/index.html",
+            "slug": "welcome",
+            "order": 0,
+            "parent": null,
+            "title": "Welcome to a new HAXcms site!",
+            "description": "",
+            "metadata": {
+                "created": 1609520400,
+                "updated": 1609520400
+            }
+        },
+        {
+            "id": "item-a7783c86-e902-46a2-a81f-7b3ca5b7eebd",
+            "indent": 1,
+            "location": "pages/item-a7783c86-e902-46a2-a81f-7b3ca5b7eebd/index.html",
+            "slug": "unit-1/lesson-1",
+            "order": 0,
+            "parent": "item-1a0ddd41-87e0-42c5-89ec-7da26e808e9f",
+            "title": "Lesson 1",
+            "description": "Lesson 1A page one level deep.Does this page still load?Yes, if the check passes.Fixture content only.",
+            "metadata": {
+                "created": 1609520400,
+                "updated": 1609520400,
+                "readtime": 1,
+                "contentDetails": {
+                    "headings": 1,
+                    "paragraphs": 3,
+                    "schema": [],
+                    "tags": {
+                        "h3": 1,
+                        "p": 3,
+                        "self-check": 1,
+                        "stop-note": 1,
+                        "span": 1
+                    },
+                    "elements": 7
+                }
+            }
+        },
+        {
+            "id": "item-c720f08a-5dc2-4069-91d6-5656fbe26675",
+            "indent": 0,
+            "location": "pages/item-c720f08a-5dc2-4069-91d6-5656fbe26675/index.html",
+            "slug": "getting-started",
+            "order": 1,
+            "parent": null,
+            "title": "Getting started",
+            "description": "About this courseThis site was made with HAXcms to check that sites from 2021 keep working.Read each unit in orderTry the self check at the endLearning is not a spectator sport.",
+            "metadata": {
+                "created": 1609520400,
+                "updated": 1609520400,
+                "readtime": 1,
+                "contentDetails": {
+                    "headings": 1,
+                    "paragraphs": 2,
+                    "schema": [],
+                    "tags": {
+                        "h2": 1,
+                        "p": 2,
+                        "strong": 1,
+                        "em": 1,
+                        "ul": 1,
+                        "li": 2,
+                        "blockquote": 1,
+                        "img": 1,
+                        "video-player": 1
+                    },
+                    "elements": 11
+                }
+            }
+        },
+        {
+            "id": "item-1a0ddd41-87e0-42c5-89ec-7da26e808e9f",
+            "indent": 0,
+            "location": "pages/item-1a0ddd41-87e0-42c5-89ec-7da26e808e9f/index.html",
+            "slug": "unit-1",
+            "order": 2,
+            "parent": null,
+            "title": "Unit 1",
+            "description": "Unit 1 overviewThis unit has one lesson.What you will learnHow old sites keep working.",
+            "metadata": {
+                "created": 1609520400,
+                "updated": 1609520400,
+                "readtime": 1,
+                "contentDetails": {
+                    "headings": 1,
+                    "paragraphs": 3,
+                    "schema": [],
+                    "tags": {
+                        "h2": 1,
+                        "p": 3,
+                        "a11y-collapse": 1,
+                        "div": 1
+                    },
+                    "elements": 6
+                }
+            }
+        },
+        {
+            "id": "item-68f614e9-d140-467f-a188-94ca5eebd427",
+            "indent": 0,
+            "location": "pages/item-68f614e9-d140-467f-a188-94ca5eebd427/index.html",
+            "slug": "resources",
+            "order": 3,
+            "parent": null,
+            "title": "Resources",
+            "description": "ResourcesHAXHAXTheWeb",
+            "metadata": {
+                "created": 1609520400,
+                "updated": 1609520400,
+                "readtime": 1,
+                "contentDetails": {
+                    "headings": 1,
+                    "paragraphs": 0,
+                    "schema": [],
+                    "tags": {
+                        "h2": 1,
+                        "ol": 1,
+                        "li": 2,
+                        "a": 2,
+                        "meme-maker": 1
+                    },
+                    "elements": 7
+                }
+            }
+        }
+    ]
+}

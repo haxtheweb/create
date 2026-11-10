@@ -1,0 +1,5 @@
+cli: hax site old-site-2026 --theme "clean-one"
+cli: hax site node:add --title "Getting started" --content "<h2 data-accent="2">About this site</h2><p data-design-treatment="dropCap-md">Made with the <strong>HAX CLI</strong> as of 2026.</p><grid-plate layout="1-1" data-width="150"><p slot="col-1">Left.</p><p slot="col-2">Right.</p></grid-plate>"
+cli: hax site node:add --title "Unit 1" --content "<h2>Unit 1 overview</h2><p>One lesson below.</p><a11y-collapse-group><a11y-collapse heading-button><p slot="heading">Goals</p><div slot="content"><p>Open the lesson.</p></div></a11y-collapse></a11y-collapse-group>"
+cli: hax site node:add --title "Lesson 1" --content "<h3>Lesson 1</h3><p>A page one level deep.</p><video-player source="https://www.youtube.com/watch?v=LrS7dqokTLE"></video-player><media-quote quote="Old sites keep working." author="HAX"></media-quote>"
+cli: hax site node:add --title "Resources" --content "<h2>Resources</h2><simple-cta link="https://haxtheweb.org/" label="Learn more" data-primary="7"></simple-cta>"

@@ -1,0 +1,31 @@
+{
+  "name": "old-site-2024",
+  "version": "8.0.0",
+  "description": "",
+  "main": "index.html",
+  "repository": {
+    "type": "git",
+    "url": "git@github.com/elmsln/haxtheweb.git"
+  },
+  "author": {
+    "name": "btopro"
+  },
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@lrnwebcomponents/haxcms-elements": "^7.0.15"
+  },
+  "private": false,
+  "publishConfig": {
+    "access": "public"
+  },
+  "resolutions": {
+  },
+  "devDependencies": {
+    "@web/dev-server": "0.3.0"
+  },
+  "scripts": {
+    "start": "yarn run dev",
+    "dev": "web-dev-server -c web-dev-server.haxcms.config.cjs",
+    "dev-theme": "cd custom && yarn start"
+  }
+}

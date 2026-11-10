@@ -1,0 +1,30 @@
+{
+  "year": 2024,
+  "siteName": "old-site-2024",
+  "source": "haxcms-php",
+  "repo": "https://github.com/haxtheweb/haxcms-php.git",
+  "branch": "master",
+  "commit": "c6d6363ec6a7e0376cd4614d0e8ee623ee45f352",
+  "commitDate": "2023-12-21T13:34:30-05:00",
+  "version": "8.0.0",
+  "generatedWith": "8.3.6",
+  "compat": [
+    "system/backend/php/vendor/icamys/php-sitemap-generator/src/SitemapGenerator.php: the bundled sitemap library calls SplFixedArray::key(), removed in PHP 8; this commit required PHP ^7.1. Patched in the throwaway copy only, so it runs on PHP 8."
+  ],
+  "notSaved": [
+    ".git (the site's own git repo)",
+    "assets/babel-bottom.js -> ../../../babel/babel-bottom.js",
+    "assets/babel-top.js -> ../../../babel/babel-top.js",
+    "build -> ../../build",
+    "dist -> ../../dist",
+    "wc-registry.json -> ../../wc-registry.json"
+  ],
+  "elements": {
+    "a11y-collapse": "@lrnwebcomponents/a11y-collapse/a11y-collapse.js",
+    "grid-plate": "@lrnwebcomponents/grid-plate/grid-plate.js",
+    "media-image": "@lrnwebcomponents/media-image/media-image.js",
+    "multiple-choice": "@lrnwebcomponents/multiple-choice/multiple-choice.js",
+    "simple-cta": "@lrnwebcomponents/simple-cta/simple-cta.js",
+    "video-player": "@lrnwebcomponents/video-player/video-player.js"
+  }
+}

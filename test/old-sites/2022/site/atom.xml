@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title>old-site-2022</title>
+  <link href="/atom.xml" rel="self" />
+  <subtitle>Fixture site made by HAX code as of January 1, 2022</subtitle>
+  <updated>2026-11-10T19:58:35+00:00</updated>
+  <author>
+      <name></name>
+  </author>
+  <id>/feed</id>
+  <entry>
+    <title>Resources</title>
+    <id>/item-80093f41-10b9-45c7-802b-9850d4083332</id>
+    <updated>2026-11-10T19:58:36+00:00</updated>
+    <published>2026-11-10T19:58:36+00:00</published>
+    <summary>ResourcesLinks and a figure.</summary>
+    <link href="/item-80093f41-10b9-45c7-802b-9850d4083332"/>
+    
+    <content type="html">
+      <![CDATA[ <h2>Resources</h2><p>Links and a figure.</p><media-image source="assets/banner.jpg" alt="Banner" caption="Banner image"></media-image> ]]>
+    </content>
+  </entry>
+  <entry>
+    <title>Welcome to a new HAXcms site!</title>
+    <id>/item-9b440298-e93a-4a41-93f4-59a129a4c24e</id>
+    <updated>2026-11-10T19:58:35+00:00</updated>
+    <published>2026-11-10T19:58:35+00:00</published>
+    <summary></summary>
+    <link href="/item-9b440298-e93a-4a41-93f4-59a129a4c24e"/>
+    
+    <content type="html">
+      <![CDATA[ <p>
+    To get started, hit the edit pencil on the side.
+    Now this content is editable in place so select and delete it to get started!
+    If you need to learn more about the HAX editor or HAXcms check out <a href="https://haxtheweb.org/ux-concepts" target="_blank" rel="noopener noreferrer">HAXTheWeb.org</a>!
+</p> ]]>
+    </content>
+  </entry>
+  <entry>
+    <title>Lesson 1</title>
+    <id>/item-76387ac2-0d0f-4185-a955-1d95abad8c0e</id>
+    <updated>2026-11-10T19:58:35+00:00</updated>
+    <published>2026-11-10T19:58:35+00:00</published>
+    <summary>Lesson 1A page one level deep.</summary>
+    <link href="/item-76387ac2-0d0f-4185-a955-1d95abad8c0e"/>
+    
+    <content type="html">
+      <![CDATA[ <h3>Lesson 1</h3><p>A page one level deep.</p><multiple-choice title="Check" question="Is this a fixture?" answers='[{"label":"Yes","correct":true},{"label":"No"}]'></multiple-choice><task-list name="Steps" tasks='[{"name":"Read"},{"name":"Try"}]'></task-list> ]]>
+    </content>
+  </entry>
+  <entry>
+    <title>Getting started</title>
+    <id>/item-5ebd8e6f-aa77-4914-a3a5-87648750d0b7</id>
+    <updated>2026-11-10T19:58:35+00:00</updated>
+    <published>2026-11-10T19:58:35+00:00</published>
+    <summary>About this siteMade with HAXcms as of 2022.Left column text.Right column text.</summary>
+    <link href="/item-5ebd8e6f-aa77-4914-a3a5-87648750d0b7"/>
+    
+    <content type="html">
+      <![CDATA[ <h2>About this site</h2><p>Made with <strong>HAXcms</strong> as of 2022.</p><grid-plate layout="1-1"><p slot="col-1">Left column text.</p><p slot="col-2">Right column text.</p></grid-plate><video-player source="https://www.youtube.com/watch?v=LrS7dqokTLE"></video-player> ]]>
+    </content>
+  </entry>
+  <entry>
+    <title>Unit 1</title>
+    <id>/item-2699a88e-ef56-4d71-a6b6-a7475d6d3c28</id>
+    <updated>2026-11-10T19:58:35+00:00</updated>
+    <published>2026-11-10T19:58:35+00:00</published>
+    <summary>Unit 1 overviewOne lesson below.ObjectivesOpen the lesson</summary>
+    <link href="/item-2699a88e-ef56-4d71-a6b6-a7475d6d3c28"/>
+    
+    <content type="html">
+      <![CDATA[ <h2>Unit 1 overview</h2><p>One lesson below.</p><a11y-collapse><p slot="heading">Objectives</p><div slot="content"><ul><li>Open the lesson</li></ul></div></a11y-collapse> ]]>
+    </content>
+  </entry>
+</feed>

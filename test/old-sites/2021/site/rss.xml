@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0">
+  <channel>
+    <title>old-site-2021</title>
+    <link>/rss.xml</link>
+    <description>Fixture site made by HAX code as of January 1, 2021</description>
+    <copyright>Copyright (C) 2026 </copyright>
+    <language>en-us</language>
+    <lastBuildDate>Tue, 10 Nov 2026 19:58:27 +0000</lastBuildDate>
+    <atom:link href="/rss.xml" rel="self" type="application/rss+xml"/>
+    <item>
+      <title>Lesson 1</title>
+      <link>/item-a7783c86-e902-46a2-a81f-7b3ca5b7eebd</link>
+      <description>
+          <![CDATA[ <h3>Lesson 1</h3><p>A page one level deep.</p><self-check title="Quick check" image="assets/banner.jpg" alt="Banner"><p slot="question">Does this page still load?</p><p>Yes, if the check passes.</p></self-check><stop-note title="Note" status="warning"><span slot="message">Fixture content only.</span></stop-note> ]]>
+      </description>
+      <category></category>
+      <guid>/item-a7783c86-e902-46a2-a81f-7b3ca5b7eebd</guid>
+      <pubDate>Tue, 10 Nov 2026 19:58:28 +0000</pubDate>
+    </item>
+    <item>
+      <title>Resources</title>
+      <link>/item-68f614e9-d140-467f-a188-94ca5eebd427</link>
+      <description>
+          <![CDATA[ <h2>Resources</h2><ol><li><a href="https://hax.psu.edu/">HAX</a></li><li><a href="https://haxtheweb.org/">HAXTheWeb</a></li></ol><meme-maker alt="Cat" image-url="assets/banner.jpg" top-text="old site" bottom-text="still works"></meme-maker> ]]>
+      </description>
+      <category></category>
+      <guid>/item-68f614e9-d140-467f-a188-94ca5eebd427</guid>
+      <pubDate>Tue, 10 Nov 2026 19:58:28 +0000</pubDate>
+    </item>
+    <item>
+      <title>Welcome to a new HAXcms site!</title>
+      <link>/item-8cc3b0d1-9bff-4c1b-88a8-e88b2e2848dd</link>
+      <description>
+          <![CDATA[ <p>
+    To get started, hit the edit pencil on the side.
+    Now this content is editable in place so select and delete it to get started!
+    If you need to learn more about the HAX editor or HAXcms check out <a href="https://haxtheweb.org/ux-concepts" target="_blank" rel="noopener noreferrer">HAXTheWeb.org</a>!
+</p> ]]>
+      </description>
+      <category></category>
+      <guid>/item-8cc3b0d1-9bff-4c1b-88a8-e88b2e2848dd</guid>
+      <pubDate>Tue, 10 Nov 2026 19:58:27 +0000</pubDate>
+    </item>
+    <item>
+      <title>Getting started</title>
+      <link>/item-c720f08a-5dc2-4069-91d6-5656fbe26675</link>
+      <description>
+          <![CDATA[ <h2>About this course</h2><p>This site was made with <strong>HAXcms</strong> to check that sites from <em>2021</em> keep working.</p><ul><li>Read each unit in order</li><li>Try the self check at the end</li></ul><blockquote><p>Learning is not a spectator sport.</p></blockquote><img src="assets/banner.jpg" alt="Course banner"><video-player source="https://www.youtube.com/watch?v=LrS7dqokTLE" accent-color="blue" dark-transcript></video-player> ]]>
+      </description>
+      <category></category>
+      <guid>/item-c720f08a-5dc2-4069-91d6-5656fbe26675</guid>
+      <pubDate>Tue, 10 Nov 2026 19:58:27 +0000</pubDate>
+    </item>
+    <item>
+      <title>Unit 1</title>
+      <link>/item-1a0ddd41-87e0-42c5-89ec-7da26e808e9f</link>
+      <description>
+          <![CDATA[ <h2>Unit 1 overview</h2><p>This unit has one lesson.</p><a11y-collapse><p slot="heading">What you will learn</p><div slot="content"><p>How old sites keep working.</p></div></a11y-collapse> ]]>
+      </description>
+      <category></category>
+      <guid>/item-1a0ddd41-87e0-42c5-89ec-7da26e808e9f</guid>
+      <pubDate>Tue, 10 Nov 2026 19:58:27 +0000</pubDate>
+    </item>
+  </channel>
+</rss>
