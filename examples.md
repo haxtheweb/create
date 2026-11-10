@@ -163,7 +163,21 @@ hax site node:edit
 Edit several fields of a node at once, scripted (no `--node-op` needed). `--item-id` accepts an id or a slug, and `--content` accepts a file path, a URL, or inline HTML. Fields: `--title`, `--slug`, `--content`, `--description`, `--tags`, `--parent`, `--order`, `--published`, `--hide-in-menu`, `--theme`
 
 ```bash
-hax site node:edit --item-id lesson-1 --title "Lesson 1: Basics" --content ./lesson-1.html --order 0 --y --no-i
+hax site node:edit --item-id=lesson-1 --title="Lesson 1: Basics" --content=./lesson-1.html --order=0 --y --no-i
+```
+
+`node:edit` runs the same HAXcms operations as the site API, so the page ends up as an edit through the API or the HAX editor would leave it. A content edit regenerates the description and reading time. A reserved slug such as `x` becomes `x-x`. Pass values that start with `-` as `--flag=value`.
+
+Move a page under another page. Whenever `--parent` is given without `--order` (even the current parent, or `null` for a top-level page), the page goes after the last of its siblings (highest sibling order + 1), the same as the API's setParent. Its depth follows the parent, and its slug is rebuilt from the path (unless the slug was set by hand).
+
+```bash
+hax site node:edit --item-id=lesson-3 --parent=unit-1 --y --no-i
+```
+
+Move a page back to the top level
+
+```bash
+hax site node:edit --item-id=lesson-3 --parent=null --y --no-i
 ```
 
 Edit the title of a specific node, scripted.

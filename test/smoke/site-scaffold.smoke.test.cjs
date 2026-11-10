@@ -95,8 +95,9 @@ test("site.json carries the JSON Outline Schema shape", opts, () => {
   // the theme passed with --theme is the one recorded, with a loadable path
   assert.equal(manifest.metadata.theme.element, "clean-one");
   assert.match(manifest.metadata.theme.path, /clean-one\.js$/);
-  assert.equal(manifest.metadata.build.structure, "course");
-  assert.equal(manifest.metadata.build.type, "own");
+  // haxtheweb/issues#3292: created with the API's createSite defaults, so
+  // there is no build block (only skeleton and import builds record one)
+  assert.equal(manifest.metadata.build, undefined);
 });
 
 test("the starter page is a real top-level item with content", opts, () => {

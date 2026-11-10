@@ -417,7 +417,8 @@ test(
     const payload = record.handlers.siteProcess[0];
     assert.equal(payload.project.name, "mysite");
     assert.equal(payload.project.siteCreationMode, "scratch");
-    assert.equal(payload.project.theme, "clean-one");
+    // haxtheweb/issues#3292: the prompt starts on createSite's default theme
+    assert.equal(payload.project.theme, "clean-two");
     assert.equal(payload.project.siteLang, "en");
     const messages = record.prompts.map((p) => p.kind);
     assert.ok(messages.includes("select"));
