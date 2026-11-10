@@ -22,17 +22,26 @@ import { t } from "../i18n.js";
  * and otherwise run through `npx -p <package>@<version>`. Nothing is run
  * through a shell; file paths are passed as arguments.
  *
- * Security: the npx path downloads and executes code from the registry, so
- * every package is pinned to an exact version (`version`, bumped on purpose
- * alongside CLI releases, never a range or "latest") and the download is
- * confirmed first unless --y was passed or there is no TTY to ask.
+ * Security (confirmed-pinned-installs): the npx path downloads and executes
+ * code from the registry, so every package is pinned to an exact version and
+ * the download is confirmed first unless --y was passed or there is no TTY to
+ * ask. The pin is this CLI's own version: the ecosystem release (ubiquity)
+ * publishes every schema package at the release version before it publishes
+ * the CLI at that same version, so a released CLI always has matching
+ * validators on the registry and nothing needs a manual bump.
  */
+// __dirname is dist/lib/programs/ in the built CLI (same idiom as skills.js),
+// so the package manifest is three levels up.
+export const SCHEMA_VALIDATOR_VERSION = JSON.parse(
+  readFileSync(path.join(__dirname, "../../../package.json"), "utf8"),
+).version;
+
 export const SCHEMA_VALIDATORS = {
   site: {
     label: "HAXcms site.json (JSON Outline Schema)",
     labelKey: "auditSchemaLabelSite",
     pkg: "@haxtheweb/json-outline-schema-spec",
-    version: "26.8.1",
+    version: SCHEMA_VALIDATOR_VERSION,
     bin: "jos-validate",
     args: ["--type", "site"],
   },
@@ -40,7 +49,7 @@ export const SCHEMA_VALIDATORS = {
     label: "HAXcms site skeletons",
     labelKey: "auditSchemaLabelSkeleton",
     pkg: "@haxtheweb/json-outline-schema-spec",
-    version: "26.8.1",
+    version: SCHEMA_VALIDATOR_VERSION,
     bin: "jos-validate",
     args: ["--type", "skeleton"],
   },
@@ -48,7 +57,7 @@ export const SCHEMA_VALIDATORS = {
     label: "haxProperties (element HAX integration)",
     labelKey: "auditSchemaLabelHaxProperties",
     pkg: "@haxtheweb/hax-schema",
-    version: "26.8.1",
+    version: SCHEMA_VALIDATOR_VERSION,
     bin: "haxproperties-validate",
     args: [],
   },
@@ -56,7 +65,7 @@ export const SCHEMA_VALIDATORS = {
     label: "demoSchema entries (HAXElementSchema)",
     labelKey: "auditSchemaLabelDemoSchema",
     pkg: "@haxtheweb/hax-element-schema",
-    version: "26.8.1",
+    version: SCHEMA_VALIDATOR_VERSION,
     bin: "hax-element-validate",
     args: [],
   },
@@ -64,7 +73,7 @@ export const SCHEMA_VALIDATORS = {
     label: "appstore payloads",
     labelKey: "auditSchemaLabelAppstore",
     pkg: "@haxtheweb/appstore-spec",
-    version: "26.8.1",
+    version: SCHEMA_VALIDATOR_VERSION,
     bin: "appstore-validate",
     args: [],
   },
@@ -72,7 +81,7 @@ export const SCHEMA_VALIDATORS = {
     label: "Merlin commands in JS source",
     labelKey: "auditSchemaLabelMerlin",
     pkg: "@haxtheweb/merlin-schema",
-    version: "26.8.1",
+    version: SCHEMA_VALIDATOR_VERSION,
     bin: "merlin-validate",
     args: ["--scan"],
   },
