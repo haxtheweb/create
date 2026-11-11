@@ -663,5 +663,11 @@
   "aliasOfferName": "Názov aliasu",
   "aliasOfferWhere": "Kam uložiť alias?",
   "aliasOfferUser": "Len pre mňa ({file})",
-  "aliasOfferProject": "Do projektového súboru tohto priečinka ({file})"
+  "aliasOfferProject": "Do projektového súboru tohto priečinka ({file})",
+  "siteActionSiteLoginLink": "Vygenerovať jednorazový prihlasovací odkaz (zabudnuté heslo)",
+  "cliOptTtl": "platnosť site:login-link (sekundy alebo 10m / 1h); predvolene 10m",
+  "cliOptUser": "účet HAXcms pre site:login-link (predvolene správca stránky)",
+  "loginLinkTitle": "🔑 Jednorazový prihlasovací odkaz",
+  "loginLinkNoBase": "Pridajte pred neho URL, na ktorej odpovedá váš server HAXcms, alebo spustite znova s --domain your-site.example",
+  "loginLinkDetails": "Jednorazovo prihlási ako {user}, do {expires} ({minutes} min).\nVygenerovanie ďalšieho odkazu tento zruší. Ktokoľvek s týmto odkazom môže upravovať stránku, preto ho nevkladajte do chatov ani tiketov."
 }

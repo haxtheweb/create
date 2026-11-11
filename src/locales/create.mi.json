@@ -663,5 +663,11 @@
   "aliasOfferName": "Ingoa kārangaranga",
   "aliasOfferWhere": "Me penapena ki hea te ingoa kārangaranga?",
   "aliasOfferUser": "Mōku anake ({file})",
-  "aliasOfferProject": "Ki te kōnae kaupapa o tēnei kōpaki ({file})"
+  "aliasOfferProject": "Ki te kōnae kaupapa o tēnei kōpaki ({file})",
+  "siteActionSiteLoginLink": "Waihanga hono takiuru kotahi-wā (kua wareware te kupuhipa)",
+  "cliOptTtl": "te roanga o te site:login-link (hēkona, 10m / 1h rānei); taunoa 10m",
+  "cliOptUser": "pūkete HAXcms mō site:login-link (taunoa ko te kaiwhakahaere o te pae)",
+  "loginLinkTitle": "🔑 Hono takiuru kotahi-wā",
+  "loginLinkNoBase": "Tāpirihia ki mua te URL e whakautu ai tō tūmau HAXcms, me whakahaere anō rānei me --domain your-site.example",
+  "loginLinkDetails": "Ka takiuru kotahi hei {user}, tae noa ki {expires} ({minutes} min).\nKa whakakorea tēnei hono ina waihangatia he hono anō. Ka taea e te tangata kei a ia tēnei hono te whakatika i te pae, nō reira kaua e whakapiri ki ngā kōrerorero, tīkiti rānei."
 }

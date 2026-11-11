@@ -663,5 +663,11 @@
   "aliasOfferName": "Име на псевдонима",
   "aliasOfferWhere": "Къде да се запази псевдонимът?",
   "aliasOfferUser": "Само за мен ({file})",
-  "aliasOfferProject": "В проектния файл на тази папка ({file})"
+  "aliasOfferProject": "В проектния файл на тази папка ({file})",
+  "siteActionSiteLoginLink": "Генериране на еднократна връзка за вход (забравена парола)",
+  "cliOptTtl": "валидност на site:login-link (секунди или 10m / 1h); по подразбиране 10m",
+  "cliOptUser": "HAXcms акаунт за site:login-link (по подразбиране администраторът на сайта)",
+  "loginLinkTitle": "🔑 Еднократна връзка за вход",
+  "loginLinkNoBase": "Добавете пред нея URL адреса, на който отговаря вашият HAXcms сървър, или стартирайте отново с --domain your-site.example",
+  "loginLinkDetails": "Влиза като {user} еднократно, до {expires} ({minutes} мин).\nГенерирането на нова връзка анулира тази. Всеки с тази връзка може да редактира сайта, затова не я поставяйте в чатове или тикети."
 }

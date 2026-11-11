@@ -667,5 +667,11 @@
   "aliasOfferName": "Nom de l'alias",
   "aliasOfferWhere": "Où enregistrer l'alias ?",
   "aliasOfferUser": "Juste pour moi ({file})",
-  "aliasOfferProject": "Dans le fichier de projet de ce dossier ({file})"
+  "aliasOfferProject": "Dans le fichier de projet de ce dossier ({file})",
+  "siteActionSiteLoginLink": "Générer un lien de connexion à usage unique (mot de passe oublié)",
+  "cliOptTtl": "durée de validité d'un site:login-link (secondes, ou 10m / 1h) ; par défaut 10m",
+  "cliOptUser": "compte HAXcms pour site:login-link (par défaut, l'administrateur du site)",
+  "loginLinkTitle": "🔑 Lien de connexion à usage unique",
+  "loginLinkNoBase": "Préfixez-le avec l'URL sur laquelle répond votre serveur HAXcms, ou relancez avec --domain your-site.example",
+  "loginLinkDetails": "Connecte une seule fois en tant que {user}, jusqu'à {expires} ({minutes} min).\nGénérer un autre lien annule celui-ci. Toute personne disposant de ce lien peut modifier le site : ne le collez pas dans des chats ou des tickets."
 }

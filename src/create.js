@@ -253,6 +253,8 @@ async function main() {
     .option("--replace <char>", t("cliOptReplace"))
     .option("--confirm", t("cliOptConfirm"))
     .option("--destroy-confirm", t("cliOptDestroyConfirm"))
+    .option("--ttl <char>", t("cliOptTtl"))
+    .option("--user <char>", t("cliOptUser"))
     // haxtheweb/issues#3228
     .option("--only <char>", t("cliOptOnly"))
     .option("--count <char>", t("cliOptCount"))
@@ -371,6 +373,8 @@ async function main() {
     .option("--replace <char>", t("cliOptReplace"))
     .option("--confirm", t("cliOptConfirm"))
     .option("--destroy-confirm", t("cliOptDestroyConfirm"))
+    .option("--ttl <char>", t("cliOptTtl"))
+    .option("--user <char>", t("cliOptUser"))
     .option("--only <char>", t("cliOptOnly"))
     .option("--count <char>", t("cliOptCount"))
     .option("--rsync <char>", t("cliOptRsync"))

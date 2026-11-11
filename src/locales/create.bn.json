@@ -667,5 +667,11 @@
   "aliasOfferName": "অ্যালিয়াস নাম",
   "aliasOfferWhere": "অ্যালিয়াসটি কোথায় সংরক্ষণ করা হবে?",
   "aliasOfferUser": "শুধু আমার জন্য ({file})",
-  "aliasOfferProject": "এই ফোল্ডারের প্রজেক্ট ফাইলে ({file})"
+  "aliasOfferProject": "এই ফোল্ডারের প্রজেক্ট ফাইলে ({file})",
+  "siteActionSiteLoginLink": "এককালীন লগইন লিংক তৈরি করুন (পাসওয়ার্ড ভুলে গেছেন)",
+  "cliOptTtl": "site:login-link-এর মেয়াদ (সেকেন্ড, অথবা 10m / 1h); ডিফল্ট 10m",
+  "cliOptUser": "site:login-link-এর জন্য HAXcms অ্যাকাউন্ট (ডিফল্ট সাইট অ্যাডমিন)",
+  "loginLinkTitle": "🔑 এককালীন লগইন লিংক",
+  "loginLinkNoBase": "এর আগে আপনার HAXcms সার্ভার যে URL-এ সাড়া দেয় তা যোগ করুন, অথবা --domain your-site.example দিয়ে আবার চালান",
+  "loginLinkDetails": "{user} হিসেবে একবার সাইন ইন করে, {expires} পর্যন্ত ({minutes} মিনিট)।\nনতুন লিংক তৈরি করলে এটি বাতিল হয়ে যায়। এই লিংক যার কাছে আছে সে-ই সাইট সম্পাদনা করতে পারে, তাই এটি চ্যাট বা টিকিটে পেস্ট করবেন না।"
 }

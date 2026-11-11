@@ -663,5 +663,11 @@
   "aliasOfferName": "Aliasnavn",
   "aliasOfferWhere": "Hvor skal aliasset gemmes?",
   "aliasOfferUser": "Kun for mig ({file})",
-  "aliasOfferProject": "I denne mappes projektfil ({file})"
+  "aliasOfferProject": "I denne mappes projektfil ({file})",
+  "siteActionSiteLoginLink": "Generér et engangslink til login (glemt adgangskode)",
+  "cliOptTtl": "levetid for et site:login-link (sekunder, eller 10m / 1h); standard 10m",
+  "cliOptUser": "HAXcms-konto til site:login-link (standard er sitets administrator)",
+  "loginLinkTitle": "🔑 Engangslink til login",
+  "loginLinkNoBase": "Sæt den URL, din HAXcms-server svarer på, foran, eller kør igen med --domain your-site.example",
+  "loginLinkDetails": "Logger ind som {user} én gang, indtil {expires} ({minutes} min).\nEt nyt link annullerer dette. Alle med dette link kan redigere sitet, så indsæt det ikke i chats eller tickets."
 }

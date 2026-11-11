@@ -663,5 +663,11 @@
   "aliasOfferName": "Naziv aliasa",
   "aliasOfferWhere": "Gdje sačuvati alias?",
   "aliasOfferUser": "Samo za mene ({file})",
-  "aliasOfferProject": "U projektnoj datoteci ovog foldera ({file})"
+  "aliasOfferProject": "U projektnoj datoteci ovog foldera ({file})",
+  "siteActionSiteLoginLink": "Generiši jednokratni link za prijavu (zaboravljena lozinka)",
+  "cliOptTtl": "trajanje site:login-link (sekunde, ili 10m / 1h); zadano 10m",
+  "cliOptUser": "HAXcms račun za site:login-link (zadano je administrator stranice)",
+  "loginLinkTitle": "🔑 Jednokratni link za prijavu",
+  "loginLinkNoBase": "Dodajte ispred URL na kojem odgovara vaš HAXcms server ili ponovo pokrenite s --domain your-site.example",
+  "loginLinkDetails": "Prijavljuje kao {user} jednom, do {expires} ({minutes} min).\nGenerisanje novog linka poništava ovaj. Svako ko ima ovaj link može uređivati stranicu, zato ga ne lijepite u chatove ili tikete."
 }

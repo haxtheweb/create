@@ -663,5 +663,11 @@
   "aliasOfferName": "אַליאַס־נאָמען",
   "aliasOfferWhere": "וווּ זאָל מען היטן דעם אַליאַס?",
   "aliasOfferUser": "נאָר פֿאַר מיר ({file})",
-  "aliasOfferProject": "אין דעם פּראָיעקט־טעקע פֿון דעם אָרדנער ({file})"
+  "aliasOfferProject": "אין דעם פּראָיעקט־טעקע פֿון דעם אָרדנער ({file})",
+  "siteActionSiteLoginLink": "שאַפֿן אַן אײנמאָליקן לאָגין־לינק (פֿאַרגעסן פּאַראָל)",
+  "cliOptTtl": "גילטיקייט פֿון אַ site:login-link (סעקונדעס, אָדער 10m / 1h); גרונט 10m",
+  "cliOptUser": "HAXcms חשבון פֿאַר site:login-link (גרונט: דער זײַטל־אַדמיניסטראַטאָר)",
+  "loginLinkTitle": "🔑 אײנמאָליקער לאָגין־לינק",
+  "loginLinkNoBase": "שטעלט פֿאָרויס דעם URL וווּ אײַער HAXcms סערווער ענטפֿערט, אָדער לויפֿט ווידער מיט --domain your-site.example",
+  "loginLinkDetails": "לאָגט אײַן ווי {user} אײן מאָל, ביז {expires} ({minutes} מינ).\nשאַפֿן אַן אַנדער לינק מבֿטל דעם דאָזיקן. ווער עס האָט דעם לינק קען רעדאַקטירן דעם זײַטל, טאָ שטעלט אים נישט אַרײַן אין שמועסן אָדער טיקעטן."
 }

@@ -663,5 +663,11 @@
   "aliasOfferName": "Алиас аты",
   "aliasOfferWhere": "Алиас кайда сакталсын?",
   "aliasOfferUser": "Мен үчүн гана ({file})",
-  "aliasOfferProject": "Ушул папканын долбоор файлында ({file})"
+  "aliasOfferProject": "Ушул папканын долбоор файлында ({file})",
+  "siteActionSiteLoginLink": "Бир жолку кирүү шилтемесин түзүү (сырсөз унутулду)",
+  "cliOptTtl": "site:login-link жарактуулук мөөнөтү (секунд же 10m / 1h); демейки 10m",
+  "cliOptUser": "site:login-link үчүн HAXcms аккаунту (демейки — сайттын администратору)",
+  "loginLinkTitle": "🔑 Бир жолку кирүү шилтемеси",
+  "loginLinkNoBase": "Алдына HAXcms сервериңиз жооп берген URL'ди кошуңуз же --domain your-site.example менен кайра иштетиңиз",
+  "loginLinkDetails": "{user} катары бир жолу кирет, {expires} чейин ({minutes} мүн).\nЖаңы шилтеме түзүү бул шилтемени жокко чыгарат. Бул шилтемеси бар ар ким сайтты түзөтө алат, ошондуктан аны чаттарга же тикеттерге койбоңуз."
 }

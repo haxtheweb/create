@@ -72,6 +72,7 @@ test("siteActions returns the expected fixed list of actions", opts, () => {
     "site:surge",
     "site:netlify",
     "site:vercel",
+    "site:login-link",
     "setup:github-actions",
     "setup:gitlab-ci",
     "setup:replit",
@@ -93,7 +94,7 @@ test(
     const b = siteActions();
     assert.notEqual(a, b);
     a.push({ value: "mutated", label: "mutated" });
-    assert.equal(b.length, 40);
+    assert.equal(b.length, 41);
   },
 );
 

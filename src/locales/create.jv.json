@@ -663,5 +663,11 @@
   "aliasOfferName": "Jeneng alias",
   "aliasOfferWhere": "Alias kudu disimpen ing ngendi?",
   "aliasOfferUser": "Mung kanggo aku ({file})",
-  "aliasOfferProject": "Ing berkas proyek folder iki ({file})"
+  "aliasOfferProject": "Ing berkas proyek folder iki ({file})",
+  "siteActionSiteLoginLink": "Gawe pranala mlebu sepisan (lali tembung sandhi)",
+  "cliOptTtl": "umur site:login-link (detik, utawa 10m / 1h); gawan 10m",
+  "cliOptUser": "akun HAXcms kanggo site:login-link (gawan: admin situs)",
+  "loginLinkTitle": "🔑 Pranala mlebu sepisan",
+  "loginLinkNoBase": "Wenehi ing ngarepe URL papan server HAXcms sampeyan mangsuli, utawa bukak maneh nganggo --domain your-site.example",
+  "loginLinkDetails": "Mlebu dadi {user} sepisan, nganti {expires} ({minutes} menit).\nNggawe pranala liyane bakal mbatalake iki. Sapa wae sing duwe pranala iki bisa nyunting situs, mula aja ditempelake ing obrolan utawa tiket."
 }
