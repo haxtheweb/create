@@ -2,6 +2,9 @@ node_modules
 # Development-only files: nothing that installs this element loads them,
 # so they stay out of the npm package (and the CDNs that mirror it).
 /test/
+# the demo page (index.html): for
+# development, never loaded by anything that installs the element
+/index.html
 /gulpfile.cjs
 /gulpfile.js
 /gulpfile.mjs
