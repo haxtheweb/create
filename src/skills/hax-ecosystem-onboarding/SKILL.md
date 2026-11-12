@@ -30,7 +30,7 @@ Onboard new developers to the HAX ecosystem by cloning repositories, installing 
 1. **Clone Repositories**: Clone all necessary HAX ecosystem repositories into a single workspace folder (ask the user where; a `haxtheweb/` folder under their usual projects directory works well). Core repos include `webcomponents`, `create`, `haxcms-php`, `haxcms-nodejs`, `desktop`, `hax11ty`, `json-outline-schema`, `hax-schema`, `open-apis`, `docs`, and `issues`.
 2. **Install HAX CLI**: Install globally with `npm install @haxtheweb/create --global`. Alternatively use `npx @haxtheweb/create` or `npm init @haxtheweb`. Update with `hax update`.
 3. **Install Agent Skills**: Run `hax skills install --all` to install the bundled interface skills (site building, ClaudeHAX, web component dev, onboarding) into `~/.agents/skills/` so any agent can use them.
-4. **Configure Environment**: Set up Warp with HAX-specific rules. Create helpful development aliases. Configure the shell to start in that workspace folder. (PRAW Rule `bAKMWCMrqRLGdWmuNWgVUw`)
+4. **Configure Environment**: Point your agent at PRAW's rules (https://github.com/haxtheweb/praw; Warp reads its `WARP.md` on its own). Create helpful development aliases. Configure the shell to start in that workspace folder. (PRAW Rule `bAKMWCMrqRLGdWmuNWgVUw`)
 5. **Scaffold First Component**: Use `hax webcomponent my-element --y` to create a LitElement with DDD and i18n support.
 6. **Scaffold First Site**: Use `hax site mysite --y --no-i` to generate a HAXcms-based static site.
 7. **Run Development Server**: Use `hax serve` to launch the site at http://localhost.
