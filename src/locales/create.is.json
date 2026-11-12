@@ -663,5 +663,11 @@
   "aliasOfferName": "Samnefni",
   "aliasOfferWhere": "Hvar á að vista samnefnið?",
   "aliasOfferUser": "Bara fyrir mig ({file})",
-  "aliasOfferProject": "Í verkefnaskrá þessarar möppu ({file})"
+  "aliasOfferProject": "Í verkefnaskrá þessarar möppu ({file})",
+  "siteActionSiteLoginLink": "Búa til einnota innskráningartengil (gleymt lykilorð)",
+  "cliOptTtl": "gildistími site:login-link (sekúndur, eða 10m / 1h); sjálfgefið 10m",
+  "cliOptUser": "HAXcms-aðgangur fyrir site:login-link (sjálfgefið er vefstjóri)",
+  "loginLinkTitle": "🔑 Einnota innskráningartengill",
+  "loginLinkNoBase": "Settu framan við það URL sem HAXcms-þjónninn þinn svarar á, eða keyrðu aftur með --domain your-site.example",
+  "loginLinkDetails": "Skráir inn sem {user} einu sinni, til {expires} ({minutes} mín.).\nEf nýr tengill er búinn til fellur þessi úr gildi. Hver sem er með þennan tengil getur breytt vefnum, svo ekki líma hann í spjall eða verkbeiðnir."
 }

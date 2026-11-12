@@ -663,5 +663,11 @@
   "aliasOfferName": "Nome d'alias",
   "aliasOfferWhere": "Induve salvà l'alias?",
   "aliasOfferUser": "Solu per mè ({file})",
-  "aliasOfferProject": "In u schedariu di prughjettu di stu cartulare ({file})"
+  "aliasOfferProject": "In u schedariu di prughjettu di stu cartulare ({file})",
+  "siteActionSiteLoginLink": "Generà un ligame di cunnessione d'una sola volta (parolla d'intesa scurdata)",
+  "cliOptTtl": "durata di un site:login-link (secondi, o 10m / 1h); predefinitu 10m",
+  "cliOptUser": "contu HAXcms per site:login-link (predefinitu: l'amministratore di u situ)",
+  "loginLinkTitle": "🔑 Ligame di cunnessione d'una sola volta",
+  "loginLinkNoBase": "Mittite davanti l'URL induve risponde u vostru servore HAXcms, o rilanciate cù --domain your-site.example",
+  "loginLinkDetails": "Cunnette cum'è {user} una sola volta, finu à {expires} ({minutes} min).\nGenerà un altru ligame annulla questu. Chiunque hà stu ligame pò mudificà u situ, dunque ùn l'incullate micca in chats o tickets."
 }

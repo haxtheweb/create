@@ -663,5 +663,11 @@
   "aliasOfferName": "Име на алијасот",
   "aliasOfferWhere": "Каде да се зачува алијасот?",
   "aliasOfferUser": "Само за мене ({file})",
-  "aliasOfferProject": "Во проектната датотека на оваа папка ({file})"
+  "aliasOfferProject": "Во проектната датотека на оваа папка ({file})",
+  "siteActionSiteLoginLink": "Генерирај еднократна врска за најава (заборавена лозинка)",
+  "cliOptTtl": "траење на site:login-link (секунди, или 10m / 1h); стандардно 10m",
+  "cliOptUser": "HAXcms сметка за site:login-link (стандардно администраторот на сајтот)",
+  "loginLinkTitle": "🔑 Еднократна врска за најава",
+  "loginLinkNoBase": "Додајте го пред неа URL-то на кое одговара вашиот HAXcms сервер, или повторно извршете со --domain your-site.example",
+  "loginLinkDetails": "Еднаш најавува како {user}, до {expires} ({minutes} мин).\nГенерирањето нова врска ја поништува оваа. Секој што ја има врската може да го уредува сајтот, па не ја лепете во разговори или тикети."
 }

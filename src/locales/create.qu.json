@@ -663,5 +663,11 @@
   "aliasOfferName": "Alias suti",
   "aliasOfferWhere": "Maypitaq alias waqaychakunqa?",
   "aliasOfferUser": "Ñuqallapaq ({file})",
-  "aliasOfferProject": "Kay carpetaq proyecto willañiqinpi ({file})"
+  "aliasOfferProject": "Kay carpetaq proyecto willañiqinpi ({file})",
+  "siteActionSiteLoginLink": "Huk kutillapaq yaykuna linkta ruway (contraseñata qunqarqanki)",
+  "cliOptTtl": "site:login-link nisqap unaynin (segundokuna, utaq 10m / 1h); predeterminado 10m",
+  "cliOptUser": "site:login-link nisqapaq HAXcms cuenta (predeterminado sitio administrador)",
+  "loginLinkTitle": "🔑 Huk kutillapaq yaykuna link",
+  "loginLinkNoBase": "Ñawpaqninman HAXcms servidorniykip kutichisqan URL nisqata yapay, utaq --domain your-site.example nisqawan wakmanta purichiy",
+  "loginLinkDetails": "{user} hina huk kutilla yaykuchin, {expires} kama ({minutes} min).\nHuk linkta ruwaspaqa kayqa chinkachisqa kanqa. Pipas kay linkniyuqqa sitiota allichayta atin, chayrayku ama chatkunaman ticketkunamanpas k'askachiychu."
 }

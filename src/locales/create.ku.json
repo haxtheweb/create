@@ -663,5 +663,11 @@
   "aliasOfferName": "Navê aliasê",
   "aliasOfferWhere": "Alias li ku were tomarkirin?",
   "aliasOfferUser": "Tenê ji bo min ({file})",
-  "aliasOfferProject": "Di pela projeyê ya vê peldankê de ({file})"
+  "aliasOfferProject": "Di pela projeyê ya vê peldankê de ({file})",
+  "siteActionSiteLoginLink": "Girêdana têketinê ya yekcarî çêke (şîfre ji bîr kir)",
+  "cliOptTtl": "dema derbasdariyê ya site:login-link (çirke, an 10m / 1h); standard 10m",
+  "cliOptUser": "hesabê HAXcms ji bo site:login-link (standard rêveberê malperê ye)",
+  "loginLinkTitle": "🔑 Girêdana têketinê ya yekcarî",
+  "loginLinkNoBase": "URL ya ku servera te ya HAXcms lê bersiv dide li pêşiyê zêde bike, an jî bi --domain your-site.example dîsa bixebitîne",
+  "loginLinkDetails": "Carekê wekî {user} dikeve, heta {expires} ({minutes} deq).\nÇêkirina girêdaneke din vê betal dike. Her kesê ku vê girêdanê hebe dikare malperê biguherîne, ji ber vê yekê wê nexe nav sohbet an tîketan."
 }

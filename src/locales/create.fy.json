@@ -663,5 +663,11 @@
   "aliasOfferName": "Aliasnamme",
   "aliasOfferWhere": "Wêr moat de alias bewarre wurde?",
   "aliasOfferUser": "Allinnich foar my ({file})",
-  "aliasOfferProject": "Yn it projektbestân fan dizze map ({file})"
+  "aliasOfferProject": "Yn it projektbestân fan dizze map ({file})",
+  "siteActionSiteLoginLink": "Ienmalige oanmeldkeppeling meitsje (wachtwurd ferjitten)",
+  "cliOptTtl": "jildigensdoer fan in site:login-link (sekonden, of 10m / 1h); standert 10m",
+  "cliOptUser": "HAXcms-account foar site:login-link (standert de sitebehearder)",
+  "loginLinkTitle": "🔑 Ienmalige oanmeldkeppeling",
+  "loginLinkNoBase": "Set de URL dêr't jo HAXcms-server op antwurdet derfoar, of fier opnij út mei --domain your-site.example",
+  "loginLinkDetails": "Meldt ien kear oan as {user}, oant {expires} ({minutes} min).\nIn nije keppeling makket dizze ûnjildich. Elkenien mei dizze keppeling kin de site bewurkje, dus plak him net yn chats of tickets."
 }

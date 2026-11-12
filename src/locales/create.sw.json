@@ -663,5 +663,11 @@
   "aliasOfferName": "Jina la alias",
   "aliasOfferWhere": "Alias ihifadhiwe wapi?",
   "aliasOfferUser": "Kwa ajili yangu tu ({file})",
-  "aliasOfferProject": "Katika faili la mradi la folda hii ({file})"
+  "aliasOfferProject": "Katika faili la mradi la folda hii ({file})",
+  "siteActionSiteLoginLink": "Tengeneza kiungo cha kuingia cha mara moja (umesahau nenosiri)",
+  "cliOptTtl": "muda wa site:login-link (sekunde, au 10m / 1h); chaguo-msingi 10m",
+  "cliOptUser": "akaunti ya HAXcms kwa site:login-link (chaguo-msingi ni msimamizi wa tovuti)",
+  "loginLinkTitle": "🔑 Kiungo cha kuingia cha mara moja",
+  "loginLinkNoBase": "Weka mbele yake URL ambayo seva yako ya HAXcms hujibu, au endesha tena ukitumia --domain your-site.example",
+  "loginLinkDetails": "Huingia kama {user} mara moja, hadi {expires} ({minutes} dak).\nKutengeneza kiungo kingine kunaghairi hiki. Yeyote aliye na kiungo hiki anaweza kuhariri tovuti, kwa hivyo usikibandike kwenye gumzo au tiketi."
 }

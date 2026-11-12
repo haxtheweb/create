@@ -663,5 +663,11 @@
   "aliasOfferName": "ಅಲಿಯಾಸ್ ಹೆಸರು",
   "aliasOfferWhere": "ಅಲಿಯಾಸ್ ಅನ್ನು ಎಲ್ಲಿ ಉಳಿಸಬೇಕು?",
   "aliasOfferUser": "ನನಗೆ ಮಾತ್ರ ({file})",
-  "aliasOfferProject": "ಈ ಫೋಲ್ಡರ್‌ನ ಪ್ರಾಜೆಕ್ಟ್ ಫೈಲ್‌ನಲ್ಲಿ ({file})"
+  "aliasOfferProject": "ಈ ಫೋಲ್ಡರ್‌ನ ಪ್ರಾಜೆಕ್ಟ್ ಫೈಲ್‌ನಲ್ಲಿ ({file})",
+  "siteActionSiteLoginLink": "ಒಂದು ಬಾರಿಯ ಲಾಗಿನ್ ಲಿಂಕ್ ರಚಿಸಿ (ಪಾಸ್‌ವರ್ಡ್ ಮರೆತಿದೆ)",
+  "cliOptTtl": "site:login-link ನ ಮಾನ್ಯತೆ ಅವಧಿ (ಸೆಕೆಂಡುಗಳು, ಅಥವಾ 10m / 1h); ಡೀಫಾಲ್ಟ್ 10m",
+  "cliOptUser": "site:login-link ಗಾಗಿ HAXcms ಖಾತೆ (ಡೀಫಾಲ್ಟ್: ಸೈಟ್ ನಿರ್ವಾಹಕ)",
+  "loginLinkTitle": "🔑 ಒಂದು ಬಾರಿಯ ಲಾಗಿನ್ ಲಿಂಕ್",
+  "loginLinkNoBase": "ನಿಮ್ಮ HAXcms ಸರ್ವರ್ ಪ್ರತಿಕ್ರಿಯಿಸುವ URL ಅನ್ನು ಮುಂದೆ ಸೇರಿಸಿ, ಅಥವಾ --domain your-site.example ನೊಂದಿಗೆ ಮತ್ತೆ ರನ್ ಮಾಡಿ",
+  "loginLinkDetails": "{user} ಆಗಿ ಒಮ್ಮೆ ಸೈನ್ ಇನ್ ಮಾಡುತ್ತದೆ, {expires} ವರೆಗೆ ({minutes} ನಿಮಿಷ).\nಇನ್ನೊಂದು ಲಿಂಕ್ ರಚಿಸಿದರೆ ಇದು ರದ್ದಾಗುತ್ತದೆ. ಈ ಲಿಂಕ್ ಹೊಂದಿರುವ ಯಾರಾದರೂ ಸೈಟ್ ಅನ್ನು ಸಂಪಾದಿಸಬಹುದು, ಆದ್ದರಿಂದ ಇದನ್ನು ಚಾಟ್ ಅಥವಾ ಟಿಕೆಟ್‌ಗಳಲ್ಲಿ ಅಂಟಿಸಬೇಡಿ."
 }

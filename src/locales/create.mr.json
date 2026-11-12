@@ -663,5 +663,11 @@
   "aliasOfferName": "अलियास नाव",
   "aliasOfferWhere": "अलियास कुठे जतन करायचा?",
   "aliasOfferUser": "फक्त माझ्यासाठी ({file})",
-  "aliasOfferProject": "या फोल्डरच्या प्रोजेक्ट फाइलमध्ये ({file})"
+  "aliasOfferProject": "या फोल्डरच्या प्रोजेक्ट फाइलमध्ये ({file})",
+  "siteActionSiteLoginLink": "एकवेळ लॉगिन लिंक तयार करा (पासवर्ड विसरलात)",
+  "cliOptTtl": "site:login-link ची वैधता (सेकंद, किंवा 10m / 1h); डीफॉल्ट 10m",
+  "cliOptUser": "site:login-link साठी HAXcms खाते (डीफॉल्ट साइट अ‍ॅडमिन)",
+  "loginLinkTitle": "🔑 एकवेळ लॉगिन लिंक",
+  "loginLinkNoBase": "तुमचा HAXcms सर्व्हर ज्या URL वर उत्तर देतो ती सुरुवातीला जोडा, किंवा --domain your-site.example सह पुन्हा चालवा",
+  "loginLinkDetails": "{user} म्हणून एकदाच साइन इन करते, {expires} पर्यंत ({minutes} मिनिटे).\nदुसरी लिंक तयार केल्यास ही रद्द होते. ही लिंक असलेले कोणीही साइट संपादित करू शकते, म्हणून ती चॅट किंवा तिकिटांमध्ये पेस्ट करू नका."
 }

@@ -663,5 +663,11 @@
   "aliasOfferName": "Aliasnamn",
   "aliasOfferWhere": "Var ska aliaset sparas?",
   "aliasOfferUser": "Bara för mig ({file})",
-  "aliasOfferProject": "I projektfilen för den här mappen ({file})"
+  "aliasOfferProject": "I projektfilen för den här mappen ({file})",
+  "siteActionSiteLoginLink": "Skapa en engångslänk för inloggning (glömt lösenord)",
+  "cliOptTtl": "giltighetstid för en site:login-link (sekunder, eller 10m / 1h); standard 10m",
+  "cliOptUser": "HAXcms-konto för site:login-link (standard är webbplatsens administratör)",
+  "loginLinkTitle": "🔑 Engångslänk för inloggning",
+  "loginLinkNoBase": "Lägg till URL:en som din HAXcms-server svarar på före länken, eller kör igen med --domain your-site.example",
+  "loginLinkDetails": "Loggar in som {user} en gång, till {expires} ({minutes} min).\nOm du skapar en ny länk upphävs den här. Alla med länken kan redigera webbplatsen, så klistra inte in den i chattar eller ärenden."
 }
