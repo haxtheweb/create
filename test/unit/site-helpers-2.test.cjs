@@ -28,6 +28,7 @@ const {
   siteNodeOperations,
   siteItemsOptionsList,
   siteThemeList,
+  isValidSiteTheme,
   siteSkeletonList,
   withSiteThemeVariables,
 } = available ? siteModule : {};
@@ -380,6 +381,34 @@ test(
     const themes = await siteThemeList(false);
     assert.ok(Array.isArray(themes));
     assert.ok(!themes.some((t) => t.value === "custom-theme"));
+  },
+);
+
+test(
+  "isValidSiteTheme accepts installed hidden themes that the prompt does not list",
+  opts,
+  async () => {
+    const core = await siteThemeList(true);
+    const all = await siteThemeList(false);
+    const hidden = all.find((t) => !core.some((c) => c.value === t.value));
+    assert.ok(
+      hidden,
+      "expected at least one installed theme outside the prompt list",
+    );
+    assert.equal(await isValidSiteTheme(hidden.value), true);
+    assert.equal(await isValidSiteTheme(core[0].value), true);
+    assert.equal(await isValidSiteTheme("custom-theme"), true);
+  },
+);
+
+test(
+  "isValidSiteTheme rejects unknown or empty theme names",
+  opts,
+  async () => {
+    assert.equal(await isValidSiteTheme("not-a-real-theme-xyz"), false);
+    assert.equal(await isValidSiteTheme(""), false);
+    assert.equal(await isValidSiteTheme(undefined), false);
+    assert.equal(await isValidSiteTheme("__proto__"), false);
   },
 );
 
