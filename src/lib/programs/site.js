@@ -1399,6 +1399,10 @@ export function formatAgentOrientation(agent) {
 }
 
 export async function siteCommandDetected(commandRun) {
+  // operations on an existing site (site:theme, site:rebuild, node edits...)
+  // re-render managed files like service-worker.js, whose template calls
+  // Twig's PHP constant(); register it here too, not only on site creation
+  ensureTwigConstantFunction();
   let activeHaxsite = await systemStructureContext();
   let actionAssigned = false;
   // default to status unless already set so we don't issue a create in a create
@@ -5397,6 +5401,23 @@ export async function siteSkeletonList(asOptions = false) {
     });
   }
   return options;
+}
+
+/**
+ * Whether an explicitly requested theme can be used to create a site.
+ * The interactive prompt only lists common themes, but a theme named on
+ * purpose (e.g. --theme training-theme) is valid when it is installed at all,
+ * hidden or not, matching `site:theme` and the API's createSite.
+ */
+export async function isValidSiteTheme(themeKey) {
+  if (!themeKey || typeof themeKey !== "string") {
+    return false;
+  }
+  if (themeKey === "custom-theme") {
+    return true;
+  }
+  const themes = (await HAXCMS.getThemes()) || {};
+  return Object.prototype.hasOwnProperty.call(themes, themeKey);
 }
 
 export async function siteThemeList(coreOnly = true, directory = null) {

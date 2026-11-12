@@ -38,6 +38,7 @@ import {
   siteProcess,
   siteCommandDetected,
   siteThemeList,
+  isValidSiteTheme,
   siteSkeletonList,
   siteListOutput,
 } from "./lib/programs/site.js";
@@ -1574,10 +1575,13 @@ async function main() {
                 results.siteCreationMode !== "template" &&
                 commandRun.options.theme
               ) {
+                // the prompt lists common themes, but an explicitly named
+                // installed theme (hidden ones like training-theme too) is valid
                 if (
                   coreThemes.filter(
                     (item) => item.value === commandRun.options.theme,
-                  ).length === 0
+                  ).length === 0 &&
+                  !(await isValidSiteTheme(commandRun.options.theme))
                 ) {
                   program.error(color.red(t("cliThemeInvalid")));
                   process.exit(1);
