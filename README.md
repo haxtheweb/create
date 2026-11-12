@@ -83,7 +83,7 @@ Workflow and knowledge skills (media ingestion, OpenStax conversion, DDD design 
 HAX works with any AI coding agent. There are two install paths depending on your tool:
 
 ```bash
-# Warp / Oz / any agent — install the bundled interface skills
+# Any agent (Codex, Copilot, Warp and others) — install the bundled interface skills
 hax skills install --all
 
 # Claude Code — add the PRAW marketplace and install the onboarding plugin
