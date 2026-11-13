@@ -144,6 +144,31 @@ function readText(file) {
 }
 
 /**
+ * Whether a haxcms-php install is a HAXiam (haxiam-managed) deployment, by
+ * the same rule as HAXCMS::getDeploymentProfile(): an explicit
+ * deploymentProfile in _config/config.json wins; "iam" with no profile is
+ * haxiam-managed. Platform upgrades are never offered or run there.
+ */
+export function isHostManaged(root) {
+  let config = null;
+  try {
+    config = JSON.parse(readText(path.join(root, "_config", "config.json")));
+  } catch {
+    config = null;
+  }
+  if (!config || typeof config !== "object") {
+    return false;
+  }
+  if (
+    typeof config.deploymentProfile === "string" &&
+    config.deploymentProfile !== ""
+  ) {
+    return config.deploymentProfile.toLowerCase() === "haxiam-managed";
+  }
+  return !!config.iam;
+}
+
+/**
  * The HAXcms backend installed at `dir`, or null. Recognizes a haxcms-php
  * install root (system/backend/php plus a version file) and a haxcms-nodejs
  * package root.
@@ -172,6 +197,7 @@ export function detectPlatformInstall(dir) {
       root,
       version: version || "unknown",
       installMethod,
+      managed: isHostManaged(root),
     };
   }
   let pkg = null;
@@ -222,6 +248,7 @@ export function buildPlatformReport(install, release, advisories) {
     security: found.length > 0,
     advisories: found,
     installMethod: install.installMethod,
+    managed: !!install.managed,
     releaseUrl:
       release &&
       typeof release.html_url === "string" &&

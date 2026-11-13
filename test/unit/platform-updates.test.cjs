@@ -257,3 +257,46 @@ test("runPhpUpgrader runs the install's own script with php", () => {
   const noPhp = () => ({ status: null });
   assert.equal(runPhpUpgrader(install, "verify", {}, noPhp), 1);
 });
+
+test("HAXiam deployments are detected and never upgraded", async () => {
+  const { isHostManaged } = require("../../src/lib/platform-updates.js");
+  const {
+    platformCommandDetected,
+  } = require("../../src/lib/programs/platform.js");
+  const root = tmpdir();
+  fs.mkdirSync(path.join(root, "system/backend/php/lib"), { recursive: true });
+  fs.writeFileSync(path.join(root, "system/backend/php/lib/HAXCMS.php"), "");
+  fs.writeFileSync(path.join(root, ".version"), "26.8.1");
+  fs.mkdirSync(path.join(root, "_config"));
+  const config = path.join(root, "_config", "config.json");
+  assert.equal(isHostManaged(root), false);
+  for (const body of [
+    '{"deploymentProfile":"haxiam-managed"}',
+    '{"deploymentProfile":"HAXIAM-MANAGED"}',
+    '{"iam":true}',
+  ]) {
+    fs.writeFileSync(config, body);
+    assert.equal(isHostManaged(root), true, body);
+    assert.equal(detectPlatformInstall(root).managed, true, body);
+  }
+  fs.writeFileSync(
+    config,
+    '{"deploymentProfile":"self-hosted-multi-site","iam":true}',
+  );
+  assert.equal(isHostManaged(root), false);
+  // upgrade on a HAXiam deployment exits non-zero without running php
+  fs.writeFileSync(config, '{"iam":true}');
+  fs.mkdirSync(path.join(root, "scripts"));
+  fs.writeFileSync(
+    path.join(root, "scripts", "platform-upgrade.php"),
+    "<?php exit(0);",
+  );
+  const before = process.exitCode;
+  await platformCommandDetected({
+    command: "platform",
+    arguments: { action: "upgrade" },
+    options: { path: root, y: true },
+  });
+  assert.equal(process.exitCode, 1);
+  process.exitCode = before;
+});

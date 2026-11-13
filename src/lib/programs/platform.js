@@ -156,6 +156,21 @@ export async function platformCommandDetected(commandRun) {
     process.exitCode = 1;
     return null;
   }
+  if (install.managed) {
+    // HAXiam: the host manages HAXcms; no checks, no upgrades
+    if (isStructuredFormat(commandRun.options.format)) {
+      const report = buildPlatformReport(install, null, null);
+      writeData(
+        commandRun.options.format === "yaml"
+          ? dump(report)
+          : JSON.stringify(report, null, 2),
+      );
+    } else {
+      p.log.info(t("platformHostManaged"));
+    }
+    process.exitCode = UPGRADER_ACTIONS.includes(action) ? 1 : 0;
+    return null;
+  }
   if (UPGRADER_ACTIONS.includes(action)) {
     if (
       install.backend === "haxcms-php" &&
@@ -223,7 +238,8 @@ export async function platformStartNotice(dir, refresh) {
   try {
     const installs = [];
     const local = detectPlatformInstall(dir);
-    if (local) {
+    // a HAXiam deployment's host handles updates: no notice for it
+    if (local && !local.managed) {
       installs.push(local);
     }
     const bundled = bundledNodeInstall();

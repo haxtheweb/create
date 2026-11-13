@@ -792,5 +792,6 @@
   "cliOptPlatformTo": "Version to upgrade to (default: latest release)",
   "cliOptPlatformDryRun": "Show what would change; change nothing",
   "cliOptPlatformOverwriteModified": "Replace code files that were changed by hand (they are backed up first)",
-  "cliOptPlatformAllowDowngrade": "Allow a version at or below the installed one"
+  "cliOptPlatformAllowDowngrade": "Allow a version at or below the installed one",
+  "platformHostManaged": "This is a HAXiam (haxiam-managed) deployment. Updates are managed by your host; platform upgrades are not allowed here."
 }
