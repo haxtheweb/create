@@ -24,6 +24,26 @@ const WORKER = path.join(
   "audit-ssr-worker.mjs",
 );
 
+// The worker renders through the SSR render kit shipped in
+// @haxtheweb/haxcms-nodejs (dist/lib/ssr). Until a release with the kit is
+// installed next to the CLI the worker can only report missing-ssr-kit, so
+// the end-to-end render test waits for it rather than failing.
+const SSR_KIT = path.join(
+  __dirname,
+  "..",
+  "..",
+  "node_modules",
+  "@haxtheweb",
+  "haxcms-nodejs",
+  "dist",
+  "lib",
+  "ssr",
+  "index.mjs",
+);
+const kitSkip = fs.existsSync(SSR_KIT)
+  ? false
+  : "needs a @haxtheweb/haxcms-nodejs release with the SSR render kit";
+
 function fixtureRoot() {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "hax-ssr-worker-"));
   const el = (name, code) => {
@@ -100,7 +120,7 @@ function runWorker(payload) {
 
 test(
   "audit-ssr-worker renders a plain element, reports failures and fallbacks",
-  { timeout: 60000 },
+  { timeout: 60000, skip: kitSkip },
   async () => {
     const root = fixtureRoot();
     try {

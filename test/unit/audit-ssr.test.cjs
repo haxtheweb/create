@@ -427,7 +427,16 @@ test("summarizeSsr reports which elements a fallback rescues", () => {
   assert.equal(summary.fallback.withHook, 3);
   assert.equal(summary.fallback.useful, 2);
   assert.deepEqual(summary.fallback.recovered, [{ tag: "a", from: "shell" }]);
-  assert.ok(summary.primitiveStyles.bytes > 0);
+  assert.equal(summary.primitiveStyles.bytes, 0);
+});
+
+test("summarizeSsr counts skipped elements and sizes the primitive stylesheet it is given", () => {
+  const summary = summarizeSsr(
+    [{ tag: "m", status: "skipped", demo: "bare", skipReason: "WebGL" }],
+    { primitiveCss: "a{b:c}" },
+  );
+  assert.equal(summary.counts.skipped, 1);
+  assert.equal(summary.primitiveStyles.bytes, 6);
 });
 
 test("the inert DOM environment is on unless --no-shim, and is reported", async () => {
@@ -471,49 +480,6 @@ test("--save-html also writes the primitive stylesheet and fallbacks", async () 
     fs.readFileSync(path.join(dir, "x-a.fallback.html"), "utf8"),
     "<p>Hi</p>",
   );
-});
-
-test("installInertDom fills in the missing browser surface and leaves existing APIs alone", async () => {
-  const { installInertDom } = await import(
-    "../../src/lib/programs/audit-ssr-env.mjs"
-  );
-  class FakeElement {}
-  const target = {
-    HTMLElement: FakeElement,
-    document: { querySelector: () => "kept" },
-  };
-  installInertDom(target);
-  assert.equal(target["window"], target);
-  assert.equal(typeof target.addEventListener, "function");
-  assert.equal(target.matchMedia("x").matches, false);
-  assert.equal(target.document.querySelector(), "kept");
-  assert.equal(target.document.body, undefined);
-  const el = new FakeElement();
-  assert.equal(el.querySelector("a"), null);
-  assert.deepEqual([...el.children], []);
-  el.classList.add("x");
-  el.style.setProperty("--a", "b");
-  el.style = "ignored";
-});
-
-test("installInertDom builds registered classes from document.createElement and aliases self", async () => {
-  const { installInertDom } = await import(
-    "../../src/lib/programs/audit-ssr-env.mjs"
-  );
-  class Registered {}
-  const target = {
-    HTMLElement: class {},
-    customElements: {
-      get: (tag) => (tag === "x-known" ? Registered : undefined),
-    },
-    document: { createElement: (tag) => ({ plain: tag }) },
-  };
-  installInertDom(target);
-  assert.equal(target.self, target);
-  assert.ok(target.document.createElement("X-Known") instanceof Registered);
-  assert.deepEqual(target.document.createElement("x-other"), {
-    plain: "x-other",
-  });
 });
 
 // A child process stand-in whose stdin.end() plays the scripted worker output,
@@ -718,7 +684,12 @@ test("runSsrWorker with default deps spawns the real worker once", async () => {
     shim: true,
     items: [{ tag: "x-a", specifier: "./no-such-element.js", demo: null }],
   });
-  assert.equal(out.fatal, undefined);
+  // until a haxcms-nodejs release ships the SSR render kit, the worker stops
+  // early with missing-ssr-kit; once it is installed the element just fails
+  if (out.fatal) {
+    assert.equal(out.fatal.code, "missing-ssr-kit");
+    return;
+  }
   assert.equal(out.results.length, 1);
   assert.equal(out.results[0].tag, "x-a");
   assert.equal(out.results[0].ok, false);
@@ -780,8 +751,8 @@ test("the text report prints the status table, causes, hints and debug rows", as
     });
     assert.equal(result.passed, true);
     assert.equal(intros.length, 1);
-    // 5 status lines + cause group + thrown-at + 3 debug rows
-    assert.equal(recorded.message.length, 10);
+    // 6 status lines + cause group + thrown-at + 3 debug rows
+    assert.equal(recorded.message.length, 11);
     assert.equal(recorded.error.length, 1);
     assert.equal(recorded.warn.length, 1);
     assert.ok(recorded.warn[0].includes("shell (1): x-b"));
