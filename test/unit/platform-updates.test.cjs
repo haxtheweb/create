@@ -194,3 +194,66 @@ test("loadPlatformData refreshes weekly and otherwise reads the cache", async ()
   });
   assert.equal(calls, 4);
 });
+
+const {
+  upgraderArguments,
+  runPhpUpgrader,
+} = require("../../src/lib/programs/platform.js");
+
+test("upgraderArguments passes only known flags and a release version", () => {
+  assert.deepEqual(
+    upgraderArguments("upgrade", {
+      to: "26.9.0",
+      dryRun: true,
+      overwriteModified: true,
+      allowDowngrade: true,
+      y: true,
+      format: "json",
+      path: "/elsewhere",
+    }),
+    [
+      path.join("scripts", "platform-upgrade.php"),
+      "upgrade",
+      "--to",
+      "26.9.0",
+      "--dry-run",
+      "--overwrite-modified",
+      "--allow-downgrade",
+      "--y",
+    ],
+  );
+  assert.equal(upgraderArguments("upgrade", { to: "26.9.0; rm -rf /" }), null);
+  assert.deepEqual(upgraderArguments("verify", { format: "json", y: true }), [
+    path.join("scripts", "platform-upgrade.php"),
+    "verify",
+    "--json",
+  ]);
+  assert.deepEqual(upgraderArguments("rollback", { y: true }), [
+    path.join("scripts", "platform-upgrade.php"),
+    "rollback",
+    "--y",
+  ]);
+});
+
+test("runPhpUpgrader runs the install's own script with php", () => {
+  const root = tmpdir();
+  const install = { backend: "haxcms-php", root, installMethod: "php-archive" };
+  const calls = [];
+  const spawn = (cmd, args, opts) => {
+    calls.push({ cmd, args, opts });
+    return { status: args[0] === "--version" ? 0 : 3 };
+  };
+  // no upgrader script in this install: nothing runs
+  assert.equal(runPhpUpgrader(install, "upgrade", {}, spawn), 1);
+  assert.equal(calls.length, 0);
+  fs.mkdirSync(path.join(root, "scripts"));
+  fs.writeFileSync(path.join(root, "scripts", "platform-upgrade.php"), "<?php");
+  assert.equal(runPhpUpgrader(install, "upgrade", { y: true }, spawn), 3);
+  assert.equal(calls[1].cmd, "php");
+  assert.deepEqual(calls[1].args.slice(1), ["upgrade", "--y"]);
+  assert.equal(calls[1].opts.cwd, root);
+  assert.equal(calls[1].opts.stdio, "inherit");
+  // no php on PATH
+  const noPhp = () => ({ status: null });
+  assert.equal(runPhpUpgrader(install, "verify", {}, noPhp), 1);
+});

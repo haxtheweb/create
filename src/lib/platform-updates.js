@@ -329,6 +329,8 @@ export function platformUpgradeCommands(report) {
     return [];
   }
   switch (report.installMethod) {
+    case "php-archive":
+      return ["php scripts/platform-upgrade.php upgrade"];
     case "php-git":
     case "node-source":
       return [`git fetch --tags && git checkout ${version}`];

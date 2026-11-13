@@ -577,9 +577,25 @@ async function main() {
       if (cmdOptions.format) {
         commandRun.options.format = cmdOptions.format;
       }
+      for (const key of [
+        "to",
+        "dryRun",
+        "overwriteModified",
+        "allowDowngrade",
+        "y",
+      ]) {
+        if (cmdOptions[key]) {
+          commandRun.options[key] = cmdOptions[key];
+        }
+      }
     })
     .option("--path <char>", t("cliOptPlatformPath"))
     .option("--format <char>", t("cliOptFormat"))
+    .option("--to <char>", t("cliOptPlatformTo"))
+    .option("--dry-run", t("cliOptPlatformDryRun"))
+    .option("--overwrite-modified", t("cliOptPlatformOverwriteModified"))
+    .option("--allow-downgrade", t("cliOptPlatformAllowDowngrade"))
+    .option("--y", t("cliOptYes"))
     .version(packageJson.version);
 
   // haxtheweb/issues#3228: machine-readable command manifest + shell completion
