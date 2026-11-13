@@ -60,6 +60,11 @@ import {
 } from "./lib/cli-manifest.js";
 import { skillsCommandDetected, skillsActions } from "./lib/programs/skills.js";
 import {
+  platformCommandDetected,
+  platformActions,
+  platformStartNotice,
+} from "./lib/programs/platform.js";
+import {
   camelToDash,
   exec,
   runCommand,
@@ -124,6 +129,7 @@ function cliManifest() {
       site: siteActions(),
       wc: webcomponentActions(),
       skills: skillsActions(),
+      platform: platformActions,
       audit: Object.keys(auditTypes).map((type) => ({
         value: type,
         label: t(auditTypes[type]),
@@ -544,6 +550,52 @@ async function main() {
     .option("--no-i", t("cliOptNoI"))
     .option("--format <char>", t("cliOptFormat"))
     .option("--quiet", t("cliOptQuiet"))
+    .version(packageJson.version);
+
+  // haxtheweb/issues#1768: update awareness for a HAXcms install
+  let strPlatformActions = "";
+  platformActions.forEach((action) => {
+    strPlatformActions += `${action.value} - ${action.label}` + "\n\r";
+  });
+  program
+    .command("platform")
+    .description(t("cliCmdPlatform"))
+    .argument(
+      "[action]",
+      t("cliArgPlatformAction") + "\n\r" + strPlatformActions,
+    )
+    .action((action, cmdOptions = {}) => {
+      commandRun = {
+        command: "platform",
+        arguments: { action: action || "status" },
+        options: {},
+      };
+      // these only exist on the platform subcommand
+      if (cmdOptions.path) {
+        commandRun.options.path = cmdOptions.path;
+      }
+      if (cmdOptions.format) {
+        commandRun.options.format = cmdOptions.format;
+      }
+      for (const key of [
+        "to",
+        "dryRun",
+        "overwriteModified",
+        "allowDowngrade",
+        "y",
+      ]) {
+        if (cmdOptions[key]) {
+          commandRun.options[key] = cmdOptions[key];
+        }
+      }
+    })
+    .option("--path <char>", t("cliOptPlatformPath"))
+    .option("--format <char>", t("cliOptFormat"))
+    .option("--to <char>", t("cliOptPlatformTo"))
+    .option("--dry-run", t("cliOptPlatformDryRun"))
+    .option("--overwrite-modified", t("cliOptPlatformOverwriteModified"))
+    .option("--allow-downgrade", t("cliOptPlatformAllowDowngrade"))
+    .option("--y", t("cliOptYes"))
     .version(packageJson.version);
 
   // haxtheweb/issues#3228: machine-readable command manifest + shell completion
@@ -976,6 +1028,11 @@ async function main() {
     siteListOutput(commandRun, process.cwd());
     process.exit(0);
   }
+  // a HAXcms install here (or the one `hax serve` uses) that is behind or
+  // missing a security fix gets a notice on start; GitHub is asked weekly
+  if (commandRun.command === "start" && !commandRun.options.quiet) {
+    await platformStartNotice(process.cwd(), timeSince.days > 7);
+  }
   // test for updating to latest or just run the command
   if (commandRun.command === "webcomponent" && commandRun.options.search) {
     await elementsSearchCommand(commandRun);
@@ -999,6 +1056,9 @@ async function main() {
     await partyCommandDetected(commandRun);
   } else if (commandRun.command === "skills") {
     await skillsCommandDetected(commandRun);
+  } else if (commandRun.command === "platform") {
+    await platformCommandDetected(commandRun);
+    process.exit(process.exitCode || 0);
   }
   // CLI works within context of the site if one is detected, otherwise we can do other things
   else if (await systemStructureContext()) {
