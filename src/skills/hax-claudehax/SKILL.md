@@ -116,6 +116,7 @@ When operating outside the `/hax` slash command, use the HAX CLI directly:
 - `hax skills list` — List bundled agent skills
 - `hax skills install <name|--all>` — Install bundled skills into `.agents/skills/`
 - `hax update` — Update HAX CLI
+- `hax platform status` — HAXcms install vs latest release and security advisories (`--path`, `--format json`); `hax platform upgrade|verify|rollback` for haxcms-php installs (never on HAXiam deployments)
 
 **Automation flags** (always use when scripting to prevent interruptions):
 
