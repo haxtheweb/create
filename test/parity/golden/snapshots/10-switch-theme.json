@@ -1,0 +1,70 @@
+{
+  "manifest": {
+    "id": "SITE_ID",
+    "title": "SITE_NAME",
+    "author": "",
+    "description": "Parity test site",
+    "license": "by-sa",
+    "metadata": {
+      "author": {},
+      "site": {
+        "name": "SITE_NAME",
+        "logo": "assets/banner.jpg",
+        "settings": {
+          "lang": "en-US",
+          "publishPagesOn": true,
+          "canonical": true,
+          "pathauto": true
+        },
+        "git": {
+          "vendor": "github",
+          "branch": "gh-pages"
+        }
+      },
+      "theme": {
+        "element": "polaris-flex-theme",
+        "path": "@haxtheweb/polaris-theme/lib/polaris-flex-theme.js",
+        "name": "Polaris Flex",
+        "thumbnail": "@haxtheweb/haxcms-elements/lib/theme-screenshots/theme-polaris-flex-theme-thumb.jpg",
+        "description": "Start with a blank site using the Polaris Flex",
+        "category": [
+          "Website"
+        ],
+        "hidden": false,
+        "priority": -1,
+        "terrible": false,
+        "supportedPalettes": null,
+        "variables": {},
+        "regions": {}
+      },
+      "node": {
+        "fields": {}
+      },
+      "platform": {
+        "audience": "expert",
+        "features": {},
+        "allowedBlocks": []
+      }
+    },
+    "items": {
+      "L0": {
+        "id": "L0",
+        "indent": 0,
+        "location": "pages/L0/index.html",
+        "slug": "welcome",
+        "order": 0,
+        "parent": null,
+        "title": "Welcome",
+        "description": "",
+        "metadata": {}
+      }
+    },
+    "location": "<sites>/SITE_NAME/index.html"
+  },
+  "sequence": [
+    "L0"
+  ],
+  "pages": {
+    "L0": "<p>\n    To get started, hit the edit pencil on the side.\n    Now this content is editable in place so select and delete it to get started!\n    If you need to learn more about the HAX editor or HAXcms check out <a href=\"https://haxtheweb.org/ux-concepts\" target=\"_blank\" rel=\"noopener noreferrer\">HAXTheWeb.org</a>!\n</p>"
+  }
+}

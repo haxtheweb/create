@@ -110,6 +110,49 @@ variable; flags win.
     snapshots/<leg>/<op>.json   normalized snapshots for ops 0..--snapshots
 ```
 
+## Golden snapshots
+
+The sequences compare legs with each other, so a change that every leg makes
+the same wrong way goes unnoticed. The golden suite
+([haxtheweb/issues#3332](https://github.com/haxtheweb/issues/issues/3332))
+compares every leg with a reviewed, committed snapshot instead.
+
+Each case in [`golden/cases.cjs`](golden/cases.cjs) starts from a fresh site,
+runs its steps (the same op shape as `ops.cjs`, through the same legs) and
+normalizes the result the same way, with each run's site name mapped to
+`SITE_NAME`. The result must equal [`golden/snapshots/<id>.json`](golden/snapshots)
+on every leg. Case ids use the numbering of the 50-operation list in the
+"HAX Golden Snapshot Parity Operations" doc. Cases marked `api` run on nodejs and php only,
+because one of their steps has no CLI command.
+
+```bash
+# compare, report-only (what the nightly does)
+npm run test:parity:golden -- --nodejs ../haxcms-nodejs --php ../haxcms-php
+
+# release gate: exit 1 when any leg does not match
+npm run test:parity:golden -- --fail-on-diff
+
+# after an intentional output change, or for a new case: rewrite the
+# snapshots from the nodejs leg, review the git diff, commit it
+npm run test:parity:golden -- --update-golden --cases 26-title-and-slug
+```
+
+`--update-golden` still compares php and the CLI against the snapshot it just
+wrote, so a leg that disagrees is reported, not written into the golden file.
+A step that fails (HTTP 400+, CLI exit code) fails its case. Results go to
+`<out>/golden/results.json` and `<out>/summary.md`.
+
+| Flag              | Environment variable       | Meaning                                   |
+| ----------------- | -------------------------- | ----------------------------------------- |
+| `--golden`        | `HAX_PARITY_GOLDEN`        | run the golden suite instead of sequences |
+| `--update-golden` | `HAX_PARITY_UPDATE_GOLDEN` | rewrite snapshots (implies `--golden`)    |
+| `--fail-on-diff`  | `HAX_PARITY_FAIL_ON_DIFF`  | exit 1 when any case does not match       |
+| `--cases`         | `HAX_PARITY_CASES`         | comma-separated case ids (default: all)   |
+
+To add a case: append it to `golden/cases.cjs`, run with
+`--update-golden --cases <id>`, check the new snapshot shows what the case
+claims, and commit both.
+
 ## Accepted differences
 
 [`normalize.cjs`](normalize.cjs) lists the differences that come from how a
@@ -160,6 +203,8 @@ as recorded. The agent workflow is the
 | `normalize.cjs`  | accepted differences                                          |
 | `summary.cjs`    | markdown report                                               |
 | `verify.cjs`     | agent-leg checker                                             |
+| `golden.cjs`     | golden snapshot suite (`--golden`)                            |
+| `golden/`        | golden cases (`cases.cjs`) and their snapshots                |
 | `boot-node.cjs`  | boots haxcms-nodejs with its own e2e runtime                  |
 | `php-router.php` | `php -S` router matching haxcms-php's web server rules        |
 | `config.cjs`     | flags, environment variables and defaults                     |

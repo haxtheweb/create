@@ -6,6 +6,7 @@ name: parity-nightly
 #
 #   sequence A  nodejs + php + CLI, ops the CLI can express
 #   sequence B  nodejs + php, every write op the site API has
+#   golden      every leg against the committed snapshots in test/parity/golden/
 #
 # After the sequences, every leg's site is checked against the site folder
 # contract (haxtheweb/issues#3351, test/contract/README.md) and each
@@ -127,6 +128,15 @@ jobs:
         # exits non-zero only when the harness crashes; divergences are data
         working-directory: create
         run: node test/parity/parity.cjs --seq A,B
+
+      # Every leg compared to the reviewed snapshots in test/parity/golden/
+      # (haxtheweb/issues#3332). Report-only here: no --fail-on-diff, so a
+      # mismatch goes to the job summary and never fails the nightly. The
+      # release-candidate gate runs the same suite with --fail-on-diff.
+      - name: Golden snapshots (report-only)
+        if: always()
+        working-directory: create
+        run: node test/parity/parity.cjs --golden --out "$HAX_PARITY_OUT/golden-suite"
 
       # Each leg has just made a site and run every op on it, so it must be a
       # complete site folder with nothing retired and nothing unknown. Findings
