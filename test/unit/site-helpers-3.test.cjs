@@ -386,6 +386,50 @@ test("pageBreakForItem echoes state and escapes values", opts, () => {
   );
 });
 
+test(
+  "applyNodeEdits refuses a --move that is not a direction",
+  opts,
+  async () => {
+    await assert.rejects(
+      () =>
+        applyNodeEdits(
+          fakeSite(),
+          fakePage(),
+          { move: "sideways" },
+          { options: {} },
+        ),
+      /--move/,
+    );
+  },
+);
+
+test(
+  "nodeEditRequests turns --move into the item operation, after a parent change",
+  opts,
+  () => {
+    const page = { id: "item-2", parent: "item-1", order: 4 };
+    for (const [direction, operation] of [
+      ["up", "moveUp"],
+      ["down", "moveDown"],
+      ["indent", "indent"],
+      ["outdent", "outdent"],
+    ]) {
+      assert.deepEqual(nodeEditRequests(page, { move: direction }, []), [
+        {
+          fields: ["move"],
+          route: "v1/items/item-2",
+          body: { operation: operation },
+        },
+      ]);
+    }
+    const both = nodeEditRequests(page, { parent: null, move: "up" }, []);
+    assert.deepEqual(
+      both.map((request) => request.body.operation),
+      ["setParent", "moveUp"],
+    );
+  },
+);
+
 test("nodeEditRequests keeps the parent for an order-only edit", opts, () => {
   const requests = nodeEditRequests(
     { id: "item-2", parent: "item-1", order: 4 },

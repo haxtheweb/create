@@ -2046,7 +2046,7 @@ export async function siteCommandDetected(commandRun) {
               console.error(
                 t("siteNodeEditNothingToChange", {
                   flags:
-                    "--title, --slug, --content, --description, --tags, --parent, --order, --published, --hide-in-menu, --theme",
+                    "--title, --slug, --content, --description, --tags, --parent, --order, --move, --published, --hide-in-menu, --theme",
                 }),
               );
               process.exitCode = 1;
@@ -2091,6 +2091,15 @@ export async function siteCommandDetected(commandRun) {
                   propValue = await p.confirm({
                     message: `${nodeProp}:`,
                     initialValue: Boolean(val),
+                  });
+                }
+                // a direction, picked from the four the backend knows
+                else if (nodeProp === "move") {
+                  propValue = await p.select({
+                    message: `${nodeProp}:`,
+                    options: Object.keys(NODE_MOVE_OPERATIONS).map(
+                      (direction) => ({ value: direction, label: direction }),
+                    ),
                   });
                 }
                 // these have fixed possible values
@@ -4435,6 +4444,7 @@ export function nodeEditsFromOptions(options, titleWasProvided = true) {
     "published",
     "hideInMenu",
     "theme",
+    "move",
   ].forEach((field) => {
     if (typeof options[field] !== "undefined") {
       edits[field] = options[field];
@@ -4541,6 +4551,14 @@ export function pageBreakForItem(item, overrides = {}) {
   return `<page-break ${html}></page-break>`;
 }
 
+// --move <direction>: the item operation each direction runs
+export const NODE_MOVE_OPERATIONS = {
+  up: "moveUp",
+  down: "moveDown",
+  indent: "indent",
+  outdent: "outdent",
+};
+
 const NODE_EDIT_ITEM_OPERATIONS = [
   ["title", "setTitle"],
   ["slug", "setSlug"],
@@ -4627,6 +4645,14 @@ export function nodeEditRequests(page, edits, items = [], body = "") {
       body: { operation: "setParent", parent: parent, order: order },
     });
   }
+  // last, so a move is made from where --parent / --order just put the page
+  if (has("move")) {
+    requests.push({
+      fields: ["move"],
+      route: `v1/items/${page.id}`,
+      body: { operation: NODE_MOVE_OPERATIONS[edits.move] },
+    });
+  }
   return requests;
 }
 
@@ -4663,6 +4689,23 @@ export async function applyNodeEdits(activeHaxsite, page, edits, commandRun) {
       );
     }
     clean.order = order;
+  }
+  if (has("move")) {
+    const direction = String(clean.move === null ? "" : clean.move)
+      .trim()
+      .toLowerCase();
+    if (
+      !Object.prototype.hasOwnProperty.call(NODE_MOVE_OPERATIONS, direction)
+    ) {
+      throw new Error(
+        t("siteMoveInvalid", {
+          flag: "--move",
+          choices: Object.keys(NODE_MOVE_OPERATIONS).join(", "),
+          value: clean.move,
+        }),
+      );
+    }
+    clean.move = direction;
   }
   if (has("theme")) {
     if (clean.theme) {
@@ -4755,6 +4798,7 @@ export function siteNodeOperations(search = null) {
     { value: "order", label: t("siteNodeOpOrder") },
     { value: "theme", label: t("siteNodeOpTheme") },
     { value: "hideInMenu", label: t("siteNodeOpHideInMenu") },
+    { value: "move", label: t("siteNodeOpMove") },
   ];
   if (search) {
     for (const op of obj) {
