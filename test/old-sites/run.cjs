@@ -16,6 +16,13 @@
 // After every write the site on disk is checked: site.json parses, ids are
 // unique, every parent exists, every page file exists, and every page the
 // fixture made still holds its content (unless the op meant to change it).
+// Once a leg has upgraded a site and written to it, the folder must also
+// reach the managed level of the site folder contract (haxtheweb/issues#3351,
+// test/contract/README.md): everything a backend writes is there. Paths the
+// contract has retired stay where the old site had them and only count in
+// the step's detail. This needs a json-outline-schema checkout (--jos or
+// HAX_CONTRACT_JOS_REPO, default: beside this repo); without one the run
+// says so in its summary and skips those steps.
 //
 // Writes summary.md (and the GitHub job summary when GITHUB_STEP_SUMMARY is
 // set) and results.json to --out. Exits 1 when any check fails. Localhost
@@ -24,6 +31,11 @@ const { execFile, execFileSync } = require("node:child_process");
 const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
+
+const {
+  CONTRACT_IN_JOS,
+  runValidator,
+} = require("../contract/site-contract.cjs");
 
 const HERE = __dirname;
 const YEARS = JSON.parse(
@@ -60,6 +72,11 @@ const cfg = {
   ),
   out: path.resolve(
     args.out || process.env.HAX_OLD_SITES_OUT || "old-sites-results",
+  ),
+  jos: path.resolve(
+    args.jos ||
+      process.env.HAX_CONTRACT_JOS_REPO ||
+      path.join(HERE, "..", "..", "..", "json-outline-schema"),
   ),
   years: String(args.years || process.env.HAX_OLD_SITES_YEARS || "")
     .split(",")
@@ -218,6 +235,31 @@ class Recorder {
   }
 }
 
+// ---------- site folder contract ----------
+
+const CONTRACT_VALIDATOR = path.join(cfg.jos, "scripts", "validate.js");
+const hasContract = () => fs.existsSync(path.join(cfg.jos, CONTRACT_IN_JOS));
+
+/**
+ * The site folder must reach the managed level of the contract. Throws with
+ * the validator's errors when it does not; returns a one-line detail.
+ */
+function assertManagedSiteFolder(dir) {
+  const report = runValidator(CONTRACT_VALIDATOR, { level: "managed" }, dir);
+  if (!report.valid)
+    throw new Error(
+      `site folder reaches ${report.reached || "no level"}, not managed: ` +
+        report.errors
+          .slice(0, 12)
+          .map((e) => `${e.path}: ${e.message}`)
+          .join("; ") +
+        (report.errors.length > 12
+          ? `; and ${report.errors.length - 12} more`
+          : ""),
+    );
+  return `reaches managed; ${report.retired.length} retired path(s) kept, ${report.unclassified.length} file(s) outside the contract`;
+}
+
 function assert(cond, msg) {
   if (!cond) throw new Error(msg);
 }
@@ -369,6 +411,10 @@ async function cliLeg(fx, work, markers) {
     );
   });
   await rec.step("site:validate at the end", validate);
+  if (hasContract())
+    await rec.step("site folder contract: managed level", () =>
+      assertManagedSiteFolder(dir),
+    );
   return rec;
 }
 
@@ -739,6 +785,10 @@ async function nodejsLeg(fx, runtime, api, markers) {
   await rec.step("render after every write", () =>
     render(api, name, dir, "re-render"),
   );
+  if (hasContract())
+    await rec.step("site folder contract: managed level", () =>
+      assertManagedSiteFolder(dir),
+    );
   return rec;
 }
 
@@ -821,6 +871,17 @@ async function main() {
   const newest = Math.max(...fixtures.map((f) => parseInt(f.year, 10)));
   if (cfg.years.length === 0 && newest < thisYear) {
     const msg = `No fixture for ${thisYear} yet: add it to years.json and run \`node test/old-sites/generate/generate.cjs --year ${thisYear}\` (test/old-sites/README.md).`;
+    notes.push("**Warning:** " + msg);
+    if (process.env.GITHUB_ACTIONS)
+      console.log(`::warning title=old-sites::${msg}`);
+  }
+
+  if (hasContract()) {
+    notes.push(
+      `Site folder contract from json-outline-schema \`${refOf(cfg.jos)}\`.`,
+    );
+  } else {
+    const msg = `Site folder contract not checked: no ${CONTRACT_IN_JOS} under ${cfg.jos} (pass --jos <json-outline-schema checkout>).`;
     notes.push("**Warning:** " + msg);
     if (process.env.GITHUB_ACTIONS)
       console.log(`::warning title=old-sites::${msg}`);

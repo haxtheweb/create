@@ -101,6 +101,16 @@ After every write the site on disk is checked: `site.json` parses, ids are
 unique, parents exist, every page file exists, and every fixture page still
 holds its content unless the step meant to change it.
 
+Each leg ends by checking the site folder against the
+[site folder contract](../contract/README.md)
+([haxtheweb/issues#3351](https://github.com/haxtheweb/issues/issues/3351)):
+once upgraded and written to, a site from any year must reach the `managed`
+level, meaning every file a backend writes is there. Paths the contract has
+retired (`theme/`, `dat.json`, ...) stay where the old site had them and are
+only counted in the step's detail. This needs a json-outline-schema checkout
+(`--jos`, or `HAX_CONTRACT_JOS_REPO`, default: beside this repo); without one
+the summary carries a warning and the step is skipped.
+
 ```bash
 # haxcms-nodejs main beside create, built; the CLI linked to it
 (cd haxcms-nodejs && yarn install --frozen-lockfile && yarn run build)
@@ -108,7 +118,10 @@ holds its content unless the step meant to change it.
   && rm -rf node_modules/@haxtheweb/haxcms-nodejs \
   && ln -s ../../../haxcms-nodejs node_modules/@haxtheweb/haxcms-nodejs)
 
-node create/test/old-sites/run.cjs --nodejs haxcms-nodejs --years 2021,2026
+# json-outline-schema beside them, for the site folder contract step
+(cd json-outline-schema && npm ci --omit=dev --ignore-scripts)
+
+node create/test/old-sites/run.cjs --nodejs haxcms-nodejs --jos json-outline-schema --years 2021,2026
 ```
 
 | Flag       | Environment variable   | Default                            |
