@@ -1910,20 +1910,24 @@ export async function siteCommandDetected(commandRun) {
               },
             });
           }
+          // the title is stored trimmed, as the API and the editor store it,
+          // and a title of only spaces is no title
+          commandRun.options.title = String(commandRun.options.title).trim();
+          if (commandRun.options.title === "") {
+            throw new Error(t("siteTitleRequired"));
+          }
           let createNodeBody = {
             site: activeHaxsite,
             node: {
               title: commandRun.options.title,
             },
           };
-          if (commandRun.options.parent && commandRun.options.parent !== "") {
-            const parentNode = findNodeByIdOrSlug(
-              activeHaxsite,
-              commandRun.options.parent,
-            );
-            createNodeBody.parent = parentNode
-              ? parentNode.id
-              : commandRun.options.parent;
+          const addParent = resolveParentOption(
+            activeHaxsite,
+            commandRun.options.parent,
+          );
+          if (addParent) {
+            createNodeBody.parent = addParent;
           }
           if (
             commandRun.options.order &&
@@ -4027,12 +4031,15 @@ export async function siteCommandDetected(commandRun) {
           ? commandRun.options.title
           : t("siteGenerateDefaultTitle");
         let parent = null;
-        if (commandRun.options.parent && commandRun.options.parent !== "") {
-          const parentNode = findNodeByIdOrSlug(
+        try {
+          parent = resolveParentOption(
             activeHaxsite,
             commandRun.options.parent,
           );
-          parent = parentNode ? parentNode.id : commandRun.options.parent;
+        } catch (e) {
+          log(formatErrorForLogging(e), "error");
+          process.exitCode = 1;
+          break;
         }
         let order = nextSiblingOrder(activeHaxsite.manifest.items, parent);
         const created = [];
@@ -4241,6 +4248,24 @@ export function siteListOutput(commandRun, directory) {
 }
 
 // haxtheweb/issues#3127: order for a new node so it lands after its siblings
+// the id of the page a --parent option names, by id or slug. No option, an
+// empty one, or the word null is the top level (null). A parent the site
+// does not have is an error, the same as node:edit --parent.
+export function resolveParentOption(activeHaxsite, value) {
+  if (value === undefined || value === null) {
+    return null;
+  }
+  const wanted = String(value).trim();
+  if (wanted === "" || wanted === "null") {
+    return null;
+  }
+  const parentNode = findNodeByIdOrSlug(activeHaxsite, wanted);
+  if (!parentNode) {
+    throw new Error(t("siteParentNotFound", { parent: wanted }));
+  }
+  return parentNode.id;
+}
+
 export function nextSiblingOrder(items, parent = null) {
   let max = -1;
   (items || []).forEach((item) => {

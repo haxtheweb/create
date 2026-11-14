@@ -90,6 +90,7 @@ const {
   nextSiblingOrder,
   nodeEditRequests,
   pageBreakForItem,
+  resolveParentOption,
   siteThemeList,
 } = available ? siteModule : {};
 
@@ -630,6 +631,33 @@ test(
     writeCustomElements(dir, "{ not json");
     const values = (await siteThemeList(true, dir)).map((item) => item.value);
     assert.deepEqual(values, ["clean-one", "custom-theme"]);
+  },
+);
+
+// --- resolveParentOption ---
+
+test(
+  "resolveParentOption finds a parent by id or slug, and refuses one the site lacks",
+  opts,
+  () => {
+    const items = [
+      { id: "item-a", slug: "module-a", parent: null },
+      { id: "item-b", slug: "module-a/lesson", parent: "item-a" },
+    ];
+    const site = {
+      manifest: { items },
+      loadNode: (id) => items.find((item) => item.id === id) || null,
+    };
+    assert.equal(resolveParentOption(site, "item-a"), "item-a");
+    assert.equal(resolveParentOption(site, "module-a/lesson"), "item-b");
+    // no option, an empty one, and the word null are all the top level
+    assert.equal(resolveParentOption(site, undefined), null);
+    assert.equal(resolveParentOption(site, ""), null);
+    assert.equal(resolveParentOption(site, "null"), null);
+    assert.throws(
+      () => resolveParentOption(site, "no-such-page"),
+      /no-such-page/,
+    );
   },
 );
 
