@@ -90,6 +90,7 @@ const {
   nextSiblingOrder,
   nodeEditRequests,
   pageBreakForItem,
+  resolveParentOption,
   siteThemeList,
 } = available ? siteModule : {};
 
@@ -385,6 +386,50 @@ test("pageBreakForItem echoes state and escapes values", opts, () => {
   );
 });
 
+test(
+  "applyNodeEdits refuses a --move that is not a direction",
+  opts,
+  async () => {
+    await assert.rejects(
+      () =>
+        applyNodeEdits(
+          fakeSite(),
+          fakePage(),
+          { move: "sideways" },
+          { options: {} },
+        ),
+      /--move/,
+    );
+  },
+);
+
+test(
+  "nodeEditRequests turns --move into the item operation, after a parent change",
+  opts,
+  () => {
+    const page = { id: "item-2", parent: "item-1", order: 4 };
+    for (const [direction, operation] of [
+      ["up", "moveUp"],
+      ["down", "moveDown"],
+      ["indent", "indent"],
+      ["outdent", "outdent"],
+    ]) {
+      assert.deepEqual(nodeEditRequests(page, { move: direction }, []), [
+        {
+          fields: ["move"],
+          route: "v1/items/item-2",
+          body: { operation: operation },
+        },
+      ]);
+    }
+    const both = nodeEditRequests(page, { parent: null, move: "up" }, []);
+    assert.deepEqual(
+      both.map((request) => request.body.operation),
+      ["setParent", "moveUp"],
+    );
+  },
+);
+
 test("nodeEditRequests keeps the parent for an order-only edit", opts, () => {
   const requests = nodeEditRequests(
     { id: "item-2", parent: "item-1", order: 4 },
@@ -630,6 +675,33 @@ test(
     writeCustomElements(dir, "{ not json");
     const values = (await siteThemeList(true, dir)).map((item) => item.value);
     assert.deepEqual(values, ["clean-one", "custom-theme"]);
+  },
+);
+
+// --- resolveParentOption ---
+
+test(
+  "resolveParentOption finds a parent by id or slug, and refuses one the site lacks",
+  opts,
+  () => {
+    const items = [
+      { id: "item-a", slug: "module-a", parent: null },
+      { id: "item-b", slug: "module-a/lesson", parent: "item-a" },
+    ];
+    const site = {
+      manifest: { items },
+      loadNode: (id) => items.find((item) => item.id === id) || null,
+    };
+    assert.equal(resolveParentOption(site, "item-a"), "item-a");
+    assert.equal(resolveParentOption(site, "module-a/lesson"), "item-b");
+    // no option, an empty one, and the word null are all the top level
+    assert.equal(resolveParentOption(site, undefined), null);
+    assert.equal(resolveParentOption(site, ""), null);
+    assert.equal(resolveParentOption(site, "null"), null);
+    assert.throws(
+      () => resolveParentOption(site, "no-such-page"),
+      /no-such-page/,
+    );
   },
 );
 
