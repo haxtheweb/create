@@ -25,6 +25,7 @@ GitHub job summary, and `--out`).
 | -------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- | ------------------------------- | ------------- |
 | [`fresh-install-smoke`](../../.github/workflows/fresh-install-smoke.yml) nightly | the site `hax site` made, after a page was added                                                                    | `managed`, `--exhaustive`       | yes           |
 | [`old-sites-weekly`](../../.github/workflows/old-sites-weekly.yml)               | every yearly fixture in `test/old-sites`, as stored                                                                 | `content`                       | yes           |
+| [`old-sites-weekly`](../../.github/workflows/old-sites-weekly.yml)               | every yearly fixture after each leg (CLI, nodejs) upgraded it and wrote to it (`test/old-sites/run.cjs`)            | `managed`                       | yes           |
 | [`parity-nightly`](../../.github/workflows/parity-nightly.yml)                   | each leg's site (nodejs, php, cli) after the op sequences; each backend's contract copy against json-outline-schema | `managed`, `--exhaustive --new` | no            |
 
 `--exhaustive` fails on a file no contract entry covers. `--new` fails on a

@@ -227,7 +227,15 @@ function main(argv, env) {
   return failed && !options["report-only"] ? 1 : 0;
 }
 
-module.exports = { parseArgs, parityTargets, compareCopies, render, main };
+module.exports = {
+  CONTRACT_IN_JOS,
+  parseArgs,
+  parityTargets,
+  runValidator,
+  compareCopies,
+  render,
+  main,
+};
 
 if (require.main === module) {
   process.exitCode = main(process.argv.slice(2), process.env);

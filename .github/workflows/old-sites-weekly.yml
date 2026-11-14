@@ -12,7 +12,8 @@ name: old-sites-weekly
 #
 # Before any upgrade, every fixture as stored must still be a HAXcms site at
 # the content level of the site folder contract (haxtheweb/issues#3351,
-# test/contract/README.md).
+# test/contract/README.md). After a leg has upgraded a fixture and
+# written to it, the folder must reach the managed level.
 #
 # Built and served on this runner only; nothing talks to a live deployment.
 # A broken fixture fails the run (red) and the job summary says what broke.
@@ -42,6 +43,7 @@ jobs:
       HAX_OLD_SITES_NODEJS: ${{ github.workspace }}/haxcms-nodejs
       HAX_OLD_SITES_CLI: ${{ github.workspace }}/create/dist/create.js
       HAX_OLD_SITES_OUT: ${{ github.workspace }}/old-sites-results
+      HAX_CONTRACT_JOS_REPO: ${{ github.workspace }}/json-outline-schema
       GIT_AUTHOR_NAME: HAX old-site check
       GIT_AUTHOR_EMAIL: old-sites@example.invalid
       GIT_COMMITTER_NAME: HAX old-site check
