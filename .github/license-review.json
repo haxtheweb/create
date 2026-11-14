@@ -1,4 +1,85 @@
 {
   "about": "Dependencies a maintainer reviewed and accepted although scripts/license-check.mjs flags their license. Each entry: {\"name\": \"<npm package>\", \"license\": \"<exact license string the check reports>\", \"reason\": \"<why it is acceptable>\"}. See haxtheweb/issues#3262.",
-  "reviewed": []
+  "reviewed": [
+    {
+      "name": "@img/sharp-libvips-darwin-arm64",
+      "license": "LGPL-3.0-or-later",
+      "reason": "Prebuilt libvips binary that sharp (image resizing in @haxtheweb/haxcms-nodejs) loads as a separate, unmodified library the user can replace. LGPL is accepted for unmodified, replaceable dependencies."
+    },
+    {
+      "name": "@img/sharp-libvips-darwin-x64",
+      "license": "LGPL-3.0-or-later",
+      "reason": "Prebuilt libvips binary that sharp (image resizing in @haxtheweb/haxcms-nodejs) loads as a separate, unmodified library the user can replace. LGPL is accepted for unmodified, replaceable dependencies."
+    },
+    {
+      "name": "@img/sharp-libvips-linux-arm",
+      "license": "LGPL-3.0-or-later",
+      "reason": "Prebuilt libvips binary that sharp (image resizing in @haxtheweb/haxcms-nodejs) loads as a separate, unmodified library the user can replace. LGPL is accepted for unmodified, replaceable dependencies."
+    },
+    {
+      "name": "@img/sharp-libvips-linux-arm64",
+      "license": "LGPL-3.0-or-later",
+      "reason": "Prebuilt libvips binary that sharp (image resizing in @haxtheweb/haxcms-nodejs) loads as a separate, unmodified library the user can replace. LGPL is accepted for unmodified, replaceable dependencies."
+    },
+    {
+      "name": "@img/sharp-libvips-linux-ppc64",
+      "license": "LGPL-3.0-or-later",
+      "reason": "Prebuilt libvips binary that sharp (image resizing in @haxtheweb/haxcms-nodejs) loads as a separate, unmodified library the user can replace. LGPL is accepted for unmodified, replaceable dependencies."
+    },
+    {
+      "name": "@img/sharp-libvips-linux-riscv64",
+      "license": "LGPL-3.0-or-later",
+      "reason": "Prebuilt libvips binary that sharp (image resizing in @haxtheweb/haxcms-nodejs) loads as a separate, unmodified library the user can replace. LGPL is accepted for unmodified, replaceable dependencies."
+    },
+    {
+      "name": "@img/sharp-libvips-linux-s390x",
+      "license": "LGPL-3.0-or-later",
+      "reason": "Prebuilt libvips binary that sharp (image resizing in @haxtheweb/haxcms-nodejs) loads as a separate, unmodified library the user can replace. LGPL is accepted for unmodified, replaceable dependencies."
+    },
+    {
+      "name": "@img/sharp-libvips-linux-x64",
+      "license": "LGPL-3.0-or-later",
+      "reason": "Prebuilt libvips binary that sharp (image resizing in @haxtheweb/haxcms-nodejs) loads as a separate, unmodified library the user can replace. LGPL is accepted for unmodified, replaceable dependencies."
+    },
+    {
+      "name": "@img/sharp-libvips-linuxmusl-arm64",
+      "license": "LGPL-3.0-or-later",
+      "reason": "Prebuilt libvips binary that sharp (image resizing in @haxtheweb/haxcms-nodejs) loads as a separate, unmodified library the user can replace. LGPL is accepted for unmodified, replaceable dependencies."
+    },
+    {
+      "name": "@img/sharp-libvips-linuxmusl-x64",
+      "license": "LGPL-3.0-or-later",
+      "reason": "Prebuilt libvips binary that sharp (image resizing in @haxtheweb/haxcms-nodejs) loads as a separate, unmodified library the user can replace. LGPL is accepted for unmodified, replaceable dependencies."
+    },
+    {
+      "name": "@img/sharp-wasm32",
+      "license": "Apache-2.0 AND LGPL-3.0-or-later AND MIT",
+      "reason": "sharp's prebuilt binary for this platform, which bundles the LGPL libvips library unmodified alongside sharp's own Apache-2.0 code; the library stays replaceable. LGPL is accepted for unmodified, replaceable dependencies."
+    },
+    {
+      "name": "@img/sharp-win32-arm64",
+      "license": "Apache-2.0 AND LGPL-3.0-or-later",
+      "reason": "sharp's prebuilt binary for this platform, which bundles the LGPL libvips library unmodified alongside sharp's own Apache-2.0 code; the library stays replaceable. LGPL is accepted for unmodified, replaceable dependencies."
+    },
+    {
+      "name": "@img/sharp-win32-ia32",
+      "license": "Apache-2.0 AND LGPL-3.0-or-later",
+      "reason": "sharp's prebuilt binary for this platform, which bundles the LGPL libvips library unmodified alongside sharp's own Apache-2.0 code; the library stays replaceable. LGPL is accepted for unmodified, replaceable dependencies."
+    },
+    {
+      "name": "@img/sharp-win32-x64",
+      "license": "Apache-2.0 AND LGPL-3.0-or-later",
+      "reason": "sharp's prebuilt binary for this platform, which bundles the LGPL libvips library unmodified alongside sharp's own Apache-2.0 code; the library stays replaceable. LGPL is accepted for unmodified, replaceable dependencies."
+    },
+    {
+      "name": "caniuse-lite",
+      "license": "CC-BY-4.0",
+      "reason": "Browser support data (CC-BY-4.0), used only by build tooling (browserslist) at development time; not shipped in the CLI's runtime output. Attribution is kept in the package."
+    },
+    {
+      "name": "spdx-exceptions",
+      "license": "CC-BY-3.0",
+      "reason": "SPDX license exception list (CC-BY-3.0 data file), used only by development tooling that parses license expressions; not shipped in the CLI's runtime output."
+    }
+  ]
 }
