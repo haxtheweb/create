@@ -97,8 +97,6 @@ jobs:
           ln -s "$HAX_OLD_SITES_NODEJS" node_modules/@haxtheweb/haxcms-nodejs
           node -e 'console.log("CLI uses haxcms-nodejs at " + require("fs").realpathSync(require.resolve("@haxtheweb/haxcms-nodejs/package.json")))'
 
-      # Skipped (with a note in the job summary) until the contract is on
-      # json-outline-schema's default branch.
       - name: Fixtures as stored are HAXcms sites (content level)
         working-directory: create
         run: |

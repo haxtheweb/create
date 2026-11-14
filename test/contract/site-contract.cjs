@@ -129,9 +129,8 @@ function compareCopies(josRepo, list) {
 
 const cell = (text) => String(text).replace(/\|/g, "\\|").replace(/\s+/g, " ");
 
-function render(options, sites, copies, note) {
+function render(options, sites, copies) {
   const lines = ["## Site folder contract", ""];
-  if (note) return lines.concat([note, ""]).join("\n");
   const asked =
     options.level +
     (options.exhaustive ? ", exhaustive" : "") +
@@ -194,20 +193,11 @@ function main(argv, env) {
   };
   const josRepo = path.resolve(options.jos);
   const validator = path.join(josRepo, "scripts", "validate.js");
-  // The contract reaches json-outline-schema's default branch with
-  // https://github.com/haxtheweb/json-outline-schema/pull/8. Until a checkout
-  // has it there is nothing to check against; say so instead of failing.
-  // Remove this guard once that pull request is merged.
   if (!fs.existsSync(path.join(josRepo, CONTRACT_IN_JOS))) {
-    emit(
-      render(
-        options,
-        [],
-        [],
-        `Skipped: \`${CONTRACT_IN_JOS}\` is not in the json-outline-schema checkout yet (haxtheweb/issues#3351).`,
-      ),
+    console.error(
+      `no ${CONTRACT_IN_JOS} in ${josRepo}: point --jos at a json-outline-schema checkout`,
     );
-    return 0;
+    return 2;
   }
   const targets = options.folders.map((dir) => ({ label: dir, dir }));
   if (options["parity-out"])
@@ -230,7 +220,7 @@ function main(argv, env) {
     );
     return 2;
   }
-  emit(render(options, sites, copies, ""));
+  emit(render(options, sites, copies));
   const failed =
     sites.some((s) => !s.report.valid) ||
     copies.some((c) => c.state !== "same");
