@@ -152,8 +152,7 @@ jobs:
       # a complete HAXcms site folder: every file a backend writes, and no file
       # the contract does not know. Retired paths only warn here, because this
       # job installs the published haxcms-nodejs release, which can still write
-      # paths the default branch has dropped. Skipped (with a note in the job
-      # summary) until the contract is on json-outline-schema's default branch.
+      # paths the default branch has dropped.
       - name: Checkout json-outline-schema (site folder contract)
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:

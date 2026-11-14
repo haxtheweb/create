@@ -59,9 +59,8 @@ node create/test/contract/site-contract.cjs --jos json-outline-schema \
 
 `--jos` defaults to a `json-outline-schema` checkout beside this repo, or
 `HAX_CONTRACT_JOS_REPO`. Exit code: 0 when everything conforms (or
-`--report-only`), 1 when something does not, 2 on a usage error.
+`--report-only`), 1 when something does not, 2 on a usage error (including a
+`--jos` folder that has no contract).
 
-Until the contract is on json-outline-schema's default branch, a checkout does
-not have it; the script then reports "Skipped" and exits 0.
 `test/unit/site-contract-check.test.cjs` covers the script itself with a
 stand-in validator.

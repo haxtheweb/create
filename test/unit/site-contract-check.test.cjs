@@ -127,11 +127,11 @@ test("--report-only reports the failure and exits 0", () => {
   assert.match(fs.readFileSync(out, "utf8"), /\*\*does not conform\*\*/);
 });
 
-test("a checkout without the contract is skipped, not failed", () => {
-  const jos = standInJos("jos-before", { withContract: false });
-  const result = run(["--jos", jos, folder("site-before", ["bad"])]);
-  assert.equal(result.status, 0);
-  assert.match(result.stdout, /Skipped: .*haxcms-site-contract\.json/);
+test("a checkout without the contract is a usage error, never a pass", () => {
+  const jos = standInJos("jos-without", { withContract: false });
+  const result = run(["--jos", jos, folder("site-without")]);
+  assert.equal(result.status, 2);
+  assert.match(result.stderr, /no schema.haxcms-site-contract\.json in /);
 });
 
 test("nothing to check is a usage error", () => {
