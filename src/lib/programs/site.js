@@ -854,6 +854,32 @@ function encodeSlugPathForLlmsFull(slug = "") {
  * Build llms-full.txt for a site directory, or return null when the site is
  * private or has no readable site.json.
  */
+/**
+ * @description The readable text of a page's HTML: no markup, script or
+ * style content, a blank line after each block and a line break for <br>.
+ * The HTML is parsed, so text that only looks like a tag once other tags are
+ * removed stays text.
+ * @param {string} html page HTML
+ * @returns {string}
+ */
+export function htmlToPageText(html) {
+  const root = parse(String(html || ""));
+  root.querySelectorAll("script, style").forEach((el) => {
+    el.replaceWith(" ");
+  });
+  root.querySelectorAll("br").forEach((el) => {
+    el.replaceWith("\n");
+  });
+  root
+    .querySelectorAll(
+      "p, div, h1, h2, h3, h4, h5, h6, li, section, article, blockquote",
+    )
+    .forEach((el) => {
+      el.insertAdjacentHTML("afterend", "\n\n");
+    });
+  return root.rawText.replace(/[ \t]+/g, " ").replace(/\n{3,}/g, "\n\n");
+}
+
 export function buildStaticLlmsFull(siteDirectory) {
   let manifest;
   try {
@@ -939,14 +965,7 @@ export function buildStaticLlmsFull(siteDirectory) {
         fs.existsSync(htmlPath)
       ) {
         // no sidecar: fall back to the page text
-        body = fs
-          .readFileSync(htmlPath, "utf8")
-          .replace(/<(script|style)[^>]*>[\s\S]*?<\/\1>/gi, " ")
-          .replace(/<\/(p|div|h[1-6]|li|section|article|blockquote)>/gi, "\n\n")
-          .replace(/<br\s*\/?>/gi, "\n")
-          .replace(/<[^>]+>/g, "")
-          .replace(/[ \t]+/g, " ")
-          .replace(/\n{3,}/g, "\n\n");
+        body = htmlToPageText(fs.readFileSync(htmlPath, "utf8"));
       }
     }
     parts.push(String(body).trim());
