@@ -255,9 +255,11 @@ class ApiLeg extends BaseLeg {
         });
         break;
       case "setLang":
+        // both backends read seo.lang; the old form-field key was ignored,
+        // so this op used to leave the language unchanged on every leg
         r = await this.call("PATCH", "/v1/site/seo", {
           site,
-          seo: { "manifest-metadata-site-settings-lang": op.lang },
+          seo: { lang: op.lang },
         });
         break;
       default:

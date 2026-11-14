@@ -50,10 +50,14 @@ function stripTiming(value, pathParts = []) {
 
 // keyToId: logical key -> this leg's uuid
 // opts.strict: skip the accepted-difference normalizations
+// opts.replace: extra literal string -> placeholder pairs, applied like the
+//   uuids (the golden suite maps each run's site name to SITE_NAME)
 function snapshot(siteDir, keyToId, opts = {}) {
   const manifest = readJson(path.join(siteDir, "site.json"));
   const idToKey = {};
   for (const [k, id] of Object.entries(keyToId)) if (id) idToKey[id] = k;
+  for (const [literal, placeholder] of Object.entries(opts.replace || {}))
+    if (literal) idToKey[literal] = placeholder;
   const items = Array.isArray(manifest.items)
     ? manifest.items
     : Object.values(manifest.items || {});

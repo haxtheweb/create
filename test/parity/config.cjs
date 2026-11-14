@@ -31,6 +31,11 @@ const SETTINGS = {
   seed: ["HAX_PARITY_SEED", ""],
   snapshots: ["HAX_PARITY_SNAPSHOTS", "100"],
   strict: ["HAX_PARITY_STRICT", ""],
+  // golden snapshot suite (golden.cjs) instead of the seeded sequences
+  golden: ["HAX_PARITY_GOLDEN", ""],
+  "update-golden": ["HAX_PARITY_UPDATE_GOLDEN", ""],
+  "fail-on-diff": ["HAX_PARITY_FAIL_ON_DIFF", ""],
+  cases: ["HAX_PARITY_CASES", ""],
 };
 
 function readArgs(argv) {
@@ -74,7 +79,12 @@ function loadConfig(argv = process.argv.slice(2), env = process.env) {
     .filter(Boolean);
   for (const s of cfg.seq)
     if (s !== "A" && s !== "B") throw new Error("unknown sequence " + s);
-  cfg.strict = cfg.strict === "1" || cfg.strict === "true";
+  const flag = (v) => v === "1" || v === "true";
+  cfg.strict = flag(cfg.strict);
+  cfg["update-golden"] = flag(cfg["update-golden"]);
+  cfg["fail-on-diff"] = flag(cfg["fail-on-diff"]);
+  // updating snapshots implies the golden suite
+  cfg.golden = flag(cfg.golden) || cfg["update-golden"];
   cfg.phpExternal = Boolean(cfg["php-url"]);
   if (!cfg["php-url"])
     cfg["php-url"] = `http://${cfg["php-host"]}:${cfg["php-port"]}`;
