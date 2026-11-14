@@ -10,6 +10,8 @@ name: fresh-install-smoke
 #   3. `hax serve` in the background, then fetch the home page and site.json
 #      from localhost
 #   4. add a page with `hax site node:add` and confirm it is served
+#   5. check the site folder against the site folder contract
+#      (haxtheweb/issues#3351, test/contract/README.md)
 #
 # Localhost only: nothing here talks to a live HAX deployment. The runner has
 # no git identity and no TTY, like a first-time user's CI or AI agent.
@@ -145,6 +147,25 @@ jobs:
           elif [ "$status" != "200" ]; then
             echo "::warning title=New page URL::GET /$PAGE_SLUG returned status $status while hax serve is running, but served the site shell, so the page still renders. Known haxcms-nodejs limitation: it reads site.json once at startup."
           fi
+
+      # haxtheweb/issues#3351: the site the CLI made, with a page added, must be
+      # a complete HAXcms site folder: every file a backend writes, and no file
+      # the contract does not know. Retired paths only warn here, because this
+      # job installs the published haxcms-nodejs release, which can still write
+      # paths the default branch has dropped. Skipped (with a note in the job
+      # summary) until the contract is on json-outline-schema's default branch.
+      - name: Checkout json-outline-schema (site folder contract)
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: haxtheweb/json-outline-schema
+          ref: master
+          path: json-outline-schema
+          persist-credentials: false
+      - name: Site folder meets the contract (managed level)
+        run: |
+          (cd json-outline-schema && npm ci --no-audit --no-fund --omit=dev --ignore-scripts)
+          node test/contract/site-contract.cjs --jos json-outline-schema \
+            --level managed --exhaustive "$SITE_DIR"
 
       - name: hax serve log
         if: always()

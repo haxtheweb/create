@@ -7,6 +7,11 @@ name: parity-nightly
 #   sequence A  nodejs + php + CLI, ops the CLI can express
 #   sequence B  nodejs + php, every write op the site API has
 #
+# After the sequences, every leg's site is checked against the site folder
+# contract (haxtheweb/issues#3351, test/contract/README.md) and each
+# backend's copy of the contract is compared with json-outline-schema's.
+# Also report-only.
+#
 # Latest default branches of haxcms-nodejs (main) and haxcms-php (master),
 # built here; the CLI is linked to that haxcms-nodejs build, not the npm
 # release. REPORT-ONLY: divergences go to the job summary and the
@@ -64,6 +69,13 @@ jobs:
           ref: master
           path: haxcms-php
           persist-credentials: false
+      - name: Checkout json-outline-schema (site folder contract)
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: haxtheweb/json-outline-schema
+          ref: master
+          path: json-outline-schema
+          persist-credentials: false
       - name: Set up Node.js
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
@@ -115,6 +127,20 @@ jobs:
         # exits non-zero only when the harness crashes; divergences are data
         working-directory: create
         run: node test/parity/parity.cjs --seq A,B
+
+      # Each leg has just made a site and run every op on it, so it must be a
+      # complete site folder with nothing retired and nothing unknown. Findings
+      # go to the job summary and parity-results/site-contract.md.
+      - name: Site folder contract (report-only)
+        if: always()
+        working-directory: create
+        run: |
+          (cd "$GITHUB_WORKSPACE/json-outline-schema" && npm ci --no-audit --no-fund --omit=dev --ignore-scripts)
+          node test/contract/site-contract.cjs --jos "$GITHUB_WORKSPACE/json-outline-schema" \
+            --level managed --exhaustive --new --report-only \
+            --parity-out "$HAX_PARITY_OUT" \
+            --copies "haxcms-nodejs=$HAX_PARITY_NODEJS_REPO,haxcms-php=$HAX_PARITY_PHP_REPO" \
+            --out "$HAX_PARITY_OUT/site-contract.md"
 
       - name: Upload parity results
         if: always()
