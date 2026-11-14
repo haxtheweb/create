@@ -29,6 +29,7 @@ const {
   stashStaticPublishArtifacts,
   unstashStaticPublishArtifacts,
   buildStaticLlmsFull,
+  htmlToPageText,
   writeStaticLlmsFull,
   removeStaticLlmsFull,
   readSurgeCnameDomain,
@@ -36,6 +37,41 @@ const {
 } = available ? siteModule : {};
 
 const opts = { skip: skipReason, timeout: 15000 };
+
+// --- htmlToPageText: the page text llms-full.txt falls back to ---
+
+test(
+  "htmlToPageText keeps the text and drops markup, script and style",
+  opts,
+  () => {
+    assert.equal(
+      htmlToPageText(
+        "<h2>Title</h2><p>One <b>bold</b> &amp; two</p><ul><li>a</li><li>b</li></ul>",
+      ),
+      "Title\n\nOne bold &amp; two\n\na\n\nb\n\n",
+    );
+    assert.equal(
+      htmlToPageText(
+        "<p>line<br>break</p><script>alert(1)</script><style>p{color:red}</style><div>after</div>",
+      ),
+      "line\nbreak\n\n after\n\n",
+    );
+    assert.equal(htmlToPageText("<p>a</p><!-- note --><p>b</p>"), "a\n\nb\n\n");
+    assert.equal(htmlToPageText(""), "");
+  },
+);
+
+test(
+  "htmlToPageText never leaves a tag built from the pieces of another",
+  opts,
+  () => {
+    const text = htmlToPageText(
+      "<scr<script>x</script>ipt>alert(1)</script><p>ok</p>",
+    );
+    assert.equal(/<script/i.test(text), false);
+    assert.ok(text.includes("ok"));
+  },
+);
 
 // --- cleanupSiteForPublish: broken-symlink finder/unlinker ---
 

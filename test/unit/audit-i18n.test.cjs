@@ -119,6 +119,13 @@ test("scrubTemplatePart keeps line breaks and carries the open block", () => {
   assert.equal(scrubTemplatePart("<pre>x", null).open, "pre");
 });
 
+test("scrubTemplatePart ends a comment at --!> as well as -->", () => {
+  // HTML also closes a comment at "--!>"
+  const part = scrubTemplatePart("<!-- note --!><b>Bold</b>");
+  assert.equal(part.open, null);
+  assert.ok(part.text.endsWith("<b>Bold</b>"));
+});
+
 test("supports member-expression html tags", () => {
   assert.deepEqual(texts("lit.html`<span>Loading</span>`"), ["Loading"]);
 });
