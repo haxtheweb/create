@@ -10,6 +10,10 @@ name: old-sites-weekly
 #           page, open the editor's API path, save content, saveOutline
 #           add / move / reorder / delete, theme and settings, render again
 #
+# Before any upgrade, every fixture as stored must still be a HAXcms site at
+# the content level of the site folder contract (haxtheweb/issues#3351,
+# test/contract/README.md).
+#
 # Built and served on this runner only; nothing talks to a live deployment.
 # A broken fixture fails the run (red) and the job summary says what broke.
 # haxcms-php is not run here yet (follow-up); its behavior is kept identical
@@ -55,6 +59,13 @@ jobs:
           ref: main
           path: haxcms-nodejs
           persist-credentials: false
+      - name: Checkout json-outline-schema (site folder contract)
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: haxtheweb/json-outline-schema
+          ref: master
+          path: json-outline-schema
+          persist-credentials: false
       - name: Set up Node.js
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
@@ -85,6 +96,15 @@ jobs:
           rm -rf node_modules/@haxtheweb/haxcms-nodejs
           ln -s "$HAX_OLD_SITES_NODEJS" node_modules/@haxtheweb/haxcms-nodejs
           node -e 'console.log("CLI uses haxcms-nodejs at " + require("fs").realpathSync(require.resolve("@haxtheweb/haxcms-nodejs/package.json")))'
+
+      # Skipped (with a note in the job summary) until the contract is on
+      # json-outline-schema's default branch.
+      - name: Fixtures as stored are HAXcms sites (content level)
+        working-directory: create
+        run: |
+          (cd "$GITHUB_WORKSPACE/json-outline-schema" && npm ci --no-audit --no-fund --omit=dev --ignore-scripts)
+          node test/contract/site-contract.cjs --jos "$GITHUB_WORKSPACE/json-outline-schema" \
+            test/old-sites/*/site
 
       - name: Upgrade every fixture and run the operations
         working-directory: create
