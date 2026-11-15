@@ -29,9 +29,10 @@ jobs:
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 24
-      # yarn.lock is what the `build` workflow installs from, so it is audited
-      # first. package-lock.json is also tracked (and is what `npm install` in
-      # AGENTS.md produces), so it is audited second. Both audits only read the
+      # package-lock.json is what every create workflow installs from (`npm ci`
+      # in build, license-check, fresh-install-smoke, fuzz-nightly) and what
+      # `npm install` in AGENTS.md produces. yarn.lock is still tracked for
+      # people who install with yarn, so it is audited too. Both audits only read the
       # lockfiles and need no `install`. Only production dependencies are
       # audited: devDependencies are not shipped in the published package.
       - name: Dependency audit
@@ -48,7 +49,7 @@ jobs:
             echo
             echo "Production dependencies only. This does not fail the build."
             echo
-            echo "### yarn audit (yarn.lock, the lockfile CI installs from)"
+            echo "### yarn audit (yarn.lock, for yarn installs)"
             echo '```text'
           } >> "$GITHUB_STEP_SUMMARY"
           yarn audit --groups dependencies 2>&1 | tee "$out/yarn-audit.txt"
@@ -57,7 +58,7 @@ jobs:
           {
             echo '```'
             echo
-            echo "### npm audit (package-lock.json)"
+            echo "### npm audit (package-lock.json, the lockfile CI installs from)"
             echo '```text'
           } >> "$GITHUB_STEP_SUMMARY"
           npm audit --package-lock-only --omit=dev 2>&1 | tee "$out/npm-audit.txt"
