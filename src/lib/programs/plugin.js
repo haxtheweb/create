@@ -110,9 +110,11 @@ const cap = (s) => {
   const x = plain(s).trim();
   return x ? x[0].toUpperCase() + x.slice(1).replace(/\.$/, "") + "." : "";
 };
+// PHP method names (spec/13): camel case across "." and "-", so a hook a dashed plugin defines
+// (fx-definer.after.ping) still names a valid method (fxDefinerAfterPing)
 const camelHook = (n) =>
   n
-    .split(".")
+    .split(/[.-]/)
     .map((part, i) => (i ? part[0].toUpperCase() + part.slice(1) : part))
     .join("");
 const studly = (id) =>

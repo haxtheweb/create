@@ -90,6 +90,29 @@ test("scaffold writes a docblock per hook in both runtimes and a passing first t
   );
 });
 
+test("PHP hook methods camel-case across dashes (a hook a dashed plugin defines)", () => {
+  const contracts = [
+    ...plugin.hookContracts(),
+    {
+      name: "fx-definer.after.ping",
+      phase: "after",
+      description: "a plugin-defined hook",
+    },
+  ];
+  const files = plugin.scaffoldPlugin(
+    { id: "fx-listener", hooks: ["fx-definer.after.ping"] },
+    contracts,
+  );
+  assert.match(
+    files["src/php/Plugin.php"],
+    /public function fxDefinerAfterPing\(\$ctx\)/,
+  );
+  assert.match(
+    files["src/nodejs/index.js"],
+    /"fx-definer\.after\.ping": async/,
+  );
+});
+
 test("a pack has no code or tests, and writeScaffold refuses a non-empty folder", () => {
   const files = plugin.scaffoldPlugin({
     id: "my-pack",
