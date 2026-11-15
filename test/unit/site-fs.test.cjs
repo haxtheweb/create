@@ -34,6 +34,9 @@ const {
   removeStaticLlmsFull,
   readSurgeCnameDomain,
   surgeUsesNewGrammar,
+  staticPublishDomain,
+  writeStaticPublishPages,
+  removeStaticPublishPages,
 } = available ? siteModule : {};
 
 const opts = { skip: skipReason, timeout: 15000 };
@@ -709,6 +712,141 @@ test(
       );
     } finally {
       fs.rmSync(root, { recursive: true, force: true });
+    }
+  },
+);
+
+// --- rendered pages for static hosts (haxtheweb/issues#3327) ---
+
+test("staticPublishDomain makes an absolute address or none", opts, () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "hax-pubdomain-"));
+  try {
+    assert.equal(staticPublishDomain(root, undefined), "");
+    assert.equal(
+      staticPublishDomain(root, "my-site.surge.sh"),
+      "https://my-site.surge.sh/",
+    );
+    assert.equal(
+      staticPublishDomain(root, "https://org.github.io/repo/"),
+      "https://org.github.io/repo/",
+    );
+    assert.equal(staticPublishDomain(root, "bad domain"), "");
+    fs.writeFileSync(path.join(root, "CNAME"), "remembered.surge.sh\n");
+    assert.equal(staticPublishDomain(root, ""), "https://remembered.surge.sh/");
+    // --domain wins over the remembered one
+    assert.equal(
+      staticPublishDomain(root, "other.surge.sh"),
+      "https://other.surge.sh/",
+    );
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test(
+  "removeStaticPublishPages removes only the recorded pages and empty folders it made",
+  opts,
+  () => {
+    const parent = fs.mkdtempSync(path.join(os.tmpdir(), "hax-pubpages-"));
+    const root = path.join(parent, "site");
+    try {
+      fs.mkdirSync(path.join(root, "about", "team"), { recursive: true });
+      fs.writeFileSync(path.join(root, "about", "index.html"), "about");
+      fs.writeFileSync(path.join(root, "about", "team", "index.html"), "team");
+      // a file someone put in a recorded folder keeps that folder
+      fs.mkdirSync(path.join(root, "kept"));
+      fs.writeFileSync(path.join(root, "kept", "index.html"), "page");
+      fs.writeFileSync(path.join(root, "kept", "mine.txt"), "mine");
+      fs.writeFileSync(path.join(root, "site.json"), "{}");
+      const stash = staticPublishStashDir(root);
+      fs.mkdirSync(stash, { recursive: true });
+      fs.writeFileSync(
+        path.join(stash, "static-pages.json"),
+        JSON.stringify({
+          files: [
+            "about/index.html",
+            "about/team/index.html",
+            "kept/index.html",
+            // never outside the site, never the site's own files by name
+            "../outside.txt",
+          ],
+          dirs: ["about", "about/team", "kept", ".."],
+        }),
+      );
+      fs.writeFileSync(path.join(parent, "outside.txt"), "outside");
+      assert.equal(removeStaticPublishPages(root), 3);
+      assert.ok(!fs.existsSync(path.join(root, "about")));
+      assert.ok(fs.existsSync(path.join(root, "kept", "mine.txt")));
+      assert.ok(fs.existsSync(path.join(root, "site.json")));
+      assert.ok(fs.existsSync(path.join(parent, "outside.txt")));
+      assert.ok(!fs.existsSync(stash), "record and empty stash removed");
+      // nothing recorded: nothing to do
+      assert.equal(removeStaticPublishPages(root), 0);
+    } finally {
+      fs.rmSync(parent, { recursive: true, force: true });
+    }
+  },
+);
+
+test(
+  "restoreSiteAfterStaticPublish removes recorded pages with the rest",
+  opts,
+  () => {
+    const parent = fs.mkdtempSync(path.join(os.tmpdir(), "hax-pubrestore-"));
+    const root = path.join(parent, "site");
+    try {
+      fs.mkdirSync(root);
+      fs.writeFileSync(path.join(root, "index.html"), "ORIGINAL");
+      fs.writeFileSync(path.join(root, "ghpages.html"), "GHPAGES");
+      assert.equal(prepareSiteForStaticPublish(root).indexSwapped, true);
+      fs.mkdirSync(path.join(root, "about"));
+      fs.writeFileSync(path.join(root, "about", "index.html"), "about");
+      const stash = staticPublishStashDir(root);
+      fs.mkdirSync(stash, { recursive: true });
+      fs.writeFileSync(
+        path.join(stash, "static-pages.json"),
+        JSON.stringify({ files: ["about/index.html"], dirs: ["about"] }),
+      );
+      assert.equal(restoreSiteAfterStaticPublish(root), true);
+      assert.ok(!fs.existsSync(path.join(root, "about")));
+      assert.equal(
+        fs.readFileSync(path.join(root, "index.html"), "utf8"),
+        "ORIGINAL",
+      );
+      // pages left by a crashed publish are cleared by the next prepare
+      fs.mkdirSync(path.join(root, "late"));
+      fs.writeFileSync(path.join(root, "late", "index.html"), "late");
+      fs.mkdirSync(stash, { recursive: true });
+      fs.writeFileSync(
+        path.join(stash, "static-pages.json"),
+        JSON.stringify({ files: ["late/index.html"], dirs: ["late"] }),
+      );
+      prepareSiteForStaticPublish(root);
+      assert.ok(!fs.existsSync(path.join(root, "late")));
+      restoreSiteAfterStaticPublish(root);
+    } finally {
+      fs.rmSync(parent, { recursive: true, force: true });
+    }
+  },
+);
+
+test(
+  "writeStaticPublishPages never fails a publish and never touches a missing site",
+  opts,
+  async () => {
+    assert.equal(
+      await writeStaticPublishPages(path.join(os.tmpdir(), "hax-no-site")),
+      0,
+    );
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), "hax-pubwrite-"));
+    try {
+      // not a HAXcms site: nothing written, no error
+      fs.writeFileSync(path.join(root, "index.html"), "x");
+      assert.equal(await writeStaticPublishPages(root, ""), 0);
+      assert.deepEqual(fs.readdirSync(root), ["index.html"]);
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+      fs.rmSync(staticPublishStashDir(root), { recursive: true, force: true });
     }
   },
 );
