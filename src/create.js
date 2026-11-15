@@ -509,6 +509,8 @@ async function main() {
         "category",
         "description",
         "common",
+        "strict",
+        "path",
       ]) {
         if (cmdOptions[k] !== undefined) {
           commandRun.options[k] = cmdOptions[k];
@@ -522,6 +524,7 @@ async function main() {
     .option("--runtimes <char>", t("cliOptPluginRuntimes"))
     .option("--hooks <char>", t("cliOptPluginHooks"))
     .option("--common", t("cliOptPluginCommon"))
+    .option("--strict", t("cliOptPluginStrict"))
     .option("--path <char>", t("cliOptPath"))
     .option("--y", t("cliOptYes"))
     .option("--auto", t("cliOptAuto"))

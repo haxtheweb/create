@@ -6,6 +6,7 @@ import * as p from "@clack/prompts";
 import color from "picocolors";
 import { writeData } from "../logging.js";
 import { t } from "../i18n.js";
+import { discoverSchemaTargets, runValidator } from "./audit-schema.js";
 
 // `hax plugin`: scaffold HAXcms plugins (spec: https://github.com/haxtheweb/haxcms-plugin-examples, spec/09) and
 // list the hooks a plugin can implement. The hook picker preselects the hooks most plugins use (`common: true` in the
@@ -22,6 +23,7 @@ export function pluginActions() {
   return [
     { value: "create", label: t("pluginActionCreate") },
     { value: "hooks", label: t("pluginActionHooks") },
+    { value: "validate", label: t("pluginActionValidate") },
   ];
 }
 
@@ -354,6 +356,88 @@ async function createPlugin(commandRun) {
 }
 
 /**
+ * @description The plugin folders `hax plugin validate` checks: the given path (or the current folder) when it holds
+ * a plugin.yaml, otherwise every plugin.yaml under it (fixtures under test/tests are skipped, as in hax audit schema).
+ * @param target a plugin folder, a plugin.yaml, or a folder that contains plugins
+ * @returns {string[]} paths to pass to hax-plugin-validate
+ */
+export function pluginValidateTargets(target) {
+  const full = path.resolve(target || process.cwd());
+  if (fs.existsSync(full) && fs.statSync(full).isFile()) return [full];
+  if (fs.existsSync(path.join(full, "plugin.yaml"))) return [full];
+  if (!fs.existsSync(full)) return [];
+  return discoverSchemaTargets(full).plugin.map((f) => path.dirname(f));
+}
+
+/**
+ * @description `hax plugin validate [path]`: is this a valid HAXcms plugin? Runs the spec's own validator
+ * (hax-plugin-validate from @haxtheweb/haxcms-plugin-spec, the same one hax audit schema and the spec repository's
+ * CI use) so people, agents and CI all get the same answer. Exit code 1 when a plugin is invalid (or, with
+ * --strict, has warnings).
+ * @param commandRun CLI state; arguments.name or options.path picks the folder, options.format json prints the report
+ * @param deps injectable validator runner (tests)
+ * @returns {{valid: boolean, plugins: object[]}|undefined}
+ */
+export function validatePlugins(commandRun, deps = {}) {
+  const run = deps.runValidator || runValidator;
+  const o = commandRun.options || {};
+  const target = (commandRun.arguments && commandRun.arguments.name) || o.path;
+  const targets = pluginValidateTargets(target);
+  if (!targets.length)
+    throw new Error(
+      t("pluginValidateNone", { path: path.resolve(target || process.cwd()) }),
+    );
+  const result = run("plugin", targets, {
+    root: path.resolve(
+      target && !target.endsWith(".yaml") ? target : process.cwd(),
+    ),
+  });
+  if (!result.ok) throw new Error(result.error);
+  const plugins = result.reports.map((r) => ({
+    file: r.file,
+    valid:
+      r.errors.length === 0 && (!o.strict || (r.warnings || []).length === 0),
+    errors: r.errors,
+    warnings: r.warnings || [],
+    tags: r.tags || r.derivedTags || [],
+  }));
+  const valid = plugins.every((x) => x.valid);
+  if (!valid) process.exitCode = 1;
+  if (o.format === "json" || o.format === "yaml") {
+    writeData(
+      JSON.stringify(
+        { valid, strict: !!o.strict, via: result.via, plugins },
+        null,
+        2,
+      ),
+    );
+    return { valid, plugins };
+  }
+  const where = (x) => path.relative(process.cwd(), x.file) || x.file;
+  const msg = (e) =>
+    typeof e === "string"
+      ? e
+      : `${e.path && e.path !== "/" ? `${e.path}: ` : ""}${e.message}`;
+  for (const x of plugins) {
+    const line = `${where(x)}${x.tags.length ? color.dim(` [${x.tags.join(", ")}]`) : ""}`;
+    if (x.valid && !x.warnings.length) p.log.success(line);
+    else if (x.valid) p.log.warn(line);
+    else p.log.error(line);
+    for (const e of x.errors) p.log.message(color.red(`  ✖ ${msg(e)}`));
+    for (const w of x.warnings) p.log.message(color.yellow(`  ⚠ ${msg(w)}`));
+  }
+  const bad = plugins.filter((x) => !x.valid).length;
+  if (bad)
+    p.outro(
+      color.red(
+        t("pluginValidateInvalid", { count: bad, total: plugins.length }),
+      ),
+    );
+  else p.outro(t("pluginValidateValid", { count: plugins.length }));
+  return { valid, plugins };
+}
+
+/**
  * @description Entry point for `hax plugin [action]`.
  */
 export async function pluginCommandDetected(commandRun) {
@@ -361,5 +445,6 @@ export async function pluginCommandDetected(commandRun) {
     (commandRun.arguments && commandRun.arguments.action) || "create";
   if (action === "hooks") return listHooks(commandRun);
   if (action === "create") return createPlugin(commandRun);
+  if (action === "validate") return validatePlugins(commandRun);
   throw new Error(t("pluginUnknownAction", { action }));
 }

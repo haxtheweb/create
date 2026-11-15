@@ -107,3 +107,117 @@ test("a pack has no code or tests, and writeScaffold refuses a non-empty folder"
     /not empty/,
   );
 });
+
+// hax plugin validate: which folders it checks, and how the spec validator's report becomes the answer.
+// The validator itself (hax-plugin-validate) is injected, so no spec package needs to be installed here.
+function pluginFolder(id) {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "hax-plugin-validate-"));
+  plugin.writeScaffold(
+    path.join(dir, id),
+    plugin.scaffoldPlugin({ id, hooks: [] }),
+  );
+  return { root: dir, dir: path.join(dir, id) };
+}
+
+test("validate targets: a plugin folder, a plugin.yaml, or every plugin under a folder (fixtures skipped)", () => {
+  const { root, dir } = pluginFolder("one-plugin");
+  plugin.writeScaffold(
+    path.join(root, "two-plugin"),
+    plugin.scaffoldPlugin({ id: "two-plugin", hooks: [] }),
+  );
+  fs.mkdirSync(path.join(root, "tests", "fixtures", "bad"), {
+    recursive: true,
+  });
+  fs.writeFileSync(
+    path.join(root, "tests", "fixtures", "bad", "plugin.yaml"),
+    "id: bad\n",
+  );
+  assert.deepEqual(plugin.pluginValidateTargets(dir), [dir]);
+  assert.deepEqual(
+    plugin.pluginValidateTargets(path.join(dir, "plugin.yaml")),
+    [path.join(dir, "plugin.yaml")],
+  );
+  assert.deepEqual(
+    plugin.pluginValidateTargets(root).sort(),
+    [path.join(root, "one-plugin"), path.join(root, "two-plugin")].sort(),
+  );
+  assert.deepEqual(
+    plugin.pluginValidateTargets(path.join(root, "missing")),
+    [],
+  );
+});
+
+test("validate passes the folders to hax-plugin-validate and answers valid, invalid or strict", () => {
+  const { dir } = pluginFolder("checked-plugin");
+  const calls = [];
+  const fake = (reports) => (kind, files) => {
+    calls.push({ kind, files });
+    return { ok: true, via: "local", reports };
+  };
+  const quiet = { options: { format: "json" }, arguments: { name: dir } };
+  const realWrite = process.stdout.write;
+  process.stdout.write = () => true;
+  try {
+    let r = plugin.validatePlugins(quiet, {
+      runValidator: fake([
+        {
+          file: path.join(dir, "plugin.yaml"),
+          errors: [],
+          warnings: [],
+          derivedTags: ["not-stable"],
+        },
+      ]),
+    });
+    assert.equal(r.valid, true);
+    assert.deepEqual(r.plugins[0].tags, ["not-stable"]);
+    assert.deepEqual(calls[0], { kind: "plugin", files: [dir] });
+    assert.notEqual(process.exitCode, 1);
+
+    r = plugin.validatePlugins(quiet, {
+      runValidator: fake([
+        {
+          file: path.join(dir, "plugin.yaml"),
+          errors: [{ path: "/id", message: "must equal the folder name" }],
+          warnings: [],
+        },
+      ]),
+    });
+    assert.equal(r.valid, false);
+    assert.equal(process.exitCode, 1);
+    process.exitCode = undefined;
+
+    const warned = [
+      {
+        file: path.join(dir, "plugin.yaml"),
+        errors: [],
+        warnings: ["no screenshots"],
+      },
+    ];
+    assert.equal(
+      plugin.validatePlugins(quiet, { runValidator: fake(warned) }).valid,
+      true,
+    );
+    assert.equal(
+      plugin.validatePlugins(
+        { options: { format: "json", strict: true }, arguments: { name: dir } },
+        { runValidator: fake(warned) },
+      ).valid,
+      false,
+    );
+    process.exitCode = undefined;
+
+    assert.throws(
+      () =>
+        plugin.validatePlugins(quiet, {
+          runValidator: () => ({
+            ok: false,
+            error: "could not run @haxtheweb/haxcms-plugin-spec",
+          }),
+        }),
+      /could not run/,
+    );
+  } finally {
+    process.stdout.write = realWrite;
+    process.exitCode = undefined;
+  }
+});
