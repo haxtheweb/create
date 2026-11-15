@@ -310,6 +310,7 @@ try {
 let staticPagesLib = null;
 try {
   // optional: only in haxcms-nodejs releases with the static page renderer
+  // eslint-disable-next-line n/no-missing-require
   staticPagesLib = require("@haxtheweb/haxcms-nodejs/dist/lib/staticPages.js");
 } catch {
   staticPagesLib = null;
