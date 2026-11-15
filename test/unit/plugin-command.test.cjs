@@ -65,6 +65,7 @@ test("scaffold writes a docblock per hook in both runtimes and a passing first t
     "src/nodejs/index.js",
     "src/php/Plugin.php",
     "tests/cases/quiet-hours.yaml",
+    "tests/php/QuietHoursPluginTest.php",
   ]);
   assert.match(
     files["plugin.yaml"],
@@ -220,4 +221,26 @@ test("validate passes the folders to hax-plugin-validate and answers valid, inva
     process.stdout.write = realWrite;
     process.exitCode = undefined;
   }
+});
+
+test("a plugin with a PHP runtime gets a PHPUnit test for its PHP side; a Node-only one does not", () => {
+  const both = plugin.scaffoldPlugin({
+    id: "quiet-hours",
+    hooks: ["page.before.save"],
+  });
+  const test = both["tests/php/QuietHoursPluginTest.php"];
+  assert.ok(test, "tests/php/QuietHoursPluginTest.php");
+  assert.match(test, /class QuietHoursPluginTest extends PluginTestCase/);
+  assert.match(
+    test,
+    /assertInstanceOf\(QuietHoursPlugin::class, \$this->plugin\(\)\)/,
+  );
+  assert.match(test, /->pageBeforeSave\(\$ctx\)/);
+  assert.match(both["AGENTS.md"], /hax-plugin-check/);
+  const nodeOnly = plugin.scaffoldPlugin({
+    id: "node-only",
+    runtimes: ["nodejs"],
+    hooks: [],
+  });
+  assert.ok(!Object.keys(nodeOnly).some((f) => f.startsWith("tests/php/")));
 });

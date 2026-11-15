@@ -210,6 +210,36 @@ export function scaffoldPlugin(o, contracts = hookContracts()) {
     files["src/php/Plugin.php"] =
       `<?php\n// ${title} (PHP).${runtimes.includes("nodejs") ? " Mirrors src/nodejs/index.js." : ""}\nclass ${studly(o.id)} {\n${hooks.map((c) => `\n${docblock(c, "  ", true)}  public function ${camelHook(c.name)}($ctx) {\n${stubBody(c, true)}  }\n`).join("")}}\n`;
   }
+  if (runtimes.includes("php")) {
+    // PHPUnit tests for the PHP side, the way haxcms-php tests itself; PluginTestCase and its in-memory ctx
+    // come from the spec package (harness/php), and hax-plugin-check runs them
+    const cls = studly(o.id);
+    const first = hooks.find(
+      (c) =>
+        c.phase === "before" ||
+        c.name.startsWith("render.") ||
+        /^the /i.test(c.returns || ""),
+    );
+    files[`tests/php/${cls}Test.php`] = `<?php
+// PHPUnit tests for ${title} (PHP). PluginTestCase and PluginTestCtx come from the plugin spec package
+// (harness/php in @haxtheweb/haxcms-plugin-spec). Run with: hax-plugin-check --only php .
+class ${cls}Test extends PluginTestCase {
+  public function testTheClassLoads() {
+    $this->assertInstanceOf(${cls}::class, $this->plugin());
+  }
+${
+  first
+    ? `
+  public function test${camelHook(first.name).replace(/^./, (x) => x.toUpperCase())}PassesTheSubjectThrough() {
+    // TODO: replace with what your ${first.name} does to the subject
+    $ctx = $this->ctx(['subject' => ['id' => 'p1']]);
+    $this->assertSame(['id' => 'p1'], $this->plugin()->${camelHook(first.name)}($ctx));
+  }
+`
+    : ""
+}}
+`;
+  }
   if (!isPack) {
     // one basic passing test so the plugin is not "untested" from day one, plus a commented example to adapt
     files[`tests/cases/${o.id}.yaml`] =
@@ -218,7 +248,7 @@ export function scaffoldPlugin(o, contracts = hookContracts()) {
   files["README.md"] =
     `# ${title}\n\n${o.description || "TODO: what this plugin does, for the people who will enable it."}\n\nRun \`node scripts/plugin-docs.mjs <this folder>\` from the spec repo (or \`hax plugin docs\` once available) to add the generated **What it implements** table: every hook below, when it runs, and the first sentence of each docblock.\n${hooks.length ? `\nHooks: ${hooks.map((c) => `\`${c.name}\``).join(", ")}.\n` : ""}`;
   files["AGENTS.md"] =
-    `# AGENTS.md (${o.id})\n\n## Purpose\nTODO\n\n## Rules\n- Every hook, operation and schedule keeps its "Implements ..." docblock (spec/02, 2.2).\n${runtimes.length > 1 ? "- Node and PHP must return identical results.\n" : ""}\n## Build, test, validate\n\`hax plugin validate\` (\`hax-plugin-validate .\`); \`hax-plugin-test .\`.\n`;
+    `# AGENTS.md (${o.id})\n\n## Purpose\nTODO\n\n## Rules\n- Every hook, operation and schedule keeps its "Implements ..." docblock (spec/02, 2.2).\n${runtimes.length > 1 ? "- Node and PHP must return identical results.\n" : ""}\n## Build, test, validate\n\`hax plugin validate\` (\`hax-plugin-validate .\`); \`hax-plugin-test .\`; every check (lint, PHPStan, PHPUnit, cases, browser): \`hax-plugin-check .\`.\n`;
   return files;
 }
 
