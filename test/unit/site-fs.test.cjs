@@ -37,6 +37,8 @@ const {
   staticPublishDomain,
   writeStaticPublishPages,
   removeStaticPublishPages,
+  buildStaticSite,
+  STATIC_BUILD_MARKER,
 } = available ? siteModule : {};
 
 const opts = { skip: skipReason, timeout: 15000 };
@@ -847,6 +849,146 @@ test(
     } finally {
       fs.rmSync(root, { recursive: true, force: true });
       fs.rmSync(staticPublishStashDir(root), { recursive: true, force: true });
+    }
+  },
+);
+
+// --- site:build-static ---
+
+// a HAXsite from the installed haxcms-nodejs boilerplate with one page
+function makeBoilerplateSite(parent) {
+  const boilerplate = path.join(
+    path.dirname(require.resolve("@haxtheweb/haxcms-nodejs/package.json")),
+    "dist",
+    "boilerplate",
+    "site",
+  );
+  const root = path.join(parent, "site");
+  fs.cpSync(boilerplate, root, { recursive: true });
+  fs.mkdirSync(path.join(root, "pages", "item-1"), { recursive: true });
+  fs.writeFileSync(
+    path.join(root, "pages", "item-1", "index.html"),
+    "<p>The first page, with words.</p>",
+  );
+  fs.writeFileSync(
+    path.join(root, "site.json"),
+    JSON.stringify({
+      id: "site-1",
+      title: "Static test",
+      description: "A site built for a static host.",
+      license: "by-sa",
+      metadata: {
+        author: {},
+        site: { name: "static-test", settings: {} },
+        theme: { element: "clean-one", variables: {} },
+      },
+      items: [
+        {
+          id: "item-1",
+          indent: 0,
+          location: "pages/item-1/index.html",
+          order: 0,
+          parent: null,
+          slug: "first",
+          title: "First",
+          description: "",
+          metadata: {},
+        },
+      ],
+    }),
+  );
+  // what a site on a HAXcms server has: a repo and links to the shared build
+  fs.mkdirSync(path.join(root, ".git"));
+  fs.writeFileSync(path.join(root, ".git", "HEAD"), "ref");
+  fs.symlinkSync("../../build", path.join(root, "build"));
+  fs.symlinkSync("../../dist", path.join(root, "dist"));
+  return root;
+}
+
+test(
+  "buildStaticSite copies the site for a static host and leaves the site alone",
+  { ...opts, timeout: 60000 },
+  async () => {
+    const parent = fs.mkdtempSync(path.join(os.tmpdir(), "hax-buildstatic-"));
+    try {
+      const root = makeBoilerplateSite(parent);
+      const before = fs.readFileSync(path.join(root, "index.html"), "utf8");
+      const out = path.join(parent, "out");
+      const built = await buildStaticSite(root, out, "https://static.example/");
+      assert.equal(built.out, out);
+      // links, .git and the server's dist link are not copied
+      assert.ok(!fs.existsSync(path.join(out, ".git")));
+      assert.ok(!fs.existsSync(path.join(out, "build")));
+      assert.ok(!fs.existsSync(path.join(out, "dist")));
+      // agent discovery files are
+      assert.ok(fs.existsSync(path.join(out, ".well-known")));
+      assert.ok(fs.existsSync(path.join(out, STATIC_BUILD_MARKER)));
+      // generated files exist and use the published address
+      assert.match(
+        fs.readFileSync(path.join(out, "robots.txt"), "utf8"),
+        /https:\/\/static\.example\/sitemap\.xml/,
+      );
+      assert.ok(fs.existsSync(path.join(out, "llms.txt")));
+      assert.ok(fs.existsSync(path.join(out, "sitemap.xml")));
+      assert.match(
+        fs.readFileSync(path.join(out, "llms-full.txt"), "utf8"),
+        /The first page, with words/,
+      );
+      if (built.renderer) {
+        assert.equal(built.pages, 2);
+        assert.match(
+          fs.readFileSync(path.join(out, "first", "index.html"), "utf8"),
+          /https:\/\/static\.example\/first/,
+        );
+      } else {
+        // an older haxcms-nodejs: the shell is the entry point
+        assert.equal(
+          fs.readFileSync(path.join(out, "index.html"), "utf8"),
+          fs.readFileSync(path.join(out, "ghpages.html"), "utf8"),
+        );
+      }
+      // the site itself is unchanged
+      assert.equal(
+        fs.readFileSync(path.join(root, "index.html"), "utf8"),
+        before,
+      );
+      assert.ok(!fs.existsSync(path.join(root, "llms-full.txt")));
+      // a second build replaces the first
+      fs.writeFileSync(path.join(out, "stale.txt"), "old");
+      await buildStaticSite(root, out, "");
+      assert.ok(!fs.existsSync(path.join(out, "stale.txt")));
+    } finally {
+      fs.rmSync(parent, { recursive: true, force: true });
+    }
+  },
+);
+
+test(
+  "buildStaticSite only replaces a folder it made",
+  { ...opts, timeout: 60000 },
+  async () => {
+    const parent = fs.mkdtempSync(path.join(os.tmpdir(), "hax-buildstatic-"));
+    try {
+      const root = makeBoilerplateSite(parent);
+      const mine = path.join(parent, "mine");
+      fs.mkdirSync(mine);
+      fs.writeFileSync(path.join(mine, "keep.txt"), "keep");
+      await assert.rejects(buildStaticSite(root, mine), /not empty/);
+      assert.ok(fs.existsSync(path.join(mine, "keep.txt")));
+      // the server's dist link is not a folder to replace
+      await assert.rejects(
+        buildStaticSite(root, path.join(root, "dist")),
+        /not a folder/,
+      );
+      // a folder that holds the site is never the output
+      await assert.rejects(buildStaticSite(root, parent), /can't contain/);
+      // not a site at all
+      await assert.rejects(
+        buildStaticSite(mine, path.join(parent, "x")),
+        /not a HAXsite/,
+      );
+    } finally {
+      fs.rmSync(parent, { recursive: true, force: true });
     }
   },
 );

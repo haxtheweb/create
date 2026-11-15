@@ -69,6 +69,7 @@ test("siteActions returns the expected fixed list of actions", opts, () => {
     "site:skeleton-install",
     "site:sync",
     "site:rsync",
+    "site:build-static",
     "site:surge",
     "site:netlify",
     "site:vercel",
@@ -94,7 +95,7 @@ test(
     const b = siteActions();
     assert.notEqual(a, b);
     a.push({ value: "mutated", label: "mutated" });
-    assert.equal(b.length, 41);
+    assert.equal(b.length, 42);
   },
 );
 

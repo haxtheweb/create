@@ -117,6 +117,7 @@ When creating educational content:
 - Run `yarn run build` after theme modifications involving HAXCMSLitElement
 - Do not manually edit `custom-elements.json` or generated manifest files
 - Regenerate feeds, sitemap, search index and `llms.txt` with `hax site site:rebuild`, never by hand
+- Build a copy for a static host (each page as its own HTML file with its metadata and text, for search engines and AI agents) with `hax site site:build-static --out-dir <folder> --y --no-i`; the site itself is not changed
 - Use HAX CLI tools for site operations rather than manual file edits
 - Ensure `site.json` is valid JSON Outline Schema before committing
 
