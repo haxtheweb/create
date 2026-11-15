@@ -303,6 +303,17 @@ try {
 } catch {
   commitContextLib = null;
 }
+// haxtheweb/issues#3327: haxcms-nodejs renders the pages a static host
+// serves (metadata, structured data and each page's text in the HTML).
+// Older releases have no renderer; then a static publish ships the
+// ghpages.html shell alone, as before.
+let staticPagesLib = null;
+try {
+  // optional: only in haxcms-nodejs releases with the static page renderer
+  staticPagesLib = require("@haxtheweb/haxcms-nodejs/dist/lib/staticPages.js");
+} catch {
+  staticPagesLib = null;
+}
 // a person ran the CLI unless --agent / HAX_ACTOR=agent says an agent did
 export function cliActor() {
   return String(process.env.HAX_ACTOR || "").toLowerCase() === "agent"
@@ -1167,6 +1178,172 @@ function logStaticPublishPrepared(state, commandRun) {
   }
 }
 
+// pages written into a site for a static publish are listed here (in the
+// stash dir, outside the site) so a restore, or the next publish after a
+// crashed one, removes exactly those files and nothing else
+const STATIC_PAGES_RECORD = "static-pages.json";
+
+/**
+ * The address a static publish goes to, as an absolute URL, or "" when it
+ * isn't known yet: --domain, then the CNAME a previous publish left.
+ */
+export function staticPublishDomain(siteDirectory, domainOption) {
+  let domain =
+    typeof domainOption === "string" && domainOption.trim() !== ""
+      ? domainOption.trim()
+      : readSurgeCnameDomain(siteDirectory);
+  if (!domain || /\s/.test(domain)) {
+    return "";
+  }
+  if (!/^https?:\/\//i.test(domain)) {
+    domain = "https://" + domain;
+  }
+  try {
+    const url = new URL(domain);
+    return url.protocol + "//" + url.host + url.pathname;
+  } catch {
+    return "";
+  }
+}
+
+/**
+ * Remove the pages writeStaticPublishPages put in a site (as listed in the
+ * record): only those files, then each folder it made if it is empty.
+ * Returns the number of files removed.
+ */
+export function removeStaticPublishPages(siteDirectory) {
+  const recordPath = path.join(
+    staticPublishStashDir(siteDirectory),
+    STATIC_PAGES_RECORD,
+  );
+  let removed = 0;
+  let record = null;
+  try {
+    record = JSON.parse(fs.readFileSync(recordPath, "utf8"));
+  } catch {
+    return removed;
+  }
+  const root = path.resolve(siteDirectory);
+  const inside = (relative) => {
+    if (typeof relative !== "string" || relative === "") {
+      return null;
+    }
+    const full = path.resolve(root, relative);
+    return full.startsWith(root + path.sep) ? full : null;
+  };
+  const files = record && Array.isArray(record.files) ? record.files : [];
+  for (const relative of files) {
+    const full = inside(relative);
+    try {
+      if (full && fs.lstatSync(full).isFile()) {
+        fs.unlinkSync(full);
+        removed++;
+      }
+    } catch {
+      // already gone
+    }
+  }
+  const dirs = record && Array.isArray(record.dirs) ? record.dirs : [];
+  // deepest first, so a parent is empty by the time it is checked
+  for (const relative of [...dirs].sort((a, b) => b.length - a.length)) {
+    const full = inside(relative);
+    try {
+      if (full) {
+        // rmdirSync refuses a folder that isn't empty
+        fs.rmdirSync(full);
+      }
+    } catch {
+      // not empty or already gone; leave it
+    }
+  }
+  try {
+    fs.unlinkSync(recordPath);
+  } catch {
+    // best-effort
+  }
+  try {
+    // only an empty stash is removed
+    fs.rmdirSync(staticPublishStashDir(siteDirectory));
+  } catch {
+    // stash still holds artifacts; restore handles it
+  }
+  return removed;
+}
+
+/**
+ * Write the pages a static host serves into a site prepared with
+ * prepareSiteForStaticPublish (haxtheweb/issues#3327): the rendered home
+ * page over the swapped-in index.html, and <slug>/index.html for each
+ * published page. A file or folder the site already has is never replaced.
+ * Every file and folder written is recorded so removeStaticPublishPages
+ * (run by restoreSiteAfterStaticPublish) takes them out again.
+ * Returns the number of pages written; 0 with an older haxcms-nodejs.
+ */
+export async function writeStaticPublishPages(siteDirectory, domain = "") {
+  if (
+    !staticPagesLib ||
+    typeof staticPagesLib.renderStaticPages !== "function" ||
+    !fs.existsSync(siteDirectory)
+  ) {
+    return 0;
+  }
+  const root = path.resolve(siteDirectory);
+  const record = { files: [], dirs: [] };
+  const saveRecord = () => {
+    const stashDir = staticPublishStashDir(siteDirectory);
+    fs.mkdirSync(stashDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(stashDir, STATIC_PAGES_RECORD),
+      JSON.stringify(record),
+    );
+  };
+  let written = 0;
+  try {
+    const site = new haxcmsLib.HAXCMSSite();
+    await site.loadSingle(root);
+    const pages = await staticPagesLib.renderStaticPages(site, { domain });
+    for (const page of pages) {
+      const target = path.resolve(root, page.path);
+      if (!target.startsWith(root + path.sep)) {
+        continue;
+      }
+      if (page.path === "index.html") {
+        // only over the ghpages.html copy prepare made (the original is
+        // in index.html.bak); never over a site's own index.html
+        if (fs.existsSync(path.join(root, "index.html.bak"))) {
+          fs.writeFileSync(target, page.html);
+          written++;
+        }
+        continue;
+      }
+      if (fs.existsSync(target)) {
+        continue;
+      }
+      // folders are recorded before anything is written into them
+      const made = [];
+      let dir = path.dirname(target);
+      while (dir !== root && !fs.existsSync(dir)) {
+        made.unshift(dir);
+        dir = path.dirname(dir);
+      }
+      for (const folder of made) {
+        record.dirs.push(path.relative(root, folder));
+      }
+      record.files.push(page.path);
+      saveRecord();
+      for (const folder of made) {
+        fs.mkdirSync(folder);
+      }
+      fs.writeFileSync(target, page.html, { flag: "wx" });
+      written++;
+    }
+  } catch {
+    // best-effort: a publish never fails over its pages; whatever was
+    // written is in the record and is removed on restore
+  }
+  return written;
+}
+
 /**
  * Prepare a live HAXcms site directory for a static host: swap ghpages.html
  * in as index.html (backing the original up), write llms-full.txt, and move
@@ -1187,7 +1364,9 @@ export function prepareSiteForStaticPublish(siteDirectory) {
     },
   };
   try {
-    // a stash left behind by a crashed/killed earlier publish goes back first
+    // pages and a stash left behind by a crashed/killed earlier publish
+    // come out / go back first
+    removeStaticPublishPages(siteDirectory);
     unstashStaticPublishArtifacts(siteDirectory);
     // static hosts have no server to answer llms-full.txt (#3104)
     writeStaticLlmsFull(siteDirectory);
@@ -1226,6 +1405,10 @@ export function restoreSiteAfterStaticPublish(siteDirectory) {
     }
     // llms-full.txt was only for the static host; HAXcms serves it live
     removeStaticLlmsFull(siteDirectory);
+    // so were the rendered pages (HAXcms renders them per request)
+    if (removeStaticPublishPages(siteDirectory) > 0) {
+      restored = true;
+    }
     const indexPath = path.join(siteDirectory, "index.html");
     const backupPath = path.join(siteDirectory, "index.html.bak");
     if (fs.existsSync(backupPath)) {
@@ -2803,6 +2986,21 @@ export async function siteCommandDetected(commandRun) {
           // Prepare for static publish: swap ghpages.html in as index.html and clean local artifacts
           surgePrepared = prepareSiteForStaticPublish(activeHaxsite.directory);
           logStaticPublishPrepared(surgePrepared, commandRun);
+          if (surgePrepared) {
+            const pagesWritten = await writeStaticPublishPages(
+              activeHaxsite.directory,
+              staticPublishDomain(
+                activeHaxsite.directory,
+                commandRun.options.domain,
+              ),
+            );
+            if (pagesWritten > 0 && !commandRun.options.quiet) {
+              log(
+                `Rendered ${pagesWritten} pages with their metadata and content for the static host`,
+                "info",
+              );
+            }
+          }
           // attempt to install; implies they asked to publish with surge but
           // system test did not see it globally
           if (!sysSurge) {
@@ -2939,6 +3137,21 @@ export async function siteCommandDetected(commandRun) {
             activeHaxsite.directory,
           );
           logStaticPublishPrepared(netlifyPrepared, commandRun);
+          if (netlifyPrepared) {
+            const pagesWritten = await writeStaticPublishPages(
+              activeHaxsite.directory,
+              staticPublishDomain(
+                activeHaxsite.directory,
+                commandRun.options.domain,
+              ),
+            );
+            if (pagesWritten > 0 && !commandRun.options.quiet) {
+              log(
+                `Rendered ${pagesWritten} pages with their metadata and content for the static host`,
+                "info",
+              );
+            }
+          }
           // attempt to install; implies they asked to publish with netlify but
           // system test did not see it globally
           if (!sysNetlify) {
@@ -3024,6 +3237,21 @@ export async function siteCommandDetected(commandRun) {
           // Prepare for static publish: swap ghpages.html in as index.html and clean local artifacts
           vercelPrepared = prepareSiteForStaticPublish(activeHaxsite.directory);
           logStaticPublishPrepared(vercelPrepared, commandRun);
+          if (vercelPrepared) {
+            const pagesWritten = await writeStaticPublishPages(
+              activeHaxsite.directory,
+              staticPublishDomain(
+                activeHaxsite.directory,
+                commandRun.options.domain,
+              ),
+            );
+            if (pagesWritten > 0 && !commandRun.options.quiet) {
+              log(
+                `Rendered ${pagesWritten} pages with their metadata and content for the static host`,
+                "info",
+              );
+            }
+          }
           // attempt to install; implies they asked to publish with vercel but
           // system test did not see it globally
           if (!sysVercel) {
