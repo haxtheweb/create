@@ -4,11 +4,22 @@
 //
 // Ids follow the numbering of the operation list in the
 // "HAX Golden Snapshot Parity Operations" doc (1-50), so coverage can be read
-// off it. Steps use the same op shape as ops.cjs and run through the same leg
+// off it. A letter after the number (34b) is a further case for that
+// operation. Steps use the same op shape as ops.cjs and run through the same leg
 // adapters in legs.cjs: L0 is the welcome page, L1.. are pages a step adds.
 //
 //   legs: "all" = nodejs + php + cli (the CLI can express every step)
 //         "api" = nodejs + php (a step has no CLI command)
+//
+// A step with `expect: <status>` must be refused with that HTTP status on
+// every leg; the snapshot then shows the site exactly as the steps before it
+// left it (an invalid outline is rejected before anything is written).
+//
+// Outline cases (haxtheweb/issues#3333) send what outline-designer sends:
+//   outlineSave: one Save Outline. `changes` edit pages by key (title, slug,
+//                parent, order, hideInMenu, delete); `add` adds new pages.
+//   outlineRaw:  a hand-written items payload, for refused saves. "@L1" is
+//                replaced with that page's id.
 //
 // Add a case: append it here, run `npm run test:parity:golden -- --update-golden
 // --cases <id>`, review the new snapshots/<id>.json, commit both.
@@ -235,6 +246,30 @@ const CASES = [
     ],
   },
   {
+    id: "32-reparent-with-order",
+    title: "Reparent a page with an explicit order",
+    legs: "all",
+    steps: [
+      { type: "addPage", key: "L1", title: "Unit", content: "<p>u</p>" },
+      {
+        type: "addPage",
+        key: "L2",
+        title: "First child",
+        content: "<p>a</p>",
+        parent: "L1",
+      },
+      {
+        type: "addPage",
+        key: "L3",
+        title: "Second child",
+        content: "<p>b</p>",
+        parent: "L1",
+      },
+      { type: "addPage", key: "L4", title: "Mover", content: "<p>m</p>" },
+      { type: "editParent", key: "L4", parent: "L1", order: 0 },
+    ],
+  },
+  {
     id: "33-move-subtree-to-top",
     title: "Move a subtree to the top level",
     legs: "api",
@@ -258,6 +293,223 @@ const CASES = [
     ],
   },
   {
+    id: "34-bulk-outline-save",
+    title:
+      "Bulk outline save: a move, a rename, a delete and a new page in one save",
+    legs: "api",
+    steps: [
+      { type: "addPage", key: "L1", title: "Unit 1", content: "<p>1</p>" },
+      { type: "addPage", key: "L2", title: "Unit 2", content: "<p>2</p>" },
+      { type: "addPage", key: "L3", title: "Lesson", content: "<p>l</p>" },
+      { type: "addPage", key: "L4", title: "Old notes", content: "<p>o</p>" },
+      {
+        type: "outlineSave",
+        changes: [
+          { key: "L3", parent: "L1" },
+          { key: "L2", title: "Unit Two" },
+          { key: "L4", delete: true },
+        ],
+        add: [{ key: "L5", title: "Quiz", parent: "L2" }],
+      },
+    ],
+  },
+  {
+    // L2's order records haxtheweb/issues#3360 item 1 (indent counts the
+    // page itself); refresh this snapshot when that is fixed
+    id: "34b-indent-and-outdent",
+    title: "Indent a page under its sibling, then outdent it back",
+    legs: "all",
+    steps: [
+      { type: "addPage", key: "L1", title: "Unit", content: "<p>u</p>" },
+      { type: "addPage", key: "L2", title: "Lesson", content: "<p>l</p>" },
+      { type: "addPage", key: "L3", title: "Activity", content: "<p>a</p>" },
+      { type: "indent", key: "L2" },
+      { type: "indent", key: "L3" },
+      { type: "indent", key: "L3" },
+      { type: "outdent", key: "L3" },
+    ],
+  },
+  {
+    id: "34c-outline-slug-collision",
+    title: "Bulk outline save renames two pages to the same title",
+    legs: "api",
+    steps: [
+      { type: "addPage", key: "L1", title: "Alpha", content: "<p>a</p>" },
+      { type: "addPage", key: "L2", title: "Beta", content: "<p>b</p>" },
+      {
+        type: "outlineSave",
+        changes: [
+          { key: "L1", title: "Overview" },
+          { key: "L2", title: "Overview" },
+        ],
+      },
+    ],
+  },
+  {
+    id: "34d-outline-slug-override",
+    title: "Bulk outline save sets a custom slug that another page has",
+    legs: "api",
+    steps: [
+      { type: "addPage", key: "L1", title: "Syllabus", content: "<p>s</p>" },
+      { type: "addPage", key: "L2", title: "Schedule", content: "<p>c</p>" },
+      { type: "outlineSave", changes: [{ key: "L2", slug: "syllabus" }] },
+    ],
+  },
+  {
+    // the locked page itself is not changed here: whether a bulk save may
+    // change a locked page is haxtheweb/issues#3360 item 3
+    id: "34e-outline-locked-and-hidden",
+    title:
+      "Bulk outline save keeps a locked page and a hidden page as they were",
+    legs: "api",
+    steps: [
+      { type: "addPage", key: "L1", title: "Locked", content: "<p>l</p>" },
+      { type: "addPage", key: "L2", title: "Hidden", content: "<p>h</p>" },
+      { type: "addPage", key: "L3", title: "Mover", content: "<p>m</p>" },
+      { type: "setLocked", key: "L1", locked: true },
+      { type: "editHideInMenu", key: "L2", hideInMenu: true },
+      {
+        type: "outlineSave",
+        changes: [
+          { key: "L3", parent: "L2" },
+          { key: "L2", title: "Hidden page" },
+        ],
+      },
+    ],
+  },
+  {
+    id: "34f-outline-hide-in-bulk",
+    title: "Bulk outline save hides one page and shows another",
+    legs: "api",
+    steps: [
+      { type: "addPage", key: "L1", title: "Shown", content: "<p>s</p>" },
+      { type: "addPage", key: "L2", title: "Was hidden", content: "<p>h</p>" },
+      { type: "editHideInMenu", key: "L2", hideInMenu: true },
+      {
+        type: "outlineSave",
+        changes: [
+          { key: "L1", hideInMenu: true },
+          { key: "L2", hideInMenu: false },
+        ],
+      },
+    ],
+  },
+  {
+    id: "34g-outline-unknown-parent",
+    title:
+      "Bulk outline save with a parent that does not exist (page goes to the top level)",
+    legs: "api",
+    steps: [
+      { type: "addPage", key: "L1", title: "Unit", content: "<p>u</p>" },
+      {
+        type: "addPage",
+        key: "L2",
+        title: "Lesson",
+        content: "<p>l</p>",
+        parent: "L1",
+      },
+      {
+        type: "outlineSave",
+        changes: [{ key: "L2", parent: "no-such-page" }],
+      },
+    ],
+  },
+  {
+    // L2 keeps indent 1 and slug unit/lesson: haxtheweb/issues#3360 item 2;
+    // refresh this snapshot when that is fixed (compare 44)
+    id: "34h-outline-delete-parent",
+    title: "Bulk outline save deletes a parent and keeps its children",
+    legs: "api",
+    steps: [
+      { type: "addPage", key: "L1", title: "Unit", content: "<p>u</p>" },
+      {
+        type: "addPage",
+        key: "L2",
+        title: "Lesson",
+        content: "<p>l</p>",
+        parent: "L1",
+      },
+      { type: "outlineSave", changes: [{ key: "L1", delete: true }] },
+    ],
+  },
+  {
+    id: "36-outline-empty-item",
+    title: "saveOutline with an empty item is refused and changes nothing",
+    legs: "api",
+    steps: [
+      { type: "addPage", key: "L1", title: "Keep", content: "<p>k</p>" },
+      { type: "outlineRaw", items: [{}], expect: 400 },
+    ],
+  },
+  {
+    id: "36b-outline-not-a-list",
+    title: "saveOutline whose items are not a list, or not objects, is refused",
+    legs: "api",
+    steps: [
+      { type: "addPage", key: "L1", title: "Keep", content: "<p>k</p>" },
+      { type: "outlineRaw", items: "L1", expect: 400 },
+      { type: "outlineRaw", items: [null], expect: 400 },
+      { type: "outlineRaw", items: [["@L1"]], expect: 400 },
+    ],
+  },
+  {
+    id: "37-outline-blank-id",
+    title: "saveOutline with a blank id is refused and changes nothing",
+    legs: "api",
+    steps: [
+      { type: "addPage", key: "L1", title: "Keep", content: "<p>k</p>" },
+      {
+        type: "outlineRaw",
+        items: [
+          { id: "@L1", title: "Renamed", parent: null, order: 0 },
+          { id: "   ", title: "Blank id", parent: null, order: 1 },
+        ],
+        expect: 400,
+      },
+    ],
+  },
+  {
+    id: "37b-outline-parent-cycle",
+    title:
+      "saveOutline that moves a page under its own child is refused and changes nothing",
+    legs: "api",
+    steps: [
+      { type: "addPage", key: "L1", title: "Unit", content: "<p>u</p>" },
+      {
+        type: "addPage",
+        key: "L2",
+        title: "Lesson",
+        content: "<p>l</p>",
+        parent: "L1",
+      },
+      {
+        type: "outlineRaw",
+        items: [
+          { id: "@L1", title: "Unit", parent: "@L2", order: 0, indent: 2 },
+          { id: "@L2", title: "Lesson", parent: "@L1", order: 0, indent: 1 },
+        ],
+        expect: 400,
+      },
+    ],
+  },
+  {
+    id: "37c-outline-duplicate-new-id",
+    title:
+      "saveOutline that sends the same new page id twice is refused and changes nothing",
+    legs: "api",
+    steps: [
+      { type: "addPage", key: "L1", title: "Keep", content: "<p>k</p>" },
+      {
+        type: "outlineRaw",
+        items: [
+          { id: "item-new-page", title: "New A", parent: null, order: 1 },
+          { id: "item-new-page", title: "New B", parent: null, order: 2 },
+        ],
+        expect: 400,
+      },
+    ],
+  },
+  {
     id: "38-lock-and-unlock",
     title: "Lock and unlock a page",
     legs: "all",
@@ -278,6 +530,29 @@ const CASES = [
       { type: "addPage", key: "L1", title: "Keep", content: "<p>k</p>" },
       { type: "addPage", key: "L2", title: "Remove", content: "<p>r</p>" },
       { type: "deletePage", key: "L2" },
+    ],
+  },
+  {
+    id: "44-delete-parent-with-children",
+    title: "Delete a page that has children",
+    legs: "all",
+    steps: [
+      { type: "addPage", key: "L1", title: "Unit", content: "<p>u</p>" },
+      {
+        type: "addPage",
+        key: "L2",
+        title: "Lesson",
+        content: "<p>l</p>",
+        parent: "L1",
+      },
+      {
+        type: "addPage",
+        key: "L3",
+        title: "Activity",
+        content: "<p>a</p>",
+        parent: "L2",
+      },
+      { type: "deletePage", key: "L1" },
     ],
   },
 ];
