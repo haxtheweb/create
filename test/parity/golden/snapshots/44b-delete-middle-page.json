@@ -1,0 +1,125 @@
+{
+  "manifest": {
+    "id": "SITE_ID",
+    "title": "SITE_NAME",
+    "author": "",
+    "description": "Parity test site",
+    "license": "by-sa",
+    "metadata": {
+      "author": {},
+      "site": {
+        "name": "SITE_NAME",
+        "logo": "assets/banner.jpg",
+        "settings": {
+          "lang": "en-US",
+          "publishPagesOn": true,
+          "canonical": true,
+          "pathauto": true
+        },
+        "git": {
+          "vendor": "github",
+          "branch": "gh-pages"
+        }
+      },
+      "theme": {
+        "element": "clean-two",
+        "path": "@haxtheweb/clean-two/clean-two.js",
+        "name": "Clean Two",
+        "thumbnail": "@haxtheweb/haxcms-elements/lib/theme-screenshots/theme-clean-two-thumb.jpg",
+        "description": "Start with a blank site using the Clean Two",
+        "category": [
+          "Course"
+        ],
+        "hidden": false,
+        "priority": 0,
+        "terrible": false,
+        "supportedPalettes": null,
+        "variables": {
+          "icon": "icons:record-voice-over",
+          "hexCode": "#3f51b5",
+          "cssVariable": "--simple-colors-default-theme-light-blue-7"
+        }
+      },
+      "node": {
+        "fields": {}
+      },
+      "platform": {
+        "audience": "expert",
+        "features": {},
+        "allowedBlocks": []
+      }
+    },
+    "items": {
+      "L0": {
+        "id": "L0",
+        "indent": 0,
+        "location": "pages/L0/index.html",
+        "slug": "home",
+        "order": 0,
+        "parent": null,
+        "title": "Home",
+        "description": "",
+        "metadata": {
+          "published": true,
+          "hideInMenu": false,
+          "tags": []
+        }
+      },
+      "L3": {
+        "id": "L3",
+        "indent": 1,
+        "location": "pages/L3/index.html",
+        "slug": "unit/activity",
+        "order": 0,
+        "parent": "L1",
+        "title": "Activity",
+        "description": "",
+        "metadata": {
+          "images": [],
+          "videos": []
+        }
+      },
+      "L1": {
+        "id": "L1",
+        "indent": 0,
+        "location": "pages/L1/index.html",
+        "slug": "unit",
+        "order": 1,
+        "parent": null,
+        "title": "Unit",
+        "description": "",
+        "metadata": {
+          "images": [],
+          "videos": []
+        }
+      },
+      "L4": {
+        "id": "L4",
+        "indent": 1,
+        "location": "pages/L4/index.html",
+        "slug": "unit/quiz",
+        "order": 1,
+        "parent": "L1",
+        "title": "Quiz",
+        "description": "",
+        "metadata": {
+          "images": [],
+          "videos": []
+        }
+      }
+    },
+    "location": "<sites>/SITE_NAME/index.html"
+  },
+  "sequence": [
+    "L0",
+    "L3",
+    "L1",
+    "L4"
+  ],
+  "pages": {
+    "L0": "<p>Edit this page to get started on your HAX site!</p>",
+    "L3": "<p>a</p>",
+    "L1": "<p>u</p>",
+    "L4": "<p>q</p>"
+  }
+}
