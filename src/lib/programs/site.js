@@ -2532,10 +2532,15 @@ export async function siteCommandDetected(commandRun) {
               // failure too.
               const respData = resp && resp.res ? resp.res.data : null;
               if (!respData || respData.status >= 400) {
+                // say why the backend refused (a locked page answers 423);
+                // "not found" only when the backend said so or said nothing
+                const notFound = t("siteNodeDeleteNotFound", {
+                  id: commandRun.options.itemId,
+                });
                 console.error(
-                  t("siteNodeDeleteNotFound", {
-                    id: commandRun.options.itemId,
-                  }),
+                  respData && respData.status !== 404
+                    ? apiMessage(respData, notFound)
+                    : notFound,
                 );
                 process.exitCode = 1;
               } else {

@@ -1295,6 +1295,66 @@ test(
   },
 );
 
+test(
+  "node:delete says why the backend refused: a locked page, not a missing one",
+  opts,
+  async () => {
+    resetMocks();
+    cliBridgeResponse = {
+      res: {
+        statusCode: 423,
+        status: 423,
+        data: { status: 423, data: { message: "Page is locked" } },
+      },
+    };
+    const errors = [];
+    const realError = console.error;
+    console.error = (msg) => errors.push(String(msg));
+    try {
+      await runSite({
+        command: "site",
+        arguments: { action: "node:delete" },
+        options: { quiet: true, i: true, y: true, itemId: "item-2" },
+      });
+    } finally {
+      console.error = realError;
+    }
+    // runSite resets process.exitCode, so the refusal shows in the message
+    assert.equal(errors.length, 1);
+    assert.match(errors[0], /locked/i);
+    assert.doesNotMatch(errors[0], /not found/i);
+  },
+);
+
+test(
+  "node:delete still says not found when the backend answers 404",
+  opts,
+  async () => {
+    resetMocks();
+    cliBridgeResponse = {
+      res: {
+        statusCode: 404,
+        status: 404,
+        data: { status: 404, data: { message: "Not found" } },
+      },
+    };
+    const errors = [];
+    const realError = console.error;
+    console.error = (msg) => errors.push(String(msg));
+    try {
+      await runSite({
+        command: "site",
+        arguments: { action: "node:delete" },
+        options: { quiet: true, i: true, y: true, itemId: "item-2" },
+      });
+    } finally {
+      console.error = realError;
+    }
+    assert.equal(errors.length, 1);
+    assert.match(errors[0], /node:delete failed "item-2" not found/);
+  },
+);
+
 // --- revisions / export / files / search-replace (cliBridge based) ---
 
 test("site:revisions lists revisions for an item", opts, async () => {
