@@ -1345,6 +1345,148 @@ export async function writeStaticPublishPages(siteDirectory, domain = "") {
   return written;
 }
 
+// site:build-static (haxtheweb/issues#3352, #2765): a folder a static host
+// serves as is, built from a site without changing it. A folder this wrote
+// carries this marker, and only such a folder (or an empty one) is replaced.
+export const STATIC_BUILD_MARKER = ".hax-static-build";
+// never copied: version control, CI, installed packages, earlier builds
+// (dist/, ignored by git and the publish ignore files), logs, publish
+// leftovers. Symbolic links aren't copied either: in a site they point at a
+// HAXcms server's shared front-end build, which a static host doesn't have
+// (the magic script loads it from the CDN instead).
+const STATIC_COPY_SKIP = new Set([
+  ".git",
+  ".github",
+  "node_modules",
+  "dist",
+  "logs",
+  "index.html.bak",
+]);
+// the dot files a static host needs: agent discovery and GitHub Pages' flag
+const STATIC_COPY_DOTFILES = new Set([".well-known", ".nojekyll"]);
+
+function copySiteForStaticBuild(from, to, skipDir) {
+  fs.mkdirSync(to, { recursive: true });
+  for (const entry of fs.readdirSync(from)) {
+    if (STATIC_COPY_SKIP.has(entry) || /\.log$/i.test(entry)) {
+      continue;
+    }
+    if (entry.charAt(0) === "." && !STATIC_COPY_DOTFILES.has(entry)) {
+      continue;
+    }
+    const source = path.join(from, entry);
+    if (source === skipDir) {
+      continue;
+    }
+    const stat = fs.lstatSync(source);
+    if (stat.isDirectory()) {
+      copySiteForStaticBuild(source, path.join(to, entry), skipDir);
+    } else if (stat.isFile()) {
+      fs.copyFileSync(source, path.join(to, entry));
+    }
+  }
+}
+
+/**
+ * Build a site for a static host into outDirectory (or in place when it is
+ * the site's own folder, for a build that already is a disposable copy):
+ * the site's files, its managed and generated files rebuilt (robots.txt,
+ * llms.txt, sitemap, feeds, search index, agent skills), ghpages.html as
+ * the entry point, llms-full.txt, and each published page rendered with its
+ * metadata and content (writeStaticPublishPages' renderer). domain is the
+ * published address when site.json has none. Returns
+ * { out, pages, renderer } where renderer is false with a haxcms-nodejs
+ * that has no page renderer (the shell is then the entry point, as before).
+ */
+export async function buildStaticSite(
+  siteDirectory,
+  outDirectory,
+  domain = "",
+) {
+  const root = path.resolve(siteDirectory);
+  const out = path.resolve(outDirectory);
+  if (!fs.existsSync(path.join(root, "site.json"))) {
+    throw new Error(`${root} is not a HAXsite (no site.json)`);
+  }
+  const inPlace = root === out;
+  if (!inPlace) {
+    if (root.startsWith(out + path.sep)) {
+      throw new Error("The output folder can't contain the site");
+    }
+    let outStat = null;
+    try {
+      outStat = fs.lstatSync(out);
+    } catch {
+      outStat = null;
+    }
+    if (outStat && !outStat.isDirectory()) {
+      throw new Error(`${out} exists and is not a folder; not replacing it`);
+    }
+    if (outStat) {
+      const entries = fs.readdirSync(out);
+      if (entries.length > 0 && !entries.includes(STATIC_BUILD_MARKER)) {
+        throw new Error(
+          `${out} is not empty and was not made by site:build-static; not replacing it`,
+        );
+      }
+      fs.rmSync(out, { recursive: true, force: true });
+    }
+    copySiteForStaticBuild(root, out, out);
+    fs.writeFileSync(path.join(out, STATIC_BUILD_MARKER), "");
+  }
+  const site = new haxcmsLib.HAXCMSSite();
+  await site.loadSingle(out);
+  if (
+    domain &&
+    site.manifest.metadata &&
+    site.manifest.metadata.site &&
+    !site.manifest.metadata.site.domain
+  ) {
+    // in memory only: the address the generated files use
+    site.manifest.metadata.site.domain = domain;
+  }
+  try {
+    await site.rebuildManagedFiles();
+  } catch {
+    // a template that can't render keeps the site's own copy
+  }
+  try {
+    await site.updateAlternateFormats();
+  } catch {
+    // feeds and indexes are best-effort, as on save
+  }
+  const ghpages = path.join(out, "ghpages.html");
+  if (fs.existsSync(ghpages)) {
+    fs.copyFileSync(ghpages, path.join(out, "index.html"));
+  }
+  if (!fs.existsSync(path.join(out, "llms-full.txt"))) {
+    const markdown = buildStaticLlmsFull(out);
+    if (markdown !== null) {
+      fs.writeFileSync(path.join(out, "llms-full.txt"), markdown);
+    }
+  }
+  const renderer = !!(
+    staticPagesLib && typeof staticPagesLib.renderStaticPages === "function"
+  );
+  let pages = 0;
+  if (renderer) {
+    const rendered = await staticPagesLib.renderStaticPages(site, { domain });
+    for (const page of rendered) {
+      const target = path.resolve(out, page.path);
+      if (!target.startsWith(out + path.sep)) {
+        continue;
+      }
+      if (page.path !== "index.html" && fs.existsSync(target)) {
+        continue;
+      }
+      fs.mkdirSync(path.dirname(target), { recursive: true });
+      fs.writeFileSync(target, page.html);
+      pages++;
+    }
+  }
+  return { out, pages, renderer };
+}
+
 /**
  * Prepare a live HAXcms site directory for a static host: swap ghpages.html
  * in as index.html (backing the original up), write llms-full.txt, and move
@@ -1526,6 +1668,7 @@ export function siteActions() {
     },
     { value: "site:sync", label: t("siteActionSiteSync") },
     { value: "site:rsync", label: t("siteActionSiteRsync") },
+    { value: "site:build-static", label: t("siteActionSiteBuildStatic") },
     { value: "site:surge", label: t("siteActionSiteSurge") },
     { value: "site:netlify", label: t("siteActionSiteNetlify") },
     { value: "site:vercel", label: t("siteActionSiteVercel") },
@@ -4135,6 +4278,38 @@ export async function siteCommandDetected(commandRun) {
             p.outro(
               `${color.green("✓")} ${t("siteRebuildDone", { targets: rebuilt.join(", ") })}`,
             );
+          }
+        } catch (e) {
+          log(formatErrorForLogging(e), "error");
+          process.exitCode = 1;
+        }
+        break;
+      }
+      case "site:build-static": {
+        try {
+          const outDirectory = commandRun.options.outDir
+            ? resolveLocalPath(commandRun.options.outDir)
+            : path.join(
+                path.dirname(path.resolve(activeHaxsite.directory)),
+                `${path.basename(path.resolve(activeHaxsite.directory))}-static`,
+              );
+          const built = await buildStaticSite(
+            activeHaxsite.directory,
+            outDirectory,
+            staticPublishDomain(
+              activeHaxsite.directory,
+              commandRun.options.domain,
+            ),
+          );
+          if (commandRun.options.format) {
+            logStructuredOutput(commandRun, built);
+          } else if (!commandRun.options.quiet) {
+            p.outro(
+              `${color.green("✓")} ${t("siteBuildStaticDone", { out: built.out, pages: built.pages })}`,
+            );
+            if (!built.renderer) {
+              log(t("siteBuildStaticNoRenderer"), "warn");
+            }
           }
         } catch (e) {
           log(formatErrorForLogging(e), "error");

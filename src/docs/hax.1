@@ -134,6 +134,9 @@ Actions to perform on site include:
 .B site:rsync
 \- Rsync site to remote/local directory
 .br
+.B site:build\-static
+\- Build the site for a static host into \-\-out\-dir (default <site>\-static beside it): every published page as its own HTML file with its metadata and text, generated files rebuilt; the site is not changed
+.br
 .B site:surge
 \- Publish site to Surge.sh
 .br
@@ -404,6 +407,9 @@ max number of site search matches to return
 .TP
 \--search\-selector
 treat \--search as a selector query (tag, tag[attr], tag[attr="value"], [attr])
+.TP
+\--out\-dir <char>
+folder site:build\-static writes the static site to
 .TP
 \--only <char>
 site:rebuild targets to rebuild, comma separated (rss, sitemap, search, llms, managed, skills)
