@@ -19,6 +19,7 @@ const {
   helpAuditRadius,
   helpAuditSpacing,
   hasColorLiteral,
+  isDddExemptValue,
   auditColorAttributes,
   auditJavaScriptLine,
 } = require("../../src/lib/programs/audit.js");
@@ -272,4 +273,38 @@ test("auditJavaScriptLine flags ?., ??, window and DDD(LitElement)", () => {
     [],
   );
   assert.deepEqual(rules("// a comment mentioning ?. and window.x"), []);
+});
+
+test("isDddExemptValue: keywords and system colors have no DDD token; numbers and colors still do", () => {
+  for (const v of [
+    "inherit",
+    "none",
+    "transparent",
+    "auto",
+    "currentColor",
+    "unset",
+    "revert-layer",
+    "CanvasText",
+    "Highlight",
+    "ButtonText",
+    "none !important",
+    "  Canvas  ",
+  ]) {
+    assert.equal(isDddExemptValue(v), true, v);
+  }
+  for (const v of [
+    "0",
+    "1",
+    "0.06em",
+    "4px",
+    "black",
+    "red",
+    "#000",
+    "normal",
+    "1px solid transparent",
+    "var(--x)",
+    "light-dark(black, white)",
+  ]) {
+    assert.equal(isDddExemptValue(v), false, v);
+  }
 });

@@ -343,6 +343,10 @@ function auditFile(fileLocation, fileName) {
         .map((item) => item && item.trim());
       lineProperty = lineProperty.toLowerCase();
       lineAttribute = lineAttribute.replace(";", "");
+      // keywords and system colors have no DDD token to suggest
+      if (isDddExemptValue(lineAttribute)) {
+        return;
+      }
 
       // Check border shorthands
       if (
@@ -491,6 +495,61 @@ function auditFile(fileLocation, fileName) {
   } else {
     p.note(t("auditNoChangesNeeded"));
   }
+}
+
+// CSS-wide keywords and keyword values that mean "no value" or "use what is
+// there"; DDD has no token for them and needs none
+const KEYWORD_VALUES = new Set([
+  "inherit",
+  "initial",
+  "unset",
+  "revert",
+  "revert-layer",
+  "none",
+  "transparent",
+  "auto",
+  "currentcolor",
+]);
+
+// CSS system colors (CSS Color 4). Forced colors / high contrast mode requires
+// them, and they follow the user's chosen palette, so they are never replaced
+// with DDD colors.
+const SYSTEM_COLORS = new Set([
+  "canvas",
+  "canvastext",
+  "linktext",
+  "visitedtext",
+  "activetext",
+  "buttonface",
+  "buttontext",
+  "buttonborder",
+  "field",
+  "fieldtext",
+  "highlight",
+  "highlighttext",
+  "selecteditem",
+  "selecteditemtext",
+  "mark",
+  "marktext",
+  "graytext",
+  "accentcolor",
+  "accentcolortext",
+]);
+
+/**
+ * @description True when a CSS value is only a keyword DDD has no token for
+ * (inherit, none, transparent, auto, currentColor, ...) or a CSS system color
+ * (Canvas, CanvasText, Highlight, ...), optionally with !important. Numbers,
+ * lengths and named colors are not exempt.
+ * @param value CSS value
+ * @returns Boolean
+ */
+export function isDddExemptValue(value) {
+  const v = String(value)
+    .toLowerCase()
+    .replace(/!\s*important\s*$/, "")
+    .trim();
+  return KEYWORD_VALUES.has(v) || SYSTEM_COLORS.has(v);
 }
 
 /**
