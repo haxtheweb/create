@@ -51,6 +51,72 @@ function syncIndents(items) {
   return items;
 }
 
+// Ops only the golden cases use (golden/cases.cjs); the seeded sequences in
+// ops.cjs never emit them.
+const GOLDEN_OP_TYPES = ["outlineSave", "outlineRaw"];
+
+// a logical key (L0, L1, ...) as written in a golden case
+const isKey = (v) => typeof v === "string" && /^L\d+$/.test(v);
+
+// outlineRaw payloads name pages as "@L1"; swap in the leg's real ids,
+// leaving everything else (an unknown id, a blank one, a number) as written
+function resolveKeys(value, idOf) {
+  if (typeof value === "string" && /^@L\d+$/.test(value))
+    return idOf(value.slice(1)) || value;
+  if (Array.isArray(value)) return value.map((v) => resolveKeys(v, idOf));
+  if (value && typeof value === "object") {
+    const out = {};
+    for (const [k, v] of Object.entries(value)) out[k] = resolveKeys(v, idOf);
+    return out;
+  }
+  return value;
+}
+
+// What outline-designer sends for one Save Outline: every page as site.json
+// has it, with this save's changes applied, new pages added under a client
+// id, and depths recomputed. A change names a page by key; its parent is a
+// key, null (top level) or any other string, sent as is.
+function buildOutlineItems(items, op, idOf) {
+  const out = items.map((i) =>
+    Object.assign({}, i, { metadata: Object.assign({}, i.metadata || {}) }),
+  );
+  const parentFor = (p) =>
+    p === null || p === undefined ? null : isKey(p) ? idOf(p) : p;
+  for (const add of op.add || []) {
+    const parent = parentFor(add.parent);
+    out.push({
+      id: "item-golden-" + add.key,
+      title: add.title,
+      parent,
+      order:
+        add.order === undefined ? nextSiblingOrder(out, parent) : add.order,
+      indent: 0,
+      metadata: {},
+    });
+  }
+  for (const ch of op.changes || []) {
+    const it = out.find((x) => x.id === idOf(ch.key));
+    if (!it) continue;
+    if (ch.title !== undefined) it.title = ch.title;
+    if (ch.slug !== undefined) {
+      it.slug = ch.slug;
+      it.metadata.overridePathauto = true;
+    }
+    if (ch.parent !== undefined) {
+      it.parent = parentFor(ch.parent);
+      if (ch.order === undefined)
+        it.order = nextSiblingOrder(
+          out.filter((x) => x.id !== it.id),
+          it.parent,
+        );
+    }
+    if (ch.order !== undefined) it.order = ch.order;
+    if (ch.hideInMenu !== undefined) it.metadata.hideInMenu = ch.hideInMenu;
+    if (ch.delete) it.delete = true;
+  }
+  return syncIndents(out);
+}
+
 // The editor's save sends a <page-break> describing the page's CURRENT
 // properties followed by the body; saveNode re-applies every attribute (and
 // resets published / hide-in-menu / override-pathauto when absent), so a
@@ -143,9 +209,14 @@ class ApiLeg extends BaseLeg {
       op.type !== "addPage" &&
       op.key &&
       !id &&
-      !["outlineReorder", "setTheme", "normalizeSlugs", "setLang"].includes(
-        op.type,
-      )
+      ![
+        "outlineReorder",
+        "outlineSave",
+        "outlineRaw",
+        "setTheme",
+        "normalizeSlugs",
+        "setLang",
+      ].includes(op.type)
     ) {
       return { status: "skipped", detail: "no mapped id for " + op.key };
     }
@@ -205,10 +276,13 @@ class ApiLeg extends BaseLeg {
         r = await patch({
           operation: "setParent",
           parent: parentId,
-          order: nextSiblingOrder(
-            items.filter((i) => i.id !== id),
-            parentId,
-          ),
+          order:
+            op.order === undefined
+              ? nextSiblingOrder(
+                  items.filter((i) => i.id !== id),
+                  parentId,
+                )
+              : op.order,
         });
         break;
       }
@@ -272,6 +346,28 @@ class ApiLeg extends BaseLeg {
         r = await this.call("PATCH", "/v1/site/outline", { site, items: out });
         break;
       }
+      case "outlineSave": {
+        const idOf = (k) => this.id(k);
+        const before = new Set(items.map((i) => i.id));
+        r = await this.call("PATCH", "/v1/site/outline", {
+          site,
+          items: buildOutlineItems(items, op, idOf),
+        });
+        // new pages get server ids; idMap says which client id became which
+        const idMap =
+          r.json && r.json.data && r.json.data.idMap ? r.json.data.idMap : {};
+        for (const add of op.add || []) {
+          const sid = idMap["item-golden-" + add.key];
+          if (sid && !before.has(sid)) this.keyToId[add.key] = sid;
+        }
+        break;
+      }
+      case "outlineRaw":
+        r = await this.call("PATCH", "/v1/site/outline", {
+          site,
+          items: resolveKeys(op.items, (k) => this.id(k)),
+        });
+        break;
       case "normalizeSlugs":
         r = await this.call("POST", "/v1/site/normalize-slugs", {
           site,
@@ -414,10 +510,13 @@ class CliLeg extends BaseLeg {
         ].concat(base);
       case "editParent": {
         const parentId = op.parent ? idOf(op.parent) : null;
-        const order = nextSiblingOrder(
-          items.filter((i) => i.id !== id),
-          parentId,
-        );
+        const order =
+          op.order === undefined
+            ? nextSiblingOrder(
+                items.filter((i) => i.id !== id),
+                parentId,
+              )
+            : op.order;
         return [
           "site",
           "node:edit",
@@ -485,6 +584,9 @@ class CliLeg extends BaseLeg {
 
 module.exports = {
   SITE_DESCRIPTION,
+  GOLDEN_OP_TYPES,
+  buildOutlineItems,
+  resolveKeys,
   ApiLeg,
   CliLeg,
   readItems,

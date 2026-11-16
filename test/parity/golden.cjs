@@ -82,9 +82,12 @@ function makeLegs(cfg, nodeInfo, which) {
 }
 
 // a failed step is part of the result: it is recorded and the case carries on,
-// so the snapshot shows what the leg left on disk
-function stepFailed(st) {
+// so the snapshot shows what the leg left on disk. A step with `expect` (an
+// HTTP status) is one that must be refused: it fails unless the leg answers
+// exactly that status, and the snapshot then shows the site was left as it was.
+function stepFailed(st, step = {}) {
   if (!st) return true;
+  if (step.expect !== undefined) return st.status !== step.expect;
   if (st.status === "ok") return false;
   return !(typeof st.status === "number" && st.status < 400);
 }
@@ -106,12 +109,13 @@ async function runCase(cfg, nodeInfo, c, runTag) {
       } catch (e) {
         st = { status: "threw", detail: String(e && e.message).slice(0, 300) };
       }
-      if (stepFailed(st))
+      if (stepFailed(st, step))
         result.stepErrors.push({
           leg: l.name,
           step: n + 1,
           type: step.type,
           status: st.status,
+          expected: step.expect,
           detail: st.detail,
         });
     }
@@ -209,7 +213,7 @@ function summarizeGolden(results, cfg) {
       );
     for (const e of r.stepErrors)
       lines.push(
-        `- ${e.leg}, step ${e.step} (${e.type}): ${esc(e.status)}${e.detail ? " " + esc(short(e.detail)) : ""}`,
+        `- ${e.leg}, step ${e.step} (${e.type}): ${esc(e.status)}${e.expected !== undefined ? " (expected " + esc(e.expected) + ")" : ""}${e.detail ? " " + esc(short(e.detail)) : ""}`,
       );
     for (const [leg, l] of Object.entries(r.legs))
       for (const d of l.examples)
@@ -245,6 +249,7 @@ async function runGolden(cfg, nodeInfo, log = console.log) {
 module.exports = {
   runGolden,
   runCase,
+  stepFailed,
   summarizeGolden,
   selectCases,
   passed,

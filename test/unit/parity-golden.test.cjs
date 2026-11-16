@@ -10,6 +10,7 @@ const { CASES } = require("../parity/golden/cases.cjs");
 const {
   selectCases,
   passed,
+  stepFailed,
   summarizeGolden,
   toGolden,
   SNAPSHOT_DIR,
@@ -17,13 +18,18 @@ const {
 const { snapshot } = require("../parity/snapshot.cjs");
 const { loadConfig } = require("../parity/config.cjs");
 const { OpGenerator } = require("../parity/ops.cjs");
+const {
+  GOLDEN_OP_TYPES,
+  buildOutlineItems,
+  resolveKeys,
+} = require("../parity/legs.cjs");
 
 test("case ids are unique and numbered like the operation list (1-50)", () => {
   const ids = CASES.map((c) => c.id);
   assert.equal(new Set(ids).size, ids.length);
   for (const id of ids) {
-    const m = /^(\d{2})-[a-z0-9-]+$/.exec(id);
-    assert.ok(m, id + " is <nn>-<words>");
+    const m = /^(\d{2})[a-z]?-[a-z0-9-]+$/.exec(id);
+    assert.ok(m, id + " is <nn>[letter]-<words>");
     const n = parseInt(m[1], 10);
     assert.ok(n >= 1 && n <= 50, id + " is numbered 1-50");
   }
@@ -34,6 +40,7 @@ test("every case lists its legs and uses op types the legs know", () => {
   const known = new Set();
   const gen = new OpGenerator(1, "api");
   for (const t of Object.keys(gen.weights)) known.add(t);
+  for (const t of GOLDEN_OP_TYPES) known.add(t);
   for (const c of CASES) {
     assert.ok(["all", "api"].includes(c.legs), c.id + " legs");
     assert.ok(c.title && c.title.length > 0, c.id + " title");
@@ -239,4 +246,81 @@ test("outlineMove sends depths the way outline-designer does", () => {
     loop.map((i) => i.indent),
     [5, 7],
   );
+});
+
+test("a step with expect passes only on that status", () => {
+  assert.equal(stepFailed({ status: 400 }, { expect: 400 }), false);
+  assert.equal(stepFailed({ status: 200 }, { expect: 400 }), true);
+  assert.equal(stepFailed({ status: 422 }, { expect: 400 }), true);
+  assert.equal(stepFailed({ status: 200 }, {}), false);
+  assert.equal(stepFailed({ status: 400 }, {}), true);
+  assert.equal(stepFailed({ status: "ok" }), false);
+  assert.equal(stepFailed(undefined, { expect: 400 }), true);
+});
+
+test("cases that expect a refusal run on the API legs only", () => {
+  for (const c of CASES)
+    for (const s of c.steps)
+      if (s.expect !== undefined)
+        assert.equal(c.legs, "api", c.id + " expects an HTTP status");
+});
+
+test("outlineSave builds what outline-designer sends", () => {
+  const ids = { L1: "a", L2: "b", L3: "c" };
+  const idOf = (k) => ids[k];
+  const items = [
+    { id: "a", title: "A", parent: null, order: 0, indent: 0 },
+    { id: "b", title: "B", parent: null, order: 1, indent: 0 },
+    { id: "c", title: "C", parent: "b", order: 0, indent: 1 },
+  ];
+  const out = buildOutlineItems(
+    items,
+    {
+      changes: [
+        { key: "L2", parent: "L1" },
+        { key: "L1", title: "A2", slug: "custom", hideInMenu: true },
+        { key: "L3", delete: true },
+      ],
+      add: [{ key: "L4", title: "New", parent: "L2" }],
+    },
+    idOf,
+  );
+  const by = Object.fromEntries(out.map((i) => [i.id, i]));
+  // a moved page goes to the end of its new siblings, its subtree follows
+  assert.equal(by.b.parent, "a");
+  assert.equal(by.b.order, 0);
+  assert.equal(by.b.indent, 1);
+  assert.equal(by.c.indent, 2);
+  assert.equal(by.c.delete, true);
+  assert.equal(by.a.title, "A2");
+  assert.equal(by.a.slug, "custom");
+  assert.equal(by.a.metadata.overridePathauto, true);
+  assert.equal(by.a.metadata.hideInMenu, true);
+  // a new page is sent under a client id, one level below its parent
+  const added = by["item-golden-L4"];
+  assert.equal(added.parent, "b");
+  assert.equal(added.order, 1);
+  assert.equal(added.indent, 2);
+  // the site's own items are not changed
+  assert.equal(items[1].parent, null);
+  assert.equal(items[0].metadata, undefined);
+  // a parent that is not a key is sent as written
+  const raw = buildOutlineItems(
+    items,
+    { changes: [{ key: "L3", parent: "no-such-page" }] },
+    idOf,
+  );
+  assert.equal(raw.find((i) => i.id === "c").parent, "no-such-page");
+});
+
+test("outlineRaw swaps @keys for ids and leaves everything else", () => {
+  const idOf = (k) => ({ L1: "a" })[k];
+  assert.deepEqual(
+    resolveKeys(
+      [{ id: "@L1", parent: "@L9", n: 1, x: null }, ["@L1"], "   "],
+      idOf,
+    ),
+    [{ id: "a", parent: "@L9", n: 1, x: null }, ["a"], "   "],
+  );
+  assert.equal(resolveKeys("L1", idOf), "L1");
 });
