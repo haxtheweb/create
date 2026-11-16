@@ -2238,11 +2238,10 @@ export async function siteCommandDetected(commandRun) {
             });
           }
           // the title is stored trimmed, as the API and the editor store it,
-          // and a title of only spaces is no title
-          commandRun.options.title = String(commandRun.options.title).trim();
-          if (commandRun.options.title === "") {
-            throw new Error(t("siteTitleRequired"));
-          }
+          // and a blank title or the text "null" gets the default page title
+          commandRun.options.title = pageTitleOrDefault(
+            commandRun.options.title,
+          );
           let createNodeBody = {
             site: activeHaxsite,
             node: {
@@ -2373,7 +2372,7 @@ export async function siteCommandDetected(commandRun) {
               console.error(
                 t("siteNodeEditNothingToChange", {
                   flags:
-                    "--title, --slug, --content, --description, --tags, --parent, --order, --move, --published, --hide-in-menu, --theme",
+                    "--title, --slug, --content, --description, --tags, --parent, --order, --move, --published, --hide-in-menu, --locked, --theme",
                 }),
               );
               process.exitCode = 1;
@@ -2405,16 +2404,20 @@ export async function siteCommandDetected(commandRun) {
               if (!commandRun.options[nodeProp]) {
                 let val = page[nodeProp];
                 if (
-                  ["tags", "published", "hideInMenu", "theme"].includes(
-                    nodeProp,
-                  )
+                  [
+                    "tags",
+                    "published",
+                    "hideInMenu",
+                    "locked",
+                    "theme",
+                  ].includes(nodeProp)
                 ) {
                   val = page.metadata[nodeProp];
                 } else if (nodeProp === "content") {
                   val = await activeHaxsite.getPageContent(page);
                 }
                 //  boolean is confirm
-                if (["published", "hideInMenu"].includes(nodeProp)) {
+                if (["published", "hideInMenu", "locked"].includes(nodeProp)) {
                   propValue = await p.confirm({
                     message: `${nodeProp}:`,
                     initialValue: Boolean(val),
@@ -4847,6 +4850,7 @@ export function nodeEditsFromOptions(options, titleWasProvided = true) {
     "order",
     "published",
     "hideInMenu",
+    "locked",
     "theme",
     "move",
   ].forEach((field) => {
@@ -4955,6 +4959,19 @@ export function pageBreakForItem(item, overrides = {}) {
   return `<page-break ${html}></page-break>`;
 }
 
+// the title a page gets when it has none, and the rule for "none": empty,
+// only white space, or the text "null" in any case. Same rule as the
+// haxcms-nodejs and haxcms-php APIs.
+export const DEFAULT_PAGE_TITLE = "New page";
+
+export function pageTitleOrDefault(value) {
+  const title =
+    value === null || value === undefined ? "" : String(value).trim();
+  return title === "" || title.toLowerCase() === "null"
+    ? DEFAULT_PAGE_TITLE
+    : title;
+}
+
 // --move <direction>: the item operation each direction runs
 export const NODE_MOVE_OPERATIONS = {
   up: "moveUp",
@@ -4980,6 +4997,18 @@ const NODE_EDIT_ITEM_OPERATIONS = [
 export function nodeEditRequests(page, edits, items = [], body = "") {
   const has = (field) => Object.prototype.hasOwnProperty.call(edits, field);
   const requests = [];
+  // a locked page refuses every change but setLocked, so an unlock goes
+  // before the other edits and a lock after them
+  const lockRequest = has("locked")
+    ? {
+        fields: ["locked"],
+        route: `v1/items/${page.id}`,
+        body: { operation: "setLocked", locked: toBoolean(edits.locked) },
+      }
+    : null;
+  if (lockRequest && !lockRequest.body.locked) {
+    requests.push(lockRequest);
+  }
   if (has("content") || has("theme")) {
     const fields = [];
     if (has("content")) {
@@ -5057,6 +5086,9 @@ export function nodeEditRequests(page, edits, items = [], body = "") {
       body: { operation: NODE_MOVE_OPERATIONS[edits.move] },
     });
   }
+  if (lockRequest && lockRequest.body.locked) {
+    requests.push(lockRequest);
+  }
   return requests;
 }
 
@@ -5068,6 +5100,11 @@ export async function applyNodeEdits(activeHaxsite, page, edits, commandRun) {
   const clean = {};
   for (const field of Object.keys(edits)) {
     clean[field] = edits[field] === "null" ? null : edits[field];
+  }
+  // a title can't be the text "null" or blank: it becomes the default title,
+  // the same rule the API keeps
+  if (Object.prototype.hasOwnProperty.call(edits, "title")) {
+    clean.title = pageTitleOrDefault(edits.title);
   }
   const has = (field) => Object.prototype.hasOwnProperty.call(clean, field);
   // validate everything before the first write
@@ -5203,6 +5240,7 @@ export function siteNodeOperations(search = null) {
     { value: "theme", label: t("siteNodeOpTheme") },
     { value: "hideInMenu", label: t("siteNodeOpHideInMenu") },
     { value: "move", label: t("siteNodeOpMove") },
+    { value: "locked", label: t("siteNodeOpLocked") },
   ];
   if (search) {
     for (const op of obj) {
@@ -5437,7 +5475,8 @@ export async function siteProcess(commandRun, project, port = "3000") {
   }
   // haxtheweb/issues#3292: the same request the API's createSite gets from
   // the dashboard. Only what the user chose is sent; createSite fills in its
-  // own defaults (clean-two theme, a "Welcome" page, no build block).
+  // own defaults (clean-two theme, the default-starter "Home" page, no build
+  // block).
   let siteRequest = newSiteRequest(commandRun.options, project);
   let skeletonFilePath = commandRun.options.skeletonFile
     ? commandRun.options.skeletonFile

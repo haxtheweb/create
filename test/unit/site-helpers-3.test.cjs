@@ -91,6 +91,7 @@ const {
   nodeEditRequests,
   pageBreakForItem,
   resolveParentOption,
+  pageTitleOrDefault,
   siteThemeList,
 } = available ? siteModule : {};
 
@@ -427,6 +428,46 @@ test(
       both.map((request) => request.body.operation),
       ["setParent", "moveUp"],
     );
+  },
+);
+
+test(
+  "pageTitleOrDefault gives the default title for blank or null",
+  opts,
+  () => {
+    for (const blank of [undefined, null, "", "   ", "null", " NULL "]) {
+      assert.equal(pageTitleOrDefault(blank), "New page", String(blank));
+    }
+    assert.equal(pageTitleOrDefault("  Unit one "), "Unit one");
+    assert.equal(pageTitleOrDefault("Nullable"), "Nullable");
+  },
+);
+
+test(
+  "nodeEditRequests unlocks before other edits and locks after them",
+  opts,
+  () => {
+    const page = { id: "item-2", parent: null, order: 1 };
+    const unlock = nodeEditRequests(
+      page,
+      { locked: "false", title: "New" },
+      [],
+    );
+    assert.deepEqual(
+      unlock.map((request) => request.body.operation),
+      ["setLocked", "setTitle"],
+    );
+    assert.equal(unlock[0].body.locked, false);
+    const lock = nodeEditRequests(
+      page,
+      { title: "New", move: "up", locked: true },
+      [],
+    );
+    assert.deepEqual(
+      lock.map((request) => request.body.operation),
+      ["setTitle", "moveUp", "setLocked"],
+    );
+    assert.equal(lock[2].body.locked, true);
   },
 );
 

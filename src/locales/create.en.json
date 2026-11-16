@@ -621,6 +621,7 @@
   "siteNodeOpTheme": "Theme",
   "siteNodeOpHideInMenu": "Hide in menu",
   "siteNodeOpMove": "Move among siblings: up, down, indent or outdent",
+  "siteNodeOpLocked": "Locked (true or false); a locked page can't be changed until it is unlocked",
   "siteInvalidSkeletonJson": "Invalid skeleton JSON structure",
   "siteSkeletonPathRequired": "Skeleton file path is required",
   "siteSkeletonFileMissing": "Skeleton file does not exist: {path}",

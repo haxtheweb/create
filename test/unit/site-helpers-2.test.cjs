@@ -299,6 +299,7 @@ test(
         "theme",
         "hideInMenu",
         "move",
+        "locked",
       ],
     );
   },
