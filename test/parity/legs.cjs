@@ -437,6 +437,32 @@ class CliLeg extends BaseLeg {
         return ["site", "node:delete", f("item-id", id)].concat(base);
       case "setTheme":
         return ["site", "site:theme", f("theme", op.theme)].concat(base);
+      // node:edit --move: the same item operations the API runs
+      case "moveUp":
+      case "moveDown":
+      case "indent":
+      case "outdent":
+        return [
+          "site",
+          "node:edit",
+          f("item-id", id),
+          f(
+            "move",
+            {
+              moveUp: "up",
+              moveDown: "down",
+              indent: "indent",
+              outdent: "outdent",
+            }[op.type],
+          ),
+        ].concat(base);
+      case "setLocked":
+        return [
+          "site",
+          "node:edit",
+          f("item-id", id),
+          f("locked", String(op.locked)),
+        ].concat(base);
       default:
         return null;
     }
