@@ -147,6 +147,18 @@ const CASES = [
     ],
   },
   {
+    id: "25-null-and-blank-titles",
+    title: 'A title that is the text "null" or blank becomes "New page"',
+    legs: "all",
+    steps: [
+      { type: "addPage", key: "L1", title: "null", content: "<p>x</p>" },
+      { type: "addPage", key: "L2", title: "Kept", content: "<p>y</p>" },
+      { type: "editTitle", key: "L2", title: "NULL" },
+      { type: "addPage", key: "L3", title: "Spaces", content: "<p>z</p>" },
+      { type: "editTitle", key: "L3", title: "   " },
+    ],
+  },
+  {
     id: "26-title-and-slug",
     title: "Update page title and slug together",
     legs: "all",
@@ -248,7 +260,7 @@ const CASES = [
   {
     id: "38-lock-and-unlock",
     title: "Lock and unlock a page",
-    legs: "api",
+    legs: "all",
     steps: [
       { type: "addPage", key: "L1", title: "Locked", content: "<p>x</p>" },
       { type: "addPage", key: "L2", title: "Unlocked", content: "<p>y</p>" },

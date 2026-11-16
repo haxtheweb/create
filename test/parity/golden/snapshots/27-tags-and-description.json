@@ -54,12 +54,17 @@
         "id": "L0",
         "indent": 0,
         "location": "pages/L0/index.html",
-        "slug": "welcome",
+        "slug": "home",
         "order": 0,
         "parent": null,
-        "title": "Welcome",
+        "title": "Home",
         "description": "",
-        "metadata": {}
+        "metadata": {
+          "published": true,
+          "hideInMenu": false,
+          "tags": [],
+          "files": []
+        }
       },
       "L1": {
         "id": "L1",
@@ -88,7 +93,7 @@
     "L1"
   ],
   "pages": {
-    "L0": "<p>\n    To get started, hit the edit pencil on the side.\n    Now this content is editable in place so select and delete it to get started!\n    If you need to learn more about the HAX editor or HAXcms check out <a href=\"https://haxtheweb.org/ux-concepts\" target=\"_blank\" rel=\"noopener noreferrer\">HAXTheWeb.org</a>!\n</p>",
+    "L0": "<p>Edit this page to get started on your HAX site!</p>",
     "L1": "<p>x</p>"
   }
 }
