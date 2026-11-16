@@ -63,7 +63,7 @@
       },
       "L2": {
         "id": "L2",
-        "indent": 0,
+        "indent": 1,
         "location": "pages/L2/index.html",
         "slug": "unit/existing-child",
         "order": 0,

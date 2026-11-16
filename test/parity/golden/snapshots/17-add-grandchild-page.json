@@ -63,7 +63,7 @@
       },
       "L2": {
         "id": "L2",
-        "indent": 0,
+        "indent": 1,
         "location": "pages/L2/index.html",
         "slug": "unit-1/lesson-1",
         "order": 0,
@@ -77,7 +77,7 @@
       },
       "L3": {
         "id": "L3",
-        "indent": 0,
+        "indent": 2,
         "location": "pages/L3/index.html",
         "slug": "unit-1/lesson-1/activity-1",
         "order": 0,
