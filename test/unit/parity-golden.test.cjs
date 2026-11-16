@@ -61,6 +61,12 @@ test("CLI-only legs are not asked to run API-only steps", () => {
     "editOrder",
     "deletePage",
     "setTheme",
+    // node:edit --move and --locked
+    "moveUp",
+    "moveDown",
+    "indent",
+    "outdent",
+    "setLocked",
   ]);
   for (const c of CASES.filter((x) => x.legs === "all"))
     for (const s of c.steps)
