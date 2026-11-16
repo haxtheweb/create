@@ -26,6 +26,31 @@ function nextSiblingOrder(items, parent) {
   return max + 1;
 }
 
+// outline-designer recomputes every page's depth from the parent chain before
+// it calls Save Outline (_recurseUpdateIndent), so a moved page's descendants
+// go with it. Do the same, so saveOutline gets what the real client sends.
+// Only a wrong depth is rewritten; a parent loop leaves the item as it was.
+function syncIndents(items) {
+  const byId = new Map(items.map((it) => [it.id, it]));
+  const parentOf = (it) =>
+    it.parent === undefined || it.parent === "" || it.parent === null
+      ? null
+      : it.parent;
+  for (const it of items) {
+    let depth = 0;
+    let p = parentOf(it);
+    const seen = new Set([it.id]);
+    while (p && byId.has(p) && !seen.has(p)) {
+      seen.add(p);
+      depth++;
+      p = parentOf(byId.get(p));
+    }
+    if (p && seen.has(p)) continue;
+    if (parseInt(it.indent) !== depth) it.indent = depth;
+  }
+  return items;
+}
+
 // The editor's save sends a <page-break> describing the page's CURRENT
 // properties followed by the body; saveNode re-applies every attribute (and
 // resets published / hide-in-menu / override-pathauto when absent), so a
@@ -238,13 +263,12 @@ class ApiLeg extends BaseLeg {
         const parentId = op.parent ? this.id(op.parent) : null;
         const out = items.map((i) => Object.assign({}, i));
         const me = out.find((x) => x.id === id);
-        const par = out.find((x) => x.id === parentId);
         me.order = nextSiblingOrder(
           out.filter((x) => x.id !== id),
           parentId,
         );
         me.parent = parentId;
-        me.indent = par ? parseInt(par.indent || 0) + 1 : 0;
+        syncIndents(out);
         r = await this.call("PATCH", "/v1/site/outline", { site, items: out });
         break;
       }
@@ -439,5 +463,6 @@ module.exports = {
   CliLeg,
   readItems,
   nextSiblingOrder,
+  syncIndents,
   runCli,
 };

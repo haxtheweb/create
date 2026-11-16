@@ -210,3 +210,27 @@ test("--update-golden implies --golden; --fail-on-diff is opt-in", () => {
   assert.equal(env.golden, true);
   assert.equal(env.cases, "x");
 });
+
+test("outlineMove sends depths the way outline-designer does", () => {
+  const { syncIndents } = require("../parity/legs.cjs");
+  // L2 moved to the top level; its child L3 must come along to depth 1
+  const items = syncIndents([
+    { id: "a", parent: null, indent: 0 },
+    { id: "b", parent: null, indent: 1 },
+    { id: "c", parent: "b", indent: 2 },
+    { id: "d", parent: "", indent: 3 },
+  ]);
+  assert.deepEqual(
+    items.map((i) => i.indent),
+    [0, 0, 1, 0],
+  );
+  // a parent loop is left exactly as it came
+  const loop = syncIndents([
+    { id: "x", parent: "y", indent: 5 },
+    { id: "y", parent: "x", indent: 7 },
+  ]);
+  assert.deepEqual(
+    loop.map((i) => i.indent),
+    [5, 7],
+  );
+});
