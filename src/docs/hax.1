@@ -467,6 +467,9 @@ Scaffold without prompts; each hook gets a stub with its "Implements hook" docbl
 .B hax plugin hooks \--format json
 List every hook a plugin can implement, with when it runs and what it is for
 .TP
+.B hax plugin validate \--strict
+Check that the current folder is a valid HAXcms plugin (plugin.yaml, registries, haxProperties, hook docblocks); exit 1 if not, and with \--strict also on warnings
+.TP
 .B hax audit theme \--format json
 .br
 Check a HAXcms theme against the theme contract and report findings as JSON

@@ -215,6 +215,7 @@ The HAX ecosystem uses a sophisticated build pipeline optimized for unbundled Ja
 - **Audit HAX schema documents** (site.json, skeletons, haxProperties + demoSchema + locales, appstore.json, Merlin commands, plugin.yaml + registries):
   ```bash
   hax audit schema            # add --strict to fail on warnings, --format json for a report
+  hax plugin validate         # is this folder a valid HAXcms plugin? --format json for agents, --strict fails on warnings
   hax audit i18n              # English hardcoded in Lit templates instead of this.t
   hax audit all               # DDD + schema + i18n
   hax audit theme             # HAXcms theme contract (editor wiring, skip-link, dark mode, regions); --format json for agents

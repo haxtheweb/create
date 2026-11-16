@@ -61,6 +61,7 @@ hax start
 - `hax plugin create` - Scaffold a HAXcms plugin: id, title, category, backends (Node.js, PHP) and the hooks it implements. The hook picker preselects the hooks most plugins use and lists every other hook with what it is for, so you can see what is possible.
 - `hax plugin create my-plugin --hooks common,render.after.body --runtimes nodejs --y` - The same without prompts (for scripts and agents). `--hooks` takes hook names, `common`, or `none`.
 - `hax plugin hooks [--common] [--format json]` - List the hooks a plugin can implement.
+- `hax plugin validate [folder] [--strict] [--format json]` - Is this a valid HAXcms plugin? Checks `plugin.yaml`, its registries, haxProperties and hook docblocks with the spec's own validator (`hax-plugin-validate`), so you, agents and CI get the same answer. Given a folder of plugins, checks each one. Exit code 1 when one is invalid (`--strict`: also on warnings). For the full set of checks (lint, PHPStan, the plugin's cases, its web components in a browser, a run in a real haxcms-nodejs), use `hax-plugin-check` from the spec package.
 
 Every hook stub comes with a docblock whose first line is `Implements hook <name>.`, the convention the plugin spec's validator and README generator use (https://github.com/haxtheweb/haxcms-plugin-examples, spec/02). The hook list comes from the installed `@haxtheweb/haxcms-plugin-spec` package, or a bundled snapshot when it is not installed.
 
