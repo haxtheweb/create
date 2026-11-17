@@ -495,6 +495,30 @@ const CASES = [
     ],
   },
   {
+    id: "34l-outline-child-before-renamed-parent",
+    title:
+      "Bulk outline save lists a page before the parent it renames (the page gets the parent's new address)",
+    legs: "api",
+    steps: [
+      { type: "addPage", key: "L1", title: "Unit", content: "<p>u</p>" },
+      {
+        type: "addPage",
+        key: "L2",
+        title: "Lesson",
+        content: "<p>l</p>",
+        parent: "L1",
+      },
+      {
+        type: "outlineRaw",
+        items: [
+          { id: "@L0", title: "Home", parent: null, order: 0, indent: 0 },
+          { id: "@L2", title: "Lesson", parent: "@L1", order: 0, indent: 1 },
+          { id: "@L1", title: "Unit one", parent: null, order: 1, indent: 0 },
+        ],
+      },
+    ],
+  },
+  {
     id: "36-outline-empty-item",
     title: "saveOutline with an empty item is refused and changes nothing",
     legs: "api",
