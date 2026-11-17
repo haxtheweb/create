@@ -314,8 +314,6 @@ const CASES = [
     ],
   },
   {
-    // L2's order records haxtheweb/issues#3360 item 1 (indent counts the
-    // page itself); refresh this snapshot when that is fixed
     id: "34b-indent-and-outdent",
     title: "Indent a page under its sibling, then outdent it back",
     legs: "all",
@@ -356,8 +354,6 @@ const CASES = [
     ],
   },
   {
-    // the locked page itself is not changed here: whether a bulk save may
-    // change a locked page is haxtheweb/issues#3360 item 3
     id: "34e-outline-locked-and-hidden",
     title:
       "Bulk outline save keeps a locked page and a hidden page as they were",
@@ -415,10 +411,9 @@ const CASES = [
     ],
   },
   {
-    // L2 keeps indent 1 and slug unit/lesson: haxtheweb/issues#3360 item 2;
-    // refresh this snapshot when that is fixed (compare 44)
     id: "34h-outline-delete-parent",
-    title: "Bulk outline save deletes a parent and keeps its children",
+    title:
+      "Bulk outline save deletes a parent and keeps its child (it moves up one level into the parent's place)",
     legs: "api",
     steps: [
       { type: "addPage", key: "L1", title: "Unit", content: "<p>u</p>" },
@@ -429,6 +424,73 @@ const CASES = [
         content: "<p>l</p>",
         parent: "L1",
       },
+      { type: "outlineSave", changes: [{ key: "L1", delete: true }] },
+    ],
+  },
+  {
+    id: "34i-outline-locked-keeps-title",
+    title:
+      "Bulk outline save keeps a locked page's title but moves it; the rest of the save applies",
+    legs: "api",
+    steps: [
+      { type: "addPage", key: "L1", title: "Locked", content: "<p>l</p>" },
+      { type: "addPage", key: "L2", title: "Unit", content: "<p>u</p>" },
+      { type: "addPage", key: "L3", title: "Other", content: "<p>o</p>" },
+      { type: "setLocked", key: "L1", locked: true },
+      {
+        type: "outlineSave",
+        changes: [
+          { key: "L1", title: "Renamed", parent: "L2" },
+          { key: "L3", title: "Other page" },
+        ],
+      },
+    ],
+  },
+  {
+    id: "34j-outline-delete-nested-parents",
+    title:
+      "Bulk outline save deletes a page and its parent but keeps a grandchild (it moves up to the nearest kept level)",
+    legs: "api",
+    steps: [
+      { type: "addPage", key: "L1", title: "Unit", content: "<p>u</p>" },
+      {
+        type: "addPage",
+        key: "L2",
+        title: "Lesson",
+        content: "<p>l</p>",
+        parent: "L1",
+      },
+      {
+        type: "addPage",
+        key: "L3",
+        title: "Activity",
+        content: "<p>a</p>",
+        parent: "L2",
+      },
+      {
+        type: "addPage",
+        key: "L4",
+        title: "Quiz",
+        content: "<p>q</p>",
+        parent: "L1",
+      },
+      { type: "addPage", key: "L5", title: "Next", content: "<p>n</p>" },
+      {
+        type: "outlineSave",
+        changes: [
+          { key: "L1", delete: true },
+          { key: "L2", delete: true },
+        ],
+      },
+    ],
+  },
+  {
+    id: "34k-outline-delete-locked",
+    title: "Bulk outline save deletes a locked page",
+    legs: "api",
+    steps: [
+      { type: "addPage", key: "L1", title: "Locked", content: "<p>l</p>" },
+      { type: "setLocked", key: "L1", locked: true },
       { type: "outlineSave", changes: [{ key: "L1", delete: true }] },
     ],
   },
@@ -534,7 +596,8 @@ const CASES = [
   },
   {
     id: "44-delete-parent-with-children",
-    title: "Delete a page that has children",
+    title:
+      "Delete a page that has children (they move up one level into its place)",
     legs: "all",
     steps: [
       { type: "addPage", key: "L1", title: "Unit", content: "<p>u</p>" },
@@ -553,6 +616,37 @@ const CASES = [
         parent: "L2",
       },
       { type: "deletePage", key: "L1" },
+    ],
+  },
+  {
+    id: "44b-delete-middle-page",
+    title:
+      "Delete a page in the middle of a branch (its child moves up under the grandparent, into its place)",
+    legs: "all",
+    steps: [
+      { type: "addPage", key: "L1", title: "Unit", content: "<p>u</p>" },
+      {
+        type: "addPage",
+        key: "L2",
+        title: "Lesson",
+        content: "<p>l</p>",
+        parent: "L1",
+      },
+      {
+        type: "addPage",
+        key: "L3",
+        title: "Activity",
+        content: "<p>a</p>",
+        parent: "L2",
+      },
+      {
+        type: "addPage",
+        key: "L4",
+        title: "Quiz",
+        content: "<p>q</p>",
+        parent: "L1",
+      },
+      { type: "deletePage", key: "L2" },
     ],
   },
 ];

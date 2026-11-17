@@ -129,7 +129,7 @@ because one of their steps has no CLI command.
 # compare, report-only (what the nightly does)
 npm run test:parity:golden -- --nodejs ../haxcms-nodejs --php ../haxcms-php
 
-# release gate: exit 1 when any leg does not match
+# exit 1 when any leg does not match (the release gate runs this; see below)
 npm run test:parity:golden -- --fail-on-diff
 
 # after an intentional output change, or for a new case: rewrite the
@@ -152,6 +152,51 @@ A step that fails (HTTP 400+, CLI exit code) fails its case. Results go to
 To add a case: append it to `golden/cases.cjs`, run with
 `--update-golden --cases <id>`, check the new snapshot shows what the case
 claims, and commit both.
+
+Outline cases send what outline-designer sends: `outlineSave` is one Save
+Outline (every page, this save's changes, new pages under a client id, depths
+recomputed) and `outlineRaw` a hand-written payload (`"@L1"` stands for that
+page's id). A step with `expect: <status>` must be refused with exactly that
+HTTP status on every leg; the snapshot then shows the site as the steps before
+it left it.
+
+## Release gate
+
+[`release-gate.cjs`](release-gate.cjs)
+([haxtheweb/issues#3334](https://github.com/haxtheweb/issues/issues/3334)) is
+what a release runs before anything is tagged or published, against the
+haxcms-nodejs and haxcms-php checkouts that are about to ship. It passes only
+when:
+
+1. both backends serve the same OpenAPI contract. haxcms-nodejs's
+   `src/openapi/{site,system}-spec.yaml` and haxcms-php's
+   `system/backend/php/lib/{site,system}Routes/openapi/*-spec.yaml` are parsed
+   and compared as data, so line folding and quote style do not count
+   ([`spec-diff.cjs`](spec-diff.cjs)); and
+2. every golden case matches its snapshot on every leg (`--golden --fail-on-diff`).
+
+```bash
+npm run test:parity:release -- --nodejs ../haxcms-nodejs --php ../haxcms-php --build --link-cli
+```
+
+| Flag           | Meaning                                                                                                                                                                                                        |
+| -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `--build`      | `npm run build` in haxcms-nodejs and in this repo first (both load from `dist/`, which git does not track)                                                                                                     |
+| `--link-cli`   | point this CLI's `@haxtheweb/haxcms-nodejs` at the checkout under test for the run, then put the installed one back. Without it, a CLI on any other haxcms-nodejs fails the gate, since that is not what ships |
+| `--specs-only` | check the OpenAPI specs and stop                                                                                                                                                                               |
+
+Every other flag goes to `parity.cjs` (`--php-user`, `--php-pass`, `--out`, ...).
+The report is `<out>/release-gate.md`; the exit code is 0 only when both checks
+pass. The ubiquity scripts in webcomponents call it: `ubiquity-testing.sh`
+reports the result, `ubiquity-push.sh` stops before anything is committed,
+tagged or published when it fails. The nightly
+([`parity-nightly.yml`](../../.github/workflows/parity-nightly.yml)) runs the
+same golden suite against both default branches, report-only, as the early
+warning between releases.
+
+A gate failure is either a real parity break (fix the backend that is wrong)
+or an intended output change: refresh the snapshots with `--update-golden`,
+review the diff and commit it to this repo before releasing.
 
 ## Accepted differences
 
@@ -192,19 +237,21 @@ as recorded. The agent workflow is the
 
 ## Files
 
-| File             | Role                                                          |
-| ---------------- | ------------------------------------------------------------- |
-| `parity.cjs`     | one-command run: boot servers, run sequences, summarize, stop |
-| `run.cjs`        | lockstep runner for one sequence                              |
-| `ops.cjs`        | seeded op generator (`shared` = CLI-expressible, `api` = all) |
-| `legs.cjs`       | `ApiLeg` (nodejs / php) and `CliLeg`                          |
-| `client.cjs`     | HAXcms API client: login, user token, site token              |
-| `snapshot.cjs`   | normalize a site from disk and diff two snapshots             |
-| `normalize.cjs`  | accepted differences                                          |
-| `summary.cjs`    | markdown report                                               |
-| `verify.cjs`     | agent-leg checker                                             |
-| `golden.cjs`     | golden snapshot suite (`--golden`)                            |
-| `golden/`        | golden cases (`cases.cjs`) and their snapshots                |
-| `boot-node.cjs`  | boots haxcms-nodejs with its own e2e runtime                  |
-| `php-router.php` | `php -S` router matching haxcms-php's web server rules        |
-| `config.cjs`     | flags, environment variables and defaults                     |
+| File               | Role                                                          |
+| ------------------ | ------------------------------------------------------------- |
+| `parity.cjs`       | one-command run: boot servers, run sequences, summarize, stop |
+| `run.cjs`          | lockstep runner for one sequence                              |
+| `ops.cjs`          | seeded op generator (`shared` = CLI-expressible, `api` = all) |
+| `legs.cjs`         | `ApiLeg` (nodejs / php) and `CliLeg`                          |
+| `client.cjs`       | HAXcms API client: login, user token, site token              |
+| `snapshot.cjs`     | normalize a site from disk and diff two snapshots             |
+| `normalize.cjs`    | accepted differences                                          |
+| `summary.cjs`      | markdown report                                               |
+| `verify.cjs`       | agent-leg checker                                             |
+| `golden.cjs`       | golden snapshot suite (`--golden`)                            |
+| `golden/`          | golden cases (`cases.cjs`) and their snapshots                |
+| `release-gate.cjs` | release gate: OpenAPI specs + golden suite, fail-on-diff      |
+| `spec-diff.cjs`    | compares the two backends' OpenAPI specs as data              |
+| `boot-node.cjs`    | boots haxcms-nodejs with its own e2e runtime                  |
+| `php-router.php`   | `php -S` router matching haxcms-php's web server rules        |
+| `config.cjs`       | flags, environment variables and defaults                     |

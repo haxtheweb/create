@@ -68,9 +68,9 @@
       },
       "L2": {
         "id": "L2",
-        "indent": 1,
+        "indent": 0,
         "location": "pages/L2/index.html",
-        "slug": "unit/lesson",
+        "slug": "lesson",
         "order": 1,
         "parent": null,
         "title": "Lesson",
