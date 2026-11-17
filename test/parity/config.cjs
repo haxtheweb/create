@@ -17,9 +17,14 @@ const SETTINGS = {
   cli: ["HAX_PARITY_CLI", path.join(REPO_ROOT, "dist", "create.js")],
   "php-bin": ["HAX_PARITY_PHP_BIN", "php"],
   "php-host": ["HAX_PARITY_PHP_HOST", "127.0.0.1"],
-  "php-port": ["HAX_PARITY_PHP_PORT", "8081"],
+  // empty: a free port is picked for the run
+  "php-port": ["HAX_PARITY_PHP_PORT", ""],
   // set to use a PHP server that is already running instead of starting one
   "php-url": ["HAX_PARITY_PHP_URL", ""],
+  // serve the --php checkout itself, with its own _config and _sites, instead
+  // of a fresh copy made for the run
+  "php-in-place": ["HAX_PARITY_PHP_IN_PLACE", ""],
+  // login for --php-url and --php-in-place; a fresh copy gets its own
   "php-user": ["HAX_PARITY_PHP_USER", "admin"],
   "php-pass": ["HAX_PARITY_PHP_PASS", "admin"],
   // node.json written by boot-node.cjs, to use a nodejs server already running
@@ -86,8 +91,15 @@ function loadConfig(argv = process.argv.slice(2), env = process.env) {
   // updating snapshots implies the golden suite
   cfg.golden = flag(cfg.golden) || cfg["update-golden"];
   cfg.phpExternal = Boolean(cfg["php-url"]);
+  cfg.phpInPlace = flag(cfg["php-in-place"]);
+  // no port given: parity.cjs picks a free one when it starts php -S and
+  // rewrites php-url; 8081 only stands in for run.cjs used on its own
+  cfg.phpPortAuto = !cfg.phpExternal && cfg["php-port"] === "";
   if (!cfg["php-url"])
-    cfg["php-url"] = `http://${cfg["php-host"]}:${cfg["php-port"]}`;
+    cfg["php-url"] = `http://${cfg["php-host"]}:${cfg["php-port"] || "8081"}`;
+  // where the php leg's sites are on disk; parity.cjs points this at the
+  // fresh copy when it makes one
+  cfg.phpRoot = cfg.php;
   cfg.args = args;
   return cfg;
 }

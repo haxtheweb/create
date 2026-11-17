@@ -45,12 +45,13 @@ git clone https://github.com/haxtheweb/haxcms-php.git
   && rm -rf node_modules/@haxtheweb/haxcms-nodejs \
   && ln -s ../../../haxcms-nodejs node_modules/@haxtheweb/haxcms-nodejs)
 
-# haxcms-php: one-time install, the user / password become --php-user / --php-pass
-(cd haxcms-php && TERM=xterm bash scripts/haxtheweb.sh admin admin)
 ```
 
+haxcms-php needs no install step: every run installs a fresh copy of the
+checkout (see [What a run touches](#what-a-run-touches)).
+
 Needs Node.js 20+ (24 in CI), PHP 8.3+ with the extensions haxcms-php lists,
-and git.
+bash and git.
 
 ## Run
 
@@ -61,9 +62,28 @@ node create/test/parity/parity.cjs --nodejs haxcms-nodejs --php haxcms-php \
 
 `parity.cjs` boots haxcms-nodejs with that repo's own e2e runtime
 (`test/e2e/helpers/harness.cjs`, a fresh temp directory with real auth),
-starts `php -S` with [`php-router.php`](php-router.php), runs each sequence,
-writes `summary.md`, and stops both servers. `npm run test:parity -- <flags>`
-runs the same thing from inside `create`.
+installs a fresh copy of haxcms-php and starts `php -S` on it with
+[`php-router.php`](php-router.php), runs each sequence, writes `summary.md`,
+and stops both servers. `npm run test:parity -- <flags>` runs the same thing
+from inside `create`.
+
+### What a run touches
+
+The result has to depend on the code under test and not on the machine, so
+every leg runs on its own state and its own port:
+
+| Leg    | State                                                                                                                                                                                                 | Port         |
+| ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| nodejs | a temp runtime made by haxcms-nodejs's e2e harness                                                                                                                                                    | chosen by OS |
+| php    | a copy of the `--php` checkout in the work folder, installed by its own `scripts/haxtheweb.sh` with a login made for the run: default system settings, empty `_sites`. `build/` is linked, not copied | a free port  |
+| cli    | an empty home folder in the work folder, so the CLI makes a default `~/.haxcmsconfig` there                                                                                                           | (no server)  |
+
+Nothing is read from, or written to, the checkout's `_config` and `_sites` or
+your own `~/.haxcmsconfig`. That matters for more than tidiness: system
+settings such as the default site language live there and end up in every new
+site, so a run that picked them up would report differences that no one else
+sees. `--php-in-place` (or `--php-url`) opts back in to an install you manage,
+and then `--php-user` / `--php-pass` are its login.
 
 To test pull request branches, check them out in the sibling repos, rebuild
 haxcms-nodejs (`npm run build`, the CLI link follows it) and rebuild the CLI
@@ -74,25 +94,26 @@ if its branch changed, then run the same command.
 Every setting is a flag (`--name value` or `--name=value`) or an environment
 variable; flags win.
 
-| Flag          | Environment variable     | Default                            | Meaning                                                     |
-| ------------- | ------------------------ | ---------------------------------- | ----------------------------------------------------------- |
-| `--nodejs`    | `HAX_PARITY_NODEJS_REPO` | `../haxcms-nodejs` (beside create) | haxcms-nodejs checkout                                      |
-| `--php`       | `HAX_PARITY_PHP_REPO`    | `../haxcms-php` (beside create)    | installed haxcms-php checkout (its `_sites` is the php leg) |
-| `--cli`       | `HAX_PARITY_CLI`         | `dist/create.js` of this repo      | built CLI entry point                                       |
-| `--php-bin`   | `HAX_PARITY_PHP_BIN`     | `php`                              | PHP binary for `php -S`                                     |
-| `--php-host`  | `HAX_PARITY_PHP_HOST`    | `127.0.0.1`                        | `php -S` host                                               |
-| `--php-port`  | `HAX_PARITY_PHP_PORT`    | `8081`                             | `php -S` port                                               |
-| `--php-url`   | `HAX_PARITY_PHP_URL`     | (start `php -S`)                   | use a haxcms-php server that is already running             |
-| `--php-user`  | `HAX_PARITY_PHP_USER`    | `admin`                            | haxcms-php login                                            |
-| `--php-pass`  | `HAX_PARITY_PHP_PASS`    | `admin`                            | haxcms-php password                                         |
-| `--node-info` | `HAX_PARITY_NODE_INFO`   | (boot haxcms-nodejs)               | `node.json` from `boot-node.cjs`, to reuse a running server |
-| `--seq`       | `HAX_PARITY_SEQ`         | `A,B`                              | sequences to run                                            |
-| `--ops`       | `HAX_PARITY_OPS`         | `1000`                             | ops per sequence                                            |
-| `--seed`      | `HAX_PARITY_SEED`        | 2026 for A, 2027 for B             | op generator seed                                           |
-| `--snapshots` | `HAX_PARITY_SNAPSHOTS`   | `100`                              | keep normalized snapshots for ops 0..N                      |
-| `--strict`    | `HAX_PARITY_STRICT`      | off                                | skip the accepted-difference normalizations                 |
-| `--out`       | `HAX_PARITY_OUT`         | `./parity-results`                 | results directory                                           |
-| `--work`      | `HAX_PARITY_WORK`        | a new OS temp directory            | where the CLI leg creates its sites                         |
+| Flag             | Environment variable      | Default                            | Meaning                                                     |
+| ---------------- | ------------------------- | ---------------------------------- | ----------------------------------------------------------- |
+| `--nodejs`       | `HAX_PARITY_NODEJS_REPO`  | `../haxcms-nodejs` (beside create) | haxcms-nodejs checkout                                      |
+| `--php`          | `HAX_PARITY_PHP_REPO`     | `../haxcms-php` (beside create)    | haxcms-php checkout; a fresh copy of it is the php leg      |
+| `--cli`          | `HAX_PARITY_CLI`          | `dist/create.js` of this repo      | built CLI entry point                                       |
+| `--php-bin`      | `HAX_PARITY_PHP_BIN`      | `php`                              | PHP binary for `php -S`                                     |
+| `--php-host`     | `HAX_PARITY_PHP_HOST`     | `127.0.0.1`                        | `php -S` host                                               |
+| `--php-port`     | `HAX_PARITY_PHP_PORT`     | (a free port)                      | `php -S` port                                               |
+| `--php-url`      | `HAX_PARITY_PHP_URL`      | (start `php -S`)                   | use a haxcms-php server that is already running             |
+| `--php-in-place` | `HAX_PARITY_PHP_IN_PLACE` | (off)                              | serve the `--php` checkout itself, with its own install     |
+| `--php-user`     | `HAX_PARITY_PHP_USER`     | `admin`                            | login, only with `--php-url` or `--php-in-place`            |
+| `--php-pass`     | `HAX_PARITY_PHP_PASS`     | `admin`                            | password, only with `--php-url` or `--php-in-place`         |
+| `--node-info`    | `HAX_PARITY_NODE_INFO`    | (boot haxcms-nodejs)               | `node.json` from `boot-node.cjs`, to reuse a running server |
+| `--seq`          | `HAX_PARITY_SEQ`          | `A,B`                              | sequences to run                                            |
+| `--ops`          | `HAX_PARITY_OPS`          | `1000`                             | ops per sequence                                            |
+| `--seed`         | `HAX_PARITY_SEED`         | 2026 for A, 2027 for B             | op generator seed                                           |
+| `--snapshots`    | `HAX_PARITY_SNAPSHOTS`    | `100`                              | keep normalized snapshots for ops 0..N                      |
+| `--strict`       | `HAX_PARITY_STRICT`       | off                                | skip the accepted-difference normalizations                 |
+| `--out`          | `HAX_PARITY_OUT`          | `./parity-results`                 | results directory                                           |
+| `--work`         | `HAX_PARITY_WORK`         | a new OS temp directory            | where the CLI leg creates its sites                         |
 
 ### Output
 
@@ -185,7 +206,7 @@ npm run test:parity:release -- --nodejs ../haxcms-nodejs --php ../haxcms-php --b
 | `--link-cli`   | point this CLI's `@haxtheweb/haxcms-nodejs` at the checkout under test for the run, then put the installed one back. Without it, a CLI on any other haxcms-nodejs fails the gate, since that is not what ships |
 | `--specs-only` | check the OpenAPI specs and stop                                                                                                                                                                               |
 
-Every other flag goes to `parity.cjs` (`--php-user`, `--php-pass`, `--out`, ...).
+Every other flag goes to `parity.cjs` (`--out`, `--cases`, ...).
 The report is `<out>/release-gate.md`; the exit code is 0 only when both checks
 pass. The ubiquity scripts in webcomponents call it: `ubiquity-testing.sh`
 reports the result, `ubiquity-push.sh` stops before anything is committed,

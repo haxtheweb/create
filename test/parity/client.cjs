@@ -52,7 +52,7 @@ class HaxClient {
     });
     if (!r.json || !r.json.jwt)
       throw new Error(
-        `${this.label} login failed ${r.status}: ${r.bodyText.slice(0, 300)}`,
+        `${this.label} login as "${this.username}" at ${this.baseUrl} failed ${r.status}: ${r.bodyText.slice(0, 300)}`,
       );
     this.jwt = r.json.jwt;
     const s = await this.settings("");

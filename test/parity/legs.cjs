@@ -394,7 +394,25 @@ class ApiLeg extends BaseLeg {
 
 // args go straight to execFile (no shell), so titles and content with quotes,
 // ampersands or markup reach the CLI unchanged
-function runCli(cliPath, args, cwd) {
+// The CLI keeps its HAXcms config, where the default site language and other
+// system settings live, in the home folder (~/.haxcmsconfig). A run must not
+// read the settings of whoever is running it, or write into their home, so
+// the CLI gets an empty home of its own and creates a default config there.
+// git falls back to the home folder for the commit author, so one is given.
+function cliEnv(home) {
+  const env = Object.assign({}, process.env, {
+    NO_COLOR: "1",
+    HOME: home,
+    USERPROFILE: home,
+  });
+  const author = { NAME: "HAX parity", EMAIL: "parity@haxtheweb.invalid" };
+  for (const who of ["AUTHOR", "COMMITTER"])
+    for (const what of ["NAME", "EMAIL"])
+      if (!env[`GIT_${who}_${what}`]) env[`GIT_${who}_${what}`] = author[what];
+  return env;
+}
+
+function runCli(cliPath, args, cwd, home) {
   return new Promise((resolve) => {
     execFile(
       process.execPath,
@@ -403,7 +421,7 @@ function runCli(cliPath, args, cwd) {
         cwd,
         timeout: 120000,
         maxBuffer: 1 << 26,
-        env: Object.assign({}, process.env, { NO_COLOR: "1" }),
+        env: cliEnv(home),
       },
       (err, stdout, stderr) => {
         resolve({
@@ -420,9 +438,12 @@ class CliLeg extends BaseLeg {
     super(name);
     this.cliPath = cliPath;
     this.parentDir = parentDir;
+    // beside the sites, not inside them, and never the real home folder
+    this.home = parentDir + "-home";
   }
   async create(siteName) {
     fs.mkdirSync(this.parentDir, { recursive: true });
+    fs.mkdirSync(this.home, { recursive: true });
     const r = await runCli(
       this.cliPath,
       [
@@ -435,6 +456,7 @@ class CliLeg extends BaseLeg {
         "--skip",
       ],
       this.parentDir,
+      this.home,
     );
     if (r.code !== 0)
       throw new Error("cli create failed: " + r.out.slice(-500));
@@ -573,7 +595,7 @@ class CliLeg extends BaseLeg {
     const args = CliLeg.argsFor(op, (k) => this.id(k), items);
     if (!args) return { status: "unsupported" };
     const before = new Set(items.map((i) => i.id));
-    const r = await runCli(this.cliPath, args, this.siteDir);
+    const r = await runCli(this.cliPath, args, this.siteDir, this.home);
     const res = { status: r.code === 0 ? "ok" : "exit" + r.code };
     if (r.code !== 0 || /error/i.test(r.out)) res.detail = r.out.slice(-300);
     if (op.type === "addPage")
