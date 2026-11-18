@@ -81,6 +81,8 @@ test("discoverSchemaTargets groups files by validator and skips build output", (
     const t = discoverSchemaTargets(root);
     const rel = (list) => list.map((f) => path.relative(root, f)).sort();
     assert.deepEqual(rel(t.site), ["site.json"]);
+    // a root site.json makes the root a site folder (the folder is the target)
+    assert.deepEqual(t.siteFolder, [root]);
     assert.deepEqual(rel(t.skeleton), [
       path.join("_config", "skeletons", "course.json"),
     ]);
@@ -473,6 +475,107 @@ test("runValidator passes the exact pinned spec to npx and never runs it when de
     } finally {
       process.argv[1] = origArgv1;
     }
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+// --- Site folder contract (haxtheweb/issues#3369) ---
+
+test("discoverSchemaTargets has no site folder without a root site.json", () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "hax-audit-schema-"));
+  try {
+    write(root, "sub/site.json", { id: "x", title: "x", items: [] });
+    assert.deepEqual(discoverSchemaTargets(root).siteFolder, []);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("siteFolder runs jos-validate --site from the pinned json-outline-schema-spec", () => {
+  const v = SCHEMA_VALIDATORS.siteFolder;
+  assert.equal(v.pkg, "@haxtheweb/json-outline-schema-spec");
+  assert.equal(v.bin, "jos-validate");
+  assert.deepEqual(v.args, ["--site"]);
+});
+
+test("auditSchemaCommand reports the site folder level and its errors", async () => {
+  const root = makeProject();
+  try {
+    logs.length = 0;
+    const { run } = fakeRunner({
+      siteFolder: {
+        ok: true,
+        via: "local",
+        reports: [
+          {
+            folder: root,
+            type: "site-folder",
+            level: "content",
+            reached: null,
+            valid: false,
+            errors: [{ path: "pages", message: "required folder is missing" }],
+            warnings: [],
+          },
+        ],
+      },
+    });
+    const r = await auditSchemaCommand({ options: {} }, root, {
+      runValidator: run,
+    });
+    assert.equal(r.passed, false);
+    assert.equal(r.results.siteFolder.errors, 1);
+    assert.ok(
+      logs.some(
+        ([k, m]) =>
+          k === "message" && m === ".: reaches no level (needs content)",
+      ),
+      JSON.stringify(logs),
+    );
+    // the folder is shown relative to the audited root ("."), not as ""
+    assert.ok(
+      logs.some(
+        ([k, m]) =>
+          k === "message" && m.includes(". pages: required folder is missing"),
+      ),
+      JSON.stringify(logs),
+    );
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("auditSchemaCommand --format json carries the site folder report", async () => {
+  const root = makeProject();
+  try {
+    let out = "";
+    const { run } = fakeRunner({
+      siteFolder: {
+        ok: true,
+        via: "local",
+        reports: [
+          {
+            folder: root,
+            type: "site-folder",
+            level: "content",
+            reached: "managed",
+            valid: true,
+            errors: [],
+            warnings: [],
+          },
+        ],
+      },
+    });
+    const r = await auditSchemaCommand({ options: { format: "json" } }, root, {
+      runValidator: run,
+      write: (text) => {
+        out += text;
+      },
+    });
+    assert.equal(r.passed, true);
+    const json = JSON.parse(out);
+    assert.equal(json.results.siteFolder.passed, true);
+    assert.equal(json.results.siteFolder.reports[0].reached, "managed");
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }
