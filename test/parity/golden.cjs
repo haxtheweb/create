@@ -73,7 +73,7 @@ function makeLegs(cfg, nodeInfo, which) {
       cfg["php-url"],
       cfg["php-user"],
       cfg["php-pass"],
-      path.join(cfg.php, "_sites"),
+      path.join(cfg.phpRoot || cfg.php, "_sites"),
     ),
   ];
   if (which === "all")
