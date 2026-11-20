@@ -224,3 +224,122 @@ test(
     assert.equal(res.status, 1, res.describe);
   },
 );
+
+// node:add / node:edit --content must store HAX authoring markup as given:
+// quiz answer keys (the bare `correct` attribute on legacy content and
+// `data-correct`) and the `preserve-content` flag on templates. A page that
+// loses them has a quiz with no right answer and a code-sample that renders
+// its text as HTML. haxcms-nodejs main keeps them (haxtheweb/issues#3113,
+// haxtheweb/issues#3273); haxcms-nodejs 26.8.1 strips both.
+const AUTHORING_MARKUP =
+  '<multiple-choice question="Pick one"><input type="checkbox" value="A" correct="correct"><input type="checkbox" value="B"></multiple-choice>\n' +
+  '<true-false-question question="True?"><input type="checkbox" value="True" data-correct="true"><input type="checkbox" value="False"></true-false-question>\n' +
+  '<code-sample type="html" copy-clipboard-button><template preserve-content="preserve-content">npm install --global @haxtheweb/create\nhax start</template></code-sample>';
+
+function pageHtml(item) {
+  return fs.readFileSync(path.join(site(), item.location), "utf8");
+}
+
+function assertAuthoringMarkupKept(html, how) {
+  assert.match(
+    html,
+    /<input type="checkbox" value="A" correct=/,
+    `${how}: the bare correct answer key was stripped`,
+  );
+  assert.doesNotMatch(
+    html,
+    /value="B" correct=/,
+    `${how}: an answer that was not marked correct became correct`,
+  );
+  assert.match(
+    html,
+    /value="True" data-correct="true"/,
+    `${how}: the data-correct answer key was stripped`,
+  );
+  assert.match(
+    html,
+    /<template preserve-content=/,
+    `${how}: preserve-content was stripped from the template`,
+  );
+  assert.match(
+    html,
+    /npm install --global @haxtheweb\/create\nhax start/,
+    `${how}: the code-sample text changed`,
+  );
+}
+
+test(
+  "node:add --content from a file keeps quiz answers and preserve-content",
+  opts,
+  () => {
+    const file = path.join(parentDir, "authoring.html");
+    fs.writeFileSync(file, AUTHORING_MARKUP);
+    ok([
+      "node:add",
+      "--title",
+      "Quiz file",
+      "--slug",
+      "quiz-file",
+      "--content",
+      file,
+    ]);
+    const item = itemBySlug(readSite(site()), "quiz-file");
+    assert.ok(item, "page created");
+    assertAuthoringMarkupKept(pageHtml(item), "node:add from a file");
+  },
+);
+
+test(
+  "node:add --content inline keeps quiz answers and preserve-content",
+  opts,
+  () => {
+    ok([
+      "node:add",
+      "--title",
+      "Quiz inline",
+      "--slug",
+      "quiz-inline",
+      "--content",
+      AUTHORING_MARKUP,
+      "--content-format",
+      "html",
+    ]);
+    const item = itemBySlug(readSite(site()), "quiz-inline");
+    assert.ok(item, "page created");
+    assertAuthoringMarkupKept(pageHtml(item), "node:add inline");
+  },
+);
+
+test(
+  "node:edit --content keeps quiz answers and preserve-content",
+  opts,
+  () => {
+    ok(["node:add", "--title", "Quiz edit", "--slug", "quiz-edit"]);
+    ok(["node:edit", "--item-id", "quiz-edit", "--content", AUTHORING_MARKUP]);
+    const item = itemBySlug(readSite(site()), "quiz-edit");
+    assert.ok(item, "page exists");
+    assertAuthoringMarkupKept(pageHtml(item), "node:edit");
+  },
+);
+
+test("node:add --content still drops script and event handlers", opts, () => {
+  ok([
+    "node:add",
+    "--title",
+    "Quiz hostile",
+    "--slug",
+    "quiz-hostile",
+    "--content",
+    '<multiple-choice question="Q"><input type="checkbox" value="A" correct="correct" onclick="steal()"></multiple-choice><script>steal()</script>',
+    "--content-format",
+    "html",
+  ]);
+  const html = pageHtml(itemBySlug(readSite(site()), "quiz-hostile"));
+  assert.doesNotMatch(html, /<script/i, "script survived");
+  assert.doesNotMatch(html, /onclick/i, "event handler survived");
+  assert.match(
+    html,
+    /value="A" correct=/,
+    "answer key kept next to removed handler",
+  );
+});

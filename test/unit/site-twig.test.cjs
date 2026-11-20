@@ -35,6 +35,13 @@ const { ensureTwigConstantFunction } = available ? siteModule : {};
 
 const opts = { skip: skipReason, timeout: 15000 };
 
+// haxcms-nodejs registers its own `constant` while site.js loads it (newer
+// releases do; 26.8.1 does not), so count only what create adds from here.
+const registeredBeforeCreate = registrations.length;
+function createRegistrations() {
+  return registrations.slice(registeredBeforeCreate);
+}
+
 test(
   "registers the constant Twig function exactly once (idempotent)",
   opts,
@@ -42,9 +49,10 @@ test(
     ensureTwigConstantFunction();
     ensureTwigConstantFunction();
     ensureTwigConstantFunction();
-    assert.equal(registrations.length, 1);
-    assert.equal(registrations[0].name, "constant");
-    assert.equal(typeof registrations[0].fn, "function");
+    const ours = createRegistrations();
+    assert.equal(ours.length, 1);
+    assert.equal(ours[0].name, "constant");
+    assert.equal(typeof ours[0].fn, "function");
   },
 );
 
@@ -53,7 +61,7 @@ test(
   opts,
   () => {
     ensureTwigConstantFunction();
-    const constantFn = registrations[0].fn;
+    const constantFn = createRegistrations()[0].fn;
     assert.equal(constantFn("JSON_PRETTY_PRINT"), 128);
     assert.equal(constantFn("JSON_HEX_TAG"), 1);
     assert.equal(constantFn("JSON_HEX_AMP"), 2);
@@ -71,7 +79,7 @@ test(
   opts,
   () => {
     ensureTwigConstantFunction();
-    const constantFn = registrations[0].fn;
+    const constantFn = createRegistrations()[0].fn;
     // no arbitrary env/global access: anything off the allowlist is null
     assert.equal(constantFn("PATH"), null);
     assert.equal(constantFn("SOME_UNDEFINED_THING"), null);
