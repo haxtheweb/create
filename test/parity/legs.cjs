@@ -173,15 +173,51 @@ class BaseLeg {
   }
 }
 
+// system import route for a document, by extension (the same routes the
+// dashboard and the CLI's file importers use)
+const IMPORT_ROUTES = {
+  docx: "actions/import-docx",
+  odt: "actions/import-odt",
+  pdf: "actions/import-pdf",
+  pptx: "actions/import-pptx",
+  odp: "actions/import-odp",
+  xlsx: "actions/import-xlsx",
+  xls: "actions/import-xlsx",
+  ods: "actions/import-xlsx",
+  md: "actions/import-md",
+  markdown: "actions/import-md",
+  txt: "actions/import-md",
+};
+function importRouteFor(filePath) {
+  const ext = path.extname(filePath).slice(1).toLowerCase();
+  if (!IMPORT_ROUTES[ext]) throw new Error("no import route for " + filePath);
+  return IMPORT_ROUTES[ext];
+}
+
 class ApiLeg extends BaseLeg {
   constructor(name, baseUrl, username, password, sitesDir) {
     super(name);
     this.client = new HaxClient(baseUrl, username, password, name);
     this.sitesDir = sitesDir;
   }
-  async create(siteName) {
+  // opts.importFile: make the site from a document, as the dashboard does:
+  // the file goes to its import route, the items it returns build the site
+  async create(siteName, opts = {}) {
     await this.client.login();
-    const r = await this.client.createSite(siteName, SITE_DESCRIPTION);
+    let build;
+    if (opts.importFile) {
+      const items = await this.client.importFile(
+        importRouteFor(opts.importFile),
+        opts.importFile,
+      );
+      build = { structure: "import", items };
+    }
+    const r = await this.client.createSite(
+      siteName,
+      SITE_DESCRIPTION,
+      undefined,
+      build,
+    );
     this.siteName = r.data.metadata.site.name;
     this.siteDir = path.join(this.sitesDir, this.siteName);
     await this.client.openSite(this.siteName);
@@ -441,20 +477,21 @@ class CliLeg extends BaseLeg {
     // beside the sites, not inside them, and never the real home folder
     this.home = parentDir + "-home";
   }
-  async create(siteName) {
+  // opts.importFile: `hax site <name> --import-site <file>` (the CLI picks
+  // the importer from the extension)
+  async create(siteName, opts = {}) {
     fs.mkdirSync(this.parentDir, { recursive: true });
     fs.mkdirSync(this.home, { recursive: true });
+    const args = [
+      "site",
+      siteName,
+      // same description the API legs send to createSite
+      "--description=" + SITE_DESCRIPTION,
+    ];
+    if (opts.importFile) args.push("--import-site=" + opts.importFile);
     const r = await runCli(
       this.cliPath,
-      [
-        "site",
-        siteName,
-        // same description the API legs send to createSite
-        "--description=" + SITE_DESCRIPTION,
-        "--y",
-        "--no-i",
-        "--skip",
-      ],
+      args.concat(["--y", "--no-i", "--skip"]),
       this.parentDir,
       this.home,
     );

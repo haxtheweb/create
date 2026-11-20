@@ -21,6 +21,12 @@
 //   outlineRaw:  a hand-written items payload, for refused saves. "@L1" is
 //                replaced with that page's id.
 //
+// Import cases (importFile) make the site from a document in
+// fixtures/import/ instead of the default starter: the API legs upload it to
+// its system import route and create the site from the items it returns (the
+// dashboard's flow); the CLI leg runs `hax site --import-site <file>`. Their
+// pages are not addressed by key, so they show up as UNTRACKED1.. in order.
+//
 // Add a case: append it here, run `npm run test:parity:golden -- --update-golden
 // --cases <id>`, review the new snapshots/<id>.json, commit both.
 
@@ -30,6 +36,70 @@ const CASES = [
     id: "01-create-site-defaults",
     title: "Create a site with the default createSite settings",
     legs: "all",
+    steps: [],
+  },
+  // 1b-1j. Site creation from a document
+  {
+    id: "01b-import-docx",
+    title: "Create a site from a Word document (.docx)",
+    legs: "all",
+    importFile: "course.docx",
+    steps: [],
+  },
+  {
+    id: "01c-import-odt",
+    title: "Create a site from an OpenDocument text (.odt)",
+    legs: "all",
+    importFile: "course.odt",
+    steps: [],
+  },
+  {
+    id: "01d-import-pdf",
+    title: "Create a site from a PDF",
+    legs: "all",
+    importFile: "course.pdf",
+    steps: [],
+  },
+  {
+    id: "01e-import-pptx",
+    title: "Create a site from a PowerPoint deck (.pptx)",
+    legs: "all",
+    importFile: "deck.pptx",
+    steps: [],
+  },
+  {
+    id: "01f-import-odp",
+    title: "Create a site from an OpenDocument presentation (.odp)",
+    legs: "all",
+    importFile: "deck.odp",
+    steps: [],
+  },
+  {
+    id: "01g-import-xlsx",
+    title: "Create a site from an Excel outline (.xlsx)",
+    legs: "all",
+    importFile: "outline.xlsx",
+    steps: [],
+  },
+  {
+    id: "01h-import-ods",
+    title: "Create a site from an OpenDocument spreadsheet outline (.ods)",
+    legs: "all",
+    importFile: "outline.ods",
+    steps: [],
+  },
+  {
+    id: "01i-import-md",
+    title: "Create a site from Markdown (.md)",
+    legs: "all",
+    importFile: "notes.md",
+    steps: [],
+  },
+  {
+    id: "01j-import-txt",
+    title: "Create a site from plain text (.txt, Windows-1252)",
+    legs: "all",
+    importFile: "notes.txt",
     steps: [],
   },
   // 2. Site settings

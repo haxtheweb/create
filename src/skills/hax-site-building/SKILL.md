@@ -34,7 +34,7 @@ Build and maintain HAXcms sites with proper structure, themes, and JSON Outline 
 4. **Routes**: Do not create pages or routes using the `x/` prefix — it is reserved for internal HAXcms paths (`x/search`, `x/tags`, `x/manifest`). (PRAW Rule `Q4D9hL9sFNORlMPt1z2ZEb`)
 5. **Content**: Use HAX-capable web components for rich content. Apply DDD attributes for consistent spacing and typography. Include engaging visual elements (videos, tables, interactive components).
 6. **Theme**: Use HAXCMSLitElement for custom theme components. Apply DDD design tokens consistently. Run `yarn run build` after theme changes.
-7. **Import**: Use supported import methods (`pressbooksToSite`, `htmlToSite`, `notionToSite`, `docxToSite`, etc.) via `hax site --import-site <url> --import-structure <method>`.
+7. **Import**: Use supported import methods (`pressbooksToSite`, `htmlToSite`, `notionToSite`, etc.) via `hax site --import-site <url> --import-structure <method>`. Documents are file imports: `hax site --import-site ./course.odt` picks the importer from the extension (.docx, .odt, .pdf, .pptx, .odp, .xlsx, .xls, .ods, .md, .markdown, .txt); `--import-structure` (`docxToSite`, `odtToSite`, `pdfToSite`, `pptxToSite`, `odpToSite`, `xlsxToSite`, `odsToSite`, `mdToSite`) can name it.
 
 ## Page creation (critical)
 

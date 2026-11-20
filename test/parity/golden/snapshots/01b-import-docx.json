@@ -1,0 +1,119 @@
+{
+  "manifest": {
+    "id": "SITE_ID",
+    "title": "SITE_NAME",
+    "author": "",
+    "description": "Parity test site",
+    "license": "by-sa",
+    "metadata": {
+      "author": {},
+      "site": {
+        "name": "SITE_NAME",
+        "logo": "assets/banner.jpg",
+        "settings": {
+          "lang": "en-US",
+          "publishPagesOn": true,
+          "canonical": true,
+          "pathauto": true
+        },
+        "git": {
+          "vendor": "github",
+          "branch": "gh-pages"
+        }
+      },
+      "theme": {
+        "element": "clean-two",
+        "path": "@haxtheweb/clean-two/clean-two.js",
+        "name": "Clean Two",
+        "thumbnail": "@haxtheweb/haxcms-elements/lib/theme-screenshots/theme-clean-two-thumb.jpg",
+        "description": "Start with a blank site using the Clean Two",
+        "category": [
+          "Course"
+        ],
+        "hidden": false,
+        "priority": 0,
+        "terrible": false,
+        "supportedPalettes": null,
+        "variables": {
+          "icon": "icons:record-voice-over",
+          "hexCode": "#3f51b5",
+          "cssVariable": "--simple-colors-default-theme-light-blue-7"
+        }
+      },
+      "node": {
+        "fields": {}
+      },
+      "platform": {
+        "audience": "expert",
+        "features": {},
+        "allowedBlocks": []
+      },
+      "build": {
+        "structure": "import"
+      }
+    },
+    "items": {
+      "L0": {
+        "id": "L0",
+        "indent": 0,
+        "location": "pages/L0/index.html",
+        "slug": "unit-one",
+        "order": 0,
+        "parent": null,
+        "title": "Unit One",
+        "description": "",
+        "metadata": {
+          "files": [
+            "FILE1"
+          ]
+        }
+      },
+      "L1": {
+        "id": "L1",
+        "indent": 1,
+        "location": "pages/L1/index.html",
+        "slug": "unit-one/lesson-a",
+        "order": 0,
+        "parent": "L0",
+        "title": "Lesson A",
+        "description": "",
+        "metadata": {}
+      },
+      "L2": {
+        "id": "L2",
+        "indent": 1,
+        "location": "pages/L2/index.html",
+        "slug": "unit-one/lesson-b",
+        "order": 1,
+        "parent": "L0",
+        "title": "Lesson B",
+        "description": "",
+        "metadata": {}
+      },
+      "L3": {
+        "id": "L3",
+        "indent": 0,
+        "location": "pages/L3/index.html",
+        "slug": "unit-two",
+        "order": 1,
+        "parent": null,
+        "title": "Unit Two",
+        "description": "",
+        "metadata": {}
+      }
+    },
+    "location": "<sites>/SITE_NAME/index.html"
+  },
+  "sequence": [
+    "L0",
+    "L1",
+    "L2",
+    "L3"
+  ],
+  "pages": {
+    "L0": "<p>Intro with <strong>bold</strong> and <em>italic</em> and a <a href=\"https://hax.psu.edu\">link</a>.</p><ol><li>Numbered one</li><li>Numbered two<ul><li>nested bullet</li></ul></li></ol><p><media-image source=\"files/unit-one.jpg\" alt=\"Red square\"></media-image></p><p>Red square</p><a></a>",
+    "L1": "<table><thead><tr><th><p>Name</p></th><th><p>Value</p></th></tr></thead><tbody><tr><td><p>A</p></td><td><p>1</p></td></tr></tbody></table><a></a>",
+    "L2": "<p>Text B.</p><a></a>",
+    "L3": "<p>Final text.</p>"
+  }
+}

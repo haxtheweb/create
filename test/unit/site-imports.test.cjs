@@ -20,7 +20,12 @@ const {
   module: siteModule,
 } = require("../_helpers/site-canary.cjs");
 
-const { IMPORT_STRUCTURE_MAP } = available ? siteModule : {};
+const {
+  IMPORT_STRUCTURE_MAP,
+  IMPORT_STRUCTURE_FOR_EXTENSION,
+  importFileUpload,
+  defaultImportStructure,
+} = available ? siteModule : {};
 
 const opts = { skip: skipReason, timeout: 15000 };
 
@@ -72,13 +77,59 @@ test("quartoToSite reaches the quarto dispatcher case", opts, () => {
   });
 });
 
-test("docx and xlsx keep their own action routes", opts, () => {
-  assert.deepEqual(IMPORT_STRUCTURE_MAP.docxToSite, {
-    routeKey: "actions/import-docx",
+test("file importers map to the backends' upload routes", opts, () => {
+  const routes = {};
+  Object.keys(IMPORT_STRUCTURE_MAP).forEach((name) => {
+    if (IMPORT_STRUCTURE_MAP[name].routeKey) {
+      routes[name] = IMPORT_STRUCTURE_MAP[name].routeKey;
+    }
   });
-  assert.deepEqual(IMPORT_STRUCTURE_MAP.xlsxToSite, {
-    routeKey: "actions/import-xlsx",
+  assert.deepEqual(routes, {
+    docxToSite: "actions/import-docx",
+    odtToSite: "actions/import-odt",
+    pdfToSite: "actions/import-pdf",
+    pptxToSite: "actions/import-pptx",
+    odpToSite: "actions/import-odp",
+    xlsxToSite: "actions/import-xlsx",
+    odsToSite: "actions/import-xlsx",
+    mdToSite: "actions/import-md",
   });
+});
+
+test("a file's extension picks its importer", opts, () => {
+  Object.keys(IMPORT_STRUCTURE_FOR_EXTENSION).forEach((ext) => {
+    assert.ok(
+      IMPORT_STRUCTURE_MAP[IMPORT_STRUCTURE_FOR_EXTENSION[ext]],
+      ext + " maps to a known importer",
+    );
+  });
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "hax-import-file-"));
+  for (const name of ["Course.ODT", "deck.odp", "notes.txt", "a.markdown"]) {
+    fs.writeFileSync(path.join(dir, name), "x");
+  }
+  assert.equal(defaultImportStructure("Course.ODT", dir), "odtToSite");
+  assert.equal(defaultImportStructure("deck.odp", dir), "odpToSite");
+  assert.equal(defaultImportStructure("notes.txt", dir), "mdToSite");
+  assert.equal(defaultImportStructure("a.markdown", dir), "mdToSite");
+  // not a local file: HAXcms to HAXcms, as before
+  assert.equal(defaultImportStructure("missing.odt", dir), "haxcmsToSite");
+  assert.equal(
+    defaultImportStructure("https://example.com/site", dir),
+    "haxcmsToSite",
+  );
+});
+
+test("a local file becomes the importer's upload", opts, () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "hax-import-upload-"));
+  fs.writeFileSync(path.join(dir, "Unit 1.odt"), "x");
+  fs.mkdirSync(path.join(dir, "folder.odt"));
+  assert.deepEqual(importFileUpload("Unit 1.odt", dir), [
+    { originalname: "Unit 1.odt", path: path.join(dir, "Unit 1.odt") },
+  ]);
+  assert.equal(importFileUpload("missing.odt", dir), null);
+  assert.equal(importFileUpload("folder.odt", dir), null);
+  assert.equal(importFileUpload("https://example.com/a.docx", dir), null);
+  assert.equal(importFileUpload("", dir), null);
 });
 
 test(

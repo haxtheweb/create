@@ -216,7 +216,7 @@ async function main() {
     .option("--import-site <char>", t("cliOptImportSite"))
     .option(
       "--import-structure <char>",
-      `${t("cliOptImportStructure")}\n\rpressbooksToSite\n\relmslnToSite\n\rhaxcmsToSite\n\rnotionToSite\n\rgitbookToSite\n\revolutionToSite\n\rploneToSite\n\rwordpressPagesToSite\n\rdrupalToSite\n\ropenstaxToSite\n\rvitepressToSite\n\rquartoToSite\n\rhtmlToSite\n\rdocxToSite\n\rxlsxToSite`,
+      `${t("cliOptImportStructure")}\n\rpressbooksToSite\n\relmslnToSite\n\rhaxcmsToSite\n\rnotionToSite\n\rgitbookToSite\n\revolutionToSite\n\rploneToSite\n\rwordpressPagesToSite\n\rdrupalToSite\n\ropenstaxToSite\n\rvitepressToSite\n\rquartoToSite\n\rhtmlToSite\n\rdocxToSite\n\rodtToSite\n\rpdfToSite\n\rpptxToSite\n\rodpToSite\n\rxlsxToSite\n\rodsToSite\n\rmdToSite`,
     )
     .option("--node-op <char>", t("cliOptNodeOp"))
     .option("--item-id <char>", t("cliOptItemId"))
@@ -347,7 +347,7 @@ async function main() {
     .option("--import-site <char>", t("cliOptImportSite"))
     .option(
       "--import-structure <char>",
-      `${t("cliOptImportStructure")}\n\rpressbooksToSite\n\relmslnToSite\n\rhaxcmsToSite\n\rnotionToSite\n\rgitbookToSite\n\revolutionToSite\n\rploneToSite\n\rwordpressPagesToSite\n\rdrupalToSite\n\ropenstaxToSite\n\rvitepressToSite\n\rquartoToSite\n\rhtmlToSite\n\rdocxToSite\n\rxlsxToSite`,
+      `${t("cliOptImportStructure")}\n\rpressbooksToSite\n\relmslnToSite\n\rhaxcmsToSite\n\rnotionToSite\n\rgitbookToSite\n\revolutionToSite\n\rploneToSite\n\rwordpressPagesToSite\n\rdrupalToSite\n\ropenstaxToSite\n\rvitepressToSite\n\rquartoToSite\n\rhtmlToSite\n\rdocxToSite\n\rodtToSite\n\rpdfToSite\n\rpptxToSite\n\rodpToSite\n\rxlsxToSite\n\rodsToSite\n\rmdToSite`,
     )
     .option("--name <char>", t("cliOptSiteName"))
     .option("--domain <char>", t("cliOptDomain"))

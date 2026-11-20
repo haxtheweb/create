@@ -25,7 +25,7 @@ class HaxClient {
       body:
         body === undefined
           ? undefined
-          : typeof body === "string"
+          : typeof body === "string" || body instanceof FormData
             ? body
             : JSON.stringify(body),
       redirect: "manual",
@@ -88,21 +88,50 @@ class HaxClient {
     return h;
   }
 
-  async createSite(name, description, theme) {
+  async createSite(name, description, theme, build) {
     const site = { name, description };
     if (theme) site.theme = theme;
+    const body = { jwt: this.jwt, token: this.dashboard.token, site };
+    if (build) body.build = build;
     const r = await this.raw("POST", "/system/api/v1/sites", {
       headers: Object.assign(
         this.systemHeaders(),
         this.dashboard.createSiteHeaders || {},
       ),
-      body: { jwt: this.jwt, token: this.dashboard.token, site },
+      body,
     });
     if (r.status !== 200)
       throw new Error(
         `${this.label} createSite ${r.status}: ${r.bodyText.slice(0, 400)}`,
       );
     return r.json;
+  }
+
+  // Upload a document to a system import route (actions/import-docx, ...)
+  // the way the dashboard does, and return the site items it makes.
+  async importFile(route, filePath) {
+    const fs = require("fs");
+    const path = require("path");
+    const form = new FormData();
+    form.append(
+      "upload",
+      new Blob([fs.readFileSync(filePath)]),
+      path.basename(filePath),
+    );
+    form.append("method", "site");
+    const headers = this.systemHeaders();
+    // fetch sets the multipart content type and boundary
+    for (const k of Object.keys(headers))
+      if (k.toLowerCase() === "content-type") delete headers[k];
+    const r = await this.raw("POST", "/system/api/v1/" + route, {
+      headers,
+      body: form,
+    });
+    if (r.status !== 200 || !r.json || !r.json.data || !r.json.data.items)
+      throw new Error(
+        `${this.label} ${route} ${r.status}: ${r.bodyText.slice(0, 400)}`,
+      );
+    return r.json.data.items;
   }
 
   async openSite(name) {
