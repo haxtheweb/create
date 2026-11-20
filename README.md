@@ -163,7 +163,7 @@ Options:
                                       (lib/<tag>.docs.json) when it builds
   --force                             force creation even if name exists in
                                       registry
-  --import-site <char>                URL of site to import
+  --import-site <char>                URL of a site, or path to a local file, to import
   --import-structure <char>           import method to use:
 
 pressbooksToSite
@@ -194,7 +194,19 @@ htmlToSite
 
 docxToSite
 
+odtToSite
+
+pdfToSite
+
+pptxToSite
+
+odpToSite
+
 xlsxToSite
+
+odsToSite
+
+mdToSite
   --node-op <char>                    node operation to perform
   --item-id <char>                    node ID to operate on
   --domain <char>                     published domain name

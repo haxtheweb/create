@@ -18,3 +18,6 @@ test/old-sites/*/site
 # golden parity snapshots: written by `test/parity/parity.cjs --update-golden`
 # (haxtheweb/issues#3332), compared as parsed JSON, not hand-formatted
 test/parity/golden/snapshots
+
+# import documents the golden import cases read: kept byte for byte
+test/parity/golden/fixtures

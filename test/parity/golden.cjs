@@ -21,6 +21,8 @@ const { snapshot, compareSnapshots } = require("./snapshot.cjs");
 const { CASES } = require("./golden/cases.cjs");
 
 const SNAPSHOT_DIR = path.join(__dirname, "golden", "snapshots");
+// documents the import cases make their sites from
+const FIXTURE_DIR = path.join(__dirname, "golden", "fixtures", "import");
 const SITE_NAME = "SITE_NAME";
 
 function selectCases(filter) {
@@ -96,10 +98,18 @@ async function runCase(cfg, nodeInfo, c, runTag) {
   const siteName = ("golden" + c.id.split("-")[0] + runTag).toLowerCase();
   const legs = makeLegs(cfg, nodeInfo, c.legs);
   const result = { id: c.id, title: c.title, legs: {}, stepErrors: [] };
+  const createOpts = c.importFile
+    ? { importFile: path.join(FIXTURE_DIR, c.importFile) }
+    : {};
   for (const l of legs) {
-    await l.create(siteName);
+    await l.create(siteName, createOpts);
     const items = l.items();
     l.keyToId.L0 = items[0] && items[0].id;
+    // an imported site's pages are L0, L1, ... in outline order
+    if (c.importFile)
+      items.forEach((it, i) => {
+        l.keyToId["L" + i] = it.id;
+      });
   }
   for (const [n, step] of c.steps.entries()) {
     for (const l of legs) {

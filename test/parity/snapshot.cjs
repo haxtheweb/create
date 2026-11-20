@@ -67,6 +67,17 @@ function snapshot(siteDir, keyToId, opts = {}) {
       idToKey[it.id] = "UNTRACKED" + ++untracked;
   }
   if (manifest.id) idToKey[manifest.id] = "SITE_ID";
+  // file records a page points at (metadata.files) get a new uuid on every
+  // run, like pages; name them FILE1.. in outline order
+  let fileCount = 0;
+  for (const it of items) {
+    const files = it && it.metadata && it.metadata.files;
+    if (!Array.isArray(files)) continue;
+    for (const fileId of files) {
+      if (typeof fileId === "string" && fileId !== "" && !idToKey[fileId])
+        idToKey[fileId] = "FILE" + ++fileCount;
+    }
+  }
   const ids = Object.keys(idToKey).sort((a, b) => b.length - a.length);
   const pages = {};
   for (const it of items) {

@@ -250,7 +250,13 @@ class Res {
 // Security (in-process-converters): params added so the site/import/:platform dispatcher
 // (replacing the open-apis broker) can receive the platform name in-process.
 // Backward-compatible: existing callers omit params, defaulting to {}.
-async function invokeRoute(routeHandler, body = {}, query = {}, params = {}) {
+async function invokeRoute(
+  routeHandler,
+  body = {},
+  query = {},
+  params = {},
+  files = undefined,
+) {
   let res = new Res();
   // Site-scoped reads (site:search, site:tags, site:blocks, site:analytics,
   // site:list-files) pass query.siteName; set the auth context so
@@ -277,6 +283,8 @@ async function invokeRoute(routeHandler, body = {}, query = {}, params = {}) {
           "x-hax-actor": cliActor(),
         },
         haxcmsSiteApiAuth: siteAuthContext,
+        // file importer routes read their upload from req.files
+        files: files,
       },
       res,
     );
@@ -386,9 +394,10 @@ export function cliCommitContextFor(handler) {
 }
 // Security (in-process-converters): map --import-structure names to on-prem haxcms-nodejs
 // route handlers (replaces the deprecated @haxtheweb/open-apis broker). Platform
-// converters go through the site/import/:platform dispatcher; docx/xlsx use their
-// own actions routes. evolutionToSite (custom zip upload) is intentionally absent
-// and falls through to the hidden-methodologies branch below.
+// converters go through the site/import/:platform dispatcher with the source URL;
+// file importers (routeKey) are the backends' upload routes and are handed the
+// local file named by --import-site. evolutionToSite (custom zip upload) is
+// intentionally absent and falls through to the hidden-methodologies branch below.
 export const IMPORT_STRUCTURE_MAP = {
   haxcmsToSite: { platform: "haxcms" },
   pressbooksToSite: { platform: "pressbooks" },
@@ -403,8 +412,75 @@ export const IMPORT_STRUCTURE_MAP = {
   quartoToSite: { platform: "quarto" },
   htmlToSite: { platform: "html" },
   docxToSite: { routeKey: "actions/import-docx" },
+  odtToSite: { routeKey: "actions/import-odt" },
+  pdfToSite: { routeKey: "actions/import-pdf" },
+  pptxToSite: { routeKey: "actions/import-pptx" },
+  odpToSite: { routeKey: "actions/import-odp" },
   xlsxToSite: { routeKey: "actions/import-xlsx" },
+  // the spreadsheet route reads .ods with the same columns
+  odsToSite: { routeKey: "actions/import-xlsx" },
+  // .txt is read as Markdown
+  mdToSite: { routeKey: "actions/import-md" },
 };
+// A local file given to --import-site with no --import-structure picks its
+// file importer from the extension.
+export const IMPORT_STRUCTURE_FOR_EXTENSION = {
+  docx: "docxToSite",
+  odt: "odtToSite",
+  pdf: "pdfToSite",
+  pptx: "pptxToSite",
+  odp: "odpToSite",
+  xlsx: "xlsxToSite",
+  xls: "xlsxToSite",
+  ods: "odsToSite",
+  md: "mdToSite",
+  markdown: "mdToSite",
+  txt: "mdToSite",
+};
+/**
+ * The upload a file importer route reads (req.files) for the local file named
+ * by --import-site, or null when it is not an existing file (a URL, a
+ * directory, a missing path).
+ * @param {string} source
+ * @param {string} [cwd]
+ * @returns {Array<{originalname: string, path: string}>|null}
+ */
+export function importFileUpload(source, cwd) {
+  if (
+    typeof source !== "string" ||
+    source === "" ||
+    /^[a-z][a-z0-9+.-]*:\/\//i.test(source)
+  ) {
+    return null;
+  }
+  const filePath = path.resolve(cwd || process.cwd(), source);
+  let stat = null;
+  try {
+    stat = fs.statSync(filePath);
+  } catch {
+    return null;
+  }
+  if (!stat.isFile()) {
+    return null;
+  }
+  return [{ originalname: path.basename(filePath), path: filePath }];
+}
+/**
+ * The --import-structure to use for an --import-site source when none was
+ * given: a local file's importer by extension, else HAXcms to HAXcms.
+ * @param {string} source
+ * @param {string} [cwd]
+ * @returns {string}
+ */
+export function defaultImportStructure(source, cwd) {
+  if (importFileUpload(source, cwd)) {
+    const ext = path.extname(source).slice(1).toLowerCase();
+    if (IMPORT_STRUCTURE_FOR_EXTENSION[ext]) {
+      return IMPORT_STRUCTURE_FOR_EXTENSION[ext];
+    }
+  }
+  return "haxcmsToSite";
+}
 // Build the build.files map for a scraped Drupal7 book-print-html page: each
 // <img src="/..."> (absolute-path, not protocol-relative //) is recorded as
 // files[relativeSrc] = absoluteImgUrl so the backend's bulk-import path can
@@ -5548,14 +5624,17 @@ export async function siteProcess(commandRun, project, port = "3000") {
   // allow for importSite option
   if (commandRun.options.importSite) {
     if (!commandRun.options.importStructure) {
-      // assume hax to hax if it's not defined
-      commandRun.options.importStructure = "haxcmsToSite";
+      // a local file picks its importer by extension; otherwise assume
+      // hax to hax
+      commandRun.options.importStructure = defaultImportStructure(
+        commandRun.options.importSite,
+      );
     }
     // Security (in-process-converters): verify this is a valid import structure and route
     // it in-process to the on-prem haxcms-nodejs handler (replaces the
     // @haxtheweb/open-apis broker + MicroFrontendRegistry lookup). Platform
-    // converters go through the site/import/:platform dispatcher; docx/xlsx
-    // use their own actions routes.
+    // converters go through the site/import/:platform dispatcher; file
+    // importers get the local file as their upload.
     const importConfig =
       IMPORT_STRUCTURE_MAP[commandRun.options.importStructure];
     if (commandRun.options.importStructure && importConfig) {
@@ -5568,10 +5647,29 @@ export async function siteProcess(commandRun, project, port = "3000") {
           { platform: importConfig.platform },
         );
       } else {
-        resp = await invokeRoute(
-          allRoutesLib.allRoutes.system.map.post[importConfig.routeKey],
-          { repoUrl: commandRun.options.importSite },
-        );
+        const upload = importFileUpload(commandRun.options.importSite);
+        const importRoute =
+          allRoutesLib.allRoutes.system.map.post[importConfig.routeKey];
+        if (typeof importRoute !== "function") {
+          // the installed haxcms-nodejs predates this importer
+          resp = {
+            statusCode: 501,
+            data: { error: t("siteImportNotInBackend") },
+          };
+        } else if (!upload) {
+          resp = {
+            statusCode: 400,
+            data: { error: t("siteImportNeedsLocalFile") },
+          };
+        } else {
+          resp = await invokeRoute(
+            importRoute,
+            { method: "site" },
+            {},
+            {},
+            upload,
+          );
+        }
       }
       const importedData =
         resp && resp.data && resp.data.data ? resp.data.data : null;
