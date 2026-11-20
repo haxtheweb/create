@@ -27,13 +27,40 @@ export function runCommand(command, args = [], options = {}) {
   let runArgs = args;
   if (process.platform === "win32" && typeof runOptions.shell === "undefined") {
     runOptions.shell = true;
-    // with shell: true Node joins args with spaces, so quote any arg that
-    // contains whitespace or quotes (e.g. -m "first commit")
-    runArgs = args.map((arg) =>
-      /[\s"]/.test(arg) ? `"${String(arg).replace(/"/g, '""')}"` : arg,
-    );
+    runArgs = args.map((arg) => windowsShellArg(arg));
   }
   return execFilePromise(command, runArgs, runOptions);
+}
+
+// cmd.exe treats these as syntax outside double quotes
+const WINDOWS_SHELL_SPECIAL = /[\s"&|<>^()!,;=]/;
+// cmd.exe expands %VAR% even inside double quotes, and a line break ends
+// the command, so neither can travel through the shell as a literal
+const WINDOWS_SHELL_UNSAFE = /[%\r\n\0]/;
+
+/**
+ * One argument made safe for the cmd.exe line Node builds with shell: true
+ * (it joins args with spaces). Security (no-shell-strings): an argument with
+ * whitespace, a quote or any cmd metacharacter (& | < > ^ ( ) ! , ; =) is
+ * wrapped in double quotes, inside which cmd treats them as text; inner
+ * quotes are doubled, which keeps cmd inside the quoted run and reads back
+ * as one literal quote. An argument with %, a line break or NUL is refused,
+ * because cmd would expand or split it even when quoted. Callers still
+ * validate their own inputs; this is the backstop.
+ * @param {string} arg
+ * @returns {string}
+ */
+export function windowsShellArg(arg) {
+  const value = String(arg);
+  if (WINDOWS_SHELL_UNSAFE.test(value)) {
+    throw new Error(
+      `Refusing to pass an argument containing %, a line break or NUL through the Windows shell: ${JSON.stringify(value)}`,
+    );
+  }
+  if (value === "" || WINDOWS_SHELL_SPECIAL.test(value)) {
+    return `"${value.replace(/"/g, '""')}"`;
+  }
+  return value;
 }
 
 export function getTimeDifference(timestamp1, timestamp2) {

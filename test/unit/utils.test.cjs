@@ -27,6 +27,7 @@ const {
   isValidGithubOwner,
   isValidGithubRepo,
   runCommand,
+  windowsShellArg,
   initGitRepo,
 } = require("../../src/lib/utils.js");
 
@@ -371,6 +372,37 @@ test("runCommand passes args literally, never through a shell (R2-L-1)", async (
     "a; echo pwned $(id)",
   ]);
   assert.equal(stdout, "a; echo pwned $(id)");
+});
+
+test("windowsShellArg quotes anything cmd.exe would read as syntax", () => {
+  // plain values pass as they are
+  assert.equal(windowsShellArg("commit"), "commit");
+  assert.equal(windowsShellArg("my-site.surge.sh"), "my-site.surge.sh");
+  // whitespace, quotes and every cmd metacharacter end up inside quotes
+  assert.equal(windowsShellArg("first commit"), '"first commit"');
+  assert.equal(windowsShellArg('say "hi"'), '"say ""hi"""');
+  for (const value of [
+    "a&calc",
+    "a|calc",
+    "a>out",
+    "a<in",
+    "a^b",
+    "(a)",
+    "a!b",
+    "a,b",
+    "a;b",
+    "a=b",
+  ]) {
+    assert.equal(windowsShellArg(value), `"${value}"`, value);
+  }
+  // an empty argument still occupies its slot
+  assert.equal(windowsShellArg(""), '""');
+});
+
+test("windowsShellArg refuses what cmd.exe expands or splits even when quoted", () => {
+  for (const value of ["%PATH%", "50% done", "a\nb", "a\rb", "a\u0000b"]) {
+    assert.throws(() => windowsShellArg(value), /Windows shell/, value);
+  }
 });
 
 test("initGitRepo works in a directory whose name contains shell syntax (R2-H-2)", async () => {
