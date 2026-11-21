@@ -179,6 +179,12 @@ Actions to perform on web component include:
 .br
 .B wc:haxproperties
 \- Write haxProperties schema
+.br
+.B wc:rename
+\- Rename this web component
+.br
+.B wc:fuzz
+\- Add a starter fuzz (property\-based) test: test/<name>\-fuzz.test.js with fast\-check, following the HAX_FUZZ_SEED / HAX_FUZZ_RUNS / HAX_FUZZ_PATH convention (\-\-name, \-\-force, \-\-dry\-run)
 .RE
 .RE
 .PP
@@ -193,6 +199,9 @@ Actions to perform on web component include:
 .br
 .B ssr
 \- report\-only: server\-render every wc\-registry.json element with @lit\-labs/ssr and bucket the result (never fails, not part of all; \-\-only, \-\-timeout, \-\-save\-html, \-\-no\-shim, \-\-format json)
+.br
+.B fuzz
+\- report\-only: list sanitizer / parser functions (sanitize*, parse*, escape*, ...) that no fast\-check property test names (never fails, not part of all; \-\-debug, \-\-format json)
 .br
 .B all
 \- ddd and schema
@@ -576,6 +585,14 @@ Report how selected elements server-render
 .B hax audit theme \--format json
 .br
 Check a HAXcms theme against the theme contract and report findings as JSON
+.TP
+.B hax audit fuzz \--format json
+.br
+List sanitizer and parser code that has no property\-based test, as JSON
+.TP
+.B hax wc wc:fuzz \--y
+.br
+Inside an element's folder, write a starter fuzz test for it
 .TP
 .B hax party \--repos haxtheweb/webcomponents
 Join the HAX community by cloning specific repositories

@@ -81,7 +81,7 @@ import {
 } from "./lib/utils.js";
 import * as haxcmsLib from "@haxtheweb/haxcms-nodejs/dist/lib/HAXCMS.js";
 const systemStructureContext = haxcmsLib.systemStructureContext;
-// `hax audit [ddd|schema|i18n|ssr|all]`; the DDD audit itself lives in audit.js
+// `hax audit [ddd|schema|i18n|ssr|theme|fuzz|all]`; the DDD audit itself lives in audit.js
 const runAuditCommand = (commandRun, dddPath, schemaRoot) =>
   runAuditCommandWith(commandRun, dddPath, schemaRoot, {
     auditDDD: auditCommandDetected,
@@ -121,6 +121,7 @@ function cliManifest() {
     i18n: "cliArgAuditI18n",
     ssr: "cliArgAuditSsr",
     theme: "cliArgAuditTheme",
+    fuzz: "cliArgAuditFuzz",
     all: "cliArgAuditAll",
   };
   return buildCliManifest(
@@ -471,6 +472,9 @@ async function main() {
         "\n\r" +
         "theme - " +
         t("cliArgAuditTheme") +
+        "\n\r" +
+        "fuzz - " +
+        t("cliArgAuditFuzz") +
         "\n\r" +
         "all - " +
         t("cliArgAuditAll"),

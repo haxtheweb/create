@@ -42,6 +42,7 @@ test(
       "wc:element",
       "wc:haxproperties",
       "wc:rename",
+      "wc:fuzz",
     ]);
     for (const action of actions) {
       assert.equal(typeof action.value, "string");
@@ -59,6 +60,6 @@ test(
     const b = webcomponentActions();
     assert.notEqual(a, b);
     a.push({ value: "mutated", label: "mutated" });
-    assert.equal(b.length, 5);
+    assert.equal(b.length, 6);
   },
 );
