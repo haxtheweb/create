@@ -286,4 +286,14 @@ class OpGenerator {
   }
 }
 
-module.exports = { OpGenerator, THEMES, MALFORMED_HTML };
+module.exports = {
+  OpGenerator,
+  THEMES,
+  MALFORMED_HTML,
+  // value pools, shared with the generated-input fuzz run (fuzz.cjs)
+  TITLES,
+  SLUGS,
+  DESCRIPTIONS,
+  TAGS,
+  CONTENT,
+};

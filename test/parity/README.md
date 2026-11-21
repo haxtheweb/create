@@ -181,6 +181,91 @@ page's id). A step with `expect: <status>` must be refused with exactly that
 HTTP status on every leg; the snapshot then shows the site as the steps before
 it left it.
 
+## Generated inputs (fuzz)
+
+The sequences and the golden cases send inputs someone chose. `--fuzz`
+([haxtheweb/issues#3386](https://github.com/haxtheweb/issues/issues/3386))
+sends inputs nobody chose: [`openapi-arb.cjs`](openapi-arb.cjs) turns the
+operations, parameters and JSON request bodies of haxcms-nodejs's
+`src/openapi/site-spec.yaml` into [fast-check](https://fast-check.dev)
+arbitraries, and [`fuzz.cjs`](fuzz.cjs) sends every generated request to
+haxcms-nodejs and haxcms-php and diffs what comes back: the HTTP status, the
+response body, and after a write the two sites on disk (the same snapshot
+diff the sequences use). It takes the place of a second, PHP-only fuzz stack.
+
+One run is a sequence of 1 to 3 requests against a site that is first put
+back to the same starting state (the welcome page, two top-level pages and a
+child page, all stamped January 1, 2026), so a counterexample does not depend
+on the runs before it and fast-check can shrink it. Most generated bodies fit
+the spec; about one in seven gets one out-of-spec change (a property dropped
+or given another JSON type), because the backends must also refuse the same
+things. String fields get arbitrary text mixed with values HAXcms gives
+meaning to (page ids, slugs, HTML, titles). The site reference and the login
+are always the real ones: this run does not fuzz authentication.
+
+It follows the HAX fuzz convention
+([haxtheweb/issues#3272](https://github.com/haxtheweb/issues/issues/3272),
+[`test/_helpers/fuzz-config.cjs`](../_helpers/fuzz-config.cjs)):
+
+| Variable        | Meaning                                                              |
+| --------------- | -------------------------------------------------------------------- |
+| `HAX_FUZZ_SEED` | an integer, or `random`; unset is the fixed default seed 3386        |
+| `HAX_FUZZ_RUNS` | generated sequences per round (default 100)                          |
+| `HAX_FUZZ_PATH` | replay one reported counterexample (with the seed it was found with) |
+
+```bash
+# the fixed default seed
+npm run test:parity:fuzz -- --nodejs ../haxcms-nodejs --php ../haxcms-php
+
+# hunt, as the nightly does
+HAX_FUZZ_SEED=random HAX_FUZZ_RUNS=300 npm run test:parity:fuzz
+
+# replay a finding: the line printed with it, run from this repo
+HAX_FUZZ_SEED=3386 HAX_FUZZ_PATH=5:0:0:1 HAX_FUZZ_RUNS=100 node test/parity/parity.cjs --fuzz
+```
+
+A difference is a **finding**: fast-check shrinks it to the smallest sequence
+that still shows it, the run replays that once to confirm it, and the report
+(`<out>/summary.md`, `<out>/fuzz/results.json`) lists the requests, what
+differed and the one-line replay command. A finding has a **signature** per
+difference (`<operationId>:<leg>:<where>`). After a finding its signatures
+are skipped and the same seed runs again, so one hunt reports up to
+`--fuzz-findings` different divergences and not the same first one each time;
+a replay line carries the signatures skipped before its finding
+(`--fuzz-skip`), which makes it reproduce that finding exactly.
+
+Like the rest of the harness it is report-only unless `--fail-on-diff` is
+given. When a finding is fixed, add its requests as a plain regression test in
+both backends (a golden case here, or a route test in each repo), so the fix
+stays without the fuzz run.
+
+| Flag              | Environment variable       | Default | Meaning                                                   |
+| ----------------- | -------------------------- | ------- | --------------------------------------------------------- |
+| `--fuzz`          | `HAX_PARITY_FUZZ`          | off     | run generated inputs instead of the sequences             |
+| `--fuzz-ops`      | `HAX_PARITY_FUZZ_OPS`      | all     | only these operationIds, comma separated (focus a hunt)   |
+| `--fuzz-steps`    | `HAX_PARITY_FUZZ_STEPS`    | `3`     | most requests in one run                                  |
+| `--fuzz-findings` | `HAX_PARITY_FUZZ_FINDINGS` | `10`    | stop the hunt after this many different findings          |
+| `--fuzz-skip`     | `HAX_PARITY_FUZZ_SKIP`     | (none)  | signatures to ignore from the start (set by replay lines) |
+| `--fail-on-diff`  | `HAX_PARITY_FAIL_ON_DIFF`  | off     | exit 1 when there is a finding                            |
+
+What is normalized before comparing, and nothing else: each leg's page ids
+(logical keys, as in the sequences), its base URL and sites folder,
+`created` / `updated` style keys, and any time that falls inside the run
+itself (that is "now" on the leg that wrote it). Times of the starting pages
+are pinned, so how a backend formats a date is still compared.
+
+Left out, with the reason in `EXCLUDED_OPERATIONS` in `fuzz.cjs` and in
+every report: multipart uploads, exports that answer an archive or document,
+the link checker (it uses the network), page revisions (git commit ids differ
+per leg) and the static discovery and OpenAPI documents (`spec-diff.cjs`
+compares those).
+
+The engine itself is tested on every pull request with a fixed seed
+([`test/unit/parity-fuzz.test.cjs`](../unit/parity-fuzz.test.cjs)): two
+in-process legs that agree pass, and a difference seeded into one of them is
+caught, shrunk and replayed from its `{ seed, path }`. The run against the
+real backends is nightly only, since it needs both of them built.
+
 ## Release gate
 
 [`release-gate.cjs`](release-gate.cjs)
@@ -275,4 +360,6 @@ as recorded. The agent workflow is the
 | `spec-diff.cjs`    | compares the two backends' OpenAPI specs as data              |
 | `boot-node.cjs`    | boots haxcms-nodejs with its own e2e runtime                  |
 | `php-router.php`   | `php -S` router matching haxcms-php's web server rules        |
+| `fuzz.cjs`         | generated-input run (`--fuzz`): engine, legs, report          |
+| `openapi-arb.cjs`  | fast-check arbitraries from an OpenAPI spec                   |
 | `config.cjs`       | flags, environment variables and defaults                     |

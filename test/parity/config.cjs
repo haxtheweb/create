@@ -41,6 +41,13 @@ const SETTINGS = {
   "update-golden": ["HAX_PARITY_UPDATE_GOLDEN", ""],
   "fail-on-diff": ["HAX_PARITY_FAIL_ON_DIFF", ""],
   cases: ["HAX_PARITY_CASES", ""],
+  // generated-input run (fuzz.cjs) instead of the seeded sequences; the seed,
+  // run count and replay path come from HAX_FUZZ_SEED / _RUNS / _PATH
+  fuzz: ["HAX_PARITY_FUZZ", ""],
+  "fuzz-ops": ["HAX_PARITY_FUZZ_OPS", ""],
+  "fuzz-steps": ["HAX_PARITY_FUZZ_STEPS", "3"],
+  "fuzz-findings": ["HAX_PARITY_FUZZ_FINDINGS", "10"],
+  "fuzz-skip": ["HAX_PARITY_FUZZ_SKIP", ""],
 };
 
 function readArgs(argv) {
@@ -90,6 +97,7 @@ function loadConfig(argv = process.argv.slice(2), env = process.env) {
   cfg["fail-on-diff"] = flag(cfg["fail-on-diff"]);
   // updating snapshots implies the golden suite
   cfg.golden = flag(cfg.golden) || cfg["update-golden"];
+  cfg.fuzz = flag(cfg.fuzz);
   cfg.phpExternal = Boolean(cfg["php-url"]);
   cfg.phpInPlace = flag(cfg["php-in-place"]);
   // no port given: parity.cjs picks a free one when it starts php -S and

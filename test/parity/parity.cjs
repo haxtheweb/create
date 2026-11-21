@@ -12,11 +12,18 @@
 // golden/snapshots/. --fail-on-diff makes a mismatch exit 1 (the release gate);
 // --update-golden rewrites the snapshots from the nodejs leg.
 //
+// With --fuzz it runs the generated-input run (fuzz.cjs): requests generated
+// from the site OpenAPI spec with fast-check go to haxcms-nodejs and
+// haxcms-php and the responses are diffed. HAX_FUZZ_SEED / HAX_FUZZ_RUNS /
+// HAX_FUZZ_PATH set the seed, the run count and a replay; --fail-on-diff
+// makes a finding exit 1.
+//
 // See README.md in this directory for every flag / environment variable.
 // Exit code: 0 when every sequence ran to the end, whatever it found;
 // 1 when the harness itself crashed (a server did not start, a leg could not
 // create its site, ...). Divergences are reported, never fatal, except in a
-// golden run with --fail-on-diff, where any mismatch exits 1.
+// golden or generated-input run with --fail-on-diff, where any mismatch
+// exits 1.
 const crypto = require("crypto");
 const fs = require("fs");
 const net = require("net");
@@ -26,6 +33,7 @@ const { loadConfig } = require("./config.cjs");
 const { runSequence } = require("./run.cjs");
 const { summarize } = require("./summary.cjs");
 const { runGolden } = require("./golden.cjs");
+const { runFuzz } = require("./fuzz.cjs");
 
 const children = [];
 function stopChildren() {
@@ -261,9 +269,10 @@ async function main() {
       "HAX CLI": gitInfo(path.resolve(path.dirname(cfg.cli), "..")),
     },
     cliBackend: cliBackend(cfg),
-    seq: cfg.golden ? [] : cfg.seq,
-    ops: cfg.golden ? 0 : cfg.ops,
+    seq: cfg.golden || cfg.fuzz ? [] : cfg.seq,
+    ops: cfg.golden || cfg.fuzz ? 0 : cfg.ops,
     golden: cfg.golden,
+    fuzz: cfg.fuzz,
     strict: cfg.strict,
   };
   fs.writeFileSync(
@@ -274,6 +283,7 @@ async function main() {
 
   let crashed = null;
   let golden = null;
+  let fuzz = null;
   try {
     const nodeInfo = await bootNode(
       cfg,
@@ -290,7 +300,8 @@ async function main() {
             ? ` (in place: ${cfg.php})`
             : ` (fresh copy: ${cfg.phpRoot})`),
     );
-    if (cfg.golden) golden = await runGolden(cfg, nodeInfo);
+    if (cfg.fuzz) fuzz = await runFuzz(cfg, nodeInfo);
+    else if (cfg.golden) golden = await runGolden(cfg, nodeInfo);
     else for (const seq of cfg.seq) await runSequence(cfg, seq, nodeInfo);
   } catch (e) {
     crashed = e;
@@ -300,7 +311,13 @@ async function main() {
     if (cfg.phpRoot !== cfg.php)
       fs.rmSync(cfg.phpRoot, { recursive: true, force: true });
   }
-  let md = golden ? golden.markdown : summarize(cfg.out);
+  let md = fuzz
+    ? fuzz.markdown
+    : golden
+      ? golden.markdown
+      : cfg.fuzz
+        ? "## HAXcms parity: generated inputs\n"
+        : summarize(cfg.out);
   if (crashed)
     md =
       `> **Harness crash:** ${String(crashed.message || crashed).replace(/[\r\n]+/g, " ")}\n\n` +
@@ -312,6 +329,10 @@ async function main() {
   if (crashed) return 1;
   if (golden && golden.failed && cfg["fail-on-diff"]) {
     console.error(`${golden.failed} golden case(s) do not match`);
+    return 1;
+  }
+  if (fuzz && fuzz.failed && cfg["fail-on-diff"]) {
+    console.error(`${fuzz.failed} generated-input finding(s)`);
     return 1;
   }
   return 0;
