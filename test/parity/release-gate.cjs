@@ -18,13 +18,18 @@
 //                Without it the gate refuses to run the CLI leg on any other
 //                haxcms-nodejs, since that is not what will ship.
 //   --specs-only check the OpenAPI specs and stop
+//   --old-sites  also run the old-site compatibility check
+//                (../old-sites/run.cjs, haxtheweb/issues#3175) on both
+//                backends and the CLI: a site made by any year's release must
+//                still load, save and take outline changes on what is about
+//                to ship. Off unless asked for; when on, it has to pass.
 const fs = require("fs");
 const path = require("path");
 const { spawnSync } = require("child_process");
 const { loadConfig, REPO_ROOT } = require("./config.cjs");
 const { compareSpecs, formatSpecReport } = require("./spec-diff.cjs");
 
-const GATE_FLAGS = ["build", "link-cli", "specs-only"];
+const GATE_FLAGS = ["build", "link-cli", "specs-only", "old-sites"];
 
 function log(msg) {
   console.log("[release-gate] " + msg);
@@ -103,6 +108,8 @@ function main(argv = process.argv.slice(2)) {
   log("OpenAPI specs: " + (specs.ok ? "same" : "DIFFERENT"));
 
   let golden = null;
+  let oldSites = null;
+  let oldSitesReport = "";
   if (!on("specs-only")) {
     // 2. golden suite on the build that will ship
     let restore = () => {};
@@ -135,6 +142,32 @@ function main(argv = process.argv.slice(2)) {
           stdio: "inherit",
         });
         golden = r.status === 0;
+        if (on("old-sites")) {
+          // while the CLI is still linked to the checkout under test
+          const oldSitesOut = path.join(cfg.out, "old-sites");
+          const run = spawnSync(
+            process.execPath,
+            [
+              path.join(__dirname, "..", "old-sites", "run.cjs"),
+              "--nodejs",
+              cfg.nodejs,
+              "--php",
+              cfg.php,
+              "--php-bin",
+              cfg["php-bin"],
+              "--cli",
+              cfg.cli,
+              "--out",
+              oldSitesOut,
+            ],
+            { cwd: REPO_ROOT, stdio: "inherit" },
+          );
+          oldSites = run.status === 0;
+          const oldSummary = path.join(oldSitesOut, "summary.md");
+          oldSitesReport = fs.existsSync(oldSummary)
+            ? fs.readFileSync(oldSummary, "utf8")
+            : "The old-site check did not finish; see the output above.\n";
+        }
       } finally {
         restore();
       }
@@ -146,11 +179,21 @@ function main(argv = process.argv.slice(2)) {
       );
     } else {
       golden = false;
+      if (on("old-sites")) oldSites = false;
     }
     log("golden snapshots: " + (golden ? "match" : "FAILED"));
+    if (oldSites !== null) {
+      lines.push(
+        "### Old-site compatibility",
+        "",
+        oldSitesReport || "Not run: the golden suite could not start.\n",
+      );
+      log("old-site compatibility: " + (oldSites ? "passed" : "FAILED"));
+    }
   }
 
-  const passed = specs.ok && (golden === null || golden);
+  const passed =
+    specs.ok && (golden === null || golden) && (oldSites === null || oldSites);
   lines.unshift(passed ? "**PASSED**\n" : "**FAILED**\n");
   fs.mkdirSync(cfg.out, { recursive: true });
   const report = path.join(cfg.out, "release-gate.md");

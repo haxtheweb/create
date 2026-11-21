@@ -290,6 +290,7 @@ npm run test:parity:release -- --nodejs ../haxcms-nodejs --php ../haxcms-php --b
 | `--build`      | `npm run build` in haxcms-nodejs and in this repo first (both load from `dist/`, which git does not track)                                                                                                     |
 | `--link-cli`   | point this CLI's `@haxtheweb/haxcms-nodejs` at the checkout under test for the run, then put the installed one back. Without it, a CLI on any other haxcms-nodejs fails the gate, since that is not what ships |
 | `--specs-only` | check the OpenAPI specs and stop                                                                                                                                                                               |
+| `--old-sites`  | also run the [old-site compatibility check](../old-sites/README.md) on both backends and the CLI (haxtheweb/issues#3175). Off unless given; when given, it has to pass for the gate to pass                    |
 
 Every other flag goes to `parity.cjs` (`--out`, `--cases`, ...).
 The report is `<out>/release-gate.md`; the exit code is 0 only when both checks
@@ -343,23 +344,24 @@ as recorded. The agent workflow is the
 
 ## Files
 
-| File               | Role                                                          |
-| ------------------ | ------------------------------------------------------------- |
-| `parity.cjs`       | one-command run: boot servers, run sequences, summarize, stop |
-| `run.cjs`          | lockstep runner for one sequence                              |
-| `ops.cjs`          | seeded op generator (`shared` = CLI-expressible, `api` = all) |
-| `legs.cjs`         | `ApiLeg` (nodejs / php) and `CliLeg`                          |
-| `client.cjs`       | HAXcms API client: login, user token, site token              |
-| `snapshot.cjs`     | normalize a site from disk and diff two snapshots             |
-| `normalize.cjs`    | accepted differences                                          |
-| `summary.cjs`      | markdown report                                               |
-| `verify.cjs`       | agent-leg checker                                             |
-| `golden.cjs`       | golden snapshot suite (`--golden`)                            |
-| `golden/`          | golden cases (`cases.cjs`) and their snapshots                |
-| `release-gate.cjs` | release gate: OpenAPI specs + golden suite, fail-on-diff      |
-| `spec-diff.cjs`    | compares the two backends' OpenAPI specs as data              |
-| `boot-node.cjs`    | boots haxcms-nodejs with its own e2e runtime                  |
-| `php-router.php`   | `php -S` router matching haxcms-php's web server rules        |
-| `fuzz.cjs`         | generated-input run (`--fuzz`): engine, legs, report          |
-| `openapi-arb.cjs`  | fast-check arbitraries from an OpenAPI spec                   |
-| `config.cjs`       | flags, environment variables and defaults                     |
+| File               | Role                                                             |
+| ------------------ | ---------------------------------------------------------------- |
+| `parity.cjs`       | one-command run: boot servers, run sequences, summarize, stop    |
+| `run.cjs`          | lockstep runner for one sequence                                 |
+| `ops.cjs`          | seeded op generator (`shared` = CLI-expressible, `api` = all)    |
+| `legs.cjs`         | `ApiLeg` (nodejs / php) and `CliLeg`                             |
+| `client.cjs`       | HAXcms API client: login, user token, site token                 |
+| `snapshot.cjs`     | normalize a site from disk and diff two snapshots                |
+| `normalize.cjs`    | accepted differences                                             |
+| `summary.cjs`      | markdown report                                                  |
+| `verify.cjs`       | agent-leg checker                                                |
+| `golden.cjs`       | golden snapshot suite (`--golden`)                               |
+| `golden/`          | golden cases (`cases.cjs`) and their snapshots                   |
+| `release-gate.cjs` | release gate: OpenAPI specs + golden suite, fail-on-diff         |
+| `spec-diff.cjs`    | compares the two backends' OpenAPI specs as data                 |
+| `boot-node.cjs`    | boots haxcms-nodejs with its own e2e runtime                     |
+| `php-router.php`   | `php -S` router matching haxcms-php's web server rules           |
+| `php-server.cjs`   | fresh haxcms-php install under `php -S` (also used by old-sites) |
+| `fuzz.cjs`         | generated-input run (`--fuzz`): engine, legs, report             |
+| `openapi-arb.cjs`  | fast-check arbitraries from an OpenAPI spec                      |
+| `config.cjs`       | flags, environment variables and defaults                        |
