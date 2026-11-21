@@ -864,12 +864,13 @@ export async function webcomponentCommandDetected(
           // a starter property test for input-parsing elements
           // (haxtheweb/issues#3386)
           if (!webcomponentFuzz(commandRun, packageData)) {
-            process.exitCode = 1;
+            // nothing was written: say so to a script too
+            process.exit(1);
           }
         } catch (e) {
           log(e.stderr);
           console.error(color.red(e));
-          process.exitCode = 1;
+          process.exit(1);
         }
         break;
       case "quit":
