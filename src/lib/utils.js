@@ -86,6 +86,32 @@ export function getTimeDifference(timestamp1, timestamp2) {
   };
 }
 
+/**
+ * Create <baseDir>/.haxtheweb for this user only, and tighten one that
+ * already exists. Security (no-secrets-in-logs): the folder holds the CLI
+ * log (command errors, tool output), cached data and site archives, so it
+ * is 0700 and the files directly in it 0600 instead of whatever the umask
+ * gives. Best-effort: never throws (a shared /tmp folder owned by someone
+ * else, or a filesystem without modes, is left as it is).
+ * @param {string} baseDir home directory (or /tmp on Vercel)
+ * @returns {string} the directory path
+ */
+export function ensurePrivateConfigDir(baseDir) {
+  const dir = path.join(baseDir, ".haxtheweb");
+  try {
+    fs.mkdirSync(dir, { recursive: true, mode: 0o700 });
+    fs.chmodSync(dir, 0o700);
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      if (entry.isFile()) {
+        fs.chmodSync(path.join(dir, entry.name), 0o600);
+      }
+    }
+  } catch {
+    // best-effort
+  }
+  return dir;
+}
+
 // write user config file
 export function writeConfigFile(filename, data) {
   let tempDir = os.homedir();
@@ -94,7 +120,8 @@ export function writeConfigFile(filename, data) {
   }
   const filePath = path.join(tempDir, ".haxtheweb", filename);
   try {
-    fs.writeFileSync(filePath, data);
+    // Security (no-secrets-in-logs): readable by this user only
+    fs.writeFileSync(filePath, data, { mode: 0o600 });
     return filePath;
   } catch {
     return null;

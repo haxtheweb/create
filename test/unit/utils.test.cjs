@@ -477,3 +477,59 @@ test("githubRepoLink rejects non-github hosts and bad input", () => {
   assert.equal(githubRepoLink(""), null);
   assert.equal(githubRepoLink(undefined), null);
 });
+
+// --- ensurePrivateConfigDir: ~/.haxtheweb is readable by its owner only ---
+
+const posixOnly = {
+  skip: process.platform === "win32" ? "POSIX file modes" : false,
+};
+
+test("ensurePrivateConfigDir creates the folder 0700", posixOnly, () => {
+  const fs = require("node:fs");
+  const os = require("node:os");
+  const { ensurePrivateConfigDir } = require("../../src/lib/utils.js");
+  const base = fs.mkdtempSync(path.join(os.tmpdir(), "hax-private-dir-"));
+  try {
+    const dir = ensurePrivateConfigDir(base);
+    assert.equal(dir, path.join(base, ".haxtheweb"));
+    assert.equal(fs.statSync(dir).mode & 0o777, 0o700);
+  } finally {
+    fs.rmSync(base, { recursive: true, force: true });
+  }
+});
+
+test(
+  "ensurePrivateConfigDir tightens an existing folder and its files, not subfolders",
+  posixOnly,
+  () => {
+    const fs = require("node:fs");
+    const os = require("node:os");
+    const { ensurePrivateConfigDir } = require("../../src/lib/utils.js");
+    const base = fs.mkdtempSync(path.join(os.tmpdir(), "hax-private-dir-"));
+    try {
+      const dir = path.join(base, ".haxtheweb");
+      fs.mkdirSync(dir);
+      fs.chmodSync(dir, 0o775);
+      fs.writeFileSync(path.join(dir, "create.log"), "x");
+      fs.chmodSync(path.join(dir, "create.log"), 0o664);
+      fs.mkdirSync(path.join(dir, "archives"));
+      fs.chmodSync(path.join(dir, "archives"), 0o755);
+      ensurePrivateConfigDir(base);
+      assert.equal(fs.statSync(dir).mode & 0o777, 0o700);
+      assert.equal(
+        fs.statSync(path.join(dir, "create.log")).mode & 0o777,
+        0o600,
+      );
+      // a folder keeps its mode (0600 would make it unusable); the 0700
+      // parent already keeps other accounts out
+      assert.equal(fs.statSync(path.join(dir, "archives")).mode & 0o777, 0o755);
+    } finally {
+      fs.rmSync(base, { recursive: true, force: true });
+    }
+  },
+);
+
+test("ensurePrivateConfigDir never throws on an unusable base", () => {
+  const { ensurePrivateConfigDir } = require("../../src/lib/utils.js");
+  assert.doesNotThrow(() => ensurePrivateConfigDir("/dev/null/nope"));
+});
