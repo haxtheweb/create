@@ -632,6 +632,36 @@ export async function restoreSiteArchive(archive, siteDirectory) {
   return { root: root, skippedLinks: inspection.skippedLinks };
 }
 
+// ---------- site:files-upload ----------
+
+/**
+ * Copy a file into a new folder under the system temp directory and return
+ * { file, remove }. Security (private-temp-files): mkdtemp makes the folder
+ * with a random name and 0700, so another account on the machine can neither
+ * read the copy nor plant a link at a name it guessed in the shared temp
+ * directory. remove() deletes the folder and never throws.
+ */
+export function copyToPrivateTemp(sourcePath, name) {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "hax-cli-upload-"));
+  const file = path.join(dir, path.basename(String(name)) || "upload");
+  try {
+    fs.copyFileSync(sourcePath, file, fs.constants.COPYFILE_EXCL);
+  } catch (e) {
+    fs.rmSync(dir, { recursive: true, force: true });
+    throw e;
+  }
+  return {
+    file: file,
+    remove: () => {
+      try {
+        fs.rmSync(dir, { recursive: true, force: true });
+      } catch {
+        // best-effort cleanup
+      }
+    },
+  };
+}
+
 // ---------- site:logs ----------
 
 // the CLI's winston log and its rotated files (create1.log, create2.log ...),

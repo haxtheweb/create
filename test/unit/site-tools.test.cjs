@@ -541,3 +541,51 @@ test("placeholderPageHtml is plain HAX content that differs per page", () => {
   assert.notEqual(one, two);
   assert.doesNotMatch(one, /<script|style=/);
 });
+
+// ---------- site:files-upload ----------
+
+test("copyToPrivateTemp stages the copy in its own private folder", () => {
+  const from = tmp("hax-upload-src-");
+  const source = path.join(from, "image.png");
+  fs.writeFileSync(source, "pixels");
+  const staged = tools.copyToPrivateTemp(source, "image.png");
+  try {
+    assert.equal(path.basename(staged.file), "image.png");
+    assert.equal(fs.readFileSync(staged.file, "utf8"), "pixels");
+    const dir = path.dirname(staged.file);
+    // never directly in the shared temp directory
+    assert.notEqual(fs.realpathSync(dir), fs.realpathSync(os.tmpdir()));
+    assert.deepEqual(fs.readdirSync(dir), ["image.png"]);
+    if (process.platform !== "win32") {
+      assert.equal(fs.statSync(dir).mode & 0o777, 0o700);
+    }
+    // two uploads of the same name never share a path
+    const again = tools.copyToPrivateTemp(source, "image.png");
+    assert.notEqual(again.file, staged.file);
+    again.remove();
+    assert.equal(fs.existsSync(path.dirname(again.file)), false);
+  } finally {
+    staged.remove();
+    fs.rmSync(from, { recursive: true, force: true });
+  }
+  assert.equal(fs.existsSync(staged.file), false);
+  // remove() twice is harmless
+  assert.doesNotThrow(() => staged.remove());
+});
+
+test("copyToPrivateTemp keeps a name with path parts inside its folder", () => {
+  const from = tmp("hax-upload-src-");
+  const source = path.join(from, "a.txt");
+  fs.writeFileSync(source, "a");
+  const staged = tools.copyToPrivateTemp(source, "../../escape.txt");
+  try {
+    assert.equal(path.basename(staged.file), "escape.txt");
+    assert.equal(
+      path.dirname(path.dirname(staged.file)),
+      path.dirname(path.dirname(path.join(os.tmpdir(), "x", "y"))),
+    );
+  } finally {
+    staged.remove();
+    fs.rmSync(from, { recursive: true, force: true });
+  }
+});
