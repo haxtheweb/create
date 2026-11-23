@@ -9,7 +9,9 @@
  *   { root, timeout, shim, items: [{ tag, specifier, demo }] }  (shim: false skips the inert DOM)
  * and one JSON document per line on stdout:
  *   { fatal: "<code>", message }        the audit cannot run at all
- *   { primitives }                       the primitive stylesheet the kit ships (sent once, after startup)
+ *   { primitives, global }               sent once, after startup: the primitive stylesheet the kit ships, and
+ *                                       global: { css, bytes, sourceBytes, variableBytes } | null, the page-level
+ *                                       sheet (primitives + the project's design system) a page would carry once
  *   { tag, file, ok: true, skipped }     the kit marks the element as not renderable; it was not imported
  *   { tag, file, ok, html, truncated, progressive? }  rendered (ok: true) or failed; truncated: output was cut at 8 MB; progressive is the
  *                                       progressive-enhancement markup the element supplies
@@ -134,6 +136,72 @@ function installResolverFallback() {
   });
 }
 
+/**
+ * The SSR render kit (inert DOM, skip list, template builder, page styles) is
+ * one copy, kept in @haxtheweb/haxcms-nodejs. Looked for, in order:
+ *   1. HAX_SSR_KIT: a haxcms-nodejs checkout or the kit folder itself, for a
+ *      CLI paired with a haxcms-nodejs release from before the kit
+ *   2. the haxcms-nodejs installed next to this CLI, then the audited
+ *      project's; dist/lib/ssr first, then src/lib/ssr for a linked checkout
+ *      that has not been built
+ * @returns {string|null} path of the kit's index.mjs
+ */
+function findSsrKit(cliDir, root) {
+  const first = (files) => files.find((file) => existsSync(file)) || null;
+  const inPackage = (dir) => [
+    path.join(dir, "dist", "lib", "ssr", "index.mjs"),
+    path.join(dir, "src", "lib", "ssr", "index.mjs"),
+  ];
+  if (process.env.HAX_SSR_KIT) {
+    const dir = path.resolve(process.env.HAX_SSR_KIT);
+    return first([path.join(dir, "index.mjs"), ...inPackage(dir)]);
+  }
+  for (const start of [cliDir, root]) {
+    const dir = findPackageDir("@haxtheweb/haxcms-nodejs", [start]);
+    const file = dir && first(inPackage(dir));
+    if (file) {
+      return file;
+    }
+  }
+  return null;
+}
+
+/**
+ * The page-level stylesheet a server would emit once per page: the kit's
+ * primitive rules plus the audited project's design system (DDD), read from
+ * the same source the browser's design system manager uses. null when the
+ * project has no DDD or the kit is from before the emitter.
+ */
+async function globalStyles(kit, root, load) {
+  if (typeof kit.globalCss !== "function") {
+    return null;
+  }
+  const file = resolveElementFile(root, "@haxtheweb/d-d-d/lib/DDDStyles.js");
+  if (!file || !existsSync(file)) {
+    return null;
+  }
+  try {
+    const ddd = await load(file);
+    if (!ddd.DDDAllStyles) {
+      return null;
+    }
+    const bytes = (css) => Buffer.byteLength(css);
+    const css = kit.globalCss(ddd.DDDAllStyles);
+    return {
+      css,
+      bytes: bytes(css),
+      // the same sheet as written in the source, comments and all
+      sourceBytes: bytes(kit.globalCss(ddd.DDDAllStyles, { compact: false })),
+      // only the tokens (custom properties), without the rest of the sheet
+      variableBytes: ddd.DDDVariables
+        ? bytes(kit.globalCss(ddd.DDDVariables, { primitives: false }))
+        : 0,
+    };
+  } catch {
+    return null;
+  }
+}
+
 const readStdin = async () => {
   let data = "";
   for await (const chunk of process.stdin) {
@@ -197,10 +265,8 @@ async function main() {
     return;
   }
   // the render kit lives in haxcms-nodejs so the server can use the same code
-  const kitDir = findPackageDir("@haxtheweb/haxcms-nodejs", [cliDir, root]);
-  const kitFile =
-    kitDir && path.join(kitDir, "dist", "lib", "ssr", "index.mjs");
-  if (!kitFile || !existsSync(kitFile)) {
+  const kitFile = findSsrKit(cliDir, root);
+  if (!kitFile) {
     out({
       fatal: "missing-ssr-kit",
       message:
@@ -226,7 +292,10 @@ async function main() {
   }
   const { render } = await load(path.join(ssrDir, "lib", "render.js"));
   const { html } = await load(path.join(litDir, "index.js"));
-  out({ primitives: SSR_PRIMITIVE_CSS });
+  out({
+    primitives: SSR_PRIMITIVE_CSS,
+    global: await globalStyles(kit, root, load),
+  });
 
   // anything an element logs or throws asynchronously is attributed to the
   // element being rendered at that moment
