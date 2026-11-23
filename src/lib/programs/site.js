@@ -5520,10 +5520,14 @@ export async function applySiteLanguage(commandRun, project) {
 }
 
 // haxtheweb/issues#3292: the createSite request for a new site. Flags the
-// user gave (--theme, --description) are sent; everything else is
+// user gave (--theme, --description, --title) are sent; everything else is
 // left to the API's createSite so a CLI-made site matches a dashboard-made one.
 export function newSiteRequest(options = {}, project = {}) {
   const site = { name: project.name };
+  // --title: the site's title (createSite keeps the machine name without it)
+  if (typeof options.title === "string" && options.title.trim() !== "") {
+    site.title = options.title;
+  }
   const theme = options.theme ? options.theme : project.theme;
   if (theme) {
     site.theme = theme;

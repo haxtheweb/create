@@ -250,6 +250,19 @@ test("newSiteRequest sends only what the user chose", opts, () => {
     newSiteRequest({}, { name: "p", theme: "clean-one" }).site.theme,
     "clean-one",
   );
+  // --title names the site; blank is left to createSite (machine name)
+  assert.equal(
+    newSiteRequest({ title: "Night Draft" }, { name: "night-draft" }).site
+      .title,
+    "Night Draft",
+  );
+  assert.equal(
+    Object.prototype.hasOwnProperty.call(
+      newSiteRequest({ title: "  " }, { name: "n" }).site,
+      "title",
+    ),
+    false,
+  );
 });
 
 test("launch extra summons the local haxcms-nodejs server", opts, async () => {
