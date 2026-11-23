@@ -28,12 +28,18 @@
         "thumbnail": "@haxtheweb/haxcms-elements/lib/theme-screenshots/theme-polaris-flex-theme-thumb.jpg",
         "description": "Start with a blank site using the Polaris Flex",
         "category": [
-          "Website"
+          "Website",
+          "Organization"
         ],
         "hidden": false,
         "priority": -1,
         "terrible": false,
         "supportedPalettes": null,
+        "layout": "Top nav",
+        "designSystem": null,
+        "inspiredBy": null,
+        "inspiredByTheme": null,
+        "acceptsDesignSystems": false,
         "variables": {},
         "regions": {}
       },

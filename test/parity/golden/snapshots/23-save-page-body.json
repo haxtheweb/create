@@ -34,6 +34,11 @@
         "priority": 0,
         "terrible": false,
         "supportedPalettes": null,
+        "layout": "Sidebar",
+        "designSystem": null,
+        "inspiredBy": null,
+        "inspiredByTheme": null,
+        "acceptsDesignSystems": false,
         "variables": {
           "icon": "icons:record-voice-over",
           "hexCode": "#3f51b5",
