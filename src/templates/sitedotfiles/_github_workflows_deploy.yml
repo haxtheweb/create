@@ -44,6 +44,9 @@ jobs:
 
       # haxtheweb/issues#3352: built into a folder of its own; the checkout
       # is not changed. The address comes from configure-pages.
+      # Security (confirmed-pinned-installs): the HAX CLI is pinned to the
+      # major version this workflow was written for, so a new major is never
+      # picked up by a deploy without this file being updated.
       - name: Build the static site
         id: static
         continue-on-error: true
@@ -51,7 +54,7 @@ jobs:
           SITE_URL: ${{ steps.pages.outputs.base_url }}
           OUT_DIR: ${{ runner.temp }}/site
         run: |
-          npx --yes @haxtheweb/create site site:build-static --root . --out-dir "$OUT_DIR" --domain "$SITE_URL" --y --no-i
+          npx --yes @haxtheweb/create@26 site site:build-static --root . --out-dir "$OUT_DIR" --domain "$SITE_URL" --y --no-i
           test -f "$OUT_DIR/index.html"
           echo "dir=$OUT_DIR" >> "$GITHUB_OUTPUT"
 

@@ -14,6 +14,7 @@ const assert = require("node:assert/strict");
 const yaml = require("js-yaml");
 
 const SRC = path.join(__dirname, "..", "..", "src");
+const CLI_VERSION = require("../../package.json").version;
 const WC_TEMPLATES = path.join(SRC, "templates", "webcomponent");
 
 const WORKFLOWS = [
@@ -67,6 +68,26 @@ for (const file of WORKFLOWS) {
 
   test(`${rel}: installs use npm ci, never npm install`, () => {
     assert.ok(!/\bnpm install\b/.test(text), `${rel}: uses npm install`);
+  });
+
+  test(`${rel}: anything run through npx is pinned to a version`, () => {
+    // "npx [flags] <package>[@version] ...": the first word that is not a flag
+    for (const m of text.matchAll(/\bnpx((?:\s+-\S+)*)\s+(\S+)/g)) {
+      const spec = m[2];
+      const at = spec.lastIndexOf("@");
+      assert.ok(
+        at > 0 && /^\d/.test(spec.slice(at + 1)),
+        `${rel}: "npx ${spec}" has no version`,
+      );
+      if (spec.startsWith("@haxtheweb/create@")) {
+        // the CLI pins itself to its own major; bump both together
+        assert.equal(
+          spec.slice(at + 1),
+          CLI_VERSION.split(".")[0],
+          `${rel}: @haxtheweb/create is pinned to a different major than package.json`,
+        );
+      }
+    }
   });
 
   test(`${rel}: no single-quoted echo steps (dead env exports)`, () => {
