@@ -393,10 +393,13 @@ async function main() {
   let siteNodeOps = siteNodeOperations();
   for (let i in siteNodeOps) {
     // --content help spells out how the value is read (URL, file or HTML)
+    // --title also names a new site (hax site <name> --title "My Site")
     const optionHelp =
       siteNodeOps[i].value === "content"
         ? t("cliOptContent")
-        : `${siteNodeOps[i].label}`;
+        : siteNodeOps[i].value === "title"
+          ? t("cliOptTitle")
+          : `${siteNodeOps[i].label}`;
     program.option(`--${camelToDash(siteNodeOps[i].value)} <char>`, optionHelp);
     siteProg.option(
       `--${camelToDash(siteNodeOps[i].value)} <char>`,
