@@ -14,7 +14,6 @@ const assert = require("node:assert/strict");
 const yaml = require("js-yaml");
 
 const SRC = path.join(__dirname, "..", "..", "src");
-const CLI_VERSION = require("../../package.json").version;
 const WC_TEMPLATES = path.join(SRC, "templates", "webcomponent");
 
 const WORKFLOWS = [
@@ -70,23 +69,29 @@ for (const file of WORKFLOWS) {
     assert.ok(!/\bnpm install\b/.test(text), `${rel}: uses npm install`);
   });
 
-  test(`${rel}: anything run through npx is pinned to a version`, () => {
+  test(`${rel}: anything run through npx is pinned to a version, except the HAX CLI`, () => {
     // "npx [flags] <package>[@version] ...": the first word that is not a flag
     for (const m of text.matchAll(/\bnpx((?:\s+-\S+)*)\s+(\S+)/g)) {
       const spec = m[2];
+      // The HAX CLI is our own package and is versioned by year (26.x, 27.x),
+      // so a pin would strand every scaffolded site on an old year. It runs
+      // unversioned so sites always build with the current CLI.
+      if (
+        spec === "@haxtheweb/create" ||
+        spec.startsWith("@haxtheweb/create@")
+      ) {
+        assert.equal(
+          spec,
+          "@haxtheweb/create",
+          `${rel}: "npx ${spec}" pins the HAX CLI; it must run unversioned`,
+        );
+        continue;
+      }
       const at = spec.lastIndexOf("@");
       assert.ok(
         at > 0 && /^\d/.test(spec.slice(at + 1)),
         `${rel}: "npx ${spec}" has no version`,
       );
-      if (spec.startsWith("@haxtheweb/create@")) {
-        // the CLI pins itself to its own major; bump both together
-        assert.equal(
-          spec.slice(at + 1),
-          CLI_VERSION.split(".")[0],
-          `${rel}: @haxtheweb/create is pinned to a different major than package.json`,
-        );
-      }
     }
   });
 
