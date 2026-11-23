@@ -279,6 +279,56 @@ test("archiveEntryProblems refuses a member written through a symlink", () => {
   );
 });
 
+test("archiveEntryProblems sees through other spellings of a symlinked folder", () => {
+  const cases = [
+    // [link member, member written under it]
+    ["././evil", "evil/f"],
+    ["evil", "././evil/f"],
+    ["a/./evil", "a/evil/f"],
+    ["a/evil", "a/./evil/f"],
+    ["a//evil", "a/evil/f"],
+    ["evil/", "evil//f"],
+    ["a\\evil", "a/evil/f"],
+  ];
+  for (const [link, member] of cases) {
+    const { problems } = tools.archiveEntryProblems(
+      ["site.json", link, member],
+      ["-", "l", "-"],
+    );
+    assert.deepEqual(
+      problems.map((p) => p.code),
+      ["throughLink"],
+      `${link} then ${member}`,
+    );
+  }
+});
+
+test("archiveEntryProblems folds case only where the filesystem does", () => {
+  const names = ["site.json", "Evil", "evil/f"];
+  const types = ["-", "l", "-"];
+  assert.deepEqual(
+    tools
+      .archiveEntryProblems(names, types, { caseInsensitive: true })
+      .problems.map((p) => p.code),
+    ["throughLink"],
+  );
+  // on a case-sensitive filesystem these are two different entries
+  assert.deepEqual(
+    tools.archiveEntryProblems(names, types, { caseInsensitive: false })
+      .problems,
+    [],
+  );
+});
+
+test("archiveEntryProblems still reports link names in their short form", () => {
+  const { problems, skippedLinks } = tools.archiveEntryProblems(
+    ["./", "././site.json", "./assets/./babel-top.js", "dist/"],
+    ["d", "-", "l", "l"],
+  );
+  assert.deepEqual(problems, []);
+  assert.deepEqual(skippedLinks, ["assets/babel-top.js", "dist"]);
+});
+
 test("archiveEntryProblems needs a site.json file at the top level", () => {
   const { problems } = tools.archiveEntryProblems(
     ["pages/site.json", "site.json"],

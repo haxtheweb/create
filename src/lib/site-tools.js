@@ -437,13 +437,31 @@ export async function createSiteArchive(siteDirectory, target) {
  * link and keeps the site's own links, so a symlink member is skipped rather
  * than refused, unless another member would be written through it.
  * Returns { problems: [{ code, entry, message }], skippedLinks: [names] }.
+ *
+ * options.caseInsensitive: compare link names the way the filesystem being
+ * restored onto does; defaults to true on macOS and Windows.
  */
-export function archiveEntryProblems(names, types = []) {
+export function archiveEntryProblems(names, types = [], options = {}) {
   const problems = [];
   const skippedLinks = [];
   let hasSiteJson = false;
-  const clean = (name) =>
-    trimSlashes(stripDotSlash(String(name).replace(/\\/g, "/")));
+  const caseInsensitive =
+    typeof options.caseInsensitive === "boolean"
+      ? options.caseInsensitive
+      : process.platform === "darwin" || process.platform === "win32";
+  // Security (safe-archive-restore): one spelling per member. tar writes
+  // "././a", "a/./b" and "a//b" to the same place as "a", "a/b" and "a/b",
+  // so they are compared in that form.
+  const clean = (name) => {
+    const normalized = trimSlashes(
+      path.posix.normalize(String(name).replace(/\\/g, "/")),
+    );
+    return normalized === "." ? "" : normalized;
+  };
+  // the form two names are compared in: on a case-insensitive filesystem
+  // "Evil" and "evil" (or two Unicode spellings) are the same entry
+  const linkKey = (name) =>
+    caseInsensitive ? name.normalize("NFC").toLowerCase() : name;
   names.forEach((rawName, index) => {
     const name = String(rawName);
     const type = types[index] || "-";
@@ -485,11 +503,11 @@ export function archiveEntryProblems(names, types = []) {
     }
   });
   // a member inside a symlinked folder would be written through the link
-  const links = new Set(skippedLinks);
+  const links = new Set(skippedLinks.map(linkKey));
   names.forEach((rawName) => {
     const parts = clean(rawName).split("/");
     for (let i = 1; i < parts.length; i++) {
-      const prefix = parts.slice(0, i).join("/");
+      const prefix = linkKey(parts.slice(0, i).join("/"));
       if (links.has(prefix)) {
         problems.push({
           code: "throughLink",
