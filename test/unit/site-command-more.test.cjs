@@ -1735,3 +1735,57 @@ test(
     assert.ok(rsyncCall.cmd.endsWith(" placeholder"));
   },
 );
+
+// --- site:login-link ---
+
+test(
+  "site:login-link without a terminal prints the link to stdout and never logs it",
+  opts,
+  async () => {
+    resetMocks();
+    // the paired haxcms-nodejs may not ship magicLinks yet; stand in for it
+    const loginLink = require("../../src/lib/login-link.js");
+    const originalLoad = loginLink.loadMagicLinkStore;
+    loginLink.loadMagicLinkStore = async () => ({
+      issueMagicLink: () => ({
+        token: "SECRET-TOKEN-VALUE",
+        user: "admin",
+        expiresAt: 1900000000,
+        ttlSeconds: 600,
+      }),
+    });
+    // log() is what appends to ~/.haxtheweb/create.log
+    const logged = [];
+    const originalLog = logging.log;
+    logging.log = (msg) => {
+      logged.push(String(msg));
+    };
+    const written = [];
+    const originalWrite = process.stdout.write;
+    process.stdout.write = (chunk) => {
+      written.push(String(chunk));
+      return true;
+    };
+    let exitCode;
+    try {
+      exitCode = await runSite({
+        command: "site",
+        arguments: { action: "site:login-link" },
+        options: { quiet: true, i: false, y: true, domain: "example.com" },
+      });
+    } finally {
+      process.stdout.write = originalWrite;
+      logging.log = originalLog;
+      loginLink.loadMagicLinkStore = originalLoad;
+    }
+    assert.equal(exitCode, 0);
+    assert.match(
+      written.join(""),
+      /https:\/\/example\.com\/system\/api\/v1\/session\/magic-link\?token=SECRET-TOKEN-VALUE/,
+    );
+    assert.ok(
+      !logged.join("\n").includes("SECRET-TOKEN-VALUE"),
+      "the sign-in token must not go through log()",
+    );
+  },
+);

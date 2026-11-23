@@ -31,6 +31,7 @@ const {
   validateWebcomponentName,
 } = require("../../src/lib/utils.js");
 const { resolveLocalPath } = require("../../src/lib/site-security.js");
+const { archiveEntryProblems } = require("../../src/lib/site-tools.js");
 
 const { fuzzConfig } = require("../_helpers/fuzz-config.cjs");
 
@@ -235,6 +236,51 @@ test("resolveLocalPath rejects NUL and non-strings, else returns an absolute pat
       fc.string().filter((s) => !s.includes("\0")),
       (s) => {
         assert.ok(path.isAbsolute(resolveLocalPath(s)));
+      },
+    ),
+    RUNS,
+  );
+});
+
+test("archiveEntryProblems refuses a member under a symlink however either is spelled", () => {
+  const segment = fc.stringMatching(/^[a-z0-9_-]{1,8}$/);
+  // ways tar accepts the same path: "./" in front, "/./" or "//" between
+  // segments, a trailing "/"
+  const spelling = fc.record({
+    dots: fc.integer({ min: 0, max: 3 }),
+    joins: fc.array(fc.constantFrom("/", "//", "/./", "/././"), {
+      minLength: 8,
+      maxLength: 8,
+    }),
+    trailing: fc.boolean(),
+  });
+  const spell = (segments, how) =>
+    "./".repeat(how.dots) +
+    segments.reduce(
+      (out, part, i) => (i === 0 ? part : out + how.joins[i - 1] + part),
+      "",
+    ) +
+    (how.trailing ? "/" : "");
+  fc.assert(
+    fc.property(
+      fc.array(segment, { minLength: 1, maxLength: 4 }),
+      fc.array(segment, { minLength: 1, maxLength: 3 }),
+      spelling,
+      spelling,
+      (linkPath, below, linkHow, memberHow) => {
+        const link = spell(linkPath, linkHow);
+        const member = spell(linkPath.concat(below), {
+          ...memberHow,
+          trailing: false,
+        });
+        const { problems } = archiveEntryProblems(
+          ["site.json", link, member],
+          ["-", "l", "-"],
+        );
+        assert.ok(
+          problems.some((p) => p.code === "throughLink"),
+          `${link} then ${member}`,
+        );
       },
     ),
     RUNS,

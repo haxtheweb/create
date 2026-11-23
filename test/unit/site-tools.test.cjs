@@ -279,6 +279,56 @@ test("archiveEntryProblems refuses a member written through a symlink", () => {
   );
 });
 
+test("archiveEntryProblems sees through other spellings of a symlinked folder", () => {
+  const cases = [
+    // [link member, member written under it]
+    ["././evil", "evil/f"],
+    ["evil", "././evil/f"],
+    ["a/./evil", "a/evil/f"],
+    ["a/evil", "a/./evil/f"],
+    ["a//evil", "a/evil/f"],
+    ["evil/", "evil//f"],
+    ["a\\evil", "a/evil/f"],
+  ];
+  for (const [link, member] of cases) {
+    const { problems } = tools.archiveEntryProblems(
+      ["site.json", link, member],
+      ["-", "l", "-"],
+    );
+    assert.deepEqual(
+      problems.map((p) => p.code),
+      ["throughLink"],
+      `${link} then ${member}`,
+    );
+  }
+});
+
+test("archiveEntryProblems folds case only where the filesystem does", () => {
+  const names = ["site.json", "Evil", "evil/f"];
+  const types = ["-", "l", "-"];
+  assert.deepEqual(
+    tools
+      .archiveEntryProblems(names, types, { caseInsensitive: true })
+      .problems.map((p) => p.code),
+    ["throughLink"],
+  );
+  // on a case-sensitive filesystem these are two different entries
+  assert.deepEqual(
+    tools.archiveEntryProblems(names, types, { caseInsensitive: false })
+      .problems,
+    [],
+  );
+});
+
+test("archiveEntryProblems still reports link names in their short form", () => {
+  const { problems, skippedLinks } = tools.archiveEntryProblems(
+    ["./", "././site.json", "./assets/./babel-top.js", "dist/"],
+    ["d", "-", "l", "l"],
+  );
+  assert.deepEqual(problems, []);
+  assert.deepEqual(skippedLinks, ["assets/babel-top.js", "dist"]);
+});
+
 test("archiveEntryProblems needs a site.json file at the top level", () => {
   const { problems } = tools.archiveEntryProblems(
     ["pages/site.json", "site.json"],
@@ -540,4 +590,52 @@ test("placeholderPageHtml is plain HAX content that differs per page", () => {
   assert.match(one, /<ul>[\s\S]*<li>/);
   assert.notEqual(one, two);
   assert.doesNotMatch(one, /<script|style=/);
+});
+
+// ---------- site:files-upload ----------
+
+test("copyToPrivateTemp stages the copy in its own private folder", () => {
+  const from = tmp("hax-upload-src-");
+  const source = path.join(from, "image.png");
+  fs.writeFileSync(source, "pixels");
+  const staged = tools.copyToPrivateTemp(source, "image.png");
+  try {
+    assert.equal(path.basename(staged.file), "image.png");
+    assert.equal(fs.readFileSync(staged.file, "utf8"), "pixels");
+    const dir = path.dirname(staged.file);
+    // never directly in the shared temp directory
+    assert.notEqual(fs.realpathSync(dir), fs.realpathSync(os.tmpdir()));
+    assert.deepEqual(fs.readdirSync(dir), ["image.png"]);
+    if (process.platform !== "win32") {
+      assert.equal(fs.statSync(dir).mode & 0o777, 0o700);
+    }
+    // two uploads of the same name never share a path
+    const again = tools.copyToPrivateTemp(source, "image.png");
+    assert.notEqual(again.file, staged.file);
+    again.remove();
+    assert.equal(fs.existsSync(path.dirname(again.file)), false);
+  } finally {
+    staged.remove();
+    fs.rmSync(from, { recursive: true, force: true });
+  }
+  assert.equal(fs.existsSync(staged.file), false);
+  // remove() twice is harmless
+  assert.doesNotThrow(() => staged.remove());
+});
+
+test("copyToPrivateTemp keeps a name with path parts inside its folder", () => {
+  const from = tmp("hax-upload-src-");
+  const source = path.join(from, "a.txt");
+  fs.writeFileSync(source, "a");
+  const staged = tools.copyToPrivateTemp(source, "../../escape.txt");
+  try {
+    assert.equal(path.basename(staged.file), "escape.txt");
+    assert.equal(
+      path.dirname(path.dirname(staged.file)),
+      path.dirname(path.dirname(path.join(os.tmpdir(), "x", "y"))),
+    );
+  } finally {
+    staged.remove();
+    fs.rmSync(from, { recursive: true, force: true });
+  }
 });

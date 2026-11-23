@@ -2,7 +2,6 @@
 import { setTimeout } from "node:timers/promises";
 import * as fs from "node:fs";
 import * as path from "node:path";
-import * as os from "node:os";
 import open from "open";
 import * as p from "@clack/prompts";
 import * as ejs from "ejs";
@@ -61,6 +60,7 @@ import {
   listSites,
   generateCount,
   placeholderPageHtml,
+  copyToPrivateTemp,
 } from "../site-tools.js";
 
 // Security (in-process-converters): the deprecated @haxtheweb/open-apis npm dependency was
@@ -3727,7 +3727,10 @@ export async function siteCommandDetected(commandRun) {
           };
           // the link IS the output, so it is printed even with --quiet
           if (structuredOutputEnabled() || commandRun.options.i === false) {
-            logStructuredOutput(commandRun, result);
+            // Security (no-secrets-in-logs): written to stdout only. log()
+            // also appends to ~/.haxtheweb/create.log, which would keep a
+            // working sign-in token on disk.
+            writeData(formatStructuredOutput(commandRun, result));
           } else {
             const where = result.url
               ? color.bold(result.url)
@@ -4049,29 +4052,26 @@ export async function siteCommandDetected(commandRun) {
                 let filePath = path.join(commandRun.options.source, file);
                 let fileStats = fs.statSync(filePath);
                 if (fileStats.isFile()) {
-                  let tmpFile = path.join(
-                    os.tmpdir(),
-                    `hax-cli-upload-${Date.now()}-${Math.floor(Math.random() * 1000000)}-${file}`,
-                  );
-                  fs.copyFileSync(filePath, tmpFile);
+                  // Security (private-temp-files): staged in a private folder
+                  const staged = copyToPrivateTemp(filePath, file);
                   let fileObj = {
-                    path: tmpFile,
+                    path: staged.file,
                     originalname: file,
                     name: file,
                     size: fileStats.size,
                   };
-                  let resp = await cliBridge.cliBridge(
-                    "v1/files",
-                    {
-                      site: { name: activeHaxsite.name },
-                    },
-                    "post",
-                    fileObj,
-                  );
+                  let resp;
                   try {
-                    fs.unlinkSync(tmpFile);
-                  } catch {
-                    /* best-effort cleanup */
+                    resp = await cliBridge.cliBridge(
+                      "v1/files",
+                      {
+                        site: { name: activeHaxsite.name },
+                      },
+                      "post",
+                      fileObj,
+                    );
+                  } finally {
+                    staged.remove();
                   }
                   if (resp.res.data && resp.res.data.status === 200) {
                     uploaded++;
@@ -4084,29 +4084,30 @@ export async function siteCommandDetected(commandRun) {
                 );
               }
             } else {
-              let tmpFile = path.join(
-                os.tmpdir(),
-                `hax-cli-upload-${Date.now()}-${Math.floor(Math.random() * 1000000)}-${path.basename(commandRun.options.source)}`,
+              const uploadName = path.basename(commandRun.options.source);
+              // Security (private-temp-files): staged in a private folder
+              const staged = copyToPrivateTemp(
+                commandRun.options.source,
+                uploadName,
               );
-              fs.copyFileSync(commandRun.options.source, tmpFile);
               let fileObj = {
-                path: tmpFile,
-                originalname: path.basename(commandRun.options.source),
-                name: path.basename(commandRun.options.source),
+                path: staged.file,
+                originalname: uploadName,
+                name: uploadName,
                 size: stats.size,
               };
-              let resp = await cliBridge.cliBridge(
-                "v1/files",
-                {
-                  site: { name: activeHaxsite.name },
-                },
-                "post",
-                fileObj,
-              );
+              let resp;
               try {
-                fs.unlinkSync(tmpFile);
-              } catch {
-                /* best-effort cleanup */
+                resp = await cliBridge.cliBridge(
+                  "v1/files",
+                  {
+                    site: { name: activeHaxsite.name },
+                  },
+                  "post",
+                  fileObj,
+                );
+              } finally {
+                staged.remove();
               }
               logStructuredOutput(commandRun, resp.res.data);
             }
