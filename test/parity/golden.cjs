@@ -24,6 +24,7 @@ const SNAPSHOT_DIR = path.join(__dirname, "golden", "snapshots");
 // documents the import cases make their sites from
 const FIXTURE_DIR = path.join(__dirname, "golden", "fixtures", "import");
 const SITE_NAME = "SITE_NAME";
+const CLONE_NAME = "CLONE_NAME";
 
 function selectCases(filter) {
   if (!filter) return CASES;
@@ -40,11 +41,53 @@ function selectCases(filter) {
 // what gets committed: the normalized snapshot without the run-specific list
 // of accepted normalizations (those are reported, not compared)
 function toGolden(snap) {
-  return {
+  const g = {
     manifest: snap.manifest,
     sequence: snap.sequence,
     pages: snap.pages,
   };
+  // only cases that ask for them carry these, so older snapshots keep their shape
+  for (const k of ["files", "clone", "extra"])
+    if (snap[k] !== undefined) g[k] = snap[k];
+  return g;
+}
+
+// replace a run's site names inside recorded values
+function renameIn(value, names) {
+  if (typeof value === "string") {
+    let out = value;
+    for (const [literal, placeholder] of Object.entries(names))
+      if (literal) out = out.split(literal).join(placeholder);
+    return out;
+  }
+  if (Array.isArray(value)) return value.map((v) => renameIn(v, names));
+  if (value && typeof value === "object")
+    return Object.fromEntries(
+      Object.entries(value).map(([k, v]) => [
+        renameIn(k, names),
+        renameIn(v, names),
+      ]),
+    );
+  return value;
+}
+
+// a leg's result for a case: its site (gone once archived), its clone,
+// and what it recorded along the way
+function legSnapshot(cfg, c, l) {
+  const names = { [l.siteName]: SITE_NAME };
+  if (l.cloneName) names[l.cloneName] = CLONE_NAME;
+  const opts = { strict: cfg.strict, replace: names, files: !!c.captureFiles };
+  const snap = l.archived
+    ? { manifest: null, sequence: [], pages: {}, accepted: [] }
+    : snapshot(l.siteDir, l.keyToId, opts);
+  if (l.cloneDir) snap.clone = toGolden(snapshot(l.cloneDir, l.keyToId, opts));
+  if (l.extra && Object.keys(l.extra).length) {
+    // page folders in an export are named by page id
+    const ids = Object.assign({}, names);
+    for (const [k, id] of Object.entries(l.keyToId)) if (id) ids[id] = k;
+    snap.extra = renameIn(l.extra, ids);
+  }
+  return snap;
 }
 
 function goldenPath(id) {
@@ -131,11 +174,7 @@ async function runCase(cfg, nodeInfo, c, runTag) {
     }
   }
   const snaps = {};
-  for (const l of legs)
-    snaps[l.name] = snapshot(l.siteDir, l.keyToId, {
-      strict: cfg.strict,
-      replace: { [l.siteName]: SITE_NAME },
-    });
+  for (const l of legs) snaps[l.name] = legSnapshot(cfg, c, l);
   let golden = readGolden(c.id);
   if (cfg["update-golden"]) {
     golden = toGolden(snaps.nodejs);
@@ -264,5 +303,6 @@ module.exports = {
   selectCases,
   passed,
   toGolden,
+  renameIn,
   SNAPSHOT_DIR,
 };

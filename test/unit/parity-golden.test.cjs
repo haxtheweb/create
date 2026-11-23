@@ -13,13 +13,15 @@ const {
   stepFailed,
   summarizeGolden,
   toGolden,
+  renameIn,
   SNAPSHOT_DIR,
 } = require("../parity/golden.cjs");
-const { snapshot } = require("../parity/snapshot.cjs");
+const { snapshot, captureFiles } = require("../parity/snapshot.cjs");
 const { loadConfig } = require("../parity/config.cjs");
 const { OpGenerator } = require("../parity/ops.cjs");
 const {
   GOLDEN_OP_TYPES,
+  listZipEntries,
   buildOutlineItems,
   resolveKeys,
 } = require("../parity/legs.cjs");
@@ -86,13 +88,33 @@ test("every case has a committed snapshot with nothing run-specific in it", () =
     assert.ok(fs.existsSync(p), "missing snapshot for " + c.id);
     const raw = fs.readFileSync(p, "utf8");
     const golden = JSON.parse(raw);
-    assert.deepEqual(Object.keys(golden).sort(), [
-      "manifest",
-      "pages",
-      "sequence",
-    ]);
-    assert.equal(golden.manifest.metadata.site.name, "SITE_NAME", c.id);
-    assert.equal(golden.manifest.id, "SITE_ID", c.id);
+    const keys = Object.keys(golden).sort();
+    for (const k of ["manifest", "pages", "sequence"])
+      assert.ok(keys.includes(k), c.id + " has " + k);
+    for (const k of keys)
+      assert.ok(
+        ["manifest", "pages", "sequence", "files", "clone", "extra"].includes(
+          k,
+        ),
+        c.id + ": unexpected key " + k,
+      );
+    // a case only records files when it asks to
+    assert.equal("files" in golden, !!c.captureFiles, c.id + " files");
+    const archived = c.steps.some((s) => s.type === "archiveSite");
+    if (archived) {
+      // the site is gone; what the case shows is where it went
+      assert.equal(golden.manifest, null, c.id);
+      assert.ok(golden.extra && golden.extra.archive, c.id);
+    } else {
+      assert.equal(golden.manifest.metadata.site.name, "SITE_NAME", c.id);
+      assert.equal(golden.manifest.id, "SITE_ID", c.id);
+    }
+    if (golden.clone)
+      assert.equal(
+        golden.clone.manifest.metadata.site.name,
+        "CLONE_NAME",
+        c.id,
+      );
     // no uuids, absolute paths, timestamps or run tags
     assert.doesNotMatch(raw, /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-/i, c.id);
     assert.doesNotMatch(raw, /"(created|updated)":/, c.id);
@@ -101,6 +123,124 @@ test("every case has a committed snapshot with nothing run-specific in it", () =
     for (const key of golden.sequence)
       assert.ok(/^L\d+$/.test(key), `${c.id}: ${key} is a logical key`);
   }
+});
+
+test("cases make their sites under distinct names", () => {
+  // golden.cjs names each case's site from the number before the first dash,
+  // so two cases with the same number would share (and clash on) one site
+  const prefixes = CASES.map((c) => c.id.split("-")[0]);
+  assert.equal(new Set(prefixes).size, prefixes.length);
+});
+
+test("hooked-operation cases run on the API legs and use known fixtures", () => {
+  const hooked = new Set(GOLDEN_OP_TYPES.slice(2));
+  for (const c of CASES)
+    for (const s of c.steps) {
+      if (hooked.has(s.type)) assert.equal(c.legs, "api", c.id);
+      if (s.fixture)
+        assert.ok(
+          fs.existsSync(
+            path.join(
+              __dirname,
+              "..",
+              "parity",
+              "golden",
+              "fixtures",
+              "files",
+              s.fixture,
+            ),
+          ),
+          c.id + ": fixture " + s.fixture,
+        );
+    }
+});
+
+test("listZipEntries reads the names in a zip's central directory", () => {
+  // a zip with two stored entries, built by hand
+  const entry = (name, data) => {
+    const n = Buffer.from(name);
+    const local = Buffer.alloc(30);
+    local.writeUInt32LE(0x04034b50, 0);
+    local.writeUInt32LE(data.length, 18);
+    local.writeUInt32LE(data.length, 22);
+    local.writeUInt16LE(n.length, 26);
+    return { n, local: Buffer.concat([local, n, data]), size: data.length };
+  };
+  const a = entry("site.json", Buffer.from("{}"));
+  const b = entry("pages/x/index.html", Buffer.from("<p></p>"));
+  const central = (e, offset) => {
+    const c = Buffer.alloc(46);
+    c.writeUInt32LE(0x02014b50, 0);
+    c.writeUInt32LE(e.size, 20);
+    c.writeUInt32LE(e.size, 24);
+    c.writeUInt16LE(e.n.length, 28);
+    c.writeUInt32LE(offset, 42);
+    return Buffer.concat([c, e.n]);
+  };
+  const cd = Buffer.concat([central(a, 0), central(b, a.local.length)]);
+  const eocd = Buffer.alloc(22);
+  eocd.writeUInt32LE(0x06054b50, 0);
+  eocd.writeUInt16LE(2, 8);
+  eocd.writeUInt16LE(2, 10);
+  eocd.writeUInt32LE(cd.length, 12);
+  eocd.writeUInt32LE(a.local.length + b.local.length, 16);
+  const zip = Buffer.concat([a.local, b.local, cd, eocd]);
+  assert.deepEqual(listZipEntries(zip), ["site.json", "pages/x/index.html"]);
+  assert.throws(() => listZipEntries(Buffer.from("not a zip at all, sorry")));
+});
+
+test("captureFiles names fixtures, drops uuids and dates from records", () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "golden-files-"));
+  fs.mkdirSync(path.join(dir, "files", "sub"), { recursive: true });
+  fs.copyFileSync(
+    path.join(
+      __dirname,
+      "..",
+      "parity",
+      "golden",
+      "fixtures",
+      "files",
+      "pink.png",
+    ),
+    path.join(dir, "files", "sub", "a.png"),
+  );
+  fs.writeFileSync(path.join(dir, "files", "b.txt"), "hi");
+  fs.writeFileSync(
+    path.join(dir, "files", "files.json"),
+    JSON.stringify({
+      schema: "HAXCMS-FILE-SCHEMA-V1",
+      data: {
+        files: [
+          {
+            path: "files/sub/a.png",
+            name: "a.png",
+            uuid: "u-1",
+            dateCreated: 5,
+            size: 74,
+          },
+        ],
+      },
+    }),
+  );
+  const out = captureFiles(dir, {}, []);
+  assert.deepEqual(out.onDisk, {
+    "b.txt": "other",
+    "sub/a.png": "fixture:pink.png",
+  });
+  assert.deepEqual(out.records, [
+    { path: "files/sub/a.png", name: "a.png", size: 74 },
+  ]);
+  fs.rmSync(dir, { recursive: true, force: true });
+});
+
+test("renameIn swaps run names in keys and values", () => {
+  assert.deepEqual(
+    renameIn(
+      { "run1.zip": ["pages/id9/index.html", 3] },
+      { run1: "SITE_NAME", id9: "L1" },
+    ),
+    { "SITE_NAME.zip": ["pages/L1/index.html", 3] },
+  );
 });
 
 test("no snapshot is left over from a removed case", () => {

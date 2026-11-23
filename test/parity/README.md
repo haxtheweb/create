@@ -181,6 +181,41 @@ page's id). A step with `expect: <status>` must be refused with exactly that
 HTTP status on every leg; the snapshot then shows the site as the steps before
 it left it.
 
+### Hooked operations
+
+The plugin platform wraps the site and system write routes in hooks, so each
+of them has a case here and the suite can show a backend gives the same
+result before and after hooks are added (plugins off, or a plugin whose hooks
+do nothing). These cases run on nodejs and php:
+
+| Step              | Route                                                                              | Cases          |
+| ----------------- | ---------------------------------------------------------------------------------- | -------------- |
+| `sitePatch`       | `PATCH /v1/site`, `/v1/site/appearance`, `/seo`, `/platform`, `/editor`, `/blocks` | 09, 11-14b     |
+| `editBlocks`      | `PATCH /v1/content/{page}/blocks`                                                  | 24b            |
+| `uploadFile`      | `POST /v1/files` (fixtures in `golden/fixtures/files/`)                            | 25b, 39-42, 49 |
+| `fileOp`          | `PATCH /v1/files/{uuid}` (`rename`, `duplicate`)                                   | 41b, 41c       |
+| `replaceFile`     | `POST /v1/files/{uuid}/content`                                                    | 41             |
+| `deleteFile`      | `DELETE /v1/files/{uuid}`                                                          | 42             |
+| `restoreRevision` | `POST /v1/items/{page}/revisions/{rev}/restore` (`back` saves before the newest)   | 45             |
+| `archiveSite`     | `POST /system/api/v1/sites/{site}/archive`                                         | 46             |
+| `downloadSite`    | `POST /system/api/v1/sites/{site}/download`, then the zip it links to              | 48             |
+| `cloneSite`       | `POST /system/api/v1/sites/{site}/clone`                                           | 49             |
+
+A snapshot can carry more than `site.json` and the pages:
+
+- `files` (cases with `captureFiles: true`): every file under `files/`, shown
+  as the upload fixture it is byte-identical to or `other`, and the
+  `files.json` records without uuids or dates. An image a backend re-encodes
+  (replace) is `other` and has no size, since sharp and GD write different bytes.
+- `clone`: the cloned site, normalized the same way, its name as `CLONE_NAME`.
+- `extra.archive`: what archiving did (the site folder is gone, the site is
+  no longer listed); the archived case has no `manifest`.
+- `extra.download`: the export's entries that matter (site.json, pages,
+  files and the deploy dotfiles), page folders by key, never `.git`.
+
+Each case's site is named from the number before the first dash, so that
+number (with its letter) must be unique; a unit test checks it.
+
 ## Generated inputs (fuzz)
 
 The sequences and the golden cases send inputs someone chose. `--fuzz`
