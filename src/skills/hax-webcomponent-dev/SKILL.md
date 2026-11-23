@@ -107,6 +107,44 @@ Multi-line CSS values are not inspected, so keep color declarations on one line 
 
 Check ARIA attributes, keyboard navigation (every interactive control reachable and operable), visible focus, semantic HTML, and color contrast in both color schemes.
 
+### ARIA and focus across the shadow boundary
+
+An `id` reference only resolves inside the tree it is written in. One that crosses a shadow root finds nothing and fails silently: no console error, often no axe failure, just a control with no name. Check these whenever you add or review a label, a description or focus handling:
+
+- **`id` references stay in one tree.** For every `aria-labelledby`, `aria-describedby`, `aria-controls`, `aria-owns`, `aria-activedescendant` and `<label for>` in the template, the target `id` is rendered in the same shadow root. A reference from the shadow root to slotted or page content, or from the page to an `id` inside the element, is ignored.
+- **A label from outside comes in as a property.** Take the text as a property or attribute and render it next to the control (`aria-label=${this.label}` on the inner control, or a `<label>` in the same template). Expose it in `haxProperties` `settings` so authors can set it; do not ask authors to point `aria-labelledby` at the host.
+- **Labelling an inner control from slotted or light DOM content** uses the element reference properties, set in `firstUpdated` / `updated`: `ariaLabelledByElements`, `ariaDescribedByElements`, `ariaControlsElements`. They resolve outward only (from the shadow tree to light DOM or an ancestor tree), never inward, so a host cannot be labelled by its own shadow content this way. They are Baseline Newly available: feature-detect and keep a working label when they are missing.
+
+  ```js
+  firstUpdated(changedProperties) {
+    if (super.firstUpdated) {
+      super.firstUpdated(changedProperties);
+    }
+    const input = this.shadowRoot.querySelector("input");
+    const label = this.querySelector('[slot="label"]');
+    if (input && label && "ariaLabelledByElements" in Element.prototype) {
+      input.ariaLabelledByElements = [label];
+    } else if (input && label) {
+      input.setAttribute("aria-label", label.textContent.trim());
+    }
+  }
+  ```
+
+- **`delegatesFocus` or `tabindex` on the host, never both.** When the element wraps one inner focusable control that owns the semantics (an input, a button), attach the shadow root with `delegatesFocus` and give the host no `tabindex`, role or state:
+
+  ```js
+  static shadowRootOptions = {
+    ...LitElement.shadowRootOptions,
+    delegatesFocus: true,
+  };
+  ```
+
+  When the host itself is the control (a custom toggle with `role` and `aria-pressed` on the host), put `tabindex="0"` on the host and leave `delegatesFocus` off. Never use a positive `tabindex`.
+
+- **Test the name, not the markup.** In the element's test, assert the accessible name of the inner control (for example `aria-label`, or the text of the element its label reference resolves to), so a broken reference fails a test instead of shipping silently.
+
+The authored-content side of the same problem (a page's `aria-labelledby` pointing into an element) is checked by the `hax-a11y-audit` skill: <https://github.com/haxtheweb/praw/tree/main/skills/hax-a11y-audit>. Rule: "Shadow-Boundary ARIA References" (`410c4334-a186-4356-9584-0796e5d2bc2d`) in the ecosystem rules linked below.
+
 ## Server-side rendering (SSR)
 
 When creating or working on a component or theme, audit it for SSR without assuming issues exist. Run `hax audit ssr` (report-only, never fails) to see how it renders under Lit SSR, and review by hand against the "SSR Safety & Enhancement Audit" rule in the ecosystem rules (linked below). The short version:
