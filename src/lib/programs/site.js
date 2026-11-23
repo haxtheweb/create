@@ -3727,7 +3727,10 @@ export async function siteCommandDetected(commandRun) {
           };
           // the link IS the output, so it is printed even with --quiet
           if (structuredOutputEnabled() || commandRun.options.i === false) {
-            logStructuredOutput(commandRun, result);
+            // Security (no-secrets-in-logs): written to stdout only. log()
+            // also appends to ~/.haxtheweb/create.log, which would keep a
+            // working sign-in token on disk.
+            writeData(formatStructuredOutput(commandRun, result));
           } else {
             const where = result.url
               ? color.bold(result.url)
