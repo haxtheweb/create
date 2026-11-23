@@ -533,3 +533,44 @@ test("ensurePrivateConfigDir never throws on an unusable base", () => {
   const { ensurePrivateConfigDir } = require("../../src/lib/utils.js");
   assert.doesNotThrow(() => ensurePrivateConfigDir("/dev/null/nope"));
 });
+
+// --- interactiveSpawnArgs: the Windows shell never sees a raw argument ---
+
+test("interactiveSpawnArgs quotes arguments when it turns the Windows shell on", () => {
+  const { interactiveSpawnArgs } = require("../../src/lib/utils.js");
+  const prepared = interactiveSpawnArgs(
+    ["-avz", "--", "C:\\My Sites\\one/", "host:/var/www & calc"],
+    { cwd: "C:\\work" },
+    "win32",
+  );
+  assert.equal(prepared.options.shell, true);
+  assert.equal(prepared.options.stdio, "inherit");
+  assert.equal(prepared.options.cwd, "C:\\work");
+  assert.deepEqual(prepared.args, [
+    "-avz",
+    "--",
+    '"C:\\My Sites\\one/"',
+    '"host:/var/www & calc"',
+  ]);
+});
+
+test("interactiveSpawnArgs refuses what cmd.exe expands even when quoted", () => {
+  const { interactiveSpawnArgs } = require("../../src/lib/utils.js");
+  assert.throws(
+    () => interactiveSpawnArgs(["%COMSPEC%"], {}, "win32"),
+    /Windows shell/,
+  );
+});
+
+test("interactiveSpawnArgs leaves arguments alone when no shell is involved", () => {
+  const { interactiveSpawnArgs } = require("../../src/lib/utils.js");
+  const args = ["a b", "c & d", "%x%"];
+  // other platforms: no shell, the array reaches the program as is
+  const posix = interactiveSpawnArgs(args, {}, "linux");
+  assert.equal(posix.options.shell, undefined);
+  assert.deepEqual(posix.args, args);
+  // a caller that sets shell itself keeps its own argument handling
+  const explicit = interactiveSpawnArgs(args, { shell: false }, "win32");
+  assert.equal(explicit.options.shell, false);
+  assert.deepEqual(explicit.args, args);
+});

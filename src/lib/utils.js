@@ -143,17 +143,36 @@ export function readConfigFile(filename) {
   }
 }
 
+/**
+ * The argument list and options interactiveExec hands to spawn. Security
+ * (no-shell-strings): on Windows the .cmd shims only run through a shell,
+ * and Node joins the arguments with spaces for it, so each one goes through
+ * windowsShellArg first, the same backstop runCommand applies. Throws for an
+ * argument cmd.exe would expand or split even when quoted.
+ * @param {string[]} args
+ * @param {object} options child_process options
+ * @param {string} platform process.platform (a parameter so it can be tested)
+ * @returns {{args: string[], options: object}}
+ */
+export function interactiveSpawnArgs(
+  args = [],
+  options = {},
+  platform = process.platform,
+) {
+  const spawnOptions = { stdio: "inherit", ...options };
+  let spawnArgs = args;
+  if (platform === "win32" && typeof spawnOptions.shell === "undefined") {
+    spawnOptions.shell = true;
+    spawnArgs = args.map((arg) => windowsShellArg(arg));
+  }
+  return { args: spawnArgs, options: spawnOptions };
+}
+
 export async function interactiveExec(command, args = [], options = {}) {
   return new Promise((resolve, reject) => {
     process.env.NODE_NO_WARNINGS = 1;
-    const spawnOptions = { stdio: "inherit", ...options };
-    if (
-      process.platform === "win32" &&
-      typeof spawnOptions.shell === "undefined"
-    ) {
-      spawnOptions.shell = true;
-    }
-    const child = spawn(command, args, spawnOptions);
+    const prepared = interactiveSpawnArgs(args, options);
+    const child = spawn(command, prepared.args, prepared.options);
     child.on("exit", (code) => {
       if (code === 0) {
         resolve();
