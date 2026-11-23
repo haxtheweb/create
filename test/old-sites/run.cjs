@@ -3,9 +3,10 @@
 // operations an author does on a site, then reports what broke.
 //
 //   node test/old-sites/run.cjs --nodejs <haxcms-nodejs checkout> \
-//     [--cli <create dist/create.js>] [--years 2021,2024] [--out <dir>]
+//     [--php <haxcms-php checkout>] [--cli <create dist/create.js>] \
+//     [--years 2021,2024] [--out <dir>]
 //
-// Two legs per fixture, each on its own copy of the site:
+// Two legs per fixture, three with --php, each on its own copy of the site:
 //   cli     the HAX CLI: site:rebuild (the upgrade), site:validate,
 //           node:add, node:edit content, site:theme, site:validate again
 //   nodejs  haxcms-nodejs, booted with that repo's own e2e harness (real
@@ -13,6 +14,10 @@
 //           page and a deep page, open the editor's API path, save page
 //           content, saveOutline add / move / reorder / delete, theme and
 //           settings changes, then render everything again
+//   php     the same steps as the nodejs leg against haxcms-php: a fresh
+//           copy of the --php checkout, installed by its own installer and
+//           served by `php -S` on a free port (../parity/php-server.cjs).
+//           Only run when --php (or HAX_OLD_SITES_PHP) is given.
 // After every write the site on disk is checked: site.json parses, ids are
 // unique, every parent exists, every page file exists, and every page the
 // fixture made still holds its content (unless the op meant to change it).
@@ -36,6 +41,8 @@ const {
   CONTRACT_IN_JOS,
   runValidator,
 } = require("../contract/site-contract.cjs");
+
+const { startPhp } = require("../parity/php-server.cjs");
 
 const HERE = __dirname;
 const YEARS = JSON.parse(
@@ -65,6 +72,12 @@ const cfg = {
       process.env.HAX_OLD_SITES_NODEJS ||
       path.join(HERE, "..", "..", "..", "haxcms-nodejs"),
   ),
+  // empty: no php leg
+  php:
+    args.php || process.env.HAX_OLD_SITES_PHP
+      ? path.resolve(String(args.php || process.env.HAX_OLD_SITES_PHP))
+      : "",
+  phpBin: String(args["php-bin"] || process.env.HAX_OLD_SITES_PHP_BIN || "php"),
   cli: path.resolve(
     args.cli ||
       process.env.HAX_OLD_SITES_CLI ||
@@ -418,7 +431,7 @@ async function cliLeg(fx, work, markers) {
   return rec;
 }
 
-// ---------- nodejs leg ----------
+// ---------- backend legs (nodejs, php) ----------
 
 function parseSettings(src) {
   const vm = require("node:vm");
@@ -569,8 +582,10 @@ async function render(api, name, dir, label) {
   return `home, /${deep.slug} and ${items.length} page files load`;
 }
 
-async function nodejsLeg(fx, runtime, api, markers) {
-  const rec = new Recorder(fx.year, "nodejs");
+// The same steps for either backend. runtime: { baseUrl, credentials,
+// runtimeRoot } where runtimeRoot holds the backend's _sites folder.
+async function backendLeg(legName, fx, runtime, api, markers) {
+  const rec = new Recorder(fx.year, legName);
   const name = fx.meta.siteName;
   const dir = path.join(runtime.runtimeRoot, "_sites", name);
   copyDir(fx.dir, dir);
@@ -651,6 +666,47 @@ async function nodejsLeg(fx, runtime, api, markers) {
     }))
   )
     return rec;
+  // the site API an old site gets from the latest backend: discovery, the
+  // site summary and the item reads answer, and list every page it has
+  await rec.step("site API: discovery and reads", async () => {
+    const discovery = await api.site("GET", "");
+    assert(
+      discovery.status === 200 && discovery.json,
+      `GET ${api.siteApi} -> ${discovery.status}`,
+    );
+    const summary = await api.site("GET", "/v1/site");
+    assert(
+      summary.status === 200 && summary.json && summary.json.data,
+      `GET /v1/site -> ${summary.status}: ${summary.text.slice(0, 200)}`,
+    );
+    const list = await api.site("GET", "/v1/items?page.limit=100");
+    const listed =
+      list.json && list.json.data && Array.isArray(list.json.data.items)
+        ? list.json.data.items
+        : null;
+    assert(
+      list.status === 200 && listed,
+      `GET /v1/items -> ${list.status}: ${list.text.slice(0, 200)}`,
+    );
+    const ids = new Set(listed.map((i) => i.id));
+    const missing = original.filter((i) => !ids.has(i.id));
+    assert(
+      missing.length === 0,
+      `GET /v1/items does not list ${missing.map((i) => `"${i.title}"`).join(", ")}`,
+    );
+    const one = await api.site(
+      "GET",
+      "/v1/items/" + encodeURIComponent(deep.id),
+    );
+    assert(
+      one.status === 200 &&
+        one.json &&
+        one.json.data &&
+        one.json.data.id === deep.id,
+      `GET /v1/items/${deep.id} -> ${one.status}: ${one.text.slice(0, 200)}`,
+    );
+    return `discovery, site summary, ${listed.length} item(s) listed, 1 read by id`;
+  });
   const others = Object.assign({}, markers);
   delete others[deep.title];
   await rec.step("edit and save page content", async () => {
@@ -858,7 +914,7 @@ async function main() {
   );
   fs.mkdirSync(cfg.out, { recursive: true });
   const notes = [
-    `haxcms-nodejs \`${refOf(cfg.nodejs)}\`, create \`${refOf(path.dirname(path.dirname(cfg.cli)))}\`, node ${process.versions.node}.`,
+    `haxcms-nodejs \`${refOf(cfg.nodejs)}\`, ${cfg.php ? "haxcms-php `" + refOf(cfg.php) + "`, " : ""}create \`${refOf(path.dirname(path.dirname(cfg.cli)))}\`, node ${process.versions.node}.`,
   ];
   // one more fixture each year: flag a missing one, without failing the run
   const thisYear = parseInt(
@@ -891,9 +947,37 @@ async function main() {
   const harness = require(harnessPath);
   const runtime = await harness.setupE2ERuntime();
   const records = [];
+  const children = [];
+  let phpRuntime = null;
+  let phpApi = null;
   try {
     const api = new Api(runtime);
     await api.login();
+    if (cfg.php) {
+      // a fresh install of the checkout under test, with its own login
+      const phpCfg = {
+        php: cfg.php,
+        work,
+        "php-bin": cfg.phpBin,
+        "php-host": "127.0.0.1",
+        "php-port": "",
+        "php-url": "",
+        phpExternal: false,
+        phpInPlace: false,
+        phpPortAuto: true,
+      };
+      await startPhp(phpCfg, path.join(cfg.out, "php-server.log"), children);
+      phpRuntime = {
+        baseUrl: phpCfg["php-url"],
+        credentials: {
+          username: phpCfg["php-user"],
+          password: phpCfg["php-pass"],
+        },
+        runtimeRoot: phpCfg.phpRoot,
+      };
+      phpApi = new Api(phpRuntime);
+      await phpApi.login();
+    }
     for (const fx of fixtures) {
       const markers = {};
       for (const p of fx.pages) {
@@ -905,15 +989,24 @@ async function main() {
       );
       const cli = await cliLeg(fx, path.join(work, fx.year), markers);
       records.push(cli);
-      const node = await nodejsLeg(fx, runtime, api, markers);
+      const node = await backendLeg("nodejs", fx, runtime, api, markers);
       records.push(node);
-      for (const r of [cli, node])
+      const legs = [cli, node];
+      if (phpApi) {
+        const php = await backendLeg("php", fx, phpRuntime, phpApi, markers);
+        records.push(php);
+        legs.push(php);
+      }
+      for (const r of legs)
         for (const s of r.steps)
           console.log(
             `  ${r.leg.padEnd(6)} ${s.ok ? "ok  " : "FAIL"} ${s.name}${s.ok ? "" : ": " + s.detail}`,
           );
     }
   } finally {
+    for (const child of children)
+      if (child.exitCode === null && child.signalCode === null)
+        child.kill("SIGTERM");
     await harness.teardownE2ERuntime(runtime);
     fs.rmSync(work, { recursive: true, force: true });
   }

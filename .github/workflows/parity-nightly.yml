@@ -7,6 +7,10 @@ name: parity-nightly
 #   sequence A  nodejs + php + CLI, ops the CLI can express
 #   sequence B  nodejs + php, every write op the site API has
 #   golden      every leg against the committed snapshots in test/parity/golden/
+#   fuzz        nodejs + php, requests generated from the site OpenAPI spec
+#               with fast-check, responses and sites diffed
+#               (haxtheweb/issues#3386). A random seed every night, shown in
+#               the job summary with a one-line replay per finding
 #
 # After the sequences, every leg's site is checked against the site folder
 # contract (haxtheweb/issues#3351, test/contract/README.md) and each
@@ -29,6 +33,14 @@ on:
         description: "Ops per sequence"
         required: false
         default: "1000"
+      fuzz_seed:
+        description: "Generated inputs: replay a seed (integer); empty for a random one"
+        required: false
+        default: ""
+      fuzz_runs:
+        description: "Generated inputs: sequences per round"
+        required: false
+        default: "200"
 permissions:
   contents: read
 concurrency:
@@ -42,6 +54,8 @@ jobs:
     env:
       # inputs are empty on the nightly schedule, so defaults apply
       HAX_PARITY_OPS: ${{ inputs.ops || '1000' }}
+      HAX_FUZZ_SEED: ${{ inputs.fuzz_seed || 'random' }}
+      HAX_FUZZ_RUNS: ${{ inputs.fuzz_runs || '200' }}
       HAX_PARITY_OUT: ${{ github.workspace }}/parity-results
       HAX_PARITY_NODEJS_REPO: ${{ github.workspace }}/haxcms-nodejs
       HAX_PARITY_PHP_REPO: ${{ github.workspace }}/haxcms-php
@@ -97,6 +111,19 @@ jobs:
               exit 1
               ;;
           esac
+          case "$HAX_FUZZ_RUNS" in
+            '' | *[!0-9]*)
+              echo "::error title=fuzz_runs::fuzz_runs must be a whole number"
+              exit 1
+              ;;
+          esac
+          case "$HAX_FUZZ_SEED" in
+            random) ;;
+            '' | - | *[!0-9-]* | ?*-*)
+              echo "::error title=fuzz_seed::fuzz_seed must be an integer or empty"
+              exit 1
+              ;;
+          esac
           git config --global user.name "$GIT_AUTHOR_NAME"
           git config --global user.email "$GIT_AUTHOR_EMAIL"
 
@@ -137,6 +164,16 @@ jobs:
         if: always()
         working-directory: create
         run: node test/parity/parity.cjs --golden --out "$HAX_PARITY_OUT/golden-suite"
+
+      # Requests generated from the site OpenAPI spec (haxtheweb/issues#3386),
+      # sent to both backends, responses and sites diffed. Report-only like
+      # the steps above: no --fail-on-diff, so findings go to the job summary
+      # (each with its seed, path and replay command) and
+      # parity-results/fuzz-run, and never fail the nightly.
+      - name: Generated inputs from the OpenAPI spec (report-only)
+        if: always()
+        working-directory: create
+        run: node test/parity/parity.cjs --fuzz --out "$HAX_PARITY_OUT/fuzz-run"
 
       # Each leg has just made a site and run every op on it, so it must be a
       # complete site folder with nothing retired and nothing unknown. Findings

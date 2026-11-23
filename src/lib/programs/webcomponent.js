@@ -11,6 +11,7 @@ import { dump } from "js-yaml";
 
 import { merlinSays } from "../statements.js";
 import { t } from "../i18n.js";
+import { webcomponentFuzz } from "./webcomponent-fuzz.js";
 import { log, writeData } from "../logging.js";
 
 import {
@@ -540,6 +541,7 @@ export function webcomponentActions() {
     { value: "wc:element", label: t("wcActionAddElement") },
     { value: "wc:haxproperties", label: t("wcActionWriteHaxProperties") },
     { value: "wc:rename", label: t("wcActionRename") },
+    { value: "wc:fuzz", label: t("wcActionAddFuzzTest") },
   ];
 }
 
@@ -853,6 +855,22 @@ export async function webcomponentCommandDetected(
           await webcomponentRename(commandRun, packageData);
         } catch (e) {
           log(e.stderr);
+        }
+        break;
+      case "fuzz":
+      case "wc:fuzz":
+      case "webcomponent:fuzz":
+        try {
+          // a starter property test for input-parsing elements
+          // (haxtheweb/issues#3386)
+          if (!webcomponentFuzz(commandRun, packageData)) {
+            // nothing was written: say so to a script too
+            process.exit(1);
+          }
+        } catch (e) {
+          log(e.stderr);
+          console.error(color.red(e));
+          process.exit(1);
         }
         break;
       case "quit":
@@ -1286,7 +1304,7 @@ export async function loadElementsCatalog() {
     // global fetch has been available (unflagged) since Node 18, which is
     // this package's actual engines floor; the plugin's data conservatively
     // marks it experimental until Node 21.
-    // eslint-disable-next-line n/no-unsupported-features/node-builtins
+
     const resp = await fetch(source, { signal: AbortSignal.timeout(8000) });
     if (!resp.ok) {
       throw new Error(`HTTP ${resp.status}`);

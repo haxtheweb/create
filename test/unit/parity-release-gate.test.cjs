@@ -109,6 +109,7 @@ test("the gate's own flags are not passed on to parity.cjs", () => {
       "--build",
       "--link-cli",
       "--specs-only",
+      "--old-sites",
       "--php=../haxcms-php",
       "--cases",
       "15-add-top-level-page",

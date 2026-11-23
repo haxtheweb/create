@@ -13,6 +13,7 @@ import color from "picocolors";
 import { auditI18nCommand } from "./audit-i18n.js";
 import { auditSsrCommand } from "./audit-ssr.js";
 import { auditThemeCommand } from "./audit-theme.js";
+import { auditFuzzCommand } from "./audit-fuzz.js";
 import { t } from "../i18n.js";
 
 /**
@@ -519,6 +520,7 @@ export function runAuditCommand(commandRun, dddPath, schemaRoot, deps = {}) {
   const auditI18n = deps.auditI18n || auditI18nCommand;
   const auditSsr = deps.auditSsr || auditSsrCommand;
   const auditTheme = deps.auditTheme || auditThemeCommand;
+  const auditFuzz = deps.auditFuzz || auditFuzzCommand;
   if (type === "ddd") {
     // DDD audit keeps its existing behavior, including exiting itself
     return auditDDD(commandRun, dddPath);
@@ -536,6 +538,12 @@ export function runAuditCommand(commandRun, dddPath, schemaRoot, deps = {}) {
   if (type === "theme") {
     // HAXcms theme contract; not part of "all" yet
     const r = auditTheme(commandRun, schemaRoot);
+    return exit(r.passed ? 0 : 1);
+  }
+  if (type === "fuzz") {
+    // a report of sanitizer / parser code with no property test, not a
+    // check: it always exits 0 (and is not part of "all")
+    const r = auditFuzz(commandRun, schemaRoot);
     return exit(r.passed ? 0 : 1);
   }
   if (type === "ssr") {
