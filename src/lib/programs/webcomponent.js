@@ -1305,9 +1305,20 @@ export async function loadElementsCatalog() {
     // this package's actual engines floor; the plugin's data conservatively
     // marks it experimental until Node 21.
 
+    // Security (fixed-outbound-urls): the URL is the constant above or one
+    // the user set in their own environment, never a command option or a
+    // remote payload, so this is not an SSRF-guarded fetch. A redirect that
+    // ends anywhere but https is refused, like an http:// source.
     const resp = await fetch(source, { signal: AbortSignal.timeout(8000) });
     if (!resp.ok) {
       throw new Error(`HTTP ${resp.status}`);
+    }
+    if (
+      typeof resp.url === "string" &&
+      resp.url &&
+      !resp.url.startsWith("https://")
+    ) {
+      throw new Error("catalog URL redirected away from https://; rejected");
     }
     return { catalog: validateElementsCatalog(await resp.json()), source };
   } catch (e) {
