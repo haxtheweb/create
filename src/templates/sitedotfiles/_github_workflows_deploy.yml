@@ -44,9 +44,6 @@ jobs:
 
       # haxtheweb/issues#3352: built into a folder of its own; the checkout
       # is not changed. The address comes from configure-pages.
-      # Security (confirmed-pinned-installs): the HAX CLI is pinned to the
-      # major version this workflow was written for, so a new major is never
-      # picked up by a deploy without this file being updated.
       - name: Build the static site
         id: static
         continue-on-error: true
