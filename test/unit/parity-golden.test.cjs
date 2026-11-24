@@ -14,6 +14,8 @@ const {
   summarizeGolden,
   toGolden,
   renameIn,
+  noopPluginProblem,
+  NOOP_PLUGIN_DIR,
   SNAPSHOT_DIR,
 } = require("../parity/golden.cjs");
 const { snapshot, captureFiles } = require("../parity/snapshot.cjs");
@@ -463,4 +465,62 @@ test("outlineRaw swaps @keys for ids and leaves everything else", () => {
     [{ id: "a", parent: "@L9", n: 1, x: null }, ["a"], "   "],
   );
   assert.equal(resolveKeys("L1", idOf), "L1");
+});
+
+test("--noop-plugin is opt-in and the spec defaults to haxcms-nodejs's copy", () => {
+  const plain = loadConfig([], {});
+  assert.equal(plain["noop-plugin"], false);
+  const on = loadConfig(["--golden", "--noop-plugin", "--nodejs", "/x/n"], {});
+  assert.equal(on["noop-plugin"], true);
+  assert.equal(
+    on["plugin-spec"],
+    path.join("/x/n", "node_modules", "@haxtheweb", "haxcms-plugin-spec"),
+  );
+  const env = loadConfig([], {
+    HAX_PARITY_NOOP_PLUGIN: "1",
+    HAX_PARITY_PLUGIN_SPEC: "/spec",
+  });
+  assert.equal(env["noop-plugin"], true);
+  assert.equal(env["plugin-spec"], "/spec");
+});
+
+test("a noop run only counts when golden-noop is enabled and active", () => {
+  const reply = (status, data) => ({ status, json: { status, data } });
+  const entry = (over) =>
+    Object.assign({ id: "golden-noop", enabled: true, status: "active" }, over);
+  assert.equal(noopPluginProblem(reply(200, [entry()])), "");
+  assert.match(noopPluginProblem(reply(404, null)), /answered 404/);
+  assert.match(noopPluginProblem(null), /answered nothing/);
+  assert.match(noopPluginProblem(reply(200, [])), /not installed/);
+  assert.match(
+    noopPluginProblem(
+      reply(200, [
+        entry({ enabled: false, status: "available", reason: "off" }),
+      ]),
+    ),
+    /available \(off\)/,
+  );
+});
+
+test("the golden-noop fixture lists the same hooks in its manifest and both runtimes", () => {
+  const read = (f) => fs.readFileSync(path.join(NOOP_PLUGIN_DIR, f), "utf8");
+  const manifest = [
+    ...read("plugin.yaml").matchAll(/^ {2}- name: (\S+)$/gm),
+  ].map((m) => m[1]);
+  const node = [
+    ...read("src/nodejs/index.js").matchAll(/^ {4}"([^"]+)": same,$/gm),
+  ].map((m) => m[1]);
+  const camel = (h) =>
+    h
+      .split(/[.-]/)
+      .map((x, i) => (i ? x[0].toUpperCase() + x.slice(1) : x))
+      .join("");
+  const php = [
+    ...read("src/php/Plugin.php").matchAll(
+      /public function (\w+)\(\$ctx\) \{\n {4}return \$ctx->subject;/g,
+    ),
+  ].map((m) => m[1]);
+  assert.ok(manifest.length > 40, "subscribes to the core hooks");
+  assert.deepEqual(node, manifest);
+  assert.deepEqual(php, manifest.map(camel));
 });

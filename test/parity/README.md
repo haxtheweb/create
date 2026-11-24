@@ -216,6 +216,31 @@ A snapshot can carry more than `site.json` and the pages:
 Each case's site is named from the number before the first dash, so that
 number (with its letter) must be unique; a unit test checks it.
 
+### With the plugin platform on (`--noop-plugin`)
+
+For backends that have the plugin platform, `--noop-plugin` runs the same
+golden suite with [`golden-noop`](golden/fixtures/plugins/golden-noop) on. That
+plugin subscribes to every core hook the cases' routes fire and hands each
+subject back unchanged, so every case must still match its snapshot: turning
+the platform on, with a plugin that does nothing, changes nothing a site ends
+up with. Run it once with plugins idle and once with `--noop-plugin`, against
+the same checkouts, before and after a change to the platform:
+
+```bash
+npm run test:parity:golden -- --fail-on-diff --nodejs <plugin branch> --php <plugin branch>
+npm run test:parity:golden -- --fail-on-diff --noop-plugin --nodejs <plugin branch> --php <plugin branch>
+```
+
+Both servers get `HAXCMS_PLUGIN_DIRS` (the fixture) and
+`HAXCMS_PLUGIN_SPEC_DIR`. A case only counts when each API leg's plugin
+registry (`GET /v1/plugins`) lists `golden-noop` as enabled and active, so a
+plugin that silently failed to load fails the case instead of passing it.
+
+| Flag            | Environment variable     | Meaning                                                                                         |
+| --------------- | ------------------------ | ----------------------------------------------------------------------------------------------- |
+| `--noop-plugin` | `HAX_PARITY_NOOP_PLUGIN` | run with the golden-noop plugin on                                                              |
+| `--plugin-spec` | `HAX_PARITY_PLUGIN_SPEC` | the plugin spec package (default: haxcms-nodejs's `node_modules/@haxtheweb/haxcms-plugin-spec`) |
+
 ## Generated inputs (fuzz)
 
 The sequences and the golden cases send inputs someone chose. `--fuzz`

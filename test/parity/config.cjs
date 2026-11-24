@@ -41,6 +41,13 @@ const SETTINGS = {
   "update-golden": ["HAX_PARITY_UPDATE_GOLDEN", ""],
   "fail-on-diff": ["HAX_PARITY_FAIL_ON_DIFF", ""],
   cases: ["HAX_PARITY_CASES", ""],
+  // run with the golden-noop plugin on (golden/fixtures/plugins): every hook
+  // fires and changes nothing, so every snapshot must still match. Needs
+  // backends that have the plugin platform, and the plugin spec package
+  "noop-plugin": ["HAX_PARITY_NOOP_PLUGIN", ""],
+  // the @haxtheweb/haxcms-plugin-spec folder both backends load plugins
+  // with; defaults to the one in the haxcms-nodejs checkout's node_modules
+  "plugin-spec": ["HAX_PARITY_PLUGIN_SPEC", ""],
   // generated-input run (fuzz.cjs) instead of the seeded sequences; the seed,
   // run count and replay path come from HAX_FUZZ_SEED / _RUNS / _PATH
   fuzz: ["HAX_PARITY_FUZZ", ""],
@@ -98,6 +105,14 @@ function loadConfig(argv = process.argv.slice(2), env = process.env) {
   // updating snapshots implies the golden suite
   cfg.golden = flag(cfg.golden) || cfg["update-golden"];
   cfg.fuzz = flag(cfg.fuzz);
+  cfg["noop-plugin"] = flag(cfg["noop-plugin"]);
+  if (!cfg["plugin-spec"])
+    cfg["plugin-spec"] = path.join(
+      cfg.nodejs,
+      "node_modules",
+      "@haxtheweb",
+      "haxcms-plugin-spec",
+    );
   cfg.phpExternal = Boolean(cfg["php-url"]);
   cfg.phpInPlace = flag(cfg["php-in-place"]);
   // no port given: parity.cjs picks a free one when it starts php -S and

@@ -30,7 +30,7 @@ const { spawn, execFileSync } = require("child_process");
 const { loadConfig } = require("./config.cjs");
 const { runSequence } = require("./run.cjs");
 const { summarize } = require("./summary.cjs");
-const { runGolden } = require("./golden.cjs");
+const { runGolden, NOOP_PLUGIN_DIR } = require("./golden.cjs");
 const { runFuzz } = require("./fuzz.cjs");
 const { startPhp } = require("./php-server.cjs");
 
@@ -134,6 +134,16 @@ async function main() {
     throw new Error(`CLI not found at ${cfg.cli}: run \`npm run build\` first`);
   fs.mkdirSync(cfg.out, { recursive: true });
   fs.mkdirSync(cfg.work, { recursive: true });
+  // both servers are started from this process, so they inherit these
+  if (cfg["noop-plugin"]) {
+    if (!fs.existsSync(path.join(cfg["plugin-spec"], "package.json")))
+      throw new Error(
+        `--noop-plugin needs the plugin spec package; not found at ${cfg["plugin-spec"]} (set --plugin-spec)`,
+      );
+    process.env.HAXCMS_PLUGIN_DIRS = NOOP_PLUGIN_DIR;
+    process.env.HAXCMS_PLUGIN_SPEC_DIR = cfg["plugin-spec"];
+    delete process.env.HAXCMS_PLUGINS;
+  }
   const env = {
     sources: {
       "haxcms-nodejs": gitInfo(cfg.nodejs),
@@ -144,6 +154,7 @@ async function main() {
     seq: cfg.golden || cfg.fuzz ? [] : cfg.seq,
     ops: cfg.golden || cfg.fuzz ? 0 : cfg.ops,
     golden: cfg.golden,
+    noopPlugin: cfg["noop-plugin"],
     fuzz: cfg.fuzz,
     strict: cfg.strict,
   };
