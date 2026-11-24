@@ -93,7 +93,8 @@ jobs:
           status="$(curl -sS -o "$RUNNER_TEMP/home.html" -w '%{http_code}' "$BASE_URL/")"
           echo "GET / -> $status"
           test "$status" = "200"
-          grep -q "<title>$SITE_NAME</title>" "$RUNNER_TEMP/home.html"
+          # the server names the page too: "<site> | <page>" (or just the site)
+          grep -qE "<title>$SITE_NAME( \| [^<]+)?</title>" "$RUNNER_TEMP/home.html"
           grep -q "haxcms-site-builder" "$RUNNER_TEMP/home.html"
           status="$(curl -sS -o "$RUNNER_TEMP/site.json" -w '%{http_code}' "$BASE_URL/site.json")"
           echo "GET /site.json -> $status"
