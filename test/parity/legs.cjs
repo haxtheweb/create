@@ -53,7 +53,59 @@ function syncIndents(items) {
 
 // Ops only the golden cases use (golden/cases.cjs); the seeded sequences in
 // ops.cjs never emit them.
-const GOLDEN_OP_TYPES = ["outlineSave", "outlineRaw"];
+const GOLDEN_OP_TYPES = [
+  "outlineSave",
+  "outlineRaw",
+  // the site API operations the plugin platform wraps in hooks
+  // (haxtheweb/issues#3332): settings saves, content blocks, files,
+  // revisions, and the system-level clone / archive / download
+  "sitePatch",
+  "editBlocks",
+  "uploadFile",
+  "fileOp",
+  "deleteFile",
+  "replaceFile",
+  "restoreRevision",
+  "cloneSite",
+  "archiveSite",
+  "downloadSite",
+];
+
+// documents and media the golden cases upload (golden/fixtures/files)
+const FILE_FIXTURE_DIR = path.join(__dirname, "golden", "fixtures", "files");
+
+// what an export must carry: the site's content and the files that make the
+// folder deployable as it is. The rest of the boilerplate (agent skills,
+// build scripts, icons) changes with every release and is left out, so the
+// golden does not churn; .git (the site's history) must never be in it.
+const EXPORT_ENTRY =
+  /^(site\.json|index\.html|manifest\.json|pages\/.+|files\/.+|\.htaccess|\.nojekyll|\.github\/workflows\/deploy\.yml|\.git\/.*)$/;
+
+// names of the entries in a zip archive, read from its central directory
+// (no dependency: the harness only needs the list, not the contents)
+function listZipEntries(buf) {
+  let eocd = -1;
+  for (let i = buf.length - 22; i >= Math.max(0, buf.length - 65557); i--) {
+    if (buf.readUInt32LE(i) === 0x06054b50) {
+      eocd = i;
+      break;
+    }
+  }
+  if (eocd === -1) throw new Error("not a zip archive");
+  const count = buf.readUInt16LE(eocd + 10);
+  let p = buf.readUInt32LE(eocd + 16);
+  const names = [];
+  for (let n = 0; n < count; n++) {
+    if (buf.readUInt32LE(p) !== 0x02014b50)
+      throw new Error("bad zip central directory");
+    const nameLen = buf.readUInt16LE(p + 28);
+    const extraLen = buf.readUInt16LE(p + 30);
+    const commentLen = buf.readUInt16LE(p + 32);
+    names.push(buf.toString("utf8", p + 46, p + 46 + nameLen));
+    p += 46 + nameLen + extraLen + commentLen;
+  }
+  return names;
+}
 
 // a logical key (L0, L1, ...) as written in a golden case
 const isKey = (v) => typeof v === "string" && /^L\d+$/.test(v);
@@ -203,6 +255,10 @@ class ApiLeg extends BaseLeg {
   // opts.importFile: make the site from a document, as the dashboard does:
   // the file goes to its import route, the items it returns build the site
   async create(siteName, opts = {}) {
+    // what a case records besides the site itself (golden.cjs: extra)
+    this.extra = {};
+    this.archived = false;
+    this.cloneDir = null;
     await this.client.login();
     let build;
     if (opts.importFile) {
@@ -252,6 +308,14 @@ class ApiLeg extends BaseLeg {
         "setTheme",
         "normalizeSlugs",
         "setLang",
+        "sitePatch",
+        "uploadFile",
+        "fileOp",
+        "deleteFile",
+        "replaceFile",
+        "cloneSite",
+        "archiveSite",
+        "downloadSite",
       ].includes(op.type)
     ) {
       return { status: "skipped", detail: "no mapped id for " + op.key };
@@ -418,6 +482,141 @@ class ApiLeg extends BaseLeg {
           seo: { lang: op.lang },
         });
         break;
+      case "sitePatch":
+        // one of the site settings saves (PATCH /v1/site, /v1/site/seo,
+        // /v1/site/platform, /v1/site/editor, /v1/site/blocks,
+        // /v1/site/appearance) with the body the settings dialogs send
+        r = await this.call(
+          "PATCH",
+          op.path,
+          Object.assign({ site }, op.body || {}),
+        );
+        break;
+      case "editBlocks":
+        r = await this.call(
+          "PATCH",
+          "/v1/content/" + encodeURIComponent(id) + "/blocks",
+          { site, ops: op.ops },
+        );
+        break;
+      case "uploadFile": {
+        const form = new FormData();
+        const bytes = fs.readFileSync(path.join(FILE_FIXTURE_DIR, op.fixture));
+        form.append("file-upload", new Blob([bytes]), op.name || op.fixture);
+        const pageId = op.page ? this.id(op.page) : null;
+        if (pageId) form.append("nodeId", pageId);
+        r = await this.client.siteForm("POST", "/v1/files", form);
+        break;
+      }
+      case "fileOp":
+      case "deleteFile":
+      case "replaceFile": {
+        const uuid = await this.fileUuid(op.name);
+        if (!uuid)
+          return { status: "skipped", detail: "no file named " + op.name };
+        const at = "/v1/files/" + encodeURIComponent(uuid);
+        if (op.type === "fileOp") {
+          const body = { site, operation: op.operation };
+          if (op.newName) body.newName = op.newName;
+          r = await this.call("PATCH", at, body);
+        } else if (op.type === "deleteFile") {
+          r = await this.call("DELETE", at, { site });
+        } else {
+          const form = new FormData();
+          const bytes = fs.readFileSync(
+            path.join(FILE_FIXTURE_DIR, op.fixture),
+          );
+          form.append("upload", new Blob([bytes]), op.name);
+          r = await this.client.siteForm("POST", at + "/content", form);
+        }
+        break;
+      }
+      case "restoreRevision": {
+        // revisions are git commits, so their ids differ per leg: pick the
+        // one `back` saves before the newest that touched the page
+        const list = await this.call(
+          "GET",
+          "/v1/items/" + encodeURIComponent(id) + "/revisions",
+        );
+        const revs =
+          list.json && list.json.data && Array.isArray(list.json.data.revisions)
+            ? list.json.data.revisions
+            : [];
+        const rev = revs[op.back || 1];
+        if (!rev)
+          return {
+            status: "skipped",
+            detail: "only " + revs.length + " revision(s)",
+          };
+        r = await this.call(
+          "POST",
+          "/v1/items/" +
+            encodeURIComponent(id) +
+            "/revisions/" +
+            encodeURIComponent(rev.hash) +
+            "/restore",
+          {},
+        );
+        break;
+      }
+      case "cloneSite": {
+        r = await this.client.system(
+          "POST",
+          "/sites/" + encodeURIComponent(this.siteName) + "/clone",
+          { site },
+        );
+        const name = r.json && r.json.data && r.json.data.name;
+        if (name) {
+          this.cloneName = name;
+          this.cloneDir = path.join(this.sitesDir, name);
+        }
+        break;
+      }
+      case "archiveSite": {
+        r = await this.client.system(
+          "POST",
+          "/sites/" + encodeURIComponent(this.siteName) + "/archive",
+          { site },
+        );
+        const listed = await this.client.system("GET", "/sites");
+        const names = JSON.stringify(listed.json || {});
+        this.archived = r.status === 200;
+        this.extra.archive = {
+          status: r.status,
+          siteFolderRemains: fs.existsSync(this.siteDir),
+          stillListed: names.indexOf('"' + this.siteName + '"') !== -1,
+          archivedUnderOwnName: !!(
+            r.json &&
+            r.json.data &&
+            r.json.data.archivedName === this.siteName
+          ),
+        };
+        break;
+      }
+      case "downloadSite": {
+        r = await this.client.system(
+          "POST",
+          "/sites/" + encodeURIComponent(this.siteName) + "/download",
+          { site },
+        );
+        const link = r.json && r.json.data && r.json.data.link;
+        if (r.status === 200 && link) {
+          const res = await fetch(
+            /^https?:/.test(link) ? link : this.client.baseUrl + link,
+          );
+          const buf = Buffer.from(await res.arrayBuffer());
+          this.extra.download = {
+            status: res.status,
+            name: r.json.data.name,
+            entries: listZipEntries(buf)
+              // git internals are a copy of the site's history, not content;
+              // folder entries are a detail of the zip writer
+              .filter((e) => EXPORT_ENTRY.test(e) && !e.endsWith("/"))
+              .sort(),
+          };
+        }
+        break;
+      }
       default:
         return { status: "unsupported" };
     }
@@ -425,6 +624,20 @@ class ApiLeg extends BaseLeg {
       status: r.status,
       detail: r.status >= 400 ? r.bodyText.slice(0, 300) : undefined,
     };
+  }
+  // a file's uuid, by name, from the site's file listing
+  async fileUuid(name) {
+    const r = await this.call("GET", "/v1/files");
+    const data = r.json && r.json.data;
+    const list = Array.isArray(data)
+      ? data
+      : data && Array.isArray(data.files)
+        ? data.files
+        : data && Array.isArray(data.items)
+          ? data.items
+          : [];
+    const hit = list.find((f) => f && f.name === name);
+    return hit ? hit.uuid || hit.id : null;
   }
 }
 
@@ -644,6 +857,7 @@ class CliLeg extends BaseLeg {
 module.exports = {
   SITE_DESCRIPTION,
   GOLDEN_OP_TYPES,
+  listZipEntries,
   buildOutlineItems,
   resolveKeys,
   ApiLeg,

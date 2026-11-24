@@ -181,6 +181,75 @@ page's id). A step with `expect: <status>` must be refused with exactly that
 HTTP status on every leg; the snapshot then shows the site as the steps before
 it left it.
 
+### Hooked operations
+
+The plugin platform wraps the site and system write routes in hooks, so each
+of them has a case here and the suite can show a backend gives the same
+result before and after hooks are added (plugins off, or a plugin whose hooks
+do nothing). These cases run on nodejs and php:
+
+| Step              | Route                                                                              | Cases          |
+| ----------------- | ---------------------------------------------------------------------------------- | -------------- |
+| `sitePatch`       | `PATCH /v1/site`, `/v1/site/appearance`, `/seo`, `/platform`, `/editor`, `/blocks` | 09, 11-14b     |
+| `editBlocks`      | `PATCH /v1/content/{page}/blocks`                                                  | 24b            |
+| `uploadFile`      | `POST /v1/files` (fixtures in `golden/fixtures/files/`)                            | 25b, 39-42, 49 |
+| `fileOp`          | `PATCH /v1/files/{uuid}` (`rename`, `duplicate`)                                   | 41b, 41c       |
+| `replaceFile`     | `POST /v1/files/{uuid}/content`                                                    | 41             |
+| `deleteFile`      | `DELETE /v1/files/{uuid}`                                                          | 42             |
+| `restoreRevision` | `POST /v1/items/{page}/revisions/{rev}/restore` (`back` saves before the newest)   | 45             |
+| `archiveSite`     | `POST /system/api/v1/sites/{site}/archive`                                         | 46             |
+| `downloadSite`    | `POST /system/api/v1/sites/{site}/download`, then the zip it links to              | 48             |
+| `cloneSite`       | `POST /system/api/v1/sites/{site}/clone`                                           | 49             |
+
+A snapshot can carry more than `site.json` and the pages:
+
+- `files` (cases with `captureFiles: true`): every file under `files/`, shown
+  as the upload fixture it is byte-identical to or `other`, and the
+  `files.json` records without uuids or dates. An image a backend re-encodes
+  (replace) is `other` and has no size, since sharp and GD write different bytes.
+- `clone`: the cloned site, normalized the same way, its name as `CLONE_NAME`.
+- `extra.archive`: what archiving did (the site folder is gone, the site is
+  no longer listed); the archived case has no `manifest`.
+- `extra.download`: the export's entries that matter (site.json, pages,
+  files and the deploy dotfiles), page folders by key, never `.git`.
+
+Each case's site is named from the number before the first dash, so that
+number (with its letter) must be unique; a unit test checks it.
+
+### With the plugin platform on (`--noop-plugin`)
+
+For backends that have the plugin platform, `--noop-plugin` runs the same
+golden suite with [`golden-noop`](golden/fixtures/plugins/golden-noop) on. That
+plugin subscribes to every core hook the cases' routes fire and hands each
+subject back unchanged, so every case must still match its snapshot: turning
+the platform on, with a plugin that does nothing, changes nothing a site ends
+up with. Run it once with plugins idle and once with `--noop-plugin`, against
+the same checkouts, before and after a change to the platform:
+
+```bash
+npm run test:parity:golden -- --fail-on-diff --nodejs <plugin branch> --php <plugin branch>
+npm run test:parity:golden -- --fail-on-diff --noop-plugin --nodejs <plugin branch> --php <plugin branch>
+```
+
+Both servers get `HAXCMS_PLUGIN_DIRS` (the fixture) and
+`HAXCMS_PLUGIN_SPEC_DIR`. A case only counts when each API leg's plugin
+registry (`GET /v1/plugins`) lists `golden-noop` as enabled and active, so a
+plugin that silently failed to load fails the case instead of passing it.
+
+`--throwing-plugin` does the same with
+[`golden-throw`](golden/fixtures/plugins/golden-throw), whose hooks all
+throw. The spec says a hook error is logged and the operation goes on (only
+a veto stops a write), so every case must still match: a broken plugin never
+changes or breaks a save. Each backend's plugin tests check that those
+throws really happen and are logged (`plugin-hook-errors.test.cjs`,
+`PluginHookErrorsTest`).
+
+| Flag                | Environment variable         | Meaning                                                                                         |
+| ------------------- | ---------------------------- | ----------------------------------------------------------------------------------------------- |
+| `--noop-plugin`     | `HAX_PARITY_NOOP_PLUGIN`     | run with the golden-noop plugin on                                                              |
+| `--throwing-plugin` | `HAX_PARITY_THROWING_PLUGIN` | run with the golden-throw plugin on                                                             |
+| `--plugin-spec`     | `HAX_PARITY_PLUGIN_SPEC`     | the plugin spec package (default: haxcms-nodejs's `node_modules/@haxtheweb/haxcms-plugin-spec`) |
+
 ## Generated inputs (fuzz)
 
 The sequences and the golden cases send inputs someone chose. `--fuzz`

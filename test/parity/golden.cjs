@@ -21,9 +21,36 @@ const { snapshot, compareSnapshots } = require("./snapshot.cjs");
 const { CASES } = require("./golden/cases.cjs");
 
 const SNAPSHOT_DIR = path.join(__dirname, "golden", "snapshots");
+// the fixture plugins a golden run can turn on: golden-noop (--noop-plugin,
+// every hook hands its subject back) and golden-throw (--throwing-plugin,
+// every hook throws)
+const PLUGIN_FIXTURES = path.join(__dirname, "golden", "fixtures", "plugins");
+function pluginFixtureDir(id) {
+  return path.join(PLUGIN_FIXTURES, id);
+}
+const NOOP_PLUGIN_DIR = pluginFixtureDir("golden-noop");
 // documents the import cases make their sites from
 const FIXTURE_DIR = path.join(__dirname, "golden", "fixtures", "import");
 const SITE_NAME = "SITE_NAME";
+const CLONE_NAME = "CLONE_NAME";
+
+// why a fixture plugin is not on for a site, from its plugins registry
+// (GET /v1/plugins), or "" when it is enabled and active
+function pluginProblem(r, id = "golden-noop") {
+  if (!r || r.status !== 200)
+    return "plugins registry answered " + (r ? r.status : "nothing");
+  const list = r.json && Array.isArray(r.json.data) ? r.json.data : [];
+  const entry = list.find((p) => p && p.id === id);
+  if (!entry) return id + " is not installed";
+  if (entry.enabled !== true || entry.status !== "active")
+    return (
+      id +
+      " is " +
+      (entry.status || "not active") +
+      (entry.reason ? " (" + entry.reason + ")" : "")
+    );
+  return "";
+}
 
 function selectCases(filter) {
   if (!filter) return CASES;
@@ -40,11 +67,53 @@ function selectCases(filter) {
 // what gets committed: the normalized snapshot without the run-specific list
 // of accepted normalizations (those are reported, not compared)
 function toGolden(snap) {
-  return {
+  const g = {
     manifest: snap.manifest,
     sequence: snap.sequence,
     pages: snap.pages,
   };
+  // only cases that ask for them carry these, so older snapshots keep their shape
+  for (const k of ["files", "clone", "extra"])
+    if (snap[k] !== undefined) g[k] = snap[k];
+  return g;
+}
+
+// replace a run's site names inside recorded values
+function renameIn(value, names) {
+  if (typeof value === "string") {
+    let out = value;
+    for (const [literal, placeholder] of Object.entries(names))
+      if (literal) out = out.split(literal).join(placeholder);
+    return out;
+  }
+  if (Array.isArray(value)) return value.map((v) => renameIn(v, names));
+  if (value && typeof value === "object")
+    return Object.fromEntries(
+      Object.entries(value).map(([k, v]) => [
+        renameIn(k, names),
+        renameIn(v, names),
+      ]),
+    );
+  return value;
+}
+
+// a leg's result for a case: its site (gone once archived), its clone,
+// and what it recorded along the way
+function legSnapshot(cfg, c, l) {
+  const names = { [l.siteName]: SITE_NAME };
+  if (l.cloneName) names[l.cloneName] = CLONE_NAME;
+  const opts = { strict: cfg.strict, replace: names, files: !!c.captureFiles };
+  const snap = l.archived
+    ? { manifest: null, sequence: [], pages: {}, accepted: [] }
+    : snapshot(l.siteDir, l.keyToId, opts);
+  if (l.cloneDir) snap.clone = toGolden(snapshot(l.cloneDir, l.keyToId, opts));
+  if (l.extra && Object.keys(l.extra).length) {
+    // page folders in an export are named by page id
+    const ids = Object.assign({}, names);
+    for (const [k, id] of Object.entries(l.keyToId)) if (id) ids[id] = k;
+    snap.extra = renameIn(l.extra, ids);
+  }
+  return snap;
 }
 
 function goldenPath(id) {
@@ -111,6 +180,24 @@ async function runCase(cfg, nodeInfo, c, runTag) {
         l.keyToId["L" + i] = it.id;
       });
   }
+  // with a fixture plugin on, the case only counts if the plugin really ran:
+  // each API leg must list it as enabled and active for this site
+  if (cfg.hookPlugin)
+    for (const l of legs) {
+      if (typeof l.call !== "function") continue;
+      const problem = pluginProblem(
+        await l.call("GET", "/v1/plugins"),
+        cfg.hookPlugin,
+      );
+      if (problem)
+        result.stepErrors.push({
+          leg: l.name,
+          step: 0,
+          type: cfg.hookPlugin,
+          status: "not-loaded",
+          detail: problem,
+        });
+    }
   for (const [n, step] of c.steps.entries()) {
     for (const l of legs) {
       let st;
@@ -131,11 +218,7 @@ async function runCase(cfg, nodeInfo, c, runTag) {
     }
   }
   const snaps = {};
-  for (const l of legs)
-    snaps[l.name] = snapshot(l.siteDir, l.keyToId, {
-      strict: cfg.strict,
-      replace: { [l.siteName]: SITE_NAME },
-    });
+  for (const l of legs) snaps[l.name] = legSnapshot(cfg, c, l);
   let golden = readGolden(c.id);
   if (cfg["update-golden"]) {
     golden = toGolden(snaps.nodejs);
@@ -258,11 +341,15 @@ async function runGolden(cfg, nodeInfo, log = console.log) {
 
 module.exports = {
   runGolden,
+  NOOP_PLUGIN_DIR,
+  pluginFixtureDir,
+  pluginProblem,
   runCase,
   stepFailed,
   summarizeGolden,
   selectCases,
   passed,
   toGolden,
+  renameIn,
   SNAPSHOT_DIR,
 };

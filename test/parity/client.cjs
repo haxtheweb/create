@@ -149,6 +149,26 @@ class HaxClient {
     return h;
   }
 
+  // a system API call (/system/api/v1/...) with the dashboard's headers
+  async system(method, specPath, body) {
+    return this.raw(method, "/system/api/v1" + specPath, {
+      headers: this.systemHeaders(),
+      body,
+    });
+  }
+
+  // a multipart site API call (file uploads): fetch sets the content type
+  // and boundary, so the JSON content-type header is left off
+  async siteForm(method, specPath, form) {
+    const headers = this.siteHeaders();
+    for (const k of Object.keys(headers))
+      if (k.toLowerCase() === "content-type") delete headers[k];
+    return this.raw(method, this.siteApiBasePath + specPath, {
+      headers,
+      body: form,
+    });
+  }
+
   async site(method, specPath, body) {
     // specPath is relative to /x/api, e.g. '/v1/items'
     return this.raw(method, this.siteApiBasePath + specPath, {

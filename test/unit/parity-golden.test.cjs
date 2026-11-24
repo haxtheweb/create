@@ -13,13 +13,18 @@ const {
   stepFailed,
   summarizeGolden,
   toGolden,
+  renameIn,
+  pluginProblem,
+  pluginFixtureDir,
+  NOOP_PLUGIN_DIR,
   SNAPSHOT_DIR,
 } = require("../parity/golden.cjs");
-const { snapshot } = require("../parity/snapshot.cjs");
+const { snapshot, captureFiles } = require("../parity/snapshot.cjs");
 const { loadConfig } = require("../parity/config.cjs");
 const { OpGenerator } = require("../parity/ops.cjs");
 const {
   GOLDEN_OP_TYPES,
+  listZipEntries,
   buildOutlineItems,
   resolveKeys,
 } = require("../parity/legs.cjs");
@@ -86,13 +91,33 @@ test("every case has a committed snapshot with nothing run-specific in it", () =
     assert.ok(fs.existsSync(p), "missing snapshot for " + c.id);
     const raw = fs.readFileSync(p, "utf8");
     const golden = JSON.parse(raw);
-    assert.deepEqual(Object.keys(golden).sort(), [
-      "manifest",
-      "pages",
-      "sequence",
-    ]);
-    assert.equal(golden.manifest.metadata.site.name, "SITE_NAME", c.id);
-    assert.equal(golden.manifest.id, "SITE_ID", c.id);
+    const keys = Object.keys(golden).sort();
+    for (const k of ["manifest", "pages", "sequence"])
+      assert.ok(keys.includes(k), c.id + " has " + k);
+    for (const k of keys)
+      assert.ok(
+        ["manifest", "pages", "sequence", "files", "clone", "extra"].includes(
+          k,
+        ),
+        c.id + ": unexpected key " + k,
+      );
+    // a case only records files when it asks to
+    assert.equal("files" in golden, !!c.captureFiles, c.id + " files");
+    const archived = c.steps.some((s) => s.type === "archiveSite");
+    if (archived) {
+      // the site is gone; what the case shows is where it went
+      assert.equal(golden.manifest, null, c.id);
+      assert.ok(golden.extra && golden.extra.archive, c.id);
+    } else {
+      assert.equal(golden.manifest.metadata.site.name, "SITE_NAME", c.id);
+      assert.equal(golden.manifest.id, "SITE_ID", c.id);
+    }
+    if (golden.clone)
+      assert.equal(
+        golden.clone.manifest.metadata.site.name,
+        "CLONE_NAME",
+        c.id,
+      );
     // no uuids, absolute paths, timestamps or run tags
     assert.doesNotMatch(raw, /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-/i, c.id);
     assert.doesNotMatch(raw, /"(created|updated)":/, c.id);
@@ -101,6 +126,124 @@ test("every case has a committed snapshot with nothing run-specific in it", () =
     for (const key of golden.sequence)
       assert.ok(/^L\d+$/.test(key), `${c.id}: ${key} is a logical key`);
   }
+});
+
+test("cases make their sites under distinct names", () => {
+  // golden.cjs names each case's site from the number before the first dash,
+  // so two cases with the same number would share (and clash on) one site
+  const prefixes = CASES.map((c) => c.id.split("-")[0]);
+  assert.equal(new Set(prefixes).size, prefixes.length);
+});
+
+test("hooked-operation cases run on the API legs and use known fixtures", () => {
+  const hooked = new Set(GOLDEN_OP_TYPES.slice(2));
+  for (const c of CASES)
+    for (const s of c.steps) {
+      if (hooked.has(s.type)) assert.equal(c.legs, "api", c.id);
+      if (s.fixture)
+        assert.ok(
+          fs.existsSync(
+            path.join(
+              __dirname,
+              "..",
+              "parity",
+              "golden",
+              "fixtures",
+              "files",
+              s.fixture,
+            ),
+          ),
+          c.id + ": fixture " + s.fixture,
+        );
+    }
+});
+
+test("listZipEntries reads the names in a zip's central directory", () => {
+  // a zip with two stored entries, built by hand
+  const entry = (name, data) => {
+    const n = Buffer.from(name);
+    const local = Buffer.alloc(30);
+    local.writeUInt32LE(0x04034b50, 0);
+    local.writeUInt32LE(data.length, 18);
+    local.writeUInt32LE(data.length, 22);
+    local.writeUInt16LE(n.length, 26);
+    return { n, local: Buffer.concat([local, n, data]), size: data.length };
+  };
+  const a = entry("site.json", Buffer.from("{}"));
+  const b = entry("pages/x/index.html", Buffer.from("<p></p>"));
+  const central = (e, offset) => {
+    const c = Buffer.alloc(46);
+    c.writeUInt32LE(0x02014b50, 0);
+    c.writeUInt32LE(e.size, 20);
+    c.writeUInt32LE(e.size, 24);
+    c.writeUInt16LE(e.n.length, 28);
+    c.writeUInt32LE(offset, 42);
+    return Buffer.concat([c, e.n]);
+  };
+  const cd = Buffer.concat([central(a, 0), central(b, a.local.length)]);
+  const eocd = Buffer.alloc(22);
+  eocd.writeUInt32LE(0x06054b50, 0);
+  eocd.writeUInt16LE(2, 8);
+  eocd.writeUInt16LE(2, 10);
+  eocd.writeUInt32LE(cd.length, 12);
+  eocd.writeUInt32LE(a.local.length + b.local.length, 16);
+  const zip = Buffer.concat([a.local, b.local, cd, eocd]);
+  assert.deepEqual(listZipEntries(zip), ["site.json", "pages/x/index.html"]);
+  assert.throws(() => listZipEntries(Buffer.from("not a zip at all, sorry")));
+});
+
+test("captureFiles names fixtures, drops uuids and dates from records", () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "golden-files-"));
+  fs.mkdirSync(path.join(dir, "files", "sub"), { recursive: true });
+  fs.copyFileSync(
+    path.join(
+      __dirname,
+      "..",
+      "parity",
+      "golden",
+      "fixtures",
+      "files",
+      "pink.png",
+    ),
+    path.join(dir, "files", "sub", "a.png"),
+  );
+  fs.writeFileSync(path.join(dir, "files", "b.txt"), "hi");
+  fs.writeFileSync(
+    path.join(dir, "files", "files.json"),
+    JSON.stringify({
+      schema: "HAXCMS-FILE-SCHEMA-V1",
+      data: {
+        files: [
+          {
+            path: "files/sub/a.png",
+            name: "a.png",
+            uuid: "u-1",
+            dateCreated: 5,
+            size: 74,
+          },
+        ],
+      },
+    }),
+  );
+  const out = captureFiles(dir, {}, []);
+  assert.deepEqual(out.onDisk, {
+    "b.txt": "other",
+    "sub/a.png": "fixture:pink.png",
+  });
+  assert.deepEqual(out.records, [
+    { path: "files/sub/a.png", name: "a.png", size: 74 },
+  ]);
+  fs.rmSync(dir, { recursive: true, force: true });
+});
+
+test("renameIn swaps run names in keys and values", () => {
+  assert.deepEqual(
+    renameIn(
+      { "run1.zip": ["pages/id9/index.html", 3] },
+      { run1: "SITE_NAME", id9: "L1" },
+    ),
+    { "SITE_NAME.zip": ["pages/L1/index.html", 3] },
+  );
 });
 
 test("no snapshot is left over from a removed case", () => {
@@ -323,4 +466,94 @@ test("outlineRaw swaps @keys for ids and leaves everything else", () => {
     [{ id: "a", parent: "@L9", n: 1, x: null }, ["a"], "   "],
   );
   assert.equal(resolveKeys("L1", idOf), "L1");
+});
+
+test("--noop-plugin is opt-in and the spec defaults to haxcms-nodejs's copy", () => {
+  const plain = loadConfig([], {});
+  assert.equal(plain["noop-plugin"], false);
+  const on = loadConfig(["--golden", "--noop-plugin", "--nodejs", "/x/n"], {});
+  assert.equal(on["noop-plugin"], true);
+  assert.equal(
+    on["plugin-spec"],
+    path.join("/x/n", "node_modules", "@haxtheweb", "haxcms-plugin-spec"),
+  );
+  const env = loadConfig([], {
+    HAX_PARITY_NOOP_PLUGIN: "1",
+    HAX_PARITY_PLUGIN_SPEC: "/spec",
+  });
+  assert.equal(env["noop-plugin"], true);
+  assert.equal(env["plugin-spec"], "/spec");
+});
+
+test("a noop run only counts when golden-noop is enabled and active", () => {
+  const reply = (status, data) => ({ status, json: { status, data } });
+  const entry = (over) =>
+    Object.assign({ id: "golden-noop", enabled: true, status: "active" }, over);
+  assert.equal(pluginProblem(reply(200, [entry()])), "");
+  assert.match(pluginProblem(reply(404, null)), /answered 404/);
+  assert.match(pluginProblem(null), /answered nothing/);
+  assert.match(pluginProblem(reply(200, [])), /not installed/);
+  assert.match(
+    pluginProblem(
+      reply(200, [
+        entry({ enabled: false, status: "available", reason: "off" }),
+      ]),
+    ),
+    /available \(off\)/,
+  );
+});
+
+test("--throwing-plugin picks golden-throw and never runs with --noop-plugin", () => {
+  assert.equal(
+    loadConfig(["--throwing-plugin"], {}).hookPlugin,
+    "golden-throw",
+  );
+  assert.equal(loadConfig(["--noop-plugin"], {}).hookPlugin, "golden-noop");
+  assert.equal(loadConfig([], {}).hookPlugin, "");
+  assert.throws(
+    () => loadConfig(["--noop-plugin", "--throwing-plugin"], {}),
+    /one at a time/,
+  );
+});
+
+test("golden-throw subscribes to the same hooks as golden-noop and throws from each", () => {
+  const hooksOf = (id) =>
+    [
+      ...fs
+        .readFileSync(path.join(pluginFixtureDir(id), "plugin.yaml"), "utf8")
+        .matchAll(/^ {2}- name: (\S+)$/gm),
+    ].map((m) => m[1]);
+  assert.deepEqual(hooksOf("golden-throw"), hooksOf("golden-noop"));
+  const php = fs.readFileSync(
+    path.join(pluginFixtureDir("golden-throw"), "src", "php", "Plugin.php"),
+    "utf8",
+  );
+  assert.equal(
+    (php.match(/throw new RuntimeException/g) || []).length,
+    hooksOf("golden-throw").length,
+  );
+  assert.doesNotMatch(php, /return \$ctx->subject/);
+});
+
+test("the golden-noop fixture lists the same hooks in its manifest and both runtimes", () => {
+  const read = (f) => fs.readFileSync(path.join(NOOP_PLUGIN_DIR, f), "utf8");
+  const manifest = [
+    ...read("plugin.yaml").matchAll(/^ {2}- name: (\S+)$/gm),
+  ].map((m) => m[1]);
+  const node = [
+    ...read("src/nodejs/index.js").matchAll(/^ {4}"([^"]+)": same,$/gm),
+  ].map((m) => m[1]);
+  const camel = (h) =>
+    h
+      .split(/[.-]/)
+      .map((x, i) => (i ? x[0].toUpperCase() + x.slice(1) : x))
+      .join("");
+  const php = [
+    ...read("src/php/Plugin.php").matchAll(
+      /public function (\w+)\(\$ctx\) \{\n {4}return \$ctx->subject;/g,
+    ),
+  ].map((m) => m[1]);
+  assert.ok(manifest.length > 40, "subscribes to the core hooks");
+  assert.deepEqual(node, manifest);
+  assert.deepEqual(php, manifest.map(camel));
 });

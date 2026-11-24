@@ -21,6 +21,18 @@
 //   outlineRaw:  a hand-written items payload, for refused saves. "@L1" is
 //                replaced with that page's id.
 //
+// Hooked-operation cases (the routes the plugin platform wraps in hooks) run
+// on the API legs and can record more than site.json and the pages:
+//   sitePatch:       a settings save, PATCH <path> with <body>
+//   editBlocks:      PATCH /v1/content/<page>/blocks
+//   uploadFile, fileOp, deleteFile, replaceFile: the files API, with
+//                    documents from fixtures/files/; captureFiles: true adds
+//                    the files/ folder (paths + hashes) and files.json records
+//   restoreRevision: restore the revision `back` saves before the newest
+//   cloneSite:       the clone is snapshotted too (CLONE_NAME)
+//   archiveSite:     records where the site went (the site itself is gone)
+//   downloadSite:    records the entries of the zip the export link serves
+//
 // Import cases (importFile) make the site from a document in
 // fixtures/import/ instead of the default starter: the API legs upload it to
 // its system import route and create the site from the items it returns (the
@@ -741,6 +753,268 @@ const CASES = [
         parent: "L1",
       },
       { type: "deletePage", key: "L2" },
+    ],
+  },
+
+  // --- Operations the plugin platform wraps in hooks ---
+  // 2. Site settings
+  {
+    id: "09-update-site-title",
+    title: "Update the site title",
+    legs: "api",
+    steps: [
+      {
+        type: "sitePatch",
+        path: "/v1/site",
+        body: { manifest: { site: { "manifest-title": "Golden course" } } },
+      },
+    ],
+  },
+  {
+    id: "11-theme-settings",
+    title: "Update theme settings (accent color, icon)",
+    legs: "api",
+    steps: [
+      {
+        type: "sitePatch",
+        path: "/v1/site/appearance",
+        body: {
+          manifest: {
+            theme: {
+              "manifest-metadata-theme-variables-cssVariable":
+                "--simple-colors-default-theme-pink-7",
+              "manifest-metadata-theme-variables-icon": "icons:star",
+            },
+          },
+        },
+      },
+    ],
+  },
+  {
+    id: "12-license-and-author",
+    title: "Update the site license and author metadata",
+    legs: "api",
+    steps: [
+      {
+        type: "sitePatch",
+        path: "/v1/site/seo",
+        body: {
+          author: {
+            license: "by-sa",
+            name: "Golden Author",
+            email: "author@example.org",
+          },
+        },
+      },
+    ],
+  },
+  {
+    id: "13-site-features",
+    title: "Turn site features on and off",
+    legs: "api",
+    steps: [
+      {
+        type: "sitePatch",
+        path: "/v1/site/platform",
+        body: {
+          platform: { features: { insights: false, contentMap: false } },
+        },
+      },
+    ],
+  },
+  {
+    id: "13b-editor-audience",
+    title: "Switch the editor to the expert audience",
+    legs: "api",
+    steps: [
+      {
+        type: "sitePatch",
+        path: "/v1/site/editor",
+        body: { platform: { audience: "expert" } },
+      },
+    ],
+  },
+  {
+    id: "13c-allowed-blocks",
+    title: "Limit the blocks authors can add",
+    legs: "api",
+    steps: [
+      {
+        type: "sitePatch",
+        path: "/v1/site/blocks",
+        body: { platform: { allowedBlocks: ["video-player", "simple-cta"] } },
+      },
+    ],
+  },
+  {
+    id: "14b-seo-description",
+    title: "Update SEO and manifest metadata: description",
+    legs: "api",
+    steps: [
+      {
+        type: "sitePatch",
+        path: "/v1/site/seo",
+        body: { seo: { description: "A golden description" } },
+      },
+    ],
+  },
+  // 4. Page content
+  {
+    id: "24b-edit-content-blocks",
+    title: "Change a block's attributes through the content blocks API",
+    legs: "api",
+    steps: [
+      {
+        type: "addPage",
+        key: "L1",
+        title: "Blocks",
+        content:
+          '<p>Hello</p><simple-cta link="https://example.org/start" label="Start"></simple-cta>',
+      },
+      {
+        type: "editBlocks",
+        key: "L1",
+        ops: [
+          {
+            tag: "simple-cta",
+            index: 0,
+            before:
+              '<simple-cta link="https://example.org/start" label="Start"></simple-cta>',
+            op: "setAttributes",
+            set: { label: "Begin", link: "https://example.org/begin" },
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "25b-embed-file",
+    title: "Save content with an embedded image",
+    legs: "api",
+    captureFiles: true,
+    steps: [
+      { type: "uploadFile", fixture: "pink.png", page: "L0" },
+      {
+        type: "editContent",
+        key: "L0",
+        content: '<p><img src="files/pink.png" alt="A pink square"></p>',
+      },
+    ],
+  },
+  // 6. Files and assets
+  {
+    id: "39-upload-file",
+    title: "Upload a file",
+    legs: "api",
+    captureFiles: true,
+    steps: [{ type: "uploadFile", fixture: "pink.png" }],
+  },
+  {
+    id: "39b-upload-same-name-twice",
+    title: "Upload two files with the same name (the second gets a suffix)",
+    legs: "api",
+    captureFiles: true,
+    steps: [
+      { type: "uploadFile", fixture: "pink.png", name: "square.png" },
+      { type: "uploadFile", fixture: "teal.png", name: "square.png" },
+    ],
+  },
+  {
+    id: "40-upload-unicode-filename",
+    title: "Upload a file with a Unicode filename",
+    legs: "api",
+    captureFiles: true,
+    // a browser sends the name as raw UTF-8; spaces become dashes on both
+    // backends (the canonical rule)
+    steps: [
+      { type: "uploadFile", fixture: "pink.png", name: "café ñandú.png" },
+    ],
+  },
+  {
+    id: "41-replace-file",
+    title: "Replace an existing file",
+    legs: "api",
+    captureFiles: true,
+    steps: [
+      { type: "uploadFile", fixture: "pink.png" },
+      { type: "replaceFile", name: "pink.png", fixture: "teal.png" },
+    ],
+  },
+  {
+    id: "41b-rename-file",
+    title: "Rename a file",
+    legs: "api",
+    captureFiles: true,
+    steps: [
+      { type: "uploadFile", fixture: "pink.png" },
+      {
+        type: "fileOp",
+        name: "pink.png",
+        operation: "rename",
+        newName: "renamed",
+      },
+    ],
+  },
+  {
+    id: "41c-duplicate-file",
+    title: "Duplicate a file",
+    legs: "api",
+    captureFiles: true,
+    steps: [
+      { type: "uploadFile", fixture: "pink.png" },
+      { type: "fileOp", name: "pink.png", operation: "duplicate" },
+    ],
+  },
+  {
+    id: "42-delete-file",
+    title: "Delete a file",
+    legs: "api",
+    captureFiles: true,
+    steps: [
+      { type: "uploadFile", fixture: "pink.png" },
+      { type: "uploadFile", fixture: "teal.png" },
+      { type: "deleteFile", name: "pink.png" },
+    ],
+  },
+  // 7. Deletion and recovery
+  {
+    id: "45-restore-revision",
+    title: "Restore a page to an earlier revision",
+    legs: "api",
+    steps: [
+      { type: "addPage", key: "L1", title: "Draft", content: "<p>First</p>" },
+      { type: "editContent", key: "L1", content: "<p>Second</p>" },
+      { type: "restoreRevision", key: "L1", back: 1 },
+    ],
+  },
+  {
+    id: "46-archive-site",
+    title: "Delete (archive) a site",
+    legs: "api",
+    steps: [
+      { type: "addPage", key: "L1", title: "Unit", content: "<p>u</p>" },
+      { type: "archiveSite" },
+    ],
+  },
+  // 8. Publishing and export
+  {
+    id: "48-export-zip",
+    title: "Export the site as a zip",
+    legs: "api",
+    steps: [
+      { type: "addPage", key: "L1", title: "Unit", content: "<p>u</p>" },
+      { type: "downloadSite" },
+    ],
+  },
+  {
+    id: "49-clone-site",
+    title: "Clone the site",
+    legs: "api",
+    captureFiles: true,
+    steps: [
+      { type: "addPage", key: "L1", title: "Unit", content: "<p>u</p>" },
+      { type: "uploadFile", fixture: "pink.png", page: "L1" },
+      { type: "cloneSite" },
     ],
   },
 ];
