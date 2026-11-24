@@ -162,7 +162,8 @@ jobs:
           persist-credentials: false
       - name: Site folder meets the contract (managed level)
         run: |
-          (cd json-outline-schema && npm ci --no-audit --no-fund --omit=dev --ignore-scripts)
+          # json-outline-schema has no lockfile, so npm ci cannot run there
+          (cd json-outline-schema && npm install --no-package-lock --no-audit --no-fund --omit=dev --ignore-scripts)
           node test/contract/site-contract.cjs --jos json-outline-schema \
             --level managed --exhaustive "$SITE_DIR"
 

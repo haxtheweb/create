@@ -182,7 +182,8 @@ jobs:
         if: always()
         working-directory: create
         run: |
-          (cd "$GITHUB_WORKSPACE/json-outline-schema" && npm ci --no-audit --no-fund --omit=dev --ignore-scripts)
+          # json-outline-schema has no lockfile, so npm ci cannot run there
+          (cd "$GITHUB_WORKSPACE/json-outline-schema" && npm install --no-package-lock --no-audit --no-fund --omit=dev --ignore-scripts)
           node test/contract/site-contract.cjs --jos "$GITHUB_WORKSPACE/json-outline-schema" \
             --level managed --exhaustive --new --report-only \
             --parity-out "$HAX_PARITY_OUT" \

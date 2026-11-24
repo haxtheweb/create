@@ -7,7 +7,6 @@ import * as p from "@clack/prompts";
 import * as ejs from "ejs";
 import color from "picocolors";
 import { dump, load } from "js-yaml";
-import Twig from "twig";
 
 import { parse } from "node-html-parser";
 import { merlinSays, communityStatement } from "../statements.js";
@@ -160,51 +159,7 @@ export function rsyncArgError(value, optionName) {
   return undefined;
 }
 
-let twigConstantFunctionRegistered = false;
 let haxcmsNodejsCli = null;
-
-export function ensureTwigConstantFunction() {
-  if (twigConstantFunctionRegistered) {
-    return;
-  }
-  twigConstantFunctionRegistered = true;
-  try {
-    if (Twig && typeof Twig.extendFunction === "function") {
-      // Security (twig-constant-allowlist): previously this read process.env[name] and
-      // globalThis[name], which exposed arbitrary secrets/globals to any Twig
-      // template rendered in this process. The only template usage is the
-      // service-worker.js template's constant('JSON_PRETTY_PRINT'), a PHP
-      // constant ported from the PHP HAXcms. Resolve that handful from a
-      // static allowlist and return null for anything else — no env/global
-      // access.
-      Twig.extendFunction("constant", function constantLookup(name) {
-        if (typeof name !== "string") {
-          return null;
-        }
-        if (Object.prototype.hasOwnProperty.call(TWIG_PHP_CONSTANTS, name)) {
-          return TWIG_PHP_CONSTANTS[name];
-        }
-        return null;
-      });
-    }
-  } catch {
-    // non-fatal: Twig constant() helper simply won't be available
-  }
-}
-
-// Static allowlist of PHP constants the Twig templates reference (ported from
-// PHP HAXcms). Values match the standard PHP bitmask values.
-const TWIG_PHP_CONSTANTS = {
-  JSON_PRETTY_PRINT: 128,
-  JSON_HEX_TAG: 1,
-  JSON_HEX_AMP: 2,
-  JSON_HEX_APOS: 4,
-  JSON_HEX_QUOT: 8,
-  JSON_FORCE_OBJECT: 16,
-  JSON_NUMERIC_CHECK: 32,
-  JSON_UNESCAPED_SLASHES: 64,
-  JSON_UNESCAPED_UNICODE: 256,
-};
 
 async function getHaxcmsNodejsCli() {
   if (!haxcmsNodejsCli) {
@@ -306,7 +261,7 @@ async function invokeRoute(
 let commitContextLib = null;
 try {
   // optional: only in haxcms-nodejs releases with commit op codes
-  // eslint-disable-next-line n/no-missing-require
+
   commitContextLib = require("@haxtheweb/haxcms-nodejs/dist/lib/commitContext.js");
 } catch {
   commitContextLib = null;
@@ -318,7 +273,7 @@ try {
 let staticPagesLib = null;
 try {
   // optional: only in haxcms-nodejs releases with the static page renderer
-  // eslint-disable-next-line n/no-missing-require
+
   staticPagesLib = require("@haxtheweb/haxcms-nodejs/dist/lib/staticPages.js");
 } catch {
   staticPagesLib = null;
@@ -1831,10 +1786,6 @@ export function formatAgentOrientation(agent) {
 }
 
 export async function siteCommandDetected(commandRun) {
-  // operations on an existing site (site:theme, site:rebuild, node edits...)
-  // re-render managed files like service-worker.js, whose template calls
-  // Twig's PHP constant(); register it here too, not only on site creation
-  ensureTwigConstantFunction();
   let activeHaxsite = await systemStructureContext();
   let actionAssigned = false;
   // default to status unless already set so we don't issue a create in a create
@@ -5824,7 +5775,6 @@ export async function siteProcess(commandRun, project, port = "3000") {
     }
   }
   HAXCMS.cliWritePath = `${project.path}`;
-  ensureTwigConstantFunction();
   let res = await invokeRoute(
     allRoutesLib.allRoutes.system.map.post["sites"],
     siteRequest,

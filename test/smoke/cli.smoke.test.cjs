@@ -885,14 +885,15 @@ test(
         ],
         parentDir,
       );
-      // new site: createSite's defaults (clean-two, "Welcome", no build)
+      // new site: createSite's defaults (clean-two, no build), starting with
+      // the default-starter skeleton's first page, as the dashboard does
       let manifest = readSite();
       assert.equal(manifest.metadata.theme.element, "clean-two");
       assert.equal(manifest.metadata.build, undefined, "no build block");
       assert.notEqual(manifest.description, "own course");
       assert.deepEqual(
         manifest.items.map((item) => item.title),
-        ["Welcome"],
+        ["Home"],
       );
       for (const title of ["Alpha", "Beta", "Gamma"]) {
         run(
@@ -949,9 +950,19 @@ test(
       assert.equal(topGamma.indent, 0);
       assert.equal(topGamma.order, byId(alpha).order + 1);
       // the API's setParent appends even when the parent does not change:
-      // --parent=null on a top-level page moves it after its siblings
+      // --parent=null on a top-level page moves it after its siblings, which
+      // close up behind it (sibling orders stay 0..n-1)
       edit(`--item-id=${alpha}`, "--parent=null");
-      assert.equal(byId(alpha).order, topGamma.order + 1);
+      const topOrders = readSite()
+        .items.filter((item) => !item.parent)
+        .map((item) => item.order)
+        .sort((a, b) => a - b);
+      assert.deepEqual(
+        topOrders,
+        topOrders.map((_, i) => i),
+      );
+      assert.equal(byId(alpha).order, topOrders.length - 1, "alpha is last");
+      assert.equal(byId(alpha).order, byId(gamma).order + 1);
       // same for the current parent id
       edit(`--item-id=${gamma}`, `--parent=${alpha}`);
       edit(`--item-id=${beta}`, `--parent=${alpha}`);

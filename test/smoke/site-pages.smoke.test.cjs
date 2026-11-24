@@ -80,9 +80,19 @@ test("node:add --parent resolves a slug to the parent's id", opts, () => {
   }
 });
 
-test("node:add --order places the page at that order", opts, () => {
+test("node:add --order past the last sibling lands at the end", opts, () => {
+  // sibling orders stay gapless (0..n-1), as in both backends: an order
+  // beyond the end places the page last instead of leaving a gap
   ok(["node:add", "--title", "Ordered", "--slug", "ordered", "--order", "7"]);
-  assert.equal(itemBySlug(readSite(site()), "ordered").order, 7);
+  const roots = readSite(site())
+    .items.filter((item) => !item.parent)
+    .map((item) => item.order)
+    .sort((a, b) => a - b);
+  assert.equal(itemBySlug(readSite(site()), "ordered").order, roots.length - 1);
+  assert.deepEqual(
+    roots,
+    roots.map((_, i) => i),
+  );
 });
 
 test("node:edit flips published / hideInMenu and sets order", opts, () => {
