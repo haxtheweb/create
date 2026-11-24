@@ -171,28 +171,30 @@ function quietAwareSpinner(commandRun) {
 const DOCS_SCRIPT = "scripts/extract-element-docs.mjs";
 
 /**
- * @description The version of @haxtheweb/create that is running, read from
- * its own package.json. The CLI and the @haxtheweb/* elements are released
- * together under one version, so this is the version scaffolds should depend
- * on. Templates write it as "^<%= haxVersion %>": create 26.11.0 scaffolds
- * "^26.11.0", and the range moves with every release (27.x included) without
- * anyone editing the templates.
+ * @description The @haxtheweb/* release line of the running CLI, as the
+ * floor for scaffolded dependencies: create's own major.minor with patch 0.
+ * The CLI and the elements are released together by major.minor, but patch
+ * releases are not shared (create 26.8.1 was a CLI-only hotfix while the
+ * elements stayed at 26.8.0), so the patch is dropped. Templates write it as
+ * "^<%= haxVersion %>": create 26.11.x scaffolds "^26.11.0", which every
+ * element in that release satisfies, and the range moves with each release
+ * (27.x included) without anyone editing the templates.
  * @param {string} [pkgPath] package.json to read; defaults to the CLI's own
  * (__dirname is lib/programs in both src/ and dist/, so ../../../package.json
  * is the package root either way)
- * @returns {string} bare x.y.z version
+ * @returns {string} x.y.0
  */
 export function haxVersion(
   pkgPath = path.join(__dirname, "../../../package.json"),
 ) {
   const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf8"));
-  const match = /^\d+\.\d+\.\d+/.exec(String(pkg.version || ""));
+  const match = /^(\d+)\.(\d+)\.\d+/.exec(String(pkg.version || ""));
   if (!match) {
     throw new Error(
       `@haxtheweb/create has no usable version in ${pkgPath}: ${pkg.version}`,
     );
   }
-  return match[0];
+  return `${match[1]}.${match[2]}.0`;
 }
 
 /**
