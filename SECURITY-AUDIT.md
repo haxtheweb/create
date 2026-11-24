@@ -11,7 +11,7 @@ Entry point for recurring security audits of this repo. `create` is one of five 
 ## Scope
 
 - `src/create.js` — option validation and dispatch; the `--npm-client` allowlist lives here
-- `src/lib/utils.js` — `validateNpmClient`, `rejectShellMetacharacters`, `validateDomain`, `validateWebcomponentName`, `interactiveExec`
+- `src/lib/utils.js` — `validateNpmClient`, `rejectShellMetacharacters`, `validateDomain`, `validateSiteUrl`, `validateWebcomponentName`, `interactiveExec`
 - `src/lib/site-security.js` — `isSSRFError`, `sanitizeIfString`, `resolveLocalPath` (path traversal / null bytes)
 - `src/lib/programs/**` — `site.js` is the largest attack surface (import, publish, scraping, Twig `constant()` allowlist, skeletons); then `webcomponent.js`, `audit.js`, `skills.js`, `party.js`
 - `src/templates/**` — ships into end users' projects; scaffolded CI workflows are downstream supply chain (SHA-pin actions, correct token input names)

@@ -82,7 +82,19 @@ test("node:add --parent resolves a slug to the parent's id", opts, () => {
 
 test("node:add --order places the page at that order", opts, () => {
   ok(["node:add", "--title", "Ordered", "--slug", "ordered", "--order", "7"]);
-  assert.equal(itemBySlug(readSite(site()), "ordered").order, 7);
+  // an order past the end places the page last among its siblings.
+  // haxcms-nodejs main keeps sibling orders 0..n-1, so it holds the last
+  // slot rather than the literal 7 earlier releases stored.
+  const manifest = readSite(site());
+  const ordered = itemBySlug(manifest, "ordered");
+  const siblingOrders = manifest.items
+    .filter((item) => item.parent === ordered.parent && item !== ordered)
+    .map((item) => item.order);
+  assert.ok(
+    siblingOrders.every((order) => order < ordered.order),
+    `ordered (${ordered.order}) sorts after ${siblingOrders.join(",")}`,
+  );
+  assert.ok(ordered.order <= 7);
 });
 
 test("node:edit flips published / hideInMenu and sets order", opts, () => {

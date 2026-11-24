@@ -12,6 +12,7 @@ const {
   validateNpmClient,
   rejectShellMetacharacters,
   validateDomain,
+  validateSiteUrl,
   validateTemplateName,
   listTemplateNames,
   validateWebcomponentName,
@@ -118,6 +119,44 @@ test("validateDomain rejects a leading dash (argument injection)", () => {
   assert.throws(() => validateDomain("--help"), /cannot start with "-"/);
   assert.throws(() => validateDomain("-x.example.com"), /cannot start with/);
   assert.equal(validateDomain("x-y.example.com"), "x-y.example.com");
+});
+
+test("validateSiteUrl accepts the Pages base_url the deploy workflow passes", () => {
+  // actions/configure-pages base_url for a custom domain and a project site
+  assert.equal(validateSiteUrl("https://btopro.com"), "https://btopro.com/");
+  assert.equal(
+    validateSiteUrl("https://haxtheweb.github.io/haxtheweb.org"),
+    "https://haxtheweb.github.io/haxtheweb.org",
+  );
+  assert.equal(
+    validateSiteUrl("http://localhost:8080/site/"),
+    "http://localhost:8080/site/",
+  );
+});
+
+test("validateSiteUrl hands bare hostnames and empty values to validateDomain", () => {
+  assert.equal(validateSiteUrl("example.com"), "example.com");
+  assert.equal(validateSiteUrl(""), "");
+  assert.equal(validateSiteUrl(undefined), undefined);
+  assert.throws(() => validateSiteUrl("example.com; rm"), /Invalid --domain/);
+  assert.throws(() => validateSiteUrl("--help"), /cannot start with "-"/);
+  assert.throws(() => validateSiteUrl("ftp://example.com"), /Invalid --domain/);
+});
+
+test("validateSiteUrl rejects credentials, queries, fragments and unsafe paths", () => {
+  for (const bad of [
+    "https://user:pw@example.com/",
+    "https://example.com/?x=1",
+    "https://example.com/#top",
+    "https://example.com/a b",
+    "https://example.com/$(id)",
+    "https://example.com/a;rm",
+    "https://example.com/'x'",
+    "https://-x.example.com/",
+    "https://",
+  ]) {
+    assert.throws(() => validateSiteUrl(bad), /Invalid --domain/, bad);
+  }
 });
 
 // --- --template allowlist ---

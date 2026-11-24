@@ -137,6 +137,7 @@
   "utilShellMetacharacters": "Invalid --{option} value: shell metacharacters are not allowed.",
   "utilLeadingDash": "Invalid --{option} value: it cannot start with \"-\".",
   "utilInvalidDomain": "Invalid --domain value: only letters, digits, dots, hyphens, and colons are allowed.",
+  "utilInvalidSiteUrl": "Invalid --domain value: use a hostname or an http(s) address with no login, query or fragment, such as https://owner.github.io/repo.",
   "utilInvalidTemplate": "Invalid --{option} value: choose one of {choices}.",
   "utilNameRequired": "Name is required (Enter accepts default)",
   "utilNameReserved": "Reserved name {name} cannot be used",
