@@ -547,6 +547,50 @@ export function validateDomain(value) {
   return value;
 }
 
+// Path of a published site address: unreserved URL characters and "/" only
+// (GitHub Pages project sites live at https://owner.github.io/repo/).
+const SITE_URL_PATH_RE = /^[A-Za-z0-9._~\-/]*$/;
+
+/**
+ * Validate a --domain value for site:build-static, which also takes the
+ * full address a static host serves the site at (actions/configure-pages
+ * hands the deploy workflow https://owner.github.io/repo). A bare hostname
+ * goes through validateDomain. A URL must be http(s) with no credentials,
+ * query or fragment, a host in the hostname charset and a path of unreserved
+ * characters, and is returned as protocol//host/path.
+ * Security (validated-cli-options): only for site:build-static, which never
+ * puts the value in a shell string; publish targets keep validateDomain.
+ * @param {string} value
+ * @returns {string}
+ */
+export function validateSiteUrl(value) {
+  if (value === undefined || value === null || value === "") {
+    return value;
+  }
+  if (typeof value !== "string" || !/^https?:\/\//i.test(value)) {
+    return validateDomain(value);
+  }
+  let url = null;
+  try {
+    url = new URL(value);
+  } catch {
+    url = null;
+  }
+  if (
+    !url ||
+    url.username ||
+    url.password ||
+    url.search ||
+    url.hash ||
+    !DOMAIN_RE.test(url.host) ||
+    url.host.charAt(0) === "-" ||
+    !SITE_URL_PATH_RE.test(url.pathname)
+  ) {
+    throw new Error(t("utilInvalidSiteUrl"));
+  }
+  return url.protocol + "//" + url.host + url.pathname;
+}
+
 // Security: --template picks a directory under src/templates/<type>/, so it
 // must be one of the shipped names, never a path. Resolved against the
 // templates root at call time so the allowlist can't drift from what ships.
