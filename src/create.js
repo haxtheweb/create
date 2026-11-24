@@ -77,6 +77,7 @@ import {
   rejectLeadingDash,
   hasNameSpecialCharacters,
   validateDomain,
+  validateSiteUrl,
   validateTemplateName,
 } from "./lib/utils.js";
 import * as haxcmsLib from "@haxtheweb/haxcms-nodejs/dist/lib/HAXCMS.js";
@@ -874,7 +875,15 @@ async function main() {
   // exploitable, without a full exec()->spawn() migration.
   try {
     if (commandRun.options.domain) {
-      commandRun.options.domain = validateDomain(commandRun.options.domain);
+      // site:build-static also takes the full published address (the Pages
+      // deploy workflow passes configure-pages' base_url); it never reaches
+      // a shell string, so it gets the URL-aware validator
+      commandRun.options.domain =
+        commandRun.command === "site" &&
+        commandRun.arguments &&
+        commandRun.arguments.action === "site:build-static"
+          ? validateSiteUrl(commandRun.options.domain)
+          : validateDomain(commandRun.options.domain);
     }
     rejectShellMetacharacters(commandRun.options.author, "author");
     rejectShellMetacharacters(commandRun.options.gitRepo, "git-repo");

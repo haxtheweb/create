@@ -885,14 +885,17 @@ test(
         ],
         parentDir,
       );
-      // new site: createSite's defaults (clean-two, "Welcome", no build)
+      // new site: createSite's defaults (clean-two, one starting page, no
+      // build). haxcms-nodejs main starts a site from the default-starter
+      // skeleton ("Home"); earlier releases add a "Welcome" page.
       let manifest = readSite();
       assert.equal(manifest.metadata.theme.element, "clean-two");
       assert.equal(manifest.metadata.build, undefined, "no build block");
       assert.notEqual(manifest.description, "own course");
-      assert.deepEqual(
-        manifest.items.map((item) => item.title),
-        ["Welcome"],
+      assert.equal(manifest.items.length, 1, "one starting page");
+      assert.ok(
+        ["Home", "Welcome"].includes(manifest.items[0].title),
+        `starting page is Home or Welcome, got ${manifest.items[0].title}`,
       );
       for (const title of ["Alpha", "Beta", "Gamma"]) {
         run(
@@ -951,7 +954,9 @@ test(
       // the API's setParent appends even when the parent does not change:
       // --parent=null on a top-level page moves it after its siblings
       edit(`--item-id=${alpha}`, "--parent=null");
-      assert.equal(byId(alpha).order, topGamma.order + 1);
+      // re-read gamma: haxcms-nodejs main renumbers siblings 0..n-1, so
+      // alpha leaving its slot moves gamma up one
+      assert.equal(byId(alpha).order, byId(gamma).order + 1);
       // same for the current parent id
       edit(`--item-id=${gamma}`, `--parent=${alpha}`);
       edit(`--item-id=${beta}`, `--parent=${alpha}`);

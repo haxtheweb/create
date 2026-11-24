@@ -13,7 +13,7 @@ Read this before writing tests or touching source so vocabulary and seams match.
 src/
 ├── create.js                      — CLI entrypoint; commander wiring, option validation, command dispatch
 ├── lib/
-│   ├── utils.js                   — pure helpers + security validators (validateNpmClient, rejectShellMetacharacters, validateDomain, validateWebcomponentName, dashToCamel, camelToDash, generateUUID, getTimeDifference, findAvailablePort, readAllFiles, writeConfigFile, readConfigFile, interactiveExec)
+│   ├── utils.js                   — pure helpers + security validators (validateNpmClient, rejectShellMetacharacters, validateDomain, validateSiteUrl, validateWebcomponentName, dashToCamel, camelToDash, generateUUID, getTimeDifference, findAvailablePort, readAllFiles, writeConfigFile, readConfigFile, interactiveExec)
 │   ├── site-security.js           — extracted security helpers (isSSRFError, sanitizeIfString, resolveLocalPath); importable without loading full site.js
 │   ├── logging.js                 — winston-based logger (log, commandString)
 │   ├── statements.js              — @clack visual statements (haxIntro, communityStatement, merlinSays)
