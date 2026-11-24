@@ -81,6 +81,7 @@ test("the monorepo template renders valid package.json with and without the step
     year: 2026,
     version: "1.0.0",
     className: "MyEl",
+    haxVersion: "26.11.0",
   };
   const withStep = JSON.parse(ejs.render(tpl, { ...locals, docsStep: true }));
   assert.match(

@@ -171,6 +171,31 @@ function quietAwareSpinner(commandRun) {
 const DOCS_SCRIPT = "scripts/extract-element-docs.mjs";
 
 /**
+ * @description The version of @haxtheweb/create that is running, read from
+ * its own package.json. The CLI and the @haxtheweb/* elements are released
+ * together under one version, so this is the version scaffolds should depend
+ * on. Templates write it as "^<%= haxVersion %>": create 26.11.0 scaffolds
+ * "^26.11.0", and the range moves with every release (27.x included) without
+ * anyone editing the templates.
+ * @param {string} [pkgPath] package.json to read; defaults to the CLI's own
+ * (__dirname is lib/programs in both src/ and dist/, so ../../../package.json
+ * is the package root either way)
+ * @returns {string} bare x.y.z version
+ */
+export function haxVersion(
+  pkgPath = path.join(__dirname, "../../../package.json"),
+) {
+  const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf8"));
+  const match = /^\d+\.\d+\.\d+/.exec(String(pkg.version || ""));
+  if (!match) {
+    throw new Error(
+      `@haxtheweb/create has no usable version in ${pkgPath}: ${pkg.version}`,
+    );
+  }
+  return match[0];
+}
+
+/**
  * @description Whether a new element's build should write its docs data:
  * only in a monorepo whose root has the docs script, and not with --no-docs.
  */
@@ -265,6 +290,9 @@ export async function webcomponentProcess(commandRun, project, port = "8000") {
   }
   // values not set by user but used in templating
   project.className = dashToCamel(project.name);
+  // @haxtheweb/* dependency version for package.json templates (written as
+  // "^<%= haxVersion %>"), so scaffolds track the release that made them
+  project.haxVersion = haxVersion();
   // monorepos that publish docs data (scripts/extract-element-docs.mjs at the
   // root) get it in the element build by default; --no-docs leaves it out
   project.docsStep = docsStepFor(commandRun, project);
