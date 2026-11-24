@@ -14,7 +14,8 @@ const {
   summarizeGolden,
   toGolden,
   renameIn,
-  noopPluginProblem,
+  pluginProblem,
+  pluginFixtureDir,
   NOOP_PLUGIN_DIR,
   SNAPSHOT_DIR,
 } = require("../parity/golden.cjs");
@@ -488,18 +489,50 @@ test("a noop run only counts when golden-noop is enabled and active", () => {
   const reply = (status, data) => ({ status, json: { status, data } });
   const entry = (over) =>
     Object.assign({ id: "golden-noop", enabled: true, status: "active" }, over);
-  assert.equal(noopPluginProblem(reply(200, [entry()])), "");
-  assert.match(noopPluginProblem(reply(404, null)), /answered 404/);
-  assert.match(noopPluginProblem(null), /answered nothing/);
-  assert.match(noopPluginProblem(reply(200, [])), /not installed/);
+  assert.equal(pluginProblem(reply(200, [entry()])), "");
+  assert.match(pluginProblem(reply(404, null)), /answered 404/);
+  assert.match(pluginProblem(null), /answered nothing/);
+  assert.match(pluginProblem(reply(200, [])), /not installed/);
   assert.match(
-    noopPluginProblem(
+    pluginProblem(
       reply(200, [
         entry({ enabled: false, status: "available", reason: "off" }),
       ]),
     ),
     /available \(off\)/,
   );
+});
+
+test("--throwing-plugin picks golden-throw and never runs with --noop-plugin", () => {
+  assert.equal(
+    loadConfig(["--throwing-plugin"], {}).hookPlugin,
+    "golden-throw",
+  );
+  assert.equal(loadConfig(["--noop-plugin"], {}).hookPlugin, "golden-noop");
+  assert.equal(loadConfig([], {}).hookPlugin, "");
+  assert.throws(
+    () => loadConfig(["--noop-plugin", "--throwing-plugin"], {}),
+    /one at a time/,
+  );
+});
+
+test("golden-throw subscribes to the same hooks as golden-noop and throws from each", () => {
+  const hooksOf = (id) =>
+    [
+      ...fs
+        .readFileSync(path.join(pluginFixtureDir(id), "plugin.yaml"), "utf8")
+        .matchAll(/^ {2}- name: (\S+)$/gm),
+    ].map((m) => m[1]);
+  assert.deepEqual(hooksOf("golden-throw"), hooksOf("golden-noop"));
+  const php = fs.readFileSync(
+    path.join(pluginFixtureDir("golden-throw"), "src", "php", "Plugin.php"),
+    "utf8",
+  );
+  assert.equal(
+    (php.match(/throw new RuntimeException/g) || []).length,
+    hooksOf("golden-throw").length,
+  );
+  assert.doesNotMatch(php, /return \$ctx->subject/);
 });
 
 test("the golden-noop fixture lists the same hooks in its manifest and both runtimes", () => {

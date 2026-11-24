@@ -236,10 +236,19 @@ Both servers get `HAXCMS_PLUGIN_DIRS` (the fixture) and
 registry (`GET /v1/plugins`) lists `golden-noop` as enabled and active, so a
 plugin that silently failed to load fails the case instead of passing it.
 
-| Flag            | Environment variable     | Meaning                                                                                         |
-| --------------- | ------------------------ | ----------------------------------------------------------------------------------------------- |
-| `--noop-plugin` | `HAX_PARITY_NOOP_PLUGIN` | run with the golden-noop plugin on                                                              |
-| `--plugin-spec` | `HAX_PARITY_PLUGIN_SPEC` | the plugin spec package (default: haxcms-nodejs's `node_modules/@haxtheweb/haxcms-plugin-spec`) |
+`--throwing-plugin` does the same with
+[`golden-throw`](golden/fixtures/plugins/golden-throw), whose hooks all
+throw. The spec says a hook error is logged and the operation goes on (only
+a veto stops a write), so every case must still match: a broken plugin never
+changes or breaks a save. Each backend's plugin tests check that those
+throws really happen and are logged (`plugin-hook-errors.test.cjs`,
+`PluginHookErrorsTest`).
+
+| Flag                | Environment variable         | Meaning                                                                                         |
+| ------------------- | ---------------------------- | ----------------------------------------------------------------------------------------------- |
+| `--noop-plugin`     | `HAX_PARITY_NOOP_PLUGIN`     | run with the golden-noop plugin on                                                              |
+| `--throwing-plugin` | `HAX_PARITY_THROWING_PLUGIN` | run with the golden-throw plugin on                                                             |
+| `--plugin-spec`     | `HAX_PARITY_PLUGIN_SPEC`     | the plugin spec package (default: haxcms-nodejs's `node_modules/@haxtheweb/haxcms-plugin-spec`) |
 
 ## Generated inputs (fuzz)
 

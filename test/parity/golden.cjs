@@ -21,30 +21,31 @@ const { snapshot, compareSnapshots } = require("./snapshot.cjs");
 const { CASES } = require("./golden/cases.cjs");
 
 const SNAPSHOT_DIR = path.join(__dirname, "golden", "snapshots");
-// the plugin --noop-plugin turns on (every hook, no changes)
-const NOOP_PLUGIN_DIR = path.join(
-  __dirname,
-  "golden",
-  "fixtures",
-  "plugins",
-  "golden-noop",
-);
+// the fixture plugins a golden run can turn on: golden-noop (--noop-plugin,
+// every hook hands its subject back) and golden-throw (--throwing-plugin,
+// every hook throws)
+const PLUGIN_FIXTURES = path.join(__dirname, "golden", "fixtures", "plugins");
+function pluginFixtureDir(id) {
+  return path.join(PLUGIN_FIXTURES, id);
+}
+const NOOP_PLUGIN_DIR = pluginFixtureDir("golden-noop");
 // documents the import cases make their sites from
 const FIXTURE_DIR = path.join(__dirname, "golden", "fixtures", "import");
 const SITE_NAME = "SITE_NAME";
 const CLONE_NAME = "CLONE_NAME";
 
-// why the golden-noop plugin is not on for a site, from its plugins registry
+// why a fixture plugin is not on for a site, from its plugins registry
 // (GET /v1/plugins), or "" when it is enabled and active
-function noopPluginProblem(r) {
+function pluginProblem(r, id = "golden-noop") {
   if (!r || r.status !== 200)
     return "plugins registry answered " + (r ? r.status : "nothing");
   const list = r.json && Array.isArray(r.json.data) ? r.json.data : [];
-  const entry = list.find((p) => p && p.id === "golden-noop");
-  if (!entry) return "golden-noop is not installed";
+  const entry = list.find((p) => p && p.id === id);
+  if (!entry) return id + " is not installed";
   if (entry.enabled !== true || entry.status !== "active")
     return (
-      "golden-noop is " +
+      id +
+      " is " +
       (entry.status || "not active") +
       (entry.reason ? " (" + entry.reason + ")" : "")
     );
@@ -179,17 +180,20 @@ async function runCase(cfg, nodeInfo, c, runTag) {
         l.keyToId["L" + i] = it.id;
       });
   }
-  // with --noop-plugin the case only counts if the plugin really ran: each
-  // API leg must list golden-noop as enabled and active for this site
-  if (cfg["noop-plugin"])
+  // with a fixture plugin on, the case only counts if the plugin really ran:
+  // each API leg must list it as enabled and active for this site
+  if (cfg.hookPlugin)
     for (const l of legs) {
       if (typeof l.call !== "function") continue;
-      const problem = noopPluginProblem(await l.call("GET", "/v1/plugins"));
+      const problem = pluginProblem(
+        await l.call("GET", "/v1/plugins"),
+        cfg.hookPlugin,
+      );
       if (problem)
         result.stepErrors.push({
           leg: l.name,
           step: 0,
-          type: "noop-plugin",
+          type: cfg.hookPlugin,
           status: "not-loaded",
           detail: problem,
         });
@@ -338,7 +342,8 @@ async function runGolden(cfg, nodeInfo, log = console.log) {
 module.exports = {
   runGolden,
   NOOP_PLUGIN_DIR,
-  noopPluginProblem,
+  pluginFixtureDir,
+  pluginProblem,
   runCase,
   stepFailed,
   summarizeGolden,
