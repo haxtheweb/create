@@ -4,7 +4,9 @@
 // that made them. The templates must not hardcode a release (they used to say
 // "^26.8.0", so create 26.11.0 kept scaffolding the 26.8 line); they write
 // "^<%= haxVersion %>" and webcomponentProcess fills it from create's own
-// package.json version.
+// major.minor. Patch releases are not shared between the CLI and the elements
+// (create 26.8.1 shipped while the elements stayed at 26.8.0), so the floor
+// is always x.y.0 or the scaffold would not install.
 
 // Isolate HOME before requiring the module — webcomponent.js imports HAXCMS.js
 // which inits a configDirectory on load.
@@ -103,15 +105,23 @@ for (const variant of PACKAGE_TEMPLATES) {
   });
 }
 
-test("haxVersion() is the running CLI's own version", opts, () => {
-  assert.equal(haxVersion(), CLI_VERSION);
+test("haxVersion() is the running CLI's major.minor with patch 0", opts, () => {
+  const [major, minor] = CLI_VERSION.split(".");
+  assert.equal(haxVersion(), `${major}.${minor}.0`);
 });
 
-test("haxVersion() reads x.y.z and drops prerelease/build tags", opts, () => {
+test("haxVersion() drops the patch and prerelease/build tags", opts, () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "hax-haxversion-"));
   const pkgPath = path.join(dir, "package.json");
-  fs.writeFileSync(pkgPath, JSON.stringify({ version: "26.11.1-beta.0" }));
-  assert.equal(haxVersion(pkgPath), "26.11.1");
+  for (const [version, expected] of [
+    ["26.8.1", "26.8.0"],
+    ["26.11.0", "26.11.0"],
+    ["26.11.3-beta.0", "26.11.0"],
+    ["27.0.2+build.5", "27.0.0"],
+  ]) {
+    fs.writeFileSync(pkgPath, JSON.stringify({ version }));
+    assert.equal(haxVersion(pkgPath), expected, version);
+  }
 });
 
 test("haxVersion() throws instead of writing a broken range", opts, () => {
