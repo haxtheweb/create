@@ -1771,6 +1771,79 @@ test(
 );
 
 test(
+  "site:items-import keeps each item's description as plain text",
+  opts,
+  async () => {
+    resetMocks();
+    const importDir = fs.mkdtempSync(
+      path.join(os.tmpdir(), "hax-items-import-"),
+    );
+    const importFile = path.join(importDir, "items.json");
+    fs.writeFileSync(
+      importFile,
+      JSON.stringify([
+        {
+          id: "about",
+          title: "About",
+          parent: null,
+          order: 2,
+          description: "What <b>this</b> site is.",
+        },
+      ]),
+    );
+    // this test's addPage puts the page in the outline, as the real one does
+    const realAddPage = fakeHaxsite.addPage;
+    fakeHaxsite.addPage = async (parent, title) => {
+      fakeItems.push({ id: "imported-desc", title, parent, order: 2 });
+      return { id: "imported-desc" };
+    };
+    fakeHaxsite.manifest.save = () => {
+      manifestSaves.push(fakeItems.map((item) => [item.id, item.order]));
+    };
+    try {
+      await runSite({
+        command: "site",
+        arguments: { action: "site:items-import" },
+        options: { quiet: true, i: true, itemsImport: importFile },
+      });
+      const added = fakeItems.find((item) => item.id === "imported-desc");
+      assert.equal(added.description, "What this site is.");
+      assert.equal(manifestSaves.length, 1);
+    } finally {
+      fakeHaxsite.addPage = realAddPage;
+      const index = fakeItems.findIndex((item) => item.id === "imported-desc");
+      if (index !== -1) {
+        fakeItems.splice(index, 1);
+      }
+      fs.rmSync(importDir, { recursive: true, force: true });
+    }
+  },
+);
+
+test("parentsFirst puts each parent before its children", () => {
+  const { parentsFirst } = siteModule;
+  const order = (items) => parentsFirst(items).map((item) => item.id);
+  assert.deepEqual(
+    order([
+      { id: "c", parent: "b" },
+      { id: "a", parent: null },
+      { id: "b", parent: "a" },
+      { id: "x", parent: "elsewhere" },
+    ]),
+    ["a", "b", "x", "c"],
+  );
+  // a loop can't be ordered; those items keep their place at the end
+  assert.deepEqual(
+    order([
+      { id: "p", parent: "q" },
+      { id: "q", parent: "p" },
+      { id: "r", parent: null },
+    ]),
+    ["r", "p", "q"],
+  );
+});
+
+test(
   "site:items-import without --keep-ids gives every item a new id",
   opts,
   async () => {

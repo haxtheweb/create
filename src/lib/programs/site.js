@@ -76,6 +76,7 @@ const JSONOutlineSchema = josfile.default;
 // IPs, cap redirects, and enforce timeouts — matching the server posture.
 import * as safeFetchLib from "@haxtheweb/haxcms-nodejs/dist/lib/safeFetch.js";
 import * as outlineUpkeepLib from "@haxtheweb/haxcms-nodejs/dist/lib/outlineUpkeep.js";
+import * as pageMetadataLib from "@haxtheweb/haxcms-nodejs/dist/lib/sanitizePageMetadata.js";
 const safeFetch = safeFetchLib.safeFetch;
 const assertUrlNotSSRF = safeFetchLib.assertUrlNotSSRF;
 const HAXCMS = haxcmsLib.HAXCMS;
@@ -2226,6 +2227,12 @@ export async function siteCommandDetected(commandRun) {
             }
           }
           let itemIdMap = {};
+          let importChangedManifest = false;
+          // add each parent before its children: a saved outline lists items
+          // by order across the whole tree, so a child (order 0) can come
+          // before its parent (order 1), and its parent id would then be
+          // remapped too late
+          josImport.items = parentsFirst(josImport.items);
           for (let i in josImport.items) {
             // if we have a parent set by force to append this structure to
             // then see if parent = null (implying top level in full site import)
@@ -2270,6 +2277,24 @@ export async function siteCommandDetected(commandRun) {
             );
             // set in the map for future translations
             itemIdMap[josImport.items[i].id] = tmpAddedItem.id;
+            // addPage takes no description, so an item's description was
+            // dropped; store it as plain text, the way node:add / node:edit do
+            const importedDescription = pageMetadataLib
+              .toPlainText(josImport.items[i].description)
+              .trim();
+            if (
+              importedDescription !== "" &&
+              activeHaxsite.manifest &&
+              Array.isArray(activeHaxsite.manifest.items)
+            ) {
+              const added = activeHaxsite.manifest.items.find(
+                (item) => item && item.id === tmpAddedItem.id,
+              );
+              if (added) {
+                added.description = importedDescription;
+                importChangedManifest = true;
+              }
+            }
           }
           // the items keep the orders they came with, which may start at 1 or
           // count across the whole site; number each parent's children
@@ -2281,6 +2306,9 @@ export async function siteCommandDetected(commandRun) {
             Array.isArray(activeHaxsite.manifest.items) &&
             outlineUpkeepLib.compactSiblingOrders(activeHaxsite.manifest.items)
           ) {
+            importChangedManifest = true;
+          }
+          if (importChangedManifest) {
             await activeHaxsite.manifest.save();
             if (typeof activeHaxsite.updateAlternateFormats === "function") {
               await activeHaxsite.updateAlternateFormats();
@@ -4964,6 +4992,48 @@ export function nextSiblingOrder(items, parent = null) {
 }
 
 // resolve a node by id, falling back to slug
+/**
+ * Items in an order where each item comes after its parent, when the parent
+ * is one of the items. Otherwise the order they came in is kept, and an item
+ * whose parent never appears (or a parent loop) keeps its place at the end.
+ */
+export function parentsFirst(items) {
+  if (!Array.isArray(items)) {
+    return items;
+  }
+  const ids = new Set(
+    items
+      .filter((item) => item && item.id !== undefined && item.id !== null)
+      .map((item) => String(item.id)),
+  );
+  const placed = new Set();
+  const out = [];
+  let pending = items.slice();
+  while (pending.length > 0) {
+    const next = [];
+    for (const item of pending) {
+      const parent =
+        item && item.parent !== undefined && item.parent !== null
+          ? String(item.parent)
+          : null;
+      if (parent === null || !ids.has(parent) || placed.has(parent)) {
+        out.push(item);
+        if (item && item.id !== undefined && item.id !== null) {
+          placed.add(String(item.id));
+        }
+      } else {
+        next.push(item);
+      }
+    }
+    if (next.length === pending.length) {
+      // a parent loop: nothing more can be placed, keep the rest as given
+      return out.concat(next);
+    }
+    pending = next;
+  }
+  return out;
+}
+
 export function findNodeByIdOrSlug(activeHaxsite, idOrSlug) {
   if (!activeHaxsite || !idOrSlug) {
     return null;
