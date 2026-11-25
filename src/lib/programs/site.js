@@ -2517,14 +2517,35 @@ export async function siteCommandDetected(commandRun) {
               }),
             );
             process.exitCode = 1;
-          } else if (!commandRun.options.quiet) {
+          } else {
             const createdId =
               created.data && created.data.id ? created.data.id : "";
-            log(
-              `"${createNodeBody.node.title}" added to site${createdId ? ` (id: ${createdId})` : ""}`,
-              "info",
-              createNodeBody.node,
-            );
+            // --published / --hide-in-menu / --locked: the create call takes
+            // the page's fields only, so these go through the path node:edit
+            // uses (they were listed for node:add but silently dropped)
+            const flagEdits = {};
+            ["published", "hideInMenu", "locked"].forEach((field) => {
+              if (typeof commandRun.options[field] !== "undefined") {
+                flagEdits[field] = commandRun.options[field];
+              }
+            });
+            // only the id is needed for these item operations, and the
+            // site loaded before the create doesn't hold the new page yet
+            if (createdId && Object.keys(flagEdits).length > 0) {
+              await applyNodeEdits(
+                activeHaxsite,
+                { id: createdId, title: createNodeBody.node.title },
+                flagEdits,
+                commandRun,
+              );
+            }
+            if (!commandRun.options.quiet) {
+              log(
+                `"${createNodeBody.node.title}" added to site${createdId ? ` (id: ${createdId})` : ""}`,
+                "info",
+                createNodeBody.node,
+              );
+            }
           }
         } catch (e) {
           log(formatErrorForLogging(e), "error");
