@@ -266,7 +266,7 @@ export function buildPlatformReport(install, release, advisories) {
 // check is skipped
 export async function fetchGitHubJson(
   url,
-  // eslint-disable-next-line n/no-unsupported-features/node-builtins
+
   fetchImpl = globalThis.fetch,
 ) {
   const allowed =
