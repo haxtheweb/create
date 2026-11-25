@@ -148,6 +148,7 @@ fs.mkdirSync(path.join(SITE_DIR, "custom", "src"), { recursive: true });
 const updateNodeCalls = [];
 const writeLocationCalls = [];
 const addPageCalls = [];
+const manifestSaves = [];
 const fakeItems = [
   {
     id: "item-1",
@@ -216,6 +217,7 @@ const fakeHaxsite = {
       parent: args[0],
       title: args[1],
       slug: args[3],
+      id: args[4],
       indent: args[5],
       content: args[6],
       order: args[7],
@@ -291,6 +293,9 @@ function resetMocks() {
   updateNodeCalls.length = 0;
   writeLocationCalls.length = 0;
   addPageCalls.length = 0;
+  manifestSaves.length = 0;
+  fakeItems[0].order = 1;
+  fakeItems[1].order = 2;
   groupResponse = { action: "quit" };
   skeletonExportPayload = {
     status: 200,
@@ -1711,6 +1716,80 @@ test(
       // the child is re-parented through the itemIdMap to the new id
       assert.equal(addPageCalls[1].parent, "imported-1");
       assert.equal(addPageCalls[1].title, "Imported Two");
+    } finally {
+      fs.rmSync(importDir, { recursive: true, force: true });
+    }
+  },
+);
+
+test(
+  "site:items-import numbers siblings 0..n-1 and --keep-ids keeps free ids",
+  opts,
+  async () => {
+    resetMocks();
+    const importDir = fs.mkdtempSync(
+      path.join(os.tmpdir(), "hax-items-import-"),
+    );
+    const importFile = path.join(importDir, "items.json");
+    fs.writeFileSync(
+      importFile,
+      JSON.stringify([
+        { id: "about", title: "About", parent: null, order: 7, content: "" },
+        // item-1 is already in the site, so it gets a new id
+        { id: "item-1", title: "Again", parent: null, order: 8, content: "" },
+      ]),
+    );
+    // an earlier test swaps save out, so set the one this test reads
+    fakeHaxsite.manifest.save = () => {
+      manifestSaves.push(fakeItems.map((item) => [item.id, item.order]));
+    };
+    try {
+      const exitCode = await runSite({
+        command: "site",
+        arguments: { action: "site:items-import" },
+        options: {
+          quiet: true,
+          i: true,
+          itemsImport: importFile,
+          keepIds: true,
+        },
+      });
+      assert.equal(exitCode, 0);
+      assert.equal(addPageCalls[0].id, "about");
+      assert.equal(addPageCalls[1].id, null);
+      // the site's own 1-based orders are renumbered and saved once
+      assert.deepEqual(manifestSaves, [
+        [
+          ["item-1", 0],
+          ["item-2", 0],
+        ],
+      ]);
+    } finally {
+      fs.rmSync(importDir, { recursive: true, force: true });
+    }
+  },
+);
+
+test(
+  "site:items-import without --keep-ids gives every item a new id",
+  opts,
+  async () => {
+    resetMocks();
+    const importDir = fs.mkdtempSync(
+      path.join(os.tmpdir(), "hax-items-import-"),
+    );
+    const importFile = path.join(importDir, "items.json");
+    fs.writeFileSync(
+      importFile,
+      JSON.stringify([{ id: "about", title: "About", parent: null }]),
+    );
+    try {
+      await runSite({
+        command: "site",
+        arguments: { action: "site:items-import" },
+        options: { quiet: true, i: true, itemsImport: importFile },
+      });
+      assert.equal(addPageCalls[0].id, null);
     } finally {
       fs.rmSync(importDir, { recursive: true, force: true });
     }

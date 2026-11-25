@@ -219,6 +219,7 @@ mdToSite
   --description <char>                description of the page (node:add /
                                       node:edit) or of the new site
   --items-import <char>               import items from a file / site
+  --keep-ids                          with --items-import, keep each item's id when free
   --custom-theme-name <char>          custom theme name
   --custom-theme-template <char>      custom theme template; (options: base,
                                       starter, polaris-flex, polaris-sidebar)

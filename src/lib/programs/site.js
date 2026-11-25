@@ -75,6 +75,7 @@ const JSONOutlineSchema = josfile.default;
 // import/content/image fetches reject private/loopback/link-local/metadata
 // IPs, cap redirects, and enforce timeouts — matching the server posture.
 import * as safeFetchLib from "@haxtheweb/haxcms-nodejs/dist/lib/safeFetch.js";
+import * as outlineUpkeepLib from "@haxtheweb/haxcms-nodejs/dist/lib/outlineUpkeep.js";
 const safeFetch = safeFetchLib.safeFetch;
 const assertUrlNotSSRF = safeFetchLib.assertUrlNotSSRF;
 const HAXCMS = haxcmsLib.HAXCMS;
@@ -2242,12 +2243,25 @@ export async function siteCommandDetected(commandRun) {
               // remaps the parent of this item bc the thing imported has changed ID
               josImport.items[i].parent = itemIdMap[josImport.items[i].parent];
             }
+            // --keep-ids: an item keeps its id when the site doesn't hold it
+            // yet, so importing the same items again gives the same pages
+            // (haxtheweb/issues#3404); a taken id still gets a new one
+            let keepId = null;
+            if (
+              commandRun.options.keepIds &&
+              josImport.items[i].id !== undefined &&
+              josImport.items[i].id !== null &&
+              String(josImport.items[i].id).trim() !== "" &&
+              !activeHaxsite.loadNode(String(josImport.items[i].id))
+            ) {
+              keepId = String(josImport.items[i].id);
+            }
             let tmpAddedItem = await activeHaxsite.addPage(
               josImport.items[i].parent,
               josImport.items[i].title,
               "html",
               josImport.items[i].slug,
-              null,
+              keepId,
               josImport.items[i].indent,
               // Security (sanitize-remote-html): sanitize remote item content before storing.
               sanitizeIfString(josImport.items[i].content),
@@ -2256,6 +2270,21 @@ export async function siteCommandDetected(commandRun) {
             );
             // set in the map for future translations
             itemIdMap[josImport.items[i].id] = tmpAddedItem.id;
+          }
+          // the items keep the orders they came with, which may start at 1 or
+          // count across the whole site; number each parent's children
+          // 0..n-1 the way every later page operation does, so the first
+          // edit after an import doesn't renumber the whole outline
+          // (haxtheweb/issues#3403)
+          if (
+            activeHaxsite.manifest &&
+            Array.isArray(activeHaxsite.manifest.items) &&
+            outlineUpkeepLib.compactSiblingOrders(activeHaxsite.manifest.items)
+          ) {
+            await activeHaxsite.manifest.save();
+            if (typeof activeHaxsite.updateAlternateFormats === "function") {
+              await activeHaxsite.updateAlternateFormats();
+            }
           }
           if (!commandRun.options.quiet) {
             log(`${josImport.items.length} nodes imported`);

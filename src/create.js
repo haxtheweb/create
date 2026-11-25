@@ -229,6 +229,7 @@ async function main() {
     .option("--content-format <char>", t("cliOptContentFormat"))
     .option("--description <char>", t("cliOptDescription"))
     .option("--items-import <char>", t("cliOptItemsImport"))
+    .option("--keep-ids", t("cliOptKeepIds"))
     .option("--custom-theme-name <char>", t("cliOptCustomThemeName"))
     .option(
       "--custom-theme-template <char>",
@@ -360,6 +361,7 @@ async function main() {
     .option("--content-format <char>", t("cliOptContentFormat"))
     .option("--description <char>", t("cliOptDescription"))
     .option("--items-import <char>", t("cliOptItemsImport"))
+    .option("--keep-ids", t("cliOptKeepIds"))
     .option("--custom-theme-name <char>", t("cliOptCustomThemeName"))
     .option("--custom-theme-template <char>", t("cliOptCustomThemeTemplate"))
     .option("--skeleton-file <char>", t("cliOptSkeletonFile"))
