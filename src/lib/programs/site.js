@@ -1438,6 +1438,41 @@ const STATIC_COPY_SKIP = new Set([
 ]);
 // the dot files a static host needs: agent discovery and GitHub Pages' flag
 const STATIC_COPY_DOTFILES = new Set([".well-known", ".nojekyll"]);
+// Invariant: a static build ships nothing that only works on a HAX server.
+// The rebuild writes these back from the boilerplate, so they come out after
+// it: PHP entry points and server config a static host would serve as plain
+// files, the container setup, and the API catalog, which describes the
+// server's /x/api (a static host has none).
+const STATIC_SERVER_ONLY = [
+  "index.php",
+  "config.php",
+  "Dockerfile",
+  "docker",
+  ".htaccess",
+  "files/.htaccess",
+  ".well-known/api-catalog",
+];
+// llms.txt list entries that point into the server's /x/api/ (the whole-site
+// HTML export): on a static host they would 404
+const STATIC_SERVER_LINK = /^- \[[^\]]*\]\([^)]*\/x\/api\/[^)]*\)/;
+
+// remove what only a HAX server can answer from a static build in out
+function stripServerOnlyFromStaticBuild(out) {
+  for (const rel of STATIC_SERVER_ONLY) {
+    const target = path.join(out, rel);
+    if (fs.existsSync(target)) {
+      fs.rmSync(target, { recursive: true, force: true });
+    }
+  }
+  const llms = path.join(out, "llms.txt");
+  if (fs.existsSync(llms)) {
+    const lines = fs.readFileSync(llms, "utf8").split("\n");
+    const kept = lines.filter((line) => !STATIC_SERVER_LINK.test(line));
+    if (kept.length !== lines.length) {
+      fs.writeFileSync(llms, kept.join("\n"));
+    }
+  }
+}
 
 function copySiteForStaticBuild(from, to, skipDir) {
   fs.mkdirSync(to, { recursive: true });
@@ -1467,7 +1502,8 @@ function copySiteForStaticBuild(from, to, skipDir) {
  * the site's files, its managed and generated files rebuilt (robots.txt,
  * llms.txt, sitemap, feeds, search index, agent skills), ghpages.html as
  * the entry point, llms-full.txt, and each published page rendered with its
- * metadata and content (writeStaticPublishPages' renderer). domain is the
+ * metadata and content (writeStaticPublishPages' renderer), without the
+ * files and links only a HAX server answers. domain is the
  * published address when site.json has none. Returns
  * { out, pages, renderer } where renderer is false with a haxcms-nodejs
  * that has no page renderer (the shell is then the entry point, as before).
@@ -1558,6 +1594,7 @@ export async function buildStaticSite(
       fs.writeFileSync(path.join(out, "llms-full.txt"), markdown);
     }
   }
+  stripServerOnlyFromStaticBuild(out);
   const renderer = !!(
     staticPagesLib && typeof staticPagesLib.renderStaticPages === "function"
   );
