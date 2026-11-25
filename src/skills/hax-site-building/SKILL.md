@@ -47,7 +47,7 @@ Two supported CLI paths, run from inside the site directory:
 - Single page: `hax site node:add --title="<title>" --slug="<slug>" --parent=<parent-id-or-slug> --content=<file, URL or HTML> --description=<text> --tags=<a,b> --y --no-i`. Without `--order` the page is appended after its siblings. The output includes the new item id.
 - Update an existing page: `hax site node:edit --item-id=<id-or-slug> --title="<title>" --content=<file, URL or HTML> --y --no-i`. See "Editing pages" below.
 - Delete a page: `hax site node:delete --item-id=<id-or-slug> --y --no-i` (`--y` skips the confirmation).
-- Bulk (preferred for a whole program): build a JOS items array (one object per page with `title`, `slug`, `parent`, `indent`, `order`, `metadata`, and `content`), then run `hax site site:items-import --items-import <items.json> --y --no-i`. The import remaps parent references to the newly generated ids automatically.
+- Bulk (preferred for a whole program): build a JOS items array (one object per page with `title`, `slug`, `parent`, `indent`, `order`, `metadata`, and `content`), then run `hax site site:items-import --items-import <items.json> --y --no-i`. The import remaps parent references to the newly generated ids automatically. Add `--keep-ids` to keep each item's own id when the site doesn't use it yet, so running the same import again gives the same pages. Imported sibling orders are renumbered 0..n-1, the same as every later page operation.
 
 How `--content` is read (the same for `node:add` and `node:edit`), checked in this order:
 

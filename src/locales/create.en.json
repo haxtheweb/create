@@ -262,6 +262,7 @@
   "cliOptDescription": "description of the page (node:add / node:edit) or of the new site",
   "cliOptTitle": "title of the page (node:add / node:edit) or of the new site",
   "cliOptItemsImport": "import items from a file / site",
+  "cliOptKeepIds": "with --items-import, keep each item's id when the site doesn't already use it",
   "cliOptCustomThemeName": "custom theme name",
   "cliOptCustomThemeTemplateList": "custom theme template; (options: base, starter, polaris-flex, polaris-sidebar)",
   "cliOptSkeletonFile": "path to skeleton JSON file",

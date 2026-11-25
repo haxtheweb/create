@@ -75,6 +75,8 @@ const JSONOutlineSchema = josfile.default;
 // import/content/image fetches reject private/loopback/link-local/metadata
 // IPs, cap redirects, and enforce timeouts — matching the server posture.
 import * as safeFetchLib from "@haxtheweb/haxcms-nodejs/dist/lib/safeFetch.js";
+import * as outlineUpkeepLib from "@haxtheweb/haxcms-nodejs/dist/lib/outlineUpkeep.js";
+import * as pageMetadataLib from "@haxtheweb/haxcms-nodejs/dist/lib/sanitizePageMetadata.js";
 const safeFetch = safeFetchLib.safeFetch;
 const assertUrlNotSSRF = safeFetchLib.assertUrlNotSSRF;
 const HAXCMS = haxcmsLib.HAXCMS;
@@ -2225,6 +2227,12 @@ export async function siteCommandDetected(commandRun) {
             }
           }
           let itemIdMap = {};
+          let importChangedManifest = false;
+          // add each parent before its children: a saved outline lists items
+          // by order across the whole tree, so a child (order 0) can come
+          // before its parent (order 1), and its parent id would then be
+          // remapped too late
+          josImport.items = parentsFirst(josImport.items);
           for (let i in josImport.items) {
             // if we have a parent set by force to append this structure to
             // then see if parent = null (implying top level in full site import)
@@ -2242,12 +2250,25 @@ export async function siteCommandDetected(commandRun) {
               // remaps the parent of this item bc the thing imported has changed ID
               josImport.items[i].parent = itemIdMap[josImport.items[i].parent];
             }
+            // --keep-ids: an item keeps its id when the site doesn't hold it
+            // yet, so importing the same items again gives the same pages
+            // (haxtheweb/issues#3404); a taken id still gets a new one
+            let keepId = null;
+            if (
+              commandRun.options.keepIds &&
+              josImport.items[i].id !== undefined &&
+              josImport.items[i].id !== null &&
+              String(josImport.items[i].id).trim() !== "" &&
+              !activeHaxsite.loadNode(String(josImport.items[i].id))
+            ) {
+              keepId = String(josImport.items[i].id);
+            }
             let tmpAddedItem = await activeHaxsite.addPage(
               josImport.items[i].parent,
               josImport.items[i].title,
               "html",
               josImport.items[i].slug,
-              null,
+              keepId,
               josImport.items[i].indent,
               // Security (sanitize-remote-html): sanitize remote item content before storing.
               sanitizeIfString(josImport.items[i].content),
@@ -2256,6 +2277,42 @@ export async function siteCommandDetected(commandRun) {
             );
             // set in the map for future translations
             itemIdMap[josImport.items[i].id] = tmpAddedItem.id;
+            // addPage takes no description, so an item's description was
+            // dropped; store it as plain text, the way node:add / node:edit do
+            const importedDescription = pageMetadataLib
+              .toPlainText(josImport.items[i].description)
+              .trim();
+            if (
+              importedDescription !== "" &&
+              activeHaxsite.manifest &&
+              Array.isArray(activeHaxsite.manifest.items)
+            ) {
+              const added = activeHaxsite.manifest.items.find(
+                (item) => item && item.id === tmpAddedItem.id,
+              );
+              if (added) {
+                added.description = importedDescription;
+                importChangedManifest = true;
+              }
+            }
+          }
+          // the items keep the orders they came with, which may start at 1 or
+          // count across the whole site; number each parent's children
+          // 0..n-1 the way every later page operation does, so the first
+          // edit after an import doesn't renumber the whole outline
+          // (haxtheweb/issues#3403)
+          if (
+            activeHaxsite.manifest &&
+            Array.isArray(activeHaxsite.manifest.items) &&
+            outlineUpkeepLib.compactSiblingOrders(activeHaxsite.manifest.items)
+          ) {
+            importChangedManifest = true;
+          }
+          if (importChangedManifest) {
+            await activeHaxsite.manifest.save();
+            if (typeof activeHaxsite.updateAlternateFormats === "function") {
+              await activeHaxsite.updateAlternateFormats();
+            }
           }
           if (!commandRun.options.quiet) {
             log(`${josImport.items.length} nodes imported`);
@@ -4935,6 +4992,48 @@ export function nextSiblingOrder(items, parent = null) {
 }
 
 // resolve a node by id, falling back to slug
+/**
+ * Items in an order where each item comes after its parent, when the parent
+ * is one of the items. Otherwise the order they came in is kept, and an item
+ * whose parent never appears (or a parent loop) keeps its place at the end.
+ */
+export function parentsFirst(items) {
+  if (!Array.isArray(items)) {
+    return items;
+  }
+  const ids = new Set(
+    items
+      .filter((item) => item && item.id !== undefined && item.id !== null)
+      .map((item) => String(item.id)),
+  );
+  const placed = new Set();
+  const out = [];
+  let pending = items.slice();
+  while (pending.length > 0) {
+    const next = [];
+    for (const item of pending) {
+      const parent =
+        item && item.parent !== undefined && item.parent !== null
+          ? String(item.parent)
+          : null;
+      if (parent === null || !ids.has(parent) || placed.has(parent)) {
+        out.push(item);
+        if (item && item.id !== undefined && item.id !== null) {
+          placed.add(String(item.id));
+        }
+      } else {
+        next.push(item);
+      }
+    }
+    if (next.length === pending.length) {
+      // a parent loop: nothing more can be placed, keep the rest as given
+      return out.concat(next);
+    }
+    pending = next;
+  }
+  return out;
+}
+
 export function findNodeByIdOrSlug(activeHaxsite, idOrSlug) {
   if (!activeHaxsite || !idOrSlug) {
     return null;

@@ -112,7 +112,9 @@ test("a YAML export imports too", opts, () => {
   assert.equal(res.status, 0, res.describe);
   const item = itemBySlug(readSite(siteDir), "yaml-one");
   assert.ok(item, "yaml page imported");
-  assert.equal(item.order, 3);
+  // numbered after the starter page, as every later page operation would
+  // (haxtheweb/issues#3403), not kept at the order it came with
+  assert.equal(item.order, 1);
   assert.match(pageHtml(siteDir, item), /yaml body/);
 });
 
