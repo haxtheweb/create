@@ -120,3 +120,30 @@ for (const file of WORKFLOWS) {
     }
   });
 }
+
+// deploy-pages looks up the github-pages artifact once. When the upload is in
+// the same job, the run's artifact list can lag behind the upload, so the
+// site workflow has to wait for the list (and may read it) before deploying.
+test("site deploy workflow waits for the artifact to be listed before deploy-pages", () => {
+  const file = WORKFLOWS[0];
+  const doc = yaml.load(fs.readFileSync(file, "utf8"));
+  assert.equal(doc.permissions && doc.permissions.actions, "read");
+  for (const job of Object.values(doc.jobs)) {
+    const steps = job.steps;
+    const deploy = steps.findIndex(
+      (s) => s.uses && s.uses.startsWith("actions/deploy-pages@"),
+    );
+    const upload = steps.findIndex(
+      (s) => s.uses && s.uses.startsWith("actions/upload-artifact@"),
+    );
+    if (deploy === -1 || upload === -1) continue;
+    const wait = steps.findIndex(
+      (s, i) =>
+        i > upload &&
+        i < deploy &&
+        typeof s.run === "string" &&
+        s.run.includes("/artifacts?name=github-pages"),
+    );
+    assert.ok(wait !== -1, "no wait step between upload and deploy-pages");
+  }
+});
