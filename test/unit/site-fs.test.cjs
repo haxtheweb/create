@@ -38,6 +38,7 @@ const {
   writeStaticPublishPages,
   removeStaticPublishPages,
   buildStaticSite,
+  staticHostLiveOnlyFiles,
   STATIC_BUILD_MARKER,
 } = available ? siteModule : {};
 
@@ -444,6 +445,95 @@ test(
         fs.readFileSync(path.join(stash, "wc-registry.json"), "utf8"),
         "live",
       );
+    } finally {
+      fs.rmSync(parent, { recursive: true, force: true });
+    }
+  },
+);
+
+test(
+  "staticHostLiveOnlyFiles lists only plain relative paths from haxcms-nodejs",
+  opts,
+  () => {
+    const list = staticHostLiveOnlyFiles();
+    assert.ok(Array.isArray(list));
+    for (const relative of list) {
+      assert.equal(typeof relative, "string");
+      assert.ok(!path.isAbsolute(relative));
+      assert.ok(!relative.split(/[\\/]/).includes(".."));
+    }
+  },
+);
+
+test(
+  "live-only files go aside for a publish and come back on restore",
+  opts,
+  () => {
+    const parent = fs.mkdtempSync(path.join(os.tmpdir(), "hax-prep-live-"));
+    const root = path.join(parent, "site");
+    fs.mkdirSync(path.join(root, ".well-known", "agent-skills"), {
+      recursive: true,
+    });
+    try {
+      fs.writeFileSync(path.join(root, "llms.txt"), "live llms");
+      fs.writeFileSync(path.join(root, ".well-known", "api-catalog"), "api");
+      fs.writeFileSync(
+        path.join(root, ".well-known", "agent-skills", "index.json"),
+        "{}",
+      );
+      const live = staticHostLiveOnlyFiles();
+      const stash = stashStaticPublishArtifacts(root);
+      assert.deepEqual([...stash.moved].sort(), [...live].sort());
+      for (const relative of live) {
+        assert.ok(!fs.existsSync(path.join(root, relative)), relative);
+      }
+      // the rest of .well-known stays published
+      assert.ok(
+        fs.existsSync(
+          path.join(root, ".well-known", "agent-skills", "index.json"),
+        ),
+      );
+      unstashStaticPublishArtifacts(root);
+      assert.equal(
+        fs.readFileSync(path.join(root, "llms.txt"), "utf8"),
+        "live llms",
+      );
+      assert.equal(
+        fs.readFileSync(path.join(root, ".well-known", "api-catalog"), "utf8"),
+        "api",
+      );
+      assert.ok(!fs.existsSync(staticPublishStashDir(root)), "stash removed");
+    } finally {
+      fs.rmSync(parent, { recursive: true, force: true });
+    }
+  },
+);
+
+test(
+  "a stashed .well-known file goes back into the site's own .well-known",
+  opts,
+  () => {
+    const parent = fs.mkdtempSync(path.join(os.tmpdir(), "hax-prep-wk-"));
+    const root = path.join(parent, "site");
+    fs.mkdirSync(path.join(root, ".well-known"), { recursive: true });
+    try {
+      fs.writeFileSync(path.join(root, ".well-known", "security.txt"), "s");
+      const stashDir = staticPublishStashDir(root);
+      fs.mkdirSync(path.join(stashDir, ".well-known"), { recursive: true });
+      fs.writeFileSync(
+        path.join(stashDir, ".well-known", "api-catalog"),
+        "api",
+      );
+      assert.equal(unstashStaticPublishArtifacts(root), 1);
+      assert.equal(
+        fs.readFileSync(path.join(root, ".well-known", "api-catalog"), "utf8"),
+        "api",
+      );
+      assert.equal(
+        fs.readFileSync(path.join(root, ".well-known", "security.txt"), "utf8"),
+        "s",
+      );
+      assert.ok(!fs.existsSync(stashDir));
     } finally {
       fs.rmSync(parent, { recursive: true, force: true });
     }
@@ -906,12 +996,47 @@ function makeBoilerplateSite(parent) {
 }
 
 test(
+  "buildStaticSite writes the page sidecars a never-saved page is missing",
+  { ...opts, timeout: 60000 },
+  async () => {
+    const parent = fs.mkdtempSync(
+      path.join(os.tmpdir(), "hax-buildstatic-md-"),
+    );
+    try {
+      const root = makeBoilerplateSite(parent);
+      const out = path.join(parent, "out");
+      const sidecar = path.join("pages", "item-1", "index.md");
+      assert.ok(!fs.existsSync(path.join(root, sidecar)));
+      await buildStaticSite(root, out, "https://static.example/");
+      assert.match(
+        fs.readFileSync(path.join(out, sidecar), "utf8"),
+        /The first page, with words/,
+      );
+      // only the output gets it; the site is left as it was
+      assert.ok(!fs.existsSync(path.join(root, sidecar)));
+    } finally {
+      fs.rmSync(parent, { recursive: true, force: true });
+    }
+  },
+);
+
+test(
   "buildStaticSite copies the site for a static host and leaves the site alone",
   { ...opts, timeout: 60000 },
   async () => {
     const parent = fs.mkdtempSync(path.join(os.tmpdir(), "hax-buildstatic-"));
     try {
       const root = makeBoilerplateSite(parent);
+      // the page's markdown sidecar, as a save writes it
+      fs.writeFileSync(
+        path.join(root, "pages", "item-1", "index.md"),
+        "The first page, with words.\n",
+      );
+      fs.mkdirSync(path.join(root, ".well-known"), { recursive: true });
+      fs.writeFileSync(
+        path.join(root, ".well-known", "api-catalog"),
+        '{"linkset":[]}',
+      );
       const before = fs.readFileSync(path.join(root, "index.html"), "utf8");
       const out = path.join(parent, "out");
       const built = await buildStaticSite(root, out, "https://static.example/");
@@ -940,6 +1065,23 @@ test(
           fs.readFileSync(path.join(out, "first", "index.html"), "utf8"),
           /https:\/\/static\.example\/first/,
         );
+        if (staticHostLiveOnlyFiles().length > 0) {
+          // every address the output links is a file in it
+          assert.equal(
+            fs.readFileSync(path.join(out, "first.md"), "utf8"),
+            "The first page, with words.\n",
+          );
+          const llms = fs.readFileSync(path.join(out, "llms.txt"), "utf8");
+          assert.equal(llms.indexOf("x/api"), -1);
+          assert.match(llms, /https:\/\/static\.example\/llms-full\.txt/);
+          // a static host has no API to catalog
+          assert.ok(
+            !fs.existsSync(path.join(out, ".well-known", "api-catalog")),
+          );
+          assert.ok(
+            fs.existsSync(path.join(root, ".well-known", "api-catalog")),
+          );
+        }
       } else {
         // an older haxcms-nodejs: the shell is the entry point
         assert.equal(

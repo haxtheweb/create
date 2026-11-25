@@ -278,6 +278,33 @@ try {
 } catch {
   staticPagesLib = null;
 }
+
+/**
+ * The live-server files a static host must not ship as they are (llms.txt
+ * linking x/api routes, .well-known/api-catalog advertising the API), as the
+ * installed haxcms-nodejs names them. Its renderStaticPages returns the
+ * static replacement where there is one. [] with a release that has no list,
+ * so an older renderer's site keeps those files.
+ */
+// a rendered page (index.html, <slug>/index.html), not one of the alternate
+// format files or llms.txt renderStaticPages also returns
+function isRenderedPagePath(relative) {
+  return /(^|\/)index\.html$/.test(String(relative));
+}
+
+export function staticHostLiveOnlyFiles() {
+  const list =
+    staticPagesLib && Array.isArray(staticPagesLib.STATIC_HOST_LIVE_ONLY)
+      ? staticPagesLib.STATIC_HOST_LIVE_ONLY
+      : [];
+  return list.filter(
+    (relative) =>
+      typeof relative === "string" &&
+      relative !== "" &&
+      !path.isAbsolute(relative) &&
+      !relative.split(/[\\/]/).includes(".."),
+  );
+}
 // a person ran the CLI unless --agent / HAX_ACTOR=agent says an agent did
 export function cliActor() {
   return String(process.env.HAX_ACTOR || "").toLowerCase() === "agent"
@@ -1067,6 +1094,10 @@ export function removeStaticLlmsFull(siteDirectory) {
 // was declined or crashed. Nothing in this flow ever rm's a real directory.
 const STATIC_PUBLISH_ARTIFACTS = ["build", "wc-registry.json"];
 const STATIC_PUBLISH_ASSETS_PREFIX = "babel";
+// folders the stash holds single files from (assets/babel*, and the live-only
+// .well-known/api-catalog); the site keeps the folder itself, so unstash moves
+// their files back one by one
+const STATIC_PUBLISH_NESTED_DIRS = ["assets", ".well-known"];
 
 /**
  * Sibling directory (outside the site, so it can't be published) where the
@@ -1113,7 +1144,12 @@ function moveAside(src, dest) {
 export function stashStaticPublishArtifacts(siteDirectory) {
   const stashDir = staticPublishStashDir(siteDirectory);
   const result = { stashDir, moved: [], skipped: [] };
-  const candidates = [...STATIC_PUBLISH_ARTIFACTS];
+  // live-only files go aside too; the static copies renderStaticPages
+  // returns are written in their place and removed again on restore
+  const candidates = [
+    ...STATIC_PUBLISH_ARTIFACTS,
+    ...staticHostLiveOnlyFiles(),
+  ];
   try {
     const assetsDir = path.join(siteDirectory, "assets");
     if (fs.existsSync(assetsDir) && fs.statSync(assetsDir).isDirectory()) {
@@ -1155,11 +1191,11 @@ export function unstashStaticPublishArtifacts(siteDirectory) {
   const entries = [];
   try {
     for (const item of fs.readdirSync(stashDir)) {
-      if (item === "assets") {
-        const stashedAssets = path.join(stashDir, "assets");
+      if (STATIC_PUBLISH_NESTED_DIRS.includes(item)) {
+        const stashedAssets = path.join(stashDir, item);
         try {
           for (const asset of fs.readdirSync(stashedAssets)) {
-            entries.push(path.join("assets", asset));
+            entries.push(path.join(item, asset));
           }
         } catch {
           // not a directory; treat as a plain entry
@@ -1178,7 +1214,10 @@ export function unstashStaticPublishArtifacts(siteDirectory) {
     }
   }
   // only an empty stash is removed (rmdirSync refuses non-empty dirs)
-  for (const dir of [path.join(stashDir, "assets"), stashDir]) {
+  for (const dir of [
+    ...STATIC_PUBLISH_NESTED_DIRS.map((nested) => path.join(stashDir, nested)),
+    stashDir,
+  ]) {
     try {
       fs.rmdirSync(dir);
     } catch {
@@ -1305,10 +1344,12 @@ export function removeStaticPublishPages(siteDirectory) {
 /**
  * Write the pages a static host serves into a site prepared with
  * prepareSiteForStaticPublish (haxtheweb/issues#3327): the rendered home
- * page over the swapped-in index.html, and <slug>/index.html for each
- * published page. A file or folder the site already has is never replaced.
- * Every file and folder written is recorded so removeStaticPublishPages
- * (run by restoreSiteAfterStaticPublish) takes them out again.
+ * page over the swapped-in index.html, <slug>/index.html for each
+ * published page with its <slug>.<format> alternate files, and the static
+ * llms.txt (prepare moved the live one aside). A file or folder the site
+ * already has is never replaced. Every file and folder written is recorded
+ * so removeStaticPublishPages (run by restoreSiteAfterStaticPublish) takes
+ * them out again.
  * Returns the number of pages written; 0 with an older haxcms-nodejs.
  */
 export async function writeStaticPublishPages(siteDirectory, domain = "") {
@@ -1367,7 +1408,9 @@ export async function writeStaticPublishPages(siteDirectory, domain = "") {
         fs.mkdirSync(folder);
       }
       fs.writeFileSync(target, page.html, { flag: "wx" });
-      written++;
+      if (isRenderedPagePath(page.path)) {
+        written++;
+      }
     }
   } catch {
     // best-effort: a publish never fails over its pages; whatever was
@@ -1476,6 +1519,25 @@ export async function buildStaticSite(
     // in memory only: the address the generated files use
     site.manifest.metadata.site.domain = domain;
   }
+  // page sidecars (index.md, .json, ...) are written on save, and a live
+  // server writes a missing one on its first request; a static host can't,
+  // so pages never saved through HAX get theirs now (llms.txt and each
+  // page's alternate links point at them)
+  if (typeof site.writePageAlternateFormats === "function") {
+    for (const item of site.manifest.items || []) {
+      try {
+        const markdown =
+          item && typeof item.location === "string"
+            ? site.getPageAlternateLocation(item.location, "md")
+            : "";
+        if (markdown && !fs.existsSync(path.join(out, markdown))) {
+          await site.writePageAlternateFormats(item);
+        }
+      } catch {
+        // best-effort, as on save
+      }
+    }
+  }
   try {
     await site.rebuildManagedFiles();
   } catch {
@@ -1501,6 +1563,21 @@ export async function buildStaticSite(
   );
   let pages = 0;
   if (renderer) {
+    // the live-only files (llms.txt with x/api links, the API catalog) leave
+    // the output; the renderer returns the static llms.txt written below
+    for (const relative of staticHostLiveOnlyFiles()) {
+      const target = path.resolve(out, relative);
+      try {
+        if (
+          target.startsWith(out + path.sep) &&
+          fs.lstatSync(target).isFile()
+        ) {
+          fs.unlinkSync(target);
+        }
+      } catch {
+        // not there
+      }
+    }
     const rendered = await staticPagesLib.renderStaticPages(site, { domain });
     for (const page of rendered) {
       const target = path.resolve(out, page.path);
@@ -1512,7 +1589,9 @@ export async function buildStaticSite(
       }
       fs.mkdirSync(path.dirname(target), { recursive: true });
       fs.writeFileSync(target, page.html);
-      pages++;
+      if (isRenderedPagePath(page.path)) {
+        pages++;
+      }
     }
   }
   return { out, pages, renderer };
