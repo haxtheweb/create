@@ -1071,6 +1071,20 @@ test(
         fs.readFileSync(path.join(out, "llms.txt"), "utf8"),
         /\/x\/api\//,
       );
+      // Markdown at the root: llms.md is llms.txt, index.md is the front page
+      // with front matter
+      assert.equal(
+        fs.readFileSync(path.join(out, "llms.md"), "utf8"),
+        fs.readFileSync(path.join(out, "llms.txt"), "utf8"),
+      );
+      const indexMd = fs.readFileSync(path.join(out, "index.md"), "utf8");
+      assert.match(indexMd, /^---\ntitle: "Static test"\n/);
+      assert.match(
+        indexMd,
+        /\ndescription: "A site built for a static host."\n/,
+      );
+      assert.match(indexMd, /\ncanonical: "https:\/\/static\.example\/"\n/);
+      assert.match(indexMd, /\n---\n\n[\s\S]*The first page, with words/);
       assert.match(
         fs.readFileSync(path.join(out, "llms-full.txt"), "utf8"),
         /The first page, with words/,

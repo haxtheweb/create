@@ -1456,6 +1456,72 @@ const STATIC_SERVER_ONLY = [
 // HTML export): on a static host they would 404
 const STATIC_SERVER_LINK = /^- \[[^\]]*\]\([^)]*\/x\/api\/[^)]*\)/;
 
+// One canonical Markdown URL for agents that ask for the site as Markdown:
+// /index.md is the front page's Markdown with front matter (title,
+// description, canonical, updated), and /llms.md is llms.txt under the name
+// agents probe for. A site's own index.md or llms.md is never replaced.
+function writeStaticRootMarkdown(out, site, domain) {
+  try {
+    const manifest = site.manifest || {};
+    const meta = (manifest.metadata && manifest.metadata.site) || {};
+    const llms = path.join(out, "llms.txt");
+    const llmsMd = path.join(out, "llms.md");
+    if (fs.existsSync(llms) && !fs.existsSync(llmsMd)) {
+      fs.copyFileSync(llms, llmsMd);
+    }
+    const indexMd = path.join(out, "index.md");
+    if (fs.existsSync(indexMd)) {
+      return;
+    }
+    const items = Array.isArray(manifest.items) ? manifest.items : [];
+    const front = items.find(
+      (item) =>
+        item &&
+        item.location &&
+        !(
+          item.metadata &&
+          (item.metadata.published === false ||
+            item.metadata.published === "false")
+        ),
+    );
+    if (!front || typeof site.getPageAlternateLocation !== "function") {
+      return;
+    }
+    const source = path.resolve(
+      out,
+      site.getPageAlternateLocation(front.location, "md") || "",
+    );
+    if (
+      !source.startsWith(out + path.sep) ||
+      !fs.existsSync(source) ||
+      !fs.statSync(source).isFile()
+    ) {
+      return;
+    }
+    const updated =
+      (front.metadata && front.metadata.updated) || meta.updated || 0;
+    const lines = ["---"];
+    const field = (key, value) => {
+      if (value) {
+        lines.push(key + ": " + JSON.stringify(String(value)));
+      }
+    };
+    field("title", manifest.title);
+    field("description", manifest.description);
+    field("canonical", meta.domain || domain);
+    if (updated) {
+      field("updated", new Date(Number(updated) * 1000).toISOString());
+    }
+    lines.push("---", "");
+    fs.writeFileSync(
+      indexMd,
+      lines.join("\n") + "\n" + fs.readFileSync(source, "utf8"),
+    );
+  } catch {
+    // best-effort, like the other generated files
+  }
+}
+
 // remove what only a HAX server can answer from a static build in out
 function stripServerOnlyFromStaticBuild(out) {
   for (const rel of STATIC_SERVER_ONLY) {
@@ -1502,8 +1568,9 @@ function copySiteForStaticBuild(from, to, skipDir) {
  * the site's files, its managed and generated files rebuilt (robots.txt,
  * llms.txt, sitemap, feeds, search index, agent skills), ghpages.html as
  * the entry point, llms-full.txt, and each published page rendered with its
- * metadata and content (writeStaticPublishPages' renderer), without the
- * files and links only a HAX server answers. domain is the
+ * metadata and content (writeStaticPublishPages' renderer), index.md and
+ * llms.md for agents that ask for Markdown, without the files and links
+ * only a HAX server answers. domain is the
  * published address when site.json has none. Returns
  * { out, pages, renderer } where renderer is false with a haxcms-nodejs
  * that has no page renderer (the shell is then the entry point, as before).
@@ -1595,6 +1662,7 @@ export async function buildStaticSite(
     }
   }
   stripServerOnlyFromStaticBuild(out);
+  writeStaticRootMarkdown(out, site, domain);
   const renderer = !!(
     staticPagesLib && typeof staticPagesLib.renderStaticPages === "function"
   );
@@ -2449,14 +2517,35 @@ export async function siteCommandDetected(commandRun) {
               }),
             );
             process.exitCode = 1;
-          } else if (!commandRun.options.quiet) {
+          } else {
             const createdId =
               created.data && created.data.id ? created.data.id : "";
-            log(
-              `"${createNodeBody.node.title}" added to site${createdId ? ` (id: ${createdId})` : ""}`,
-              "info",
-              createNodeBody.node,
-            );
+            // --published / --hide-in-menu / --locked: the create call takes
+            // the page's fields only, so these go through the path node:edit
+            // uses (they were listed for node:add but silently dropped)
+            const flagEdits = {};
+            ["published", "hideInMenu", "locked"].forEach((field) => {
+              if (typeof commandRun.options[field] !== "undefined") {
+                flagEdits[field] = commandRun.options[field];
+              }
+            });
+            // only the id is needed for these item operations, and the
+            // site loaded before the create doesn't hold the new page yet
+            if (createdId && Object.keys(flagEdits).length > 0) {
+              await applyNodeEdits(
+                activeHaxsite,
+                { id: createdId, title: createNodeBody.node.title },
+                flagEdits,
+                commandRun,
+              );
+            }
+            if (!commandRun.options.quiet) {
+              log(
+                `"${createNodeBody.node.title}" added to site${createdId ? ` (id: ${createdId})` : ""}`,
+                "info",
+                createNodeBody.node,
+              );
+            }
           }
         } catch (e) {
           log(formatErrorForLogging(e), "error");

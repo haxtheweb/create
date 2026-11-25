@@ -1079,6 +1079,47 @@ test("node:add posts a new item through the cliBridge", opts, async () => {
   assert.equal(call.body.order, 3);
 });
 
+test(
+  "node:add applies --published, --hide-in-menu and --locked after the create",
+  opts,
+  async () => {
+    resetMocks();
+    cliBridgeResponse = {
+      res: {
+        statusCode: 200,
+        status: 200,
+        data: { status: 200, data: { id: "item-new" } },
+      },
+    };
+    await runSite({
+      command: "site",
+      arguments: { action: "node:add" },
+      options: {
+        quiet: true,
+        i: false,
+        y: true,
+        title: "Privacy",
+        slug: "privacy",
+        published: "true",
+        hideInMenu: "true",
+        locked: "true",
+      },
+    });
+    assert.deepEqual(
+      cliBridgeCalls.map((call) => [call.route, call.body.operation || null]),
+      [
+        ["v1/items", null],
+        ["v1/items/item-new", "setPublished"],
+        ["v1/items/item-new", "setHideInMenu"],
+        ["v1/items/item-new", "setLocked"],
+      ],
+    );
+    assert.equal(cliBridgeCalls[1].body.published, true);
+    assert.equal(cliBridgeCalls[2].body.hideInMenu, true);
+    assert.equal(cliBridgeCalls[3].body.locked, true);
+  },
+);
+
 // --- haxtheweb/issues#3125 / #3126 / #3127 ---
 
 test(
