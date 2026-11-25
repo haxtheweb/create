@@ -29,7 +29,7 @@ export class <%= className %> extends DDDSuper(I18NMixin(LitElement)) {
     this.registerLocalization({
       context: this,
       localesPath:
-        new URL("./locales/<%= name %>.ar.json", import.meta.url).href +
+        new URL("./locales/<%= name %>.en.json", import.meta.url).href +
         "/../",
     });
   }
@@ -89,7 +89,9 @@ export class <%= className %> extends DDDSuper(I18NMixin(LitElement)) {
       new CustomEvent("i18n-manager-register-element", {
         detail: {
           namespace: `<%= name %>.haxProperties`,
-          localesPath: new URL(`./locales`, import.meta.url).href,
+          localesPath:
+            new URL("./locales/<%= name %>.en.json", import.meta.url).href +
+            "/../",
         },
       }),
     );

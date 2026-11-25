@@ -89,7 +89,7 @@ test("removes every non-English locale, including haxProperties ones", () => {
   ]);
 });
 
-test("every shipped template's locales are all non-English, so the folder goes away", () => {
+test("every shipped template keeps only its English locale file", () => {
   const templates = path.join(__dirname, "../../src/templates/webcomponent");
   fs.readdirSync(templates).forEach((name) => {
     const src = path.join(templates, name, "locales");
@@ -100,7 +100,37 @@ test("every shipped template's locales are all non-English, so the folder goes a
     const locales = path.join(dir, "locales");
     fs.cpSync(src, locales, { recursive: true });
     assert.ok(removeNonEnglishLocales(locales).length > 0, name);
-    assert.equal(fs.existsSync(locales), false, `${name} locales left behind`);
+    assert.deepEqual(fs.readdirSync(locales), ["webcomponent.en.json"], name);
+  });
+});
+
+// Bundlers (@web/rollup-plugin-import-meta-assets) fail on a new URL() that
+// names the locales/ folder or a file that is not there, so every locale URL
+// in a template names the English file, the one an English-only monorepo
+// keeps. haxtheweb/issues#3402
+test("every template locale URL names the English file that ships", () => {
+  const templates = path.join(__dirname, "../../src/templates/webcomponent");
+  const LOCALE_URL =
+    /new URL\(\s*(["'`])((?:\.\.?\/)+locales(?:\/[^"'`$]*)?)\1\s*,\s*import\.meta\.url\s*\)/g;
+  fs.readdirSync(templates).forEach((name) => {
+    const js = path.join(templates, name, "webcomponent.js");
+    if (!fs.existsSync(js)) {
+      return;
+    }
+    const urls = [...fs.readFileSync(js, "utf8").matchAll(LOCALE_URL)].map(
+      (m) => m[2],
+    );
+    // a template without i18n wiring (minimal) has nothing to check
+    if (!urls.length) {
+      return;
+    }
+    urls.forEach((url) => {
+      assert.equal(url, "./locales/<%= name %>.en.json", `${name}: ${url}`);
+    });
+    assert.ok(
+      fs.existsSync(path.join(templates, name, "locales/webcomponent.en.json")),
+      `${name} ships no English locale file`,
+    );
   });
 });
 
