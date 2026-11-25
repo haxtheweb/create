@@ -1,6 +1,6 @@
 {
   "name": "@haxtheweb/create",
-  "version": "26.8.1",
+  "version": "26.11.0",
   "publishConfig": {
     "access": "public"
   },
