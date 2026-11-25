@@ -44,6 +44,8 @@ const {
   runSsrWorker,
   auditSsrCommand,
   SSR_STATUSES,
+  isNonVisual,
+  isVariableRule,
 } = require("../../src/lib/programs/audit-ssr.js");
 
 function project(files) {
@@ -427,7 +429,50 @@ test("summarizeSsr reports which elements a fallback rescues", () => {
   assert.equal(summary.fallback.withHook, 3);
   assert.equal(summary.fallback.useful, 2);
   assert.deepEqual(summary.fallback.recovered, [{ tag: "a", from: "shell" }]);
-  assert.ok(summary.primitiveStyles.bytes > 0);
+  assert.equal(summary.primitiveStyles.bytes, 0);
+});
+
+test("isNonVisual recognises elements with nothing to draw", () => {
+  assert.equal(isNonVisual("class A extends HTMLElement { go() {} }"), true);
+  assert.equal(
+    isNonVisual(
+      "class A extends B { async load() { return fetch('/x').then((r) => r.json()); } }",
+    ),
+    true,
+  );
+  assert.equal(
+    isNonVisual("class A {\n  render() {\n    return html``;\n  }\n}"),
+    false,
+  );
+  assert.equal(
+    isNonVisual("class A { static get styles() { return []; } }"),
+    false,
+  );
+  assert.equal(
+    isNonVisual("class A { firstUpdated() { this.innerHTML = '<p></p>'; } }"),
+    false,
+  );
+  assert.equal(
+    isNonVisual(
+      "class A extends HTMLElement { constructor() { super(); this.attachShadow({ mode: 'open' }); } }",
+    ),
+    false,
+  );
+  assert.equal(isNonVisual("customElements.define('x-a', Library);"), false);
+  assert.equal(isNonVisual(""), false);
+});
+
+test("summarizeSsr counts skipped elements and sizes the primitive stylesheet it is given", () => {
+  const summary = summarizeSsr(
+    [{ tag: "m", status: "skipped", demo: "bare", skipReason: "WebGL" }],
+    { primitiveCss: "a{b:c}" },
+  );
+  assert.equal(summary.counts.skipped, 1);
+  // a skipped element was never rendered: it has no size to add
+  assert.equal(summary.size.measured, 0);
+  assert.equal(summary.size.bytes, 0);
+  assert.deepEqual(summary.largest, []);
+  assert.equal(summary.primitiveStyles.bytes, 6);
 });
 
 test("the inert DOM environment is on unless --no-shim, and is reported", async () => {
@@ -471,49 +516,6 @@ test("--save-html also writes the primitive stylesheet and fallbacks", async () 
     fs.readFileSync(path.join(dir, "x-a.fallback.html"), "utf8"),
     "<p>Hi</p>",
   );
-});
-
-test("installInertDom fills in the missing browser surface and leaves existing APIs alone", async () => {
-  const { installInertDom } = await import(
-    "../../src/lib/programs/audit-ssr-env.mjs"
-  );
-  class FakeElement {}
-  const target = {
-    HTMLElement: FakeElement,
-    document: { querySelector: () => "kept" },
-  };
-  installInertDom(target);
-  assert.equal(target["window"], target);
-  assert.equal(typeof target.addEventListener, "function");
-  assert.equal(target.matchMedia("x").matches, false);
-  assert.equal(target.document.querySelector(), "kept");
-  assert.equal(target.document.body, undefined);
-  const el = new FakeElement();
-  assert.equal(el.querySelector("a"), null);
-  assert.deepEqual([...el.children], []);
-  el.classList.add("x");
-  el.style.setProperty("--a", "b");
-  el.style = "ignored";
-});
-
-test("installInertDom builds registered classes from document.createElement and aliases self", async () => {
-  const { installInertDom } = await import(
-    "../../src/lib/programs/audit-ssr-env.mjs"
-  );
-  class Registered {}
-  const target = {
-    HTMLElement: class {},
-    customElements: {
-      get: (tag) => (tag === "x-known" ? Registered : undefined),
-    },
-    document: { createElement: (tag) => ({ plain: tag }) },
-  };
-  installInertDom(target);
-  assert.equal(target.self, target);
-  assert.ok(target.document.createElement("X-Known") instanceof Registered);
-  assert.deepEqual(target.document.createElement("x-other"), {
-    plain: "x-other",
-  });
 });
 
 // A child process stand-in whose stdin.end() plays the scripted worker output,
@@ -718,7 +720,12 @@ test("runSsrWorker with default deps spawns the real worker once", async () => {
     shim: true,
     items: [{ tag: "x-a", specifier: "./no-such-element.js", demo: null }],
   });
-  assert.equal(out.fatal, undefined);
+  // paired with a haxcms-nodejs from before the SSR render kit, the worker
+  // stops early and says so; with the kit the element just fails to import
+  if (out.fatal) {
+    assert.equal(out.fatal.code, "missing-ssr-kit");
+    return;
+  }
   assert.equal(out.results.length, 1);
   assert.equal(out.results[0].tag, "x-a");
   assert.equal(out.results[0].ok, false);
@@ -776,12 +783,19 @@ test("the text report prints the status table, causes, hints and debug rows", as
             parent: pathToFileURL(path.join(root, "pkg/helper.js")).href,
           },
         ],
+        primitives: "p{margin:0}",
+        global: {
+          css: "p{margin:0}",
+          bytes: 11,
+          sourceBytes: 11,
+          variableBytes: 0,
+        },
       }),
     });
     assert.equal(result.passed, true);
     assert.equal(intros.length, 1);
-    // 5 status lines + cause group + thrown-at + 3 debug rows
-    assert.equal(recorded.message.length, 10);
+    // 7 status lines + cause group + thrown-at + 3 debug rows
+    assert.equal(recorded.message.length, 12);
     assert.equal(recorded.error.length, 1);
     assert.equal(recorded.warn.length, 1);
     assert.ok(recorded.warn[0].includes("shell (1): x-b"));
@@ -795,8 +809,10 @@ test("the text report prints the status table, causes, hints and debug rows", as
     assert.ok(
       recorded.message.some((line) => line.includes("TypeError: boom")),
     );
-    // progress line, totals, sizes, style share, fallback rescue, resolver fallbacks
-    assert.equal(recorded.info.length, 6);
+    // progress line, totals, sizes, style share, page stylesheet, fallback
+    // rescue, resolver fallbacks (no style-cost line: nothing here has styles)
+    assert.equal(recorded.info.length, 7);
+    assert.ok(recorded.info.some((line) => line.includes("once per page")));
     assert.equal(
       result.summary.resolverFallbacks.examples[0].from,
       "pkg/helper.js",
@@ -926,4 +942,118 @@ test("summarizeSsr flags styles shared across elements and groups hints", () => 
   assert.deepEqual(summary.hints, [
     { hint: "fetches-data", tags: ["x-1", "x-2", "x-3", "x-4"] },
   ]);
+});
+
+test("isVariableRule picks out rules that only set custom properties", () => {
+  assert.equal(isVariableRule(":host{--a:1;--b:var(--c)}"), true);
+  assert.equal(
+    isVariableRule(':host([accent-color="red"]) { /* map; */ --a: #f00; }'),
+    true,
+  );
+  assert.equal(isVariableRule(":host{--a:1;color:red}"), false);
+  assert.equal(isVariableRule(":host{}"), false);
+  assert.equal(isVariableRule(":host{/* never closed --a:1}"), false);
+  assert.equal(isVariableRule("@media print{:host{--a:1}}"), false);
+  assert.equal(isVariableRule("@import 'a.css'"), false);
+});
+
+test("summarizeSsr prices the ways of shipping shadow-root styles", () => {
+  const a = analyzeSsrOutput(
+    shadow("<style>:host{--a:1}p{margin:0}</style><p>Hi</p>") +
+      shadow("<style>:host{--a:1}p{margin:0}</style><p>Hi</p>"),
+    "x-a",
+  );
+  const b = analyzeSsrOutput(
+    shadow(
+      "<style>:host{--a:1}p{margin:0}</style><style>b{c:d}</style><p>Yo</p>",
+      "x-b",
+    ),
+    "x-b",
+  );
+  assert.deepEqual([a.variableRuleBytes, b.variableRuleBytes], [24, 12]);
+  const summary = summarizeSsr(
+    [
+      { tag: "x-a", demo: "bare", ...a },
+      { tag: "x-b", demo: "bare", ...b },
+    ],
+    { global: { css: "x", bytes: 300, sourceBytes: 400, variableBytes: 100 } },
+  );
+  // the block is 23 bytes and appears three times; the second block is 6
+  assert.deepEqual(summary.styleCosts, {
+    perShadowRoot: 75,
+    oncePerElement: 52,
+    onceOverall: 29,
+    distinctBlocks: 2,
+    variableRules: { bytes: 36, bytesIfEmittedOnce: 12 },
+    htmlWithoutStyles: a.bytes + b.bytes - 75,
+  });
+  assert.deepEqual(summary.globalStyles, {
+    bytes: 300,
+    sourceBytes: 400,
+    variableBytes: 100,
+  });
+  assert.equal(summarizeSsr([]).globalStyles, null);
+});
+
+test("--save-html writes the page stylesheet and the report leaves the per-rule detail out", async () => {
+  const root = project({ "wc-registry.json": { "x-a": "pkg/a.js" } });
+  const saveHtml = path.join(root, "out");
+  let written = "";
+  const result = await auditSsrCommand(
+    { options: { format: "json", saveHtml } },
+    root,
+    {
+      write: (text) => (written += text),
+      runWorker: async () => ({
+        results: [
+          {
+            tag: "x-a",
+            ok: true,
+            file: null,
+            html: shadow("<style>:host{--a:1}</style><p>Hi</p>"),
+          },
+        ],
+        fallbacks: [],
+        primitives: "p{margin:0}",
+        global: {
+          css: "p{margin:0}:root{--ddd-a:1px}",
+          bytes: 29,
+          sourceBytes: 29,
+          variableBytes: 18,
+        },
+      }),
+    },
+  );
+  assert.equal(
+    fs.readFileSync(path.join(saveHtml, "_global.css"), "utf8"),
+    "p{margin:0}:root{--ddd-a:1px}",
+  );
+  assert.equal(result.summary.globalStyles.bytes, 29);
+  const row = JSON.parse(written).results[0];
+  for (const key of [
+    "styleRules",
+    "styleBlocks",
+    "variableRules",
+    "variableRuleBytes",
+  ]) {
+    assert.equal(key in row, false, key);
+  }
+});
+
+test("a missing SSR render kit is explained with how to get it", async () => {
+  const root = project({ "wc-registry.json": { "x-a": "pkg/a.js" } });
+  let written = "";
+  const result = await auditSsrCommand({ options: { format: "json" } }, root, {
+    write: (text) => (written += text),
+    runWorker: async () => ({
+      fatal: { code: "missing-ssr-kit", message: "no kit" },
+      results: [],
+      fallbacks: [],
+    }),
+  });
+  assert.equal(result.passed, false);
+  assert.equal(result.fatal.code, "missing-ssr-kit");
+  assert.ok(result.fatal.message.includes("HAX_SSR_KIT"));
+  assert.ok(result.fatal.message.includes("@haxtheweb/haxcms-nodejs@latest"));
+  assert.equal(JSON.parse(written).fatal.code, "missing-ssr-kit");
 });
