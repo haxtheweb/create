@@ -930,6 +930,22 @@ test(
       );
       assert.ok(fs.existsSync(path.join(out, "llms.txt")));
       assert.ok(fs.existsSync(path.join(out, "sitemap.xml")));
+      // nothing that only a HAX server answers ships to the static host
+      for (const rel of [
+        "index.php",
+        "config.php",
+        "Dockerfile",
+        "docker",
+        ".htaccess",
+        "files/.htaccess",
+        ".well-known/api-catalog",
+      ]) {
+        assert.ok(!fs.existsSync(path.join(out, rel)), `${rel} shipped`);
+      }
+      assert.doesNotMatch(
+        fs.readFileSync(path.join(out, "llms.txt"), "utf8"),
+        /\/x\/api\//,
+      );
       assert.match(
         fs.readFileSync(path.join(out, "llms-full.txt"), "utf8"),
         /The first page, with words/,
