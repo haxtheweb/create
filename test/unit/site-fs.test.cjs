@@ -29,13 +29,54 @@ const {
   stashStaticPublishArtifacts,
   unstashStaticPublishArtifacts,
   buildStaticLlmsFull,
+  htmlToPageText,
   writeStaticLlmsFull,
   removeStaticLlmsFull,
   readSurgeCnameDomain,
   surgeUsesNewGrammar,
+  staticPublishDomain,
+  writeStaticPublishPages,
+  removeStaticPublishPages,
+  buildStaticSite,
+  STATIC_BUILD_MARKER,
 } = available ? siteModule : {};
 
 const opts = { skip: skipReason, timeout: 15000 };
+
+// --- htmlToPageText: the page text llms-full.txt falls back to ---
+
+test(
+  "htmlToPageText keeps the text and drops markup, script and style",
+  opts,
+  () => {
+    assert.equal(
+      htmlToPageText(
+        "<h2>Title</h2><p>One <b>bold</b> &amp; two</p><ul><li>a</li><li>b</li></ul>",
+      ),
+      "Title\n\nOne bold &amp; two\n\na\n\nb\n\n",
+    );
+    assert.equal(
+      htmlToPageText(
+        "<p>line<br>break</p><script>alert(1)</script><style>p{color:red}</style><div>after</div>",
+      ),
+      "line\nbreak\n\n after\n\n",
+    );
+    assert.equal(htmlToPageText("<p>a</p><!-- note --><p>b</p>"), "a\n\nb\n\n");
+    assert.equal(htmlToPageText(""), "");
+  },
+);
+
+test(
+  "htmlToPageText never leaves a tag built from the pieces of another",
+  opts,
+  () => {
+    const text = htmlToPageText(
+      "<scr<script>x</script>ipt>alert(1)</script><p>ok</p>",
+    );
+    assert.equal(/<script/i.test(text), false);
+    assert.ok(text.includes("ok"));
+  },
+);
 
 // --- cleanupSiteForPublish: broken-symlink finder/unlinker ---
 
@@ -673,6 +714,281 @@ test(
       );
     } finally {
       fs.rmSync(root, { recursive: true, force: true });
+    }
+  },
+);
+
+// --- rendered pages for static hosts (haxtheweb/issues#3327) ---
+
+test("staticPublishDomain makes an absolute address or none", opts, () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "hax-pubdomain-"));
+  try {
+    assert.equal(staticPublishDomain(root, undefined), "");
+    assert.equal(
+      staticPublishDomain(root, "my-site.surge.sh"),
+      "https://my-site.surge.sh/",
+    );
+    assert.equal(
+      staticPublishDomain(root, "https://org.github.io/repo/"),
+      "https://org.github.io/repo/",
+    );
+    assert.equal(staticPublishDomain(root, "bad domain"), "");
+    fs.writeFileSync(path.join(root, "CNAME"), "remembered.surge.sh\n");
+    assert.equal(staticPublishDomain(root, ""), "https://remembered.surge.sh/");
+    // --domain wins over the remembered one
+    assert.equal(
+      staticPublishDomain(root, "other.surge.sh"),
+      "https://other.surge.sh/",
+    );
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test(
+  "removeStaticPublishPages removes only the recorded pages and empty folders it made",
+  opts,
+  () => {
+    const parent = fs.mkdtempSync(path.join(os.tmpdir(), "hax-pubpages-"));
+    const root = path.join(parent, "site");
+    try {
+      fs.mkdirSync(path.join(root, "about", "team"), { recursive: true });
+      fs.writeFileSync(path.join(root, "about", "index.html"), "about");
+      fs.writeFileSync(path.join(root, "about", "team", "index.html"), "team");
+      // a file someone put in a recorded folder keeps that folder
+      fs.mkdirSync(path.join(root, "kept"));
+      fs.writeFileSync(path.join(root, "kept", "index.html"), "page");
+      fs.writeFileSync(path.join(root, "kept", "mine.txt"), "mine");
+      fs.writeFileSync(path.join(root, "site.json"), "{}");
+      const stash = staticPublishStashDir(root);
+      fs.mkdirSync(stash, { recursive: true });
+      fs.writeFileSync(
+        path.join(stash, "static-pages.json"),
+        JSON.stringify({
+          files: [
+            "about/index.html",
+            "about/team/index.html",
+            "kept/index.html",
+            // never outside the site, never the site's own files by name
+            "../outside.txt",
+          ],
+          dirs: ["about", "about/team", "kept", ".."],
+        }),
+      );
+      fs.writeFileSync(path.join(parent, "outside.txt"), "outside");
+      assert.equal(removeStaticPublishPages(root), 3);
+      assert.ok(!fs.existsSync(path.join(root, "about")));
+      assert.ok(fs.existsSync(path.join(root, "kept", "mine.txt")));
+      assert.ok(fs.existsSync(path.join(root, "site.json")));
+      assert.ok(fs.existsSync(path.join(parent, "outside.txt")));
+      assert.ok(!fs.existsSync(stash), "record and empty stash removed");
+      // nothing recorded: nothing to do
+      assert.equal(removeStaticPublishPages(root), 0);
+    } finally {
+      fs.rmSync(parent, { recursive: true, force: true });
+    }
+  },
+);
+
+test(
+  "restoreSiteAfterStaticPublish removes recorded pages with the rest",
+  opts,
+  () => {
+    const parent = fs.mkdtempSync(path.join(os.tmpdir(), "hax-pubrestore-"));
+    const root = path.join(parent, "site");
+    try {
+      fs.mkdirSync(root);
+      fs.writeFileSync(path.join(root, "index.html"), "ORIGINAL");
+      fs.writeFileSync(path.join(root, "ghpages.html"), "GHPAGES");
+      assert.equal(prepareSiteForStaticPublish(root).indexSwapped, true);
+      fs.mkdirSync(path.join(root, "about"));
+      fs.writeFileSync(path.join(root, "about", "index.html"), "about");
+      const stash = staticPublishStashDir(root);
+      fs.mkdirSync(stash, { recursive: true });
+      fs.writeFileSync(
+        path.join(stash, "static-pages.json"),
+        JSON.stringify({ files: ["about/index.html"], dirs: ["about"] }),
+      );
+      assert.equal(restoreSiteAfterStaticPublish(root), true);
+      assert.ok(!fs.existsSync(path.join(root, "about")));
+      assert.equal(
+        fs.readFileSync(path.join(root, "index.html"), "utf8"),
+        "ORIGINAL",
+      );
+      // pages left by a crashed publish are cleared by the next prepare
+      fs.mkdirSync(path.join(root, "late"));
+      fs.writeFileSync(path.join(root, "late", "index.html"), "late");
+      fs.mkdirSync(stash, { recursive: true });
+      fs.writeFileSync(
+        path.join(stash, "static-pages.json"),
+        JSON.stringify({ files: ["late/index.html"], dirs: ["late"] }),
+      );
+      prepareSiteForStaticPublish(root);
+      assert.ok(!fs.existsSync(path.join(root, "late")));
+      restoreSiteAfterStaticPublish(root);
+    } finally {
+      fs.rmSync(parent, { recursive: true, force: true });
+    }
+  },
+);
+
+test(
+  "writeStaticPublishPages never fails a publish and never touches a missing site",
+  opts,
+  async () => {
+    assert.equal(
+      await writeStaticPublishPages(path.join(os.tmpdir(), "hax-no-site")),
+      0,
+    );
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), "hax-pubwrite-"));
+    try {
+      // not a HAXcms site: nothing written, no error
+      fs.writeFileSync(path.join(root, "index.html"), "x");
+      assert.equal(await writeStaticPublishPages(root, ""), 0);
+      assert.deepEqual(fs.readdirSync(root), ["index.html"]);
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+      fs.rmSync(staticPublishStashDir(root), { recursive: true, force: true });
+    }
+  },
+);
+
+// --- site:build-static ---
+
+// a HAXsite from the installed haxcms-nodejs boilerplate with one page
+function makeBoilerplateSite(parent) {
+  const boilerplate = path.join(
+    path.dirname(require.resolve("@haxtheweb/haxcms-nodejs/package.json")),
+    "dist",
+    "boilerplate",
+    "site",
+  );
+  const root = path.join(parent, "site");
+  fs.cpSync(boilerplate, root, { recursive: true });
+  fs.mkdirSync(path.join(root, "pages", "item-1"), { recursive: true });
+  fs.writeFileSync(
+    path.join(root, "pages", "item-1", "index.html"),
+    "<p>The first page, with words.</p>",
+  );
+  fs.writeFileSync(
+    path.join(root, "site.json"),
+    JSON.stringify({
+      id: "site-1",
+      title: "Static test",
+      description: "A site built for a static host.",
+      license: "by-sa",
+      metadata: {
+        author: {},
+        site: { name: "static-test", settings: {} },
+        theme: { element: "clean-one", variables: {} },
+      },
+      items: [
+        {
+          id: "item-1",
+          indent: 0,
+          location: "pages/item-1/index.html",
+          order: 0,
+          parent: null,
+          slug: "first",
+          title: "First",
+          description: "",
+          metadata: {},
+        },
+      ],
+    }),
+  );
+  // what a site on a HAXcms server has: a repo and links to the shared build
+  fs.mkdirSync(path.join(root, ".git"));
+  fs.writeFileSync(path.join(root, ".git", "HEAD"), "ref");
+  fs.symlinkSync("../../build", path.join(root, "build"));
+  fs.symlinkSync("../../dist", path.join(root, "dist"));
+  return root;
+}
+
+test(
+  "buildStaticSite copies the site for a static host and leaves the site alone",
+  { ...opts, timeout: 60000 },
+  async () => {
+    const parent = fs.mkdtempSync(path.join(os.tmpdir(), "hax-buildstatic-"));
+    try {
+      const root = makeBoilerplateSite(parent);
+      const before = fs.readFileSync(path.join(root, "index.html"), "utf8");
+      const out = path.join(parent, "out");
+      const built = await buildStaticSite(root, out, "https://static.example/");
+      assert.equal(built.out, out);
+      // links, .git and the server's dist link are not copied
+      assert.ok(!fs.existsSync(path.join(out, ".git")));
+      assert.ok(!fs.existsSync(path.join(out, "build")));
+      assert.ok(!fs.existsSync(path.join(out, "dist")));
+      // agent discovery files are
+      assert.ok(fs.existsSync(path.join(out, ".well-known")));
+      assert.ok(fs.existsSync(path.join(out, STATIC_BUILD_MARKER)));
+      // generated files exist and use the published address
+      assert.match(
+        fs.readFileSync(path.join(out, "robots.txt"), "utf8"),
+        /https:\/\/static\.example\/sitemap\.xml/,
+      );
+      assert.ok(fs.existsSync(path.join(out, "llms.txt")));
+      assert.ok(fs.existsSync(path.join(out, "sitemap.xml")));
+      assert.match(
+        fs.readFileSync(path.join(out, "llms-full.txt"), "utf8"),
+        /The first page, with words/,
+      );
+      if (built.renderer) {
+        assert.equal(built.pages, 2);
+        assert.match(
+          fs.readFileSync(path.join(out, "first", "index.html"), "utf8"),
+          /https:\/\/static\.example\/first/,
+        );
+      } else {
+        // an older haxcms-nodejs: the shell is the entry point
+        assert.equal(
+          fs.readFileSync(path.join(out, "index.html"), "utf8"),
+          fs.readFileSync(path.join(out, "ghpages.html"), "utf8"),
+        );
+      }
+      // the site itself is unchanged
+      assert.equal(
+        fs.readFileSync(path.join(root, "index.html"), "utf8"),
+        before,
+      );
+      assert.ok(!fs.existsSync(path.join(root, "llms-full.txt")));
+      // a second build replaces the first
+      fs.writeFileSync(path.join(out, "stale.txt"), "old");
+      await buildStaticSite(root, out, "");
+      assert.ok(!fs.existsSync(path.join(out, "stale.txt")));
+    } finally {
+      fs.rmSync(parent, { recursive: true, force: true });
+    }
+  },
+);
+
+test(
+  "buildStaticSite only replaces a folder it made",
+  { ...opts, timeout: 60000 },
+  async () => {
+    const parent = fs.mkdtempSync(path.join(os.tmpdir(), "hax-buildstatic-"));
+    try {
+      const root = makeBoilerplateSite(parent);
+      const mine = path.join(parent, "mine");
+      fs.mkdirSync(mine);
+      fs.writeFileSync(path.join(mine, "keep.txt"), "keep");
+      await assert.rejects(buildStaticSite(root, mine), /not empty/);
+      assert.ok(fs.existsSync(path.join(mine, "keep.txt")));
+      // the server's dist link is not a folder to replace
+      await assert.rejects(
+        buildStaticSite(root, path.join(root, "dist")),
+        /not a folder/,
+      );
+      // a folder that holds the site is never the output
+      await assert.rejects(buildStaticSite(root, parent), /can't contain/);
+      // not a site at all
+      await assert.rejects(
+        buildStaticSite(mine, path.join(parent, "x")),
+        /not a HAXsite/,
+      );
+    } finally {
+      fs.rmSync(parent, { recursive: true, force: true });
     }
   },
 );

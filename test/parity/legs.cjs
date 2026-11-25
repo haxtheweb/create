@@ -26,6 +26,149 @@ function nextSiblingOrder(items, parent) {
   return max + 1;
 }
 
+// outline-designer recomputes every page's depth from the parent chain before
+// it calls Save Outline (_recurseUpdateIndent), so a moved page's descendants
+// go with it. Do the same, so saveOutline gets what the real client sends.
+// Only a wrong depth is rewritten; a parent loop leaves the item as it was.
+function syncIndents(items) {
+  const byId = new Map(items.map((it) => [it.id, it]));
+  const parentOf = (it) =>
+    it.parent === undefined || it.parent === "" || it.parent === null
+      ? null
+      : it.parent;
+  for (const it of items) {
+    let depth = 0;
+    let p = parentOf(it);
+    const seen = new Set([it.id]);
+    while (p && byId.has(p) && !seen.has(p)) {
+      seen.add(p);
+      depth++;
+      p = parentOf(byId.get(p));
+    }
+    if (p && seen.has(p)) continue;
+    if (parseInt(it.indent) !== depth) it.indent = depth;
+  }
+  return items;
+}
+
+// Ops only the golden cases use (golden/cases.cjs); the seeded sequences in
+// ops.cjs never emit them.
+const GOLDEN_OP_TYPES = [
+  "outlineSave",
+  "outlineRaw",
+  // the site API operations the plugin platform wraps in hooks
+  // (haxtheweb/issues#3332): settings saves, content blocks, files,
+  // revisions, and the system-level clone / archive / download
+  "sitePatch",
+  "editBlocks",
+  "uploadFile",
+  "fileOp",
+  "deleteFile",
+  "replaceFile",
+  "restoreRevision",
+  "cloneSite",
+  "archiveSite",
+  "downloadSite",
+];
+
+// documents and media the golden cases upload (golden/fixtures/files)
+const FILE_FIXTURE_DIR = path.join(__dirname, "golden", "fixtures", "files");
+
+// what an export must carry: the site's content and the files that make the
+// folder deployable as it is. The rest of the boilerplate (agent skills,
+// build scripts, icons) changes with every release and is left out, so the
+// golden does not churn; .git (the site's history) must never be in it.
+const EXPORT_ENTRY =
+  /^(site\.json|index\.html|manifest\.json|pages\/.+|files\/.+|\.htaccess|\.nojekyll|\.github\/workflows\/deploy\.yml|\.git\/.*)$/;
+
+// names of the entries in a zip archive, read from its central directory
+// (no dependency: the harness only needs the list, not the contents)
+function listZipEntries(buf) {
+  let eocd = -1;
+  for (let i = buf.length - 22; i >= Math.max(0, buf.length - 65557); i--) {
+    if (buf.readUInt32LE(i) === 0x06054b50) {
+      eocd = i;
+      break;
+    }
+  }
+  if (eocd === -1) throw new Error("not a zip archive");
+  const count = buf.readUInt16LE(eocd + 10);
+  let p = buf.readUInt32LE(eocd + 16);
+  const names = [];
+  for (let n = 0; n < count; n++) {
+    if (buf.readUInt32LE(p) !== 0x02014b50)
+      throw new Error("bad zip central directory");
+    const nameLen = buf.readUInt16LE(p + 28);
+    const extraLen = buf.readUInt16LE(p + 30);
+    const commentLen = buf.readUInt16LE(p + 32);
+    names.push(buf.toString("utf8", p + 46, p + 46 + nameLen));
+    p += 46 + nameLen + extraLen + commentLen;
+  }
+  return names;
+}
+
+// a logical key (L0, L1, ...) as written in a golden case
+const isKey = (v) => typeof v === "string" && /^L\d+$/.test(v);
+
+// outlineRaw payloads name pages as "@L1"; swap in the leg's real ids,
+// leaving everything else (an unknown id, a blank one, a number) as written
+function resolveKeys(value, idOf) {
+  if (typeof value === "string" && /^@L\d+$/.test(value))
+    return idOf(value.slice(1)) || value;
+  if (Array.isArray(value)) return value.map((v) => resolveKeys(v, idOf));
+  if (value && typeof value === "object") {
+    const out = {};
+    for (const [k, v] of Object.entries(value)) out[k] = resolveKeys(v, idOf);
+    return out;
+  }
+  return value;
+}
+
+// What outline-designer sends for one Save Outline: every page as site.json
+// has it, with this save's changes applied, new pages added under a client
+// id, and depths recomputed. A change names a page by key; its parent is a
+// key, null (top level) or any other string, sent as is.
+function buildOutlineItems(items, op, idOf) {
+  const out = items.map((i) =>
+    Object.assign({}, i, { metadata: Object.assign({}, i.metadata || {}) }),
+  );
+  const parentFor = (p) =>
+    p === null || p === undefined ? null : isKey(p) ? idOf(p) : p;
+  for (const add of op.add || []) {
+    const parent = parentFor(add.parent);
+    out.push({
+      id: "item-golden-" + add.key,
+      title: add.title,
+      parent,
+      order:
+        add.order === undefined ? nextSiblingOrder(out, parent) : add.order,
+      indent: 0,
+      metadata: {},
+    });
+  }
+  for (const ch of op.changes || []) {
+    const it = out.find((x) => x.id === idOf(ch.key));
+    if (!it) continue;
+    if (ch.title !== undefined) it.title = ch.title;
+    if (ch.slug !== undefined) {
+      it.slug = ch.slug;
+      it.metadata.overridePathauto = true;
+    }
+    if (ch.parent !== undefined) {
+      it.parent = parentFor(ch.parent);
+      if (ch.order === undefined)
+        it.order = nextSiblingOrder(
+          out.filter((x) => x.id !== it.id),
+          it.parent,
+        );
+    }
+    if (ch.order !== undefined) it.order = ch.order;
+    if (ch.hideInMenu !== undefined) it.metadata.hideInMenu = ch.hideInMenu;
+    if (ch.delete) it.delete = true;
+  }
+  return syncIndents(out);
+}
+
 // The editor's save sends a <page-break> describing the page's CURRENT
 // properties followed by the body; saveNode re-applies every attribute (and
 // resets published / hide-in-menu / override-pathauto when absent), so a
@@ -82,15 +225,55 @@ class BaseLeg {
   }
 }
 
+// system import route for a document, by extension (the same routes the
+// dashboard and the CLI's file importers use)
+const IMPORT_ROUTES = {
+  docx: "actions/import-docx",
+  odt: "actions/import-odt",
+  pdf: "actions/import-pdf",
+  pptx: "actions/import-pptx",
+  odp: "actions/import-odp",
+  xlsx: "actions/import-xlsx",
+  xls: "actions/import-xlsx",
+  ods: "actions/import-xlsx",
+  md: "actions/import-md",
+  markdown: "actions/import-md",
+  txt: "actions/import-md",
+};
+function importRouteFor(filePath) {
+  const ext = path.extname(filePath).slice(1).toLowerCase();
+  if (!IMPORT_ROUTES[ext]) throw new Error("no import route for " + filePath);
+  return IMPORT_ROUTES[ext];
+}
+
 class ApiLeg extends BaseLeg {
   constructor(name, baseUrl, username, password, sitesDir) {
     super(name);
     this.client = new HaxClient(baseUrl, username, password, name);
     this.sitesDir = sitesDir;
   }
-  async create(siteName) {
+  // opts.importFile: make the site from a document, as the dashboard does:
+  // the file goes to its import route, the items it returns build the site
+  async create(siteName, opts = {}) {
+    // what a case records besides the site itself (golden.cjs: extra)
+    this.extra = {};
+    this.archived = false;
+    this.cloneDir = null;
     await this.client.login();
-    const r = await this.client.createSite(siteName, SITE_DESCRIPTION);
+    let build;
+    if (opts.importFile) {
+      const items = await this.client.importFile(
+        importRouteFor(opts.importFile),
+        opts.importFile,
+      );
+      build = { structure: "import", items };
+    }
+    const r = await this.client.createSite(
+      siteName,
+      SITE_DESCRIPTION,
+      undefined,
+      build,
+    );
     this.siteName = r.data.metadata.site.name;
     this.siteDir = path.join(this.sitesDir, this.siteName);
     await this.client.openSite(this.siteName);
@@ -118,9 +301,22 @@ class ApiLeg extends BaseLeg {
       op.type !== "addPage" &&
       op.key &&
       !id &&
-      !["outlineReorder", "setTheme", "normalizeSlugs", "setLang"].includes(
-        op.type,
-      )
+      ![
+        "outlineReorder",
+        "outlineSave",
+        "outlineRaw",
+        "setTheme",
+        "normalizeSlugs",
+        "setLang",
+        "sitePatch",
+        "uploadFile",
+        "fileOp",
+        "deleteFile",
+        "replaceFile",
+        "cloneSite",
+        "archiveSite",
+        "downloadSite",
+      ].includes(op.type)
     ) {
       return { status: "skipped", detail: "no mapped id for " + op.key };
     }
@@ -180,10 +376,13 @@ class ApiLeg extends BaseLeg {
         r = await patch({
           operation: "setParent",
           parent: parentId,
-          order: nextSiblingOrder(
-            items.filter((i) => i.id !== id),
-            parentId,
-          ),
+          order:
+            op.order === undefined
+              ? nextSiblingOrder(
+                  items.filter((i) => i.id !== id),
+                  parentId,
+                )
+              : op.order,
         });
         break;
       }
@@ -238,16 +437,37 @@ class ApiLeg extends BaseLeg {
         const parentId = op.parent ? this.id(op.parent) : null;
         const out = items.map((i) => Object.assign({}, i));
         const me = out.find((x) => x.id === id);
-        const par = out.find((x) => x.id === parentId);
         me.order = nextSiblingOrder(
           out.filter((x) => x.id !== id),
           parentId,
         );
         me.parent = parentId;
-        me.indent = par ? parseInt(par.indent || 0) + 1 : 0;
+        syncIndents(out);
         r = await this.call("PATCH", "/v1/site/outline", { site, items: out });
         break;
       }
+      case "outlineSave": {
+        const idOf = (k) => this.id(k);
+        const before = new Set(items.map((i) => i.id));
+        r = await this.call("PATCH", "/v1/site/outline", {
+          site,
+          items: buildOutlineItems(items, op, idOf),
+        });
+        // new pages get server ids; idMap says which client id became which
+        const idMap =
+          r.json && r.json.data && r.json.data.idMap ? r.json.data.idMap : {};
+        for (const add of op.add || []) {
+          const sid = idMap["item-golden-" + add.key];
+          if (sid && !before.has(sid)) this.keyToId[add.key] = sid;
+        }
+        break;
+      }
+      case "outlineRaw":
+        r = await this.call("PATCH", "/v1/site/outline", {
+          site,
+          items: resolveKeys(op.items, (k) => this.id(k)),
+        });
+        break;
       case "normalizeSlugs":
         r = await this.call("POST", "/v1/site/normalize-slugs", {
           site,
@@ -255,11 +475,148 @@ class ApiLeg extends BaseLeg {
         });
         break;
       case "setLang":
+        // both backends read seo.lang; the old form-field key was ignored,
+        // so this op used to leave the language unchanged on every leg
         r = await this.call("PATCH", "/v1/site/seo", {
           site,
-          seo: { "manifest-metadata-site-settings-lang": op.lang },
+          seo: { lang: op.lang },
         });
         break;
+      case "sitePatch":
+        // one of the site settings saves (PATCH /v1/site, /v1/site/seo,
+        // /v1/site/platform, /v1/site/editor, /v1/site/blocks,
+        // /v1/site/appearance) with the body the settings dialogs send
+        r = await this.call(
+          "PATCH",
+          op.path,
+          Object.assign({ site }, op.body || {}),
+        );
+        break;
+      case "editBlocks":
+        r = await this.call(
+          "PATCH",
+          "/v1/content/" + encodeURIComponent(id) + "/blocks",
+          { site, ops: op.ops },
+        );
+        break;
+      case "uploadFile": {
+        const form = new FormData();
+        const bytes = fs.readFileSync(path.join(FILE_FIXTURE_DIR, op.fixture));
+        form.append("file-upload", new Blob([bytes]), op.name || op.fixture);
+        const pageId = op.page ? this.id(op.page) : null;
+        if (pageId) form.append("nodeId", pageId);
+        r = await this.client.siteForm("POST", "/v1/files", form);
+        break;
+      }
+      case "fileOp":
+      case "deleteFile":
+      case "replaceFile": {
+        const uuid = await this.fileUuid(op.name);
+        if (!uuid)
+          return { status: "skipped", detail: "no file named " + op.name };
+        const at = "/v1/files/" + encodeURIComponent(uuid);
+        if (op.type === "fileOp") {
+          const body = { site, operation: op.operation };
+          if (op.newName) body.newName = op.newName;
+          r = await this.call("PATCH", at, body);
+        } else if (op.type === "deleteFile") {
+          r = await this.call("DELETE", at, { site });
+        } else {
+          const form = new FormData();
+          const bytes = fs.readFileSync(
+            path.join(FILE_FIXTURE_DIR, op.fixture),
+          );
+          form.append("upload", new Blob([bytes]), op.name);
+          r = await this.client.siteForm("POST", at + "/content", form);
+        }
+        break;
+      }
+      case "restoreRevision": {
+        // revisions are git commits, so their ids differ per leg: pick the
+        // one `back` saves before the newest that touched the page
+        const list = await this.call(
+          "GET",
+          "/v1/items/" + encodeURIComponent(id) + "/revisions",
+        );
+        const revs =
+          list.json && list.json.data && Array.isArray(list.json.data.revisions)
+            ? list.json.data.revisions
+            : [];
+        const rev = revs[op.back || 1];
+        if (!rev)
+          return {
+            status: "skipped",
+            detail: "only " + revs.length + " revision(s)",
+          };
+        r = await this.call(
+          "POST",
+          "/v1/items/" +
+            encodeURIComponent(id) +
+            "/revisions/" +
+            encodeURIComponent(rev.hash) +
+            "/restore",
+          {},
+        );
+        break;
+      }
+      case "cloneSite": {
+        r = await this.client.system(
+          "POST",
+          "/sites/" + encodeURIComponent(this.siteName) + "/clone",
+          { site },
+        );
+        const name = r.json && r.json.data && r.json.data.name;
+        if (name) {
+          this.cloneName = name;
+          this.cloneDir = path.join(this.sitesDir, name);
+        }
+        break;
+      }
+      case "archiveSite": {
+        r = await this.client.system(
+          "POST",
+          "/sites/" + encodeURIComponent(this.siteName) + "/archive",
+          { site },
+        );
+        const listed = await this.client.system("GET", "/sites");
+        const names = JSON.stringify(listed.json || {});
+        this.archived = r.status === 200;
+        this.extra.archive = {
+          status: r.status,
+          siteFolderRemains: fs.existsSync(this.siteDir),
+          stillListed: names.indexOf('"' + this.siteName + '"') !== -1,
+          archivedUnderOwnName: !!(
+            r.json &&
+            r.json.data &&
+            r.json.data.archivedName === this.siteName
+          ),
+        };
+        break;
+      }
+      case "downloadSite": {
+        r = await this.client.system(
+          "POST",
+          "/sites/" + encodeURIComponent(this.siteName) + "/download",
+          { site },
+        );
+        const link = r.json && r.json.data && r.json.data.link;
+        if (r.status === 200 && link) {
+          const res = await fetch(
+            /^https?:/.test(link) ? link : this.client.baseUrl + link,
+          );
+          const buf = Buffer.from(await res.arrayBuffer());
+          this.extra.download = {
+            status: res.status,
+            name: r.json.data.name,
+            entries: listZipEntries(buf)
+              // git internals are a copy of the site's history, not content;
+              // folder entries are a detail of the zip writer
+              .filter((e) => EXPORT_ENTRY.test(e) && !e.endsWith("/"))
+              .sort(),
+          };
+        }
+        break;
+      }
       default:
         return { status: "unsupported" };
     }
@@ -268,11 +625,43 @@ class ApiLeg extends BaseLeg {
       detail: r.status >= 400 ? r.bodyText.slice(0, 300) : undefined,
     };
   }
+  // a file's uuid, by name, from the site's file listing
+  async fileUuid(name) {
+    const r = await this.call("GET", "/v1/files");
+    const data = r.json && r.json.data;
+    const list = Array.isArray(data)
+      ? data
+      : data && Array.isArray(data.files)
+        ? data.files
+        : data && Array.isArray(data.items)
+          ? data.items
+          : [];
+    const hit = list.find((f) => f && f.name === name);
+    return hit ? hit.uuid || hit.id : null;
+  }
 }
 
 // args go straight to execFile (no shell), so titles and content with quotes,
 // ampersands or markup reach the CLI unchanged
-function runCli(cliPath, args, cwd) {
+// The CLI keeps its HAXcms config, where the default site language and other
+// system settings live, in the home folder (~/.haxcmsconfig). A run must not
+// read the settings of whoever is running it, or write into their home, so
+// the CLI gets an empty home of its own and creates a default config there.
+// git falls back to the home folder for the commit author, so one is given.
+function cliEnv(home) {
+  const env = Object.assign({}, process.env, {
+    NO_COLOR: "1",
+    HOME: home,
+    USERPROFILE: home,
+  });
+  const author = { NAME: "HAX parity", EMAIL: "parity@haxtheweb.invalid" };
+  for (const who of ["AUTHOR", "COMMITTER"])
+    for (const what of ["NAME", "EMAIL"])
+      if (!env[`GIT_${who}_${what}`]) env[`GIT_${who}_${what}`] = author[what];
+  return env;
+}
+
+function runCli(cliPath, args, cwd, home) {
   return new Promise((resolve) => {
     execFile(
       process.execPath,
@@ -281,7 +670,7 @@ function runCli(cliPath, args, cwd) {
         cwd,
         timeout: 120000,
         maxBuffer: 1 << 26,
-        env: Object.assign({}, process.env, { NO_COLOR: "1" }),
+        env: cliEnv(home),
       },
       (err, stdout, stderr) => {
         resolve({
@@ -298,21 +687,26 @@ class CliLeg extends BaseLeg {
     super(name);
     this.cliPath = cliPath;
     this.parentDir = parentDir;
+    // beside the sites, not inside them, and never the real home folder
+    this.home = parentDir + "-home";
   }
-  async create(siteName) {
+  // opts.importFile: `hax site <name> --import-site <file>` (the CLI picks
+  // the importer from the extension)
+  async create(siteName, opts = {}) {
     fs.mkdirSync(this.parentDir, { recursive: true });
+    fs.mkdirSync(this.home, { recursive: true });
+    const args = [
+      "site",
+      siteName,
+      // same description the API legs send to createSite
+      "--description=" + SITE_DESCRIPTION,
+    ];
+    if (opts.importFile) args.push("--import-site=" + opts.importFile);
     const r = await runCli(
       this.cliPath,
-      [
-        "site",
-        siteName,
-        // same description the API legs send to createSite
-        "--description=" + SITE_DESCRIPTION,
-        "--y",
-        "--no-i",
-        "--skip",
-      ],
+      args.concat(["--y", "--no-i", "--skip"]),
       this.parentDir,
+      this.home,
     );
     if (r.code !== 0)
       throw new Error("cli create failed: " + r.out.slice(-500));
@@ -388,10 +782,13 @@ class CliLeg extends BaseLeg {
         ].concat(base);
       case "editParent": {
         const parentId = op.parent ? idOf(op.parent) : null;
-        const order = nextSiblingOrder(
-          items.filter((i) => i.id !== id),
-          parentId,
-        );
+        const order =
+          op.order === undefined
+            ? nextSiblingOrder(
+                items.filter((i) => i.id !== id),
+                parentId,
+              )
+            : op.order;
         return [
           "site",
           "node:edit",
@@ -411,6 +808,32 @@ class CliLeg extends BaseLeg {
         return ["site", "node:delete", f("item-id", id)].concat(base);
       case "setTheme":
         return ["site", "site:theme", f("theme", op.theme)].concat(base);
+      // node:edit --move: the same item operations the API runs
+      case "moveUp":
+      case "moveDown":
+      case "indent":
+      case "outdent":
+        return [
+          "site",
+          "node:edit",
+          f("item-id", id),
+          f(
+            "move",
+            {
+              moveUp: "up",
+              moveDown: "down",
+              indent: "indent",
+              outdent: "outdent",
+            }[op.type],
+          ),
+        ].concat(base);
+      case "setLocked":
+        return [
+          "site",
+          "node:edit",
+          f("item-id", id),
+          f("locked", String(op.locked)),
+        ].concat(base);
       default:
         return null;
     }
@@ -422,7 +845,7 @@ class CliLeg extends BaseLeg {
     const args = CliLeg.argsFor(op, (k) => this.id(k), items);
     if (!args) return { status: "unsupported" };
     const before = new Set(items.map((i) => i.id));
-    const r = await runCli(this.cliPath, args, this.siteDir);
+    const r = await runCli(this.cliPath, args, this.siteDir, this.home);
     const res = { status: r.code === 0 ? "ok" : "exit" + r.code };
     if (r.code !== 0 || /error/i.test(r.out)) res.detail = r.out.slice(-300);
     if (op.type === "addPage")
@@ -433,9 +856,14 @@ class CliLeg extends BaseLeg {
 
 module.exports = {
   SITE_DESCRIPTION,
+  GOLDEN_OP_TYPES,
+  listZipEntries,
+  buildOutlineItems,
+  resolveKeys,
   ApiLeg,
   CliLeg,
   readItems,
   nextSiblingOrder,
+  syncIndents,
   runCli,
 };

@@ -205,3 +205,44 @@ test(
     }
   },
 );
+
+test(
+  "loadElementsCatalog refuses http:// and a redirect that leaves https://",
+  opts,
+  async () => {
+    const previous = process.env.HAX_ELEMENTS_CATALOG;
+    const originalFetch = globalThis.fetch;
+    const requested = [];
+    let finalUrl = "https://catalog.example/elements-catalog.json";
+    globalThis.fetch = async (url) => {
+      requested.push(url);
+      return {
+        ok: true,
+        status: 200,
+        url: finalUrl,
+        json: async () => CATALOG,
+      };
+    };
+    try {
+      // plaintext source: never requested
+      process.env.HAX_ELEMENTS_CATALOG = "http://catalog.example/c.json";
+      const plain = await loadElementsCatalog();
+      assert.match(plain.fallbackReason, /insecure http:\/\//);
+      assert.deepEqual(requested, []);
+      // https all the way: used
+      process.env.HAX_ELEMENTS_CATALOG = "https://catalog.example/c.json";
+      const good = await loadElementsCatalog();
+      assert.equal(good.source, "https://catalog.example/c.json");
+      assert.equal(good.catalog.elements.length, 4);
+      // https that redirects to http: the response is not used
+      finalUrl = "http://catalog.example/elements-catalog.json";
+      const downgraded = await loadElementsCatalog();
+      assert.match(downgraded.fallbackReason, /redirected away from https/);
+      assert.match(downgraded.source, /wc-registry/);
+    } finally {
+      globalThis.fetch = originalFetch;
+      if (previous === undefined) delete process.env.HAX_ELEMENTS_CATALOG;
+      else process.env.HAX_ELEMENTS_CATALOG = previous;
+    }
+  },
+);

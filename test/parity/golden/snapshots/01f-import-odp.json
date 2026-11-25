@@ -1,0 +1,137 @@
+{
+  "manifest": {
+    "id": "SITE_ID",
+    "title": "SITE_NAME",
+    "author": "",
+    "description": "Parity test site",
+    "license": "by-sa",
+    "metadata": {
+      "author": {},
+      "site": {
+        "name": "SITE_NAME",
+        "logo": "assets/banner.jpg",
+        "settings": {
+          "lang": "en-US",
+          "publishPagesOn": true,
+          "canonical": true,
+          "pathauto": true
+        },
+        "git": {
+          "vendor": "github",
+          "branch": "gh-pages"
+        }
+      },
+      "theme": {
+        "element": "clean-two",
+        "path": "@haxtheweb/clean-two/clean-two.js",
+        "name": "Clean Two",
+        "thumbnail": "@haxtheweb/haxcms-elements/lib/theme-screenshots/theme-clean-two-thumb.jpg",
+        "description": "Start with a blank site using the Clean Two",
+        "category": [
+          "Course"
+        ],
+        "hidden": false,
+        "priority": 0,
+        "terrible": false,
+        "supportedPalettes": null,
+        "layout": "Sidebar",
+        "designSystem": null,
+        "inspiredBy": null,
+        "inspiredByTheme": null,
+        "acceptsDesignSystems": false,
+        "variables": {
+          "icon": "icons:record-voice-over",
+          "hexCode": "#3f51b5",
+          "cssVariable": "--simple-colors-default-theme-light-blue-7"
+        }
+      },
+      "node": {
+        "fields": {}
+      },
+      "platform": {
+        "audience": "expert",
+        "features": {},
+        "allowedBlocks": []
+      },
+      "build": {
+        "structure": "import"
+      }
+    },
+    "items": {
+      "L0": {
+        "id": "L0",
+        "indent": 0,
+        "location": "pages/L0/index.html",
+        "slug": "course-intro",
+        "order": 0,
+        "parent": null,
+        "title": "Course Intro",
+        "description": "",
+        "metadata": {}
+      },
+      "L1": {
+        "id": "L1",
+        "indent": 0,
+        "location": "pages/L1/index.html",
+        "slug": "unit-one",
+        "order": 1,
+        "parent": null,
+        "title": "Unit One",
+        "description": "",
+        "metadata": {}
+      },
+      "L2": {
+        "id": "L2",
+        "indent": 0,
+        "location": "pages/L2/index.html",
+        "slug": "picture-slide",
+        "order": 2,
+        "parent": null,
+        "title": "Picture slide",
+        "description": "",
+        "metadata": {
+          "files": [
+            "FILE1"
+          ]
+        }
+      },
+      "L3": {
+        "id": "L3",
+        "indent": 0,
+        "location": "pages/L3/index.html",
+        "slug": "table-slide",
+        "order": 3,
+        "parent": null,
+        "title": "Table slide",
+        "description": "",
+        "metadata": {}
+      },
+      "L4": {
+        "id": "L4",
+        "indent": 0,
+        "location": "pages/L4/index.html",
+        "slug": "untitled-slide-text",
+        "order": 4,
+        "parent": null,
+        "title": "Untitled slide text",
+        "description": "",
+        "metadata": {}
+      }
+    },
+    "location": "<sites>/SITE_NAME/index.html"
+  },
+  "sequence": [
+    "L0",
+    "L1",
+    "L2",
+    "L3",
+    "L4"
+  ],
+  "pages": {
+    "L0": "<p>Welcome subtitle</p>",
+    "L1": "<ul><li>First point<ul><li>Nested point</li></ul></li><li>Second point</li></ul>",
+    "L2": "<p><media-image source=\"files/picture-slide.jpg\" alt=\"red.png\"></media-image></p>",
+    "L3": "<table><tbody><tr><td>Name</td><td>Value</td></tr><tr><td>A</td><td>1</td></tr></tbody></table>",
+    "L4": "<p></p>"
+  }
+}

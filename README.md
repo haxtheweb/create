@@ -49,8 +49,12 @@ hax start
 - `hax audit i18n` - Finds English hardcoded in Lit templates (text and attributes like `aria-label`, `title`, `placeholder`) that should come from `this.t` so it can be translated
 - `hax audit all` - Runs all three
 - `hax audit theme` - Checks HAXcms theme source (a site's `custom/src/`, or theme files under the current directory) against the theme contract: extends `HAXCMSLitElementTheme`, `static get tag()` + `customElements.define`, `#contentcontainer > #slot > <slot>` for the HAX editor, a skip-link rendered first, `super.styles`, dark mode (`light-dark()` needs `color-scheme`), a responsive `@media` fallback, `site-region` names the Appearance dialog can assign, `globalThis` and no optional chaining. Each finding's rule id matches a `@hax-theme-contract` marker in the `starter` template. Errors fail; warnings fail with `--strict`. `--format json` gives rule, severity, file, line, message and fix for agents. Not part of `all`
-- `hax audit ssr` - Report-only: server-renders every element in `wc-registry.json` with `@lit-labs/ssr` and buckets the result (rendered / shell / empty / no shadow root / threw) with output and style sizes. Never fails on render problems and is not part of `all`. Runs with a small inert DOM environment (`window`, event target, observers, element query/child/class/style APIs as no-ops) so elements fail only for their own reasons; `--no-shim` turns that off to show what elements manage unaided. Also reports elements that supply their own `progressiveEnhancement` fallback markup and the size of a primitive-tag stylesheet that covers it, and flags HTML boolean attributes written as `="false"` (a `.checked=${value}` property binding on a native input renders as `checked="false"`, which browsers read as on until hydration; use `?checked=${value}`) or a native element's address bound as a property in the element's own source (`<iframe .src=${url}>`, which Lit SSR does not write; use `src=${url}`). Options: `--only <tags>`, `--timeout <ms>`, `--save-html <dir>`, `--no-shim`, `--format json`
+- `hax audit ssr` - Report-only: server-renders every element in `wc-registry.json` with `@lit-labs/ssr` and buckets the result (rendered / shell / empty / no shadow root / non-visual / skipped / threw) with output and style sizes, what the styles repeated in every shadow root cost, and the size of the page-level stylesheet (primitives plus the design system) a page would carry once. It renders through the SSR render kit in `@haxtheweb/haxcms-nodejs` (`lib/ssr`); with a haxcms-nodejs from before the kit, set `HAX_SSR_KIT` to a haxcms-nodejs checkout. Never fails on render problems and is not part of `all`. Runs with a small inert DOM environment (`window`, event target, observers, element query/child/class/style APIs as no-ops) so elements fail only for their own reasons; `--no-shim` turns that off to show what elements manage unaided. Also reports elements that supply their own `progressiveEnhancement` fallback markup and the size of a primitive-tag stylesheet that covers it, and flags HTML boolean attributes written as `="false"` (a `.checked=${value}` property binding on a native input renders as `checked="false"`, which browsers read as on until hydration; use `?checked=${value}`) or a native element's address bound as a property in the element's own source (`<iframe .src=${url}>`, which Lit SSR does not write; use `src=${url}`). Options: `--only <tags>`, `--timeout <ms>`, `--save-html <dir>`, `--no-shim`, `--format json`
+- `hax audit fuzz` - Report-only: lists sanitizer / parser functions (named `sanitize*`, `parse*`, `escape*`, `decode*`, `strip*`, `normalize*`, `validate*`, ...) that no fast-check property test in the same package names. Never fails and is not part of `all`; `--debug` also lists the covered ones, `--format json` is for scripts and agents
+- `hax wc wc:fuzz` - Inside an element's folder, writes a starter fuzz test (`test/<name>-fuzz.test.js`): whatever its attributes or slot are set to, the element must not throw and must not turn the text into markup. It follows the HAX fuzz convention (a fixed seed on every normal run; `HAX_FUZZ_SEED=random` hunts; `HAX_FUZZ_SEED` + `HAX_FUZZ_PATH` replay a failure). A standalone element also gets the helper, a web-test-runner config that passes the variables to the browser, `fast-check` as a devDependency and a `test:fuzz` script; in the webcomponents monorepo only the test file is written
 - `hax update` - HAX CLI self update
+- `hax platform status` - Installed vs latest HAXcms release, published security advisories that affect it, and the command that updates this kind of install (`--path <install>`, `--format json`). Outside an install it reports on the haxcms-nodejs that `hax serve` uses. `hax start` mentions a newer release (checked at most weekly) and flags a missing security fix on every run
+- `hax platform upgrade` - Upgrade a haxcms-php install by running its own `scripts/platform-upgrade.php`: checks the release against `SHA256SUMS` and `platform-manifest.json`, backs up the code files it changes, never touches site data (`--to <x.y.z>`, `--dry-run`, `--overwrite-modified`, `--allow-downgrade`, `--y`). `hax platform verify` compares code files with the release manifest; `hax platform rollback` undoes the last upgrade. npm, Docker and git installs are pointed at the tool they came from. Not available on HAXiam (`haxiam-managed`) deployments, where the host manages HAXcms
 - `hax party` - Display options to join the HAX community and get involved!
 - `hax skills list` - List bundled agent skills shipped with the CLI
 - `hax skills install --all` - Install all bundled skills into `~/.agents/skills/` for any agent to use
@@ -161,7 +165,7 @@ Options:
                                       (lib/<tag>.docs.json) when it builds
   --force                             force creation even if name exists in
                                       registry
-  --import-site <char>                URL of site to import
+  --import-site <char>                URL of a site, or path to a local file, to import
   --import-structure <char>           import method to use:
 
 pressbooksToSite
@@ -192,7 +196,19 @@ htmlToSite
 
 docxToSite
 
+odtToSite
+
+pdfToSite
+
+pptxToSite
+
+odpToSite
+
 xlsxToSite
+
+odsToSite
+
+mdToSite
   --node-op <char>                    node operation to perform
   --item-id <char>                    node ID to operate on
   --domain <char>                     published domain name
@@ -526,4 +542,4 @@ rollup.config.js
 - [HAX doc site](https://haxtheweb.org/)
 - [HAX + 11ty](https://github.com/haxtheweb/hax11ty)
 
-![HAX Traveler: World Changer](https://raw.githubusercontent.com/haxtheweb/art/refs/heads/main/haxtheweb/hax-traveler-world-changer.jpg)
+![HAX Future Traveler](https://raw.githubusercontent.com/haxtheweb/art/refs/heads/main/haxtheweb/hax-future-traveler.jpg)

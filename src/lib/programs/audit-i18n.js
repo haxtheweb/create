@@ -139,7 +139,7 @@ export function scrubTemplatePart(raw, open = null) {
   while (rest.length) {
     if (open) {
       const close =
-        open === "comment" ? /-->/ : new RegExp(`</${open}\\s*>`, "i");
+        open === "comment" ? /--!?>/ : new RegExp(`</${open}\\s*>`, "i");
       const m = rest.match(close);
       if (!m) {
         return { text: out + BLANK(rest), open };

@@ -27,13 +27,40 @@ export function runCommand(command, args = [], options = {}) {
   let runArgs = args;
   if (process.platform === "win32" && typeof runOptions.shell === "undefined") {
     runOptions.shell = true;
-    // with shell: true Node joins args with spaces, so quote any arg that
-    // contains whitespace or quotes (e.g. -m "first commit")
-    runArgs = args.map((arg) =>
-      /[\s"]/.test(arg) ? `"${String(arg).replace(/"/g, '""')}"` : arg,
-    );
+    runArgs = args.map((arg) => windowsShellArg(arg));
   }
   return execFilePromise(command, runArgs, runOptions);
+}
+
+// cmd.exe treats these as syntax outside double quotes
+const WINDOWS_SHELL_SPECIAL = /[\s"&|<>^()!,;=]/;
+// cmd.exe expands %VAR% even inside double quotes, and a line break ends
+// the command, so neither can travel through the shell as a literal
+const WINDOWS_SHELL_UNSAFE = /[%\r\n\0]/;
+
+/**
+ * One argument made safe for the cmd.exe line Node builds with shell: true
+ * (it joins args with spaces). Security (no-shell-strings): an argument with
+ * whitespace, a quote or any cmd metacharacter (& | < > ^ ( ) ! , ; =) is
+ * wrapped in double quotes, inside which cmd treats them as text; inner
+ * quotes are doubled, which keeps cmd inside the quoted run and reads back
+ * as one literal quote. An argument with %, a line break or NUL is refused,
+ * because cmd would expand or split it even when quoted. Callers still
+ * validate their own inputs; this is the backstop.
+ * @param {string} arg
+ * @returns {string}
+ */
+export function windowsShellArg(arg) {
+  const value = String(arg);
+  if (WINDOWS_SHELL_UNSAFE.test(value)) {
+    throw new Error(
+      `Refusing to pass an argument containing %, a line break or NUL through the Windows shell: ${JSON.stringify(value)}`,
+    );
+  }
+  if (value === "" || WINDOWS_SHELL_SPECIAL.test(value)) {
+    return `"${value.replace(/"/g, '""')}"`;
+  }
+  return value;
 }
 
 export function getTimeDifference(timestamp1, timestamp2) {
@@ -59,6 +86,32 @@ export function getTimeDifference(timestamp1, timestamp2) {
   };
 }
 
+/**
+ * Create <baseDir>/.haxtheweb for this user only, and tighten one that
+ * already exists. Security (no-secrets-in-logs): the folder holds the CLI
+ * log (command errors, tool output), cached data and site archives, so it
+ * is 0700 and the files directly in it 0600 instead of whatever the umask
+ * gives. Best-effort: never throws (a shared /tmp folder owned by someone
+ * else, or a filesystem without modes, is left as it is).
+ * @param {string} baseDir home directory (or /tmp on Vercel)
+ * @returns {string} the directory path
+ */
+export function ensurePrivateConfigDir(baseDir) {
+  const dir = path.join(baseDir, ".haxtheweb");
+  try {
+    fs.mkdirSync(dir, { recursive: true, mode: 0o700 });
+    fs.chmodSync(dir, 0o700);
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      if (entry.isFile()) {
+        fs.chmodSync(path.join(dir, entry.name), 0o600);
+      }
+    }
+  } catch {
+    // best-effort
+  }
+  return dir;
+}
+
 // write user config file
 export function writeConfigFile(filename, data) {
   let tempDir = os.homedir();
@@ -67,7 +120,8 @@ export function writeConfigFile(filename, data) {
   }
   const filePath = path.join(tempDir, ".haxtheweb", filename);
   try {
-    fs.writeFileSync(filePath, data);
+    // Security (no-secrets-in-logs): readable by this user only
+    fs.writeFileSync(filePath, data, { mode: 0o600 });
     return filePath;
   } catch {
     return null;
@@ -89,17 +143,36 @@ export function readConfigFile(filename) {
   }
 }
 
+/**
+ * The argument list and options interactiveExec hands to spawn. Security
+ * (no-shell-strings): on Windows the .cmd shims only run through a shell,
+ * and Node joins the arguments with spaces for it, so each one goes through
+ * windowsShellArg first, the same backstop runCommand applies. Throws for an
+ * argument cmd.exe would expand or split even when quoted.
+ * @param {string[]} args
+ * @param {object} options child_process options
+ * @param {string} platform process.platform (a parameter so it can be tested)
+ * @returns {{args: string[], options: object}}
+ */
+export function interactiveSpawnArgs(
+  args = [],
+  options = {},
+  platform = process.platform,
+) {
+  const spawnOptions = { stdio: "inherit", ...options };
+  let spawnArgs = args;
+  if (platform === "win32" && typeof spawnOptions.shell === "undefined") {
+    spawnOptions.shell = true;
+    spawnArgs = args.map((arg) => windowsShellArg(arg));
+  }
+  return { args: spawnArgs, options: spawnOptions };
+}
+
 export async function interactiveExec(command, args = [], options = {}) {
   return new Promise((resolve, reject) => {
     process.env.NODE_NO_WARNINGS = 1;
-    const spawnOptions = { stdio: "inherit", ...options };
-    if (
-      process.platform === "win32" &&
-      typeof spawnOptions.shell === "undefined"
-    ) {
-      spawnOptions.shell = true;
-    }
-    const child = spawn(command, args, spawnOptions);
+    const prepared = interactiveSpawnArgs(args, options);
+    const child = spawn(command, prepared.args, prepared.options);
     child.on("exit", (code) => {
       if (code === 0) {
         resolve();
@@ -472,6 +545,50 @@ export function validateDomain(value) {
   // and be read as an option by the publish CLI it is handed to.
   rejectLeadingDash(value, "domain");
   return value;
+}
+
+// Path of a published site address: unreserved URL characters and "/" only
+// (GitHub Pages project sites live at https://owner.github.io/repo/).
+const SITE_URL_PATH_RE = /^[A-Za-z0-9._~\-/]*$/;
+
+/**
+ * Validate a --domain value for site:build-static, which also takes the
+ * full address a static host serves the site at (actions/configure-pages
+ * hands the deploy workflow https://owner.github.io/repo). A bare hostname
+ * goes through validateDomain. A URL must be http(s) with no credentials,
+ * query or fragment, a host in the hostname charset and a path of unreserved
+ * characters, and is returned as protocol//host/path.
+ * Security (validated-cli-options): only for site:build-static, which never
+ * puts the value in a shell string; publish targets keep validateDomain.
+ * @param {string} value
+ * @returns {string}
+ */
+export function validateSiteUrl(value) {
+  if (value === undefined || value === null || value === "") {
+    return value;
+  }
+  if (typeof value !== "string" || !/^https?:\/\//i.test(value)) {
+    return validateDomain(value);
+  }
+  let url = null;
+  try {
+    url = new URL(value);
+  } catch {
+    url = null;
+  }
+  if (
+    !url ||
+    url.username ||
+    url.password ||
+    url.search ||
+    url.hash ||
+    !DOMAIN_RE.test(url.host) ||
+    url.host.charAt(0) === "-" ||
+    !SITE_URL_PATH_RE.test(url.pathname)
+  ) {
+    throw new Error(t("utilInvalidSiteUrl"));
+  }
+  return url.protocol + "//" + url.host + url.pathname;
 }
 
 // Security: --template picks a directory under src/templates/<type>/, so it

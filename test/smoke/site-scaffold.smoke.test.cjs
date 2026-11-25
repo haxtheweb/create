@@ -59,7 +59,8 @@ test("a new site has the files HAXcms needs to serve and edit it", opts, () => {
     ".dddignore",
     "files",
     "pages",
-    "theme",
+    // no "theme": the site folder contract retired it (haxtheweb/issues#3351);
+    // haxcms-nodejs main no longer writes it, the published release still does
     "custom",
     path.join(".well-known", "agent-skills", "index.json"),
   ]) {

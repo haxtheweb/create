@@ -1,0 +1,100 @@
+{
+  "manifest": {
+    "id": "SITE_ID",
+    "title": "SITE_NAME",
+    "author": "",
+    "description": "Parity test site",
+    "license": "by-sa",
+    "metadata": {
+      "author": {},
+      "site": {
+        "name": "SITE_NAME",
+        "logo": "assets/banner.jpg",
+        "settings": {
+          "lang": "en-US",
+          "publishPagesOn": true,
+          "canonical": true,
+          "pathauto": true
+        },
+        "git": {
+          "vendor": "github",
+          "branch": "gh-pages"
+        }
+      },
+      "theme": {
+        "element": "clean-two",
+        "path": "@haxtheweb/clean-two/clean-two.js",
+        "name": "Clean Two",
+        "thumbnail": "@haxtheweb/haxcms-elements/lib/theme-screenshots/theme-clean-two-thumb.jpg",
+        "description": "Start with a blank site using the Clean Two",
+        "category": [
+          "Course"
+        ],
+        "hidden": false,
+        "priority": 0,
+        "terrible": false,
+        "supportedPalettes": null,
+        "layout": "Sidebar",
+        "designSystem": null,
+        "inspiredBy": null,
+        "inspiredByTheme": null,
+        "acceptsDesignSystems": false,
+        "variables": {
+          "icon": "icons:record-voice-over",
+          "hexCode": "#3f51b5",
+          "cssVariable": "--simple-colors-default-theme-light-blue-7"
+        }
+      },
+      "node": {
+        "fields": {}
+      },
+      "platform": {
+        "audience": "expert",
+        "features": {},
+        "allowedBlocks": []
+      }
+    },
+    "items": {
+      "L0": {
+        "id": "L0",
+        "indent": 0,
+        "location": "pages/L0/index.html",
+        "slug": "home",
+        "order": 0,
+        "parent": null,
+        "title": "Home",
+        "description": "",
+        "metadata": {
+          "published": true,
+          "hideInMenu": false,
+          "tags": []
+        }
+      },
+      "L1": {
+        "id": "L1",
+        "indent": 0,
+        "location": "pages/L1/index.html",
+        "slug": "custom-slug",
+        "order": 1,
+        "parent": null,
+        "title": "Final title",
+        "description": "",
+        "metadata": {
+          "images": [],
+          "videos": [],
+          "files": [],
+          "overridePathauto": true
+        }
+      }
+    },
+    "location": "<sites>/SITE_NAME/index.html"
+  },
+  "sequence": [
+    "L0",
+    "L1"
+  ],
+  "pages": {
+    "L0": "<p>Edit this page to get started on your HAX site!</p>",
+    "L1": "<p>x</p>"
+  }
+}

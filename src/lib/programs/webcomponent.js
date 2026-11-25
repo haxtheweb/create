@@ -11,6 +11,7 @@ import { dump } from "js-yaml";
 
 import { merlinSays } from "../statements.js";
 import { t } from "../i18n.js";
+import { webcomponentFuzz } from "./webcomponent-fuzz.js";
 import { log, writeData } from "../logging.js";
 
 import {
@@ -170,6 +171,33 @@ function quietAwareSpinner(commandRun) {
 const DOCS_SCRIPT = "scripts/extract-element-docs.mjs";
 
 /**
+ * @description The @haxtheweb/* release line of the running CLI, as the
+ * floor for scaffolded dependencies: create's own major.minor with patch 0.
+ * The CLI and the elements are released together by major.minor, but patch
+ * releases are not shared (create 26.8.1 was a CLI-only hotfix while the
+ * elements stayed at 26.8.0), so the patch is dropped. Templates write it as
+ * "^<%= haxVersion %>": create 26.11.x scaffolds "^26.11.0", which every
+ * element in that release satisfies, and the range moves with each release
+ * (27.x included) without anyone editing the templates.
+ * @param {string} [pkgPath] package.json to read; defaults to the CLI's own
+ * (__dirname is lib/programs in both src/ and dist/, so ../../../package.json
+ * is the package root either way)
+ * @returns {string} x.y.0
+ */
+export function haxVersion(
+  pkgPath = path.join(__dirname, "../../../package.json"),
+) {
+  const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf8"));
+  const match = /^(\d+)\.(\d+)\.\d+/.exec(String(pkg.version || ""));
+  if (!match) {
+    throw new Error(
+      `@haxtheweb/create has no usable version in ${pkgPath}: ${pkg.version}`,
+    );
+  }
+  return `${match[1]}.${match[2]}.0`;
+}
+
+/**
  * @description Whether a new element's build should write its docs data:
  * only in a monorepo whose root has the docs script, and not with --no-docs.
  */
@@ -264,6 +292,9 @@ export async function webcomponentProcess(commandRun, project, port = "8000") {
   }
   // values not set by user but used in templating
   project.className = dashToCamel(project.name);
+  // @haxtheweb/* dependency version for package.json templates (written as
+  // "^<%= haxVersion %>"), so scaffolds track the release that made them
+  project.haxVersion = haxVersion();
   // monorepos that publish docs data (scripts/extract-element-docs.mjs at the
   // root) get it in the element build by default; --no-docs leaves it out
   project.docsStep = docsStepFor(commandRun, project);
@@ -540,6 +571,7 @@ export function webcomponentActions() {
     { value: "wc:element", label: t("wcActionAddElement") },
     { value: "wc:haxproperties", label: t("wcActionWriteHaxProperties") },
     { value: "wc:rename", label: t("wcActionRename") },
+    { value: "wc:fuzz", label: t("wcActionAddFuzzTest") },
   ];
 }
 
@@ -853,6 +885,22 @@ export async function webcomponentCommandDetected(
           await webcomponentRename(commandRun, packageData);
         } catch (e) {
           log(e.stderr);
+        }
+        break;
+      case "fuzz":
+      case "wc:fuzz":
+      case "webcomponent:fuzz":
+        try {
+          // a starter property test for input-parsing elements
+          // (haxtheweb/issues#3386)
+          if (!webcomponentFuzz(commandRun, packageData)) {
+            // nothing was written: say so to a script too
+            process.exit(1);
+          }
+        } catch (e) {
+          log(e.stderr);
+          console.error(color.red(e));
+          process.exit(1);
         }
         break;
       case "quit":
@@ -1286,10 +1334,21 @@ export async function loadElementsCatalog() {
     // global fetch has been available (unflagged) since Node 18, which is
     // this package's actual engines floor; the plugin's data conservatively
     // marks it experimental until Node 21.
-    // eslint-disable-next-line n/no-unsupported-features/node-builtins
+
+    // Security (fixed-outbound-urls): the URL is the constant above or one
+    // the user set in their own environment, never a command option or a
+    // remote payload, so this is not an SSRF-guarded fetch. A redirect that
+    // ends anywhere but https is refused, like an http:// source.
     const resp = await fetch(source, { signal: AbortSignal.timeout(8000) });
     if (!resp.ok) {
       throw new Error(`HTTP ${resp.status}`);
+    }
+    if (
+      typeof resp.url === "string" &&
+      resp.url &&
+      !resp.url.startsWith("https://")
+    ) {
+      throw new Error("catalog URL redirected away from https://; rejected");
     }
     return { catalog: validateElementsCatalog(await resp.json()), source };
   } catch (e) {

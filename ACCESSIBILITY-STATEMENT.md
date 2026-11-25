@@ -1,57 +1,36 @@
-# Accessibility Statement — haxtheweb/webcomponents
+# Accessibility Statement — haxtheweb/create
 
-**Last updated:** October 2026  
+**Last updated:** November 2026  
 **Contact:** hax@psu.edu  
-**Standard:** WCAG 2.1 AA (with WCAG 2.0 AA baseline)
+**Standard:** WCAG 2.1 AA (with WCAG 2.0 AA baseline), applied to a command-line tool where its principles fit
 
 ## Our Commitment
 
-The `haxtheweb/webcomponents` monorepo is committed to ensuring that all web components and sites built with them are accessible to people with disabilities. Accessibility is one of our core project pillars: **Accessible**, **Free and Open**, **Platform Agnostic**, and **Sustainable**.
+`@haxtheweb/create` is the HAX command-line tool (`hax`): it creates and runs HAX sites and web components. Accessibility is one of the HAX project pillars: **Accessible — built for everyone, by everyone.** For a CLI that means it can be used without sight of animations or colors, without answering interactive prompts, and in the person's own language.
 
-## What This Means
+## What is in this repository
 
-- **Perceivable**: Text alternatives for non-text content, captions for multimedia, content that can be presented in different ways without losing meaning
-- **Operable**: All functionality available from a keyboard, enough time to read and use content, predictable navigation
-- **Understandable**: Text readable and understandable, content appears and operates in predictable ways, help users avoid and correct mistakes
-- **Robust**: Content interpreted reliably by a wide variety of user agents, including assistive technologies
+- **The CLI itself:** its prompts, messages, help text and output formats.
+- **What it creates:** new sites and components start from HAX templates, themes and elements built in [`haxtheweb/webcomponents`](https://github.com/haxtheweb/webcomponents), and their accessibility work happens there; see its [accessibility statement](https://github.com/haxtheweb/webcomponents/blob/master/ACCESSIBILITY-STATEMENT.md). `hax audit` checks a component's CSS against the DDD design system, which carries the contrast and spacing tokens.
 
-## What We're Doing
+## What we do
 
-### Automated Testing
-
-- **121 test files** use axe-based a11ySuite testing, running in CI via `yarn test:all`
-- **311 reference a11y patterns** across the codebase
-- All elements tested automatically on every PR
-
-### Design System
-
-- **DDD (Design, Develop, Deliver) design system** provides contrast tooling and tokens targeting WCAG 2.0 AA
-- **a11y-\* element family** (a11y-collapse, a11y-tabs, a11y-details, a11y-figure...) makes accessibility a first-class surface
-- Components built on **W3C web components standards** (custom elements, shadow DOM)
-- **HAXSchema (haxProperties)** provides documented authoring-interoperability standard
-
-### Contribution Requirements
-
-- `hax audit` **required** before submitting theme or component changes
-- DDD tokens for fonts, colors, padding, spacing, margins
-- Inherit from `DDDSuper` class for automatic DDD integration
+- **Every prompt can be skipped.** `--y` (or `--auto`) accepts the defaults and `--no-i` never prompts, so any command can be run from a script or with a screen reader without navigating interactive menus. With no terminal attached, or in CI, the CLI behaves as if `--no-i` was passed.
+- **Text you can parse or keep.** `--format json` or `--format yaml` print structured output, `--to-file` writes it to a file, and `--quiet` turns off logging; notices go to stderr so structured output stays clean.
+- **No required animation.** `--skip` turns off the start-up animations.
+- **Color is never the only signal.** Messages say what happened in words. Terminal colors come from `picocolors`, which turns color off when `NO_COLOR` is set or the output isn't a terminal.
+- **Your language.** CLI messages and help text are translated (103 locale files in `src/locales`).
+- **Documentation outside the terminal:** `hax help`, `hax <command> --help` and `man hax`.
 
 ## Known Limitations
 
-We are honest about areas where accessibility can be improved:
-
-- **No standalone accessibility bug register** exists in-repo yet (track via GitHub Issues)
-- **Browser/device support matrix** — see below for evergreen browser commitments
-- **AI-enabled components**: Not applicable — this monorepo contains no AI chat or generative components
-- **Legacy components**: Not applicable — all 250+ components follow current accessibility standards
-- Some **older components** may not fully meet WCAG 2.1 AA requirements; prioritize updates via the issue queue
+- **There are no automated accessibility tests for the CLI's interactive prompts.** The arrow-key menus come from `@clack/prompts`; how well screen readers announce them depends on the terminal and screen reader.
+- **Screen reader testing has not been recorded.** Reports from NVDA, JAWS, VoiceOver and Orca users are welcome.
 
 ## How You Can Help
 
-- **Report accessibility issues** via GitHub Issues or email hax@psu.edu
-- **Test with assistive technologies** (screen readers, keyboard navigation) and share findings
-- **Contribute accessibility fixes** through the unified issue queue (`haxtheweb/issues`)
-- **Participate in accessibility testing** — our CI runs axe-based tests on every PR
+- **Report accessibility issues** in the unified issue queue, [haxtheweb/issues](https://github.com/haxtheweb/issues/issues), or email hax@psu.edu.
+- **Test with assistive technologies** (screen readers, braille displays, high contrast terminals) and share what you find.
 
 ## Support
 
@@ -59,14 +38,6 @@ We are honest about areas where accessibility can be improved:
 - **GitHub:** [haxtheweb/issues](https://github.com/haxtheweb/issues)
 - **Discord:** [discord.gg/aCGxmRHEJP](https://discord.gg/aCGxmRHEJP) (#accessibility channel)
 
-## Verification
-
-- **CI Testing:** All PRs run `yarn test:all` which includes axe-based a11ySuite testing
-- **Manual Testing:** Recommended with screen readers (NVDA, VoiceOver) and keyboard-only navigation
-- **Component Gallery:** Live demos at the component gallery demonstrate accessible patterns
-
 ---
 
-_This statement reflects our current status and commitments. As an evolving open source project, we acknowledge there is always more work to do to ensure accessibility for all users. We appreciate your partnership in making the HAX ecosystem more accessible._
-
-_Scored with the Higher Education Open Source Assessment Tool (HEOSAT), rubric version "2026.07 enhanced guidance edition". Accessibility is one of our four core project pillars: Accessible, Free and Open, OER 5Rs, Platform Agnostic, and Sustainable._
+_This statement reflects our current status and commitments. As an evolving open source project, we acknowledge there is always more work to do to ensure accessibility for all users._

@@ -80,7 +80,11 @@ allRoutes.system.map.post["site/import/:platform"] = (req, res) => {
   });
 };
 allRoutes.system.map.post["actions/import-docx"] = (req, res) => {
-  importHandlerCalls.push({ body: req.body, params: req.params });
+  importHandlerCalls.push({
+    body: req.body,
+    params: req.params,
+    files: req.files,
+  });
   res.status(200);
   res.json({
     status: 200,
@@ -245,6 +249,19 @@ test("newSiteRequest sends only what the user chose", opts, () => {
   assert.equal(
     newSiteRequest({}, { name: "p", theme: "clean-one" }).site.theme,
     "clean-one",
+  );
+  // --title names the site; blank is left to createSite (machine name)
+  assert.equal(
+    newSiteRequest({ title: "Night Draft" }, { name: "night-draft" }).site
+      .title,
+    "Night Draft",
+  );
+  assert.equal(
+    Object.prototype.hasOwnProperty.call(
+      newSiteRequest({ title: "  " }, { name: "n" }).site,
+      "title",
+    ),
+    false,
   );
 });
 
@@ -633,6 +650,10 @@ test(
     const root = fs.mkdtempSync(path.join(os.tmpdir(), "hax-site-proc-docx-"));
     try {
       makeSiteDir(root, "docx-site");
+      // file importers take a local file and hand it to the route as its
+      // upload (req.files), as the backends' upload routes expect
+      const docPath = path.join(root, "Course doc.docx");
+      fs.writeFileSync(docPath, "x");
       await siteProcess(
         {
           command: "site",
@@ -640,7 +661,7 @@ test(
           options: {
             quiet: true,
             npmClient: "npm",
-            importSite: "https://source.example/doc.docx",
+            importSite: docPath,
             importStructure: "docxToSite",
           },
         },
@@ -653,11 +674,50 @@ test(
         },
       );
       assert.equal(importHandlerCalls.length, 1);
-      assert.equal(
-        importHandlerCalls[0].body.repoUrl,
-        "https://source.example/doc.docx",
-      );
+      assert.deepEqual(importHandlerCalls[0].files, [
+        { originalname: "Course doc.docx", path: docPath },
+      ]);
+      assert.equal(importHandlerCalls[0].body.method, "site");
       assert.equal(sitesHandlerCalls[0].build.items[0].title, "Docx Page");
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  },
+);
+
+test(
+  "a file importer refuses a URL without calling its route",
+  opts,
+  async () => {
+    resetMocks();
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), "hax-site-proc-url-"));
+    try {
+      makeSiteDir(root, "url-site");
+      await siteProcess(
+        {
+          command: "site",
+          arguments: {},
+          options: {
+            quiet: true,
+            npmClient: "npm",
+            importSite: "https://source.example/doc.docx",
+            importStructure: "docxToSite",
+          },
+        },
+        {
+          name: "url-site",
+          type: "site",
+          path: root,
+          theme: "clean-one",
+          extras: [],
+        },
+      );
+      assert.equal(importHandlerCalls.length, 0);
+      // nothing imported: the site is made without import items
+      assert.ok(
+        !sitesHandlerCalls[0].build ||
+          sitesHandlerCalls[0].build.structure !== "import",
+      );
     } finally {
       fs.rmSync(root, { recursive: true, force: true });
     }

@@ -89,17 +89,28 @@ summary when the current year has no fixture.
 
 [`run.cjs`](run.cjs) boots haxcms-nodejs with that repo's own e2e harness
 (`test/e2e/helpers/harness.cjs`: temp directory, real auth, ephemeral
-localhost port) and runs two legs per fixture, each on its own copy, with a
-fresh git repo in the copy as old sites had:
+localhost port) and runs two legs per fixture (three with `--php`), each on
+its own copy, with a fresh git repo in the copy as old sites had:
 
-| Leg      | Steps                                                                                                                                                                                                                                                                   |
-| -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `cli`    | `site:rebuild` (the CLI's upgrade path: managed files, feeds, sitemap, search index, llms.txt, agent skills), `site:validate`, `node:add`, `node:edit` content of the deep page, `site:theme`, `site:validate`                                                          |
-| `nodejs` | render home, a deep page and every page file; the legacy bootstrap upgrade haxcms-nodejs does when it loads a site; open the editor (site token, page content); save page content; saveOutline add, move, reorder, delete; theme change; language setting; render again |
+| Leg      | Steps                                                                                                                                                                                                                                                                                                                                       |
+| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `cli`    | `site:rebuild` (the CLI's upgrade path: managed files, feeds, sitemap, search index, llms.txt, agent skills), `site:validate`, `node:add`, `node:edit` content of the deep page, `site:theme`, `site:validate`                                                                                                                              |
+| `nodejs` | render home, a deep page and every page file; the legacy bootstrap upgrade haxcms-nodejs does when it loads a site; open the editor (site token, page content); site API discovery, site summary and item reads; save page content; saveOutline add, move, reorder, delete; theme change; language setting; render again                    |
+| `php`    | the same steps as `nodejs`, against haxcms-php. Only with `--php`: a fresh copy of that checkout, installed by its own installer with a login made for the run, served by `php -S` on a free port with [`../parity/php-router.php`](../parity/php-router.php). Nothing is read from or written to the checkout's own `_config` and `_sites` |
 
 After every write the site on disk is checked: `site.json` parses, ids are
 unique, parents exist, every page file exists, and every fixture page still
 holds its content unless the step meant to change it.
+
+Each leg ends by checking the site folder against the
+[site folder contract](../contract/README.md)
+([haxtheweb/issues#3351](https://github.com/haxtheweb/issues/issues/3351)):
+once upgraded and written to, a site from any year must reach the `managed`
+level, meaning every file a backend writes is there. Paths the contract has
+retired (`theme/`, `dat.json`, ...) stay where the old site had them and are
+only counted in the step's detail. This needs a json-outline-schema checkout
+(`--jos`, or `HAX_CONTRACT_JOS_REPO`, default: beside this repo); without one
+the summary carries a warning and the step is skipped.
 
 ```bash
 # haxcms-nodejs main beside create, built; the CLI linked to it
@@ -108,15 +119,23 @@ holds its content unless the step meant to change it.
   && rm -rf node_modules/@haxtheweb/haxcms-nodejs \
   && ln -s ../../../haxcms-nodejs node_modules/@haxtheweb/haxcms-nodejs)
 
-node create/test/old-sites/run.cjs --nodejs haxcms-nodejs --years 2021,2026
+# json-outline-schema beside them, for the site folder contract step
+(cd json-outline-schema && npm ci --omit=dev --ignore-scripts)
+
+node create/test/old-sites/run.cjs --nodejs haxcms-nodejs --jos json-outline-schema --years 2021,2026
+
+# with the php leg (PHP 8.3+ with the extensions haxcms-php lists, bash, git)
+node create/test/old-sites/run.cjs --nodejs haxcms-nodejs --php haxcms-php --jos json-outline-schema
 ```
 
-| Flag       | Environment variable   | Default                            |
-| ---------- | ---------------------- | ---------------------------------- |
-| `--nodejs` | `HAX_OLD_SITES_NODEJS` | `../haxcms-nodejs` (beside create) |
-| `--cli`    | `HAX_OLD_SITES_CLI`    | `dist/create.js` of this repo      |
-| `--years`  | `HAX_OLD_SITES_YEARS`  | every fixture                      |
-| `--out`    | `HAX_OLD_SITES_OUT`    | `./old-sites-results`              |
+| Flag        | Environment variable    | Default                            |
+| ----------- | ----------------------- | ---------------------------------- |
+| `--nodejs`  | `HAX_OLD_SITES_NODEJS`  | `../haxcms-nodejs` (beside create) |
+| `--php`     | `HAX_OLD_SITES_PHP`     | (none: no php leg)                 |
+| `--php-bin` | `HAX_OLD_SITES_PHP_BIN` | `php`                              |
+| `--cli`     | `HAX_OLD_SITES_CLI`     | `dist/create.js` of this repo      |
+| `--years`   | `HAX_OLD_SITES_YEARS`   | every fixture                      |
+| `--out`     | `HAX_OLD_SITES_OUT`     | `./old-sites-results`              |
 
 It writes `summary.md` (also the GitHub job summary) and `results.json`, and
 exits 1 when any step fails. The weekly workflow is
@@ -124,5 +143,13 @@ exits 1 when any step fails. The weekly workflow is
 (Sunday night, America/New_York); it can also be run by hand with a list of
 years.
 
-Not covered yet: the same operations against haxcms-php `master`, and a real
-browser rendering the upgraded sites.
+Which self-healing path of the backends each fixture and step exercises, and
+which ones no fixture reaches yet, is in [`COMPAT-LAYER.md`](COMPAT-LAYER.md).
+A new self-healing path comes with a fixture trait and a step, and a row
+there.
+
+The release gate runs this check on the checkouts about to ship when it is
+given `--old-sites` ([`../parity/README.md`](../parity/README.md#release-gate)).
+
+Not covered yet: publishing a fixture (static output), and a real browser
+rendering the upgraded sites.

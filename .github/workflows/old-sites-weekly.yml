@@ -9,11 +9,17 @@ name: old-sites-weekly
 #   nodejs  haxcms-nodejs main via its e2e harness: render home and a deep
 #           page, open the editor's API path, save content, saveOutline
 #           add / move / reorder / delete, theme and settings, render again
+#   php     the same steps against haxcms-php master: a fresh copy, installed
+#           by its own installer, under `php -S` on this runner
+#
+# Before any upgrade, every fixture as stored must still be a HAXcms site at
+# the content level of the site folder contract (haxtheweb/issues#3351,
+# test/contract/README.md). After a leg has upgraded a fixture and
+# written to it, the folder must reach the managed level.
 #
 # Built and served on this runner only; nothing talks to a live deployment.
 # A broken fixture fails the run (red) and the job summary says what broke.
-# haxcms-php is not run here yet (follow-up); its behavior is kept identical
-# to haxcms-nodejs through the shared OpenAPI spec.
+# Which self-healing path each step guards: test/old-sites/COMPAT-LAYER.md.
 on:
   schedule:
     - cron: "23 3 * * 1" # Sunday night America/New_York (Monday 03:23 UTC)
@@ -36,8 +42,10 @@ jobs:
     env:
       HAX_OLD_SITES_YEARS: ${{ inputs.years }}
       HAX_OLD_SITES_NODEJS: ${{ github.workspace }}/haxcms-nodejs
+      HAX_OLD_SITES_PHP: ${{ github.workspace }}/haxcms-php
       HAX_OLD_SITES_CLI: ${{ github.workspace }}/create/dist/create.js
       HAX_OLD_SITES_OUT: ${{ github.workspace }}/old-sites-results
+      HAX_CONTRACT_JOS_REPO: ${{ github.workspace }}/json-outline-schema
       GIT_AUTHOR_NAME: HAX old-site check
       GIT_AUTHOR_EMAIL: old-sites@example.invalid
       GIT_COMMITTER_NAME: HAX old-site check
@@ -55,10 +63,31 @@ jobs:
           ref: main
           path: haxcms-nodejs
           persist-credentials: false
+      - name: Checkout haxcms-php
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: haxtheweb/haxcms-php
+          ref: master
+          path: haxcms-php
+          persist-credentials: false
+      - name: Checkout json-outline-schema (site folder contract)
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: haxtheweb/json-outline-schema
+          ref: master
+          path: json-outline-schema
+          persist-credentials: false
       - name: Set up Node.js
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 24
+      - name: Set up PHP
+        uses: shivammathur/setup-php@b604ade2a87db23f8871b7182e69ec5e75effb45 # v2
+        with:
+          php-version: "8.3"
+          extensions: mbstring, xml, dom, simplexml, gd, zip, curl, intl, fileinfo, iconv, xmlreader, xmlwriter, zlib
+          ini-values: "error_reporting=E_ALL & ~E_NOTICE & ~E_DEPRECATED"
+          coverage: none
 
       - name: Check inputs
         run: |
@@ -85,6 +114,14 @@ jobs:
           rm -rf node_modules/@haxtheweb/haxcms-nodejs
           ln -s "$HAX_OLD_SITES_NODEJS" node_modules/@haxtheweb/haxcms-nodejs
           node -e 'console.log("CLI uses haxcms-nodejs at " + require("fs").realpathSync(require.resolve("@haxtheweb/haxcms-nodejs/package.json")))'
+
+      - name: Fixtures as stored are HAXcms sites (content level)
+        working-directory: create
+        run: |
+          # json-outline-schema has no lockfile, so npm ci cannot run there
+          (cd "$GITHUB_WORKSPACE/json-outline-schema" && npm install --no-package-lock --no-audit --no-fund --omit=dev --ignore-scripts)
+          node test/contract/site-contract.cjs --jos "$GITHUB_WORKSPACE/json-outline-schema" \
+            test/old-sites/*/site
 
       - name: Upgrade every fixture and run the operations
         working-directory: create

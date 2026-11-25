@@ -1,13 +1,12 @@
 "use strict";
 
-// Covers ensureTwigConstantFunction() in src/lib/programs/site.js (exported
-// for testability): it registers the security-hardened `constant` Twig
-// function exactly once (idempotent via the module-level
-// twigConstantFunctionRegistered flag) and resolves PHP constants from the
-// static TWIG_PHP_CONSTANTS allowlist only. Twig.extendFunction is
-// monkey-patched on the writable twig CJS module BEFORE site.js is required
-// so the registration can be captured. HOME is isolated before the canary
-// because site.js imports HAXCMS which inits a configDirectory on load.
+// Managed files (service-worker.js) are rendered by haxcms-nodejs, whose
+// Twig templates call PHP's constant(). haxcms-nodejs registers that
+// function when it loads; the CLI relies on it rather than registering its
+// own. The function resolves the static allowlist of PHP JSON_* constants
+// and nothing else: no environment variables, no globals. HOME is isolated
+// before the canary because site.js imports HAXCMS, which inits a
+// configDirectory on load.
 const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
@@ -20,73 +19,51 @@ require("@babel/register");
 const test = require("node:test");
 const assert = require("node:assert/strict");
 
+const { available, skipReason } = require("../_helpers/site-canary.cjs");
 const Twig = require("twig");
-const registrations = [];
-Twig.extendFunction = (name, fn) => {
-  registrations.push({ name, fn });
-};
-
-const {
-  available,
-  skipReason,
-  module: siteModule,
-} = require("../_helpers/site-canary.cjs");
-const { ensureTwigConstantFunction } = available ? siteModule : {};
 
 const opts = { skip: skipReason, timeout: 15000 };
 
-// haxcms-nodejs registers its own `constant` while site.js loads it (newer
-// releases do; 26.8.1 does not), so count only what create adds from here.
-const registeredBeforeCreate = registrations.length;
-function createRegistrations() {
-  return registrations.slice(registeredBeforeCreate);
+function render(source) {
+  return Twig.twig({ data: source }).render({});
 }
 
 test(
-  "registers the constant Twig function exactly once (idempotent)",
+  "loading the site program leaves constant() resolving the PHP allowlist",
   opts,
   () => {
-    ensureTwigConstantFunction();
-    ensureTwigConstantFunction();
-    ensureTwigConstantFunction();
-    const ours = createRegistrations();
-    assert.equal(ours.length, 1);
-    assert.equal(ours[0].name, "constant");
-    assert.equal(typeof ours[0].fn, "function");
+    assert.ok(available);
+    const values = {
+      JSON_PRETTY_PRINT: 128,
+      JSON_HEX_TAG: 1,
+      JSON_HEX_AMP: 2,
+      JSON_HEX_APOS: 4,
+      JSON_HEX_QUOT: 8,
+      JSON_FORCE_OBJECT: 16,
+      JSON_NUMERIC_CHECK: 32,
+      JSON_UNESCAPED_SLASHES: 64,
+      JSON_UNESCAPED_UNICODE: 256,
+    };
+    for (const [name, value] of Object.entries(values)) {
+      assert.equal(render(`{{ constant('${name}') }}`), String(value), name);
+    }
   },
 );
 
-test(
-  "the registered function resolves only the static PHP constant allowlist",
-  opts,
-  () => {
-    ensureTwigConstantFunction();
-    const constantFn = createRegistrations()[0].fn;
-    assert.equal(constantFn("JSON_PRETTY_PRINT"), 128);
-    assert.equal(constantFn("JSON_HEX_TAG"), 1);
-    assert.equal(constantFn("JSON_HEX_AMP"), 2);
-    assert.equal(constantFn("JSON_HEX_APOS"), 4);
-    assert.equal(constantFn("JSON_HEX_QUOT"), 8);
-    assert.equal(constantFn("JSON_FORCE_OBJECT"), 16);
-    assert.equal(constantFn("JSON_NUMERIC_CHECK"), 32);
-    assert.equal(constantFn("JSON_UNESCAPED_SLASHES"), 64);
-    assert.equal(constantFn("JSON_UNESCAPED_UNICODE"), 256);
-  },
-);
-
-test(
-  "the registered function returns null for non-allowlisted or non-string names",
-  opts,
-  () => {
-    ensureTwigConstantFunction();
-    const constantFn = createRegistrations()[0].fn;
-    // no arbitrary env/global access: anything off the allowlist is null
-    assert.equal(constantFn("PATH"), null);
-    assert.equal(constantFn("SOME_UNDEFINED_THING"), null);
-    assert.equal(constantFn(""), null);
-    assert.equal(constantFn(123), null);
-    assert.equal(constantFn(null), null);
-    assert.equal(constantFn(undefined), null);
-    assert.equal(constantFn({ name: "JSON_PRETTY_PRINT" }), null);
-  },
-);
+test("constant() gives nothing for names off the allowlist", opts, () => {
+  process.env.HAX_TWIG_SECRET_PROBE = "leaked";
+  try {
+    for (const name of [
+      "PATH",
+      "HOME",
+      "HAX_TWIG_SECRET_PROBE",
+      "process",
+      "SOME_UNDEFINED_THING",
+      "",
+    ]) {
+      assert.equal(render(`{{ constant('${name}') }}`), "", name);
+    }
+  } finally {
+    delete process.env.HAX_TWIG_SECRET_PROBE;
+  }
+});

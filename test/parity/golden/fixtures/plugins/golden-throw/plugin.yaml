@@ -1,0 +1,75 @@
+# golden-throw: a parity test fixture, not a plugin anyone installs.
+# It subscribes to every core hook the golden cases' routes fire and throws
+# from each one. The spec (06, 13) says a hook error is logged and the
+# operation goes on with the previous subject, so with it on (--throwing-plugin)
+# every golden case must still match: a broken plugin never changes or breaks
+# a save.
+specVersion: "0.1.0"
+id: golden-throw
+uuid: 4e8d1a6b-2c37-4f90-a5b1-6d3e9f0c7a28
+title: Golden throw (parity fixture)
+description: Subscribes to every core hook and throws from each; used by the create golden parity suite.
+version: 0.1.0
+category: other
+icon: icons:block
+docs:
+  readme: README.md
+  agents: AGENTS.md
+untested: true
+runtimes: [nodejs, php]
+entry:
+  nodejs: src/nodejs/index.js
+  php: src/php/Plugin.php
+hooks:
+  - name: entity.before.create
+  - name: entity.before.read
+  - name: entity.before.update
+  - name: entity.before.delete
+  - name: entity.after.create
+  - name: entity.after.read
+  - name: entity.after.update
+  - name: entity.after.delete
+  - name: page.before.save
+  - name: page.before.delete
+  - name: page.after.save
+  - name: page.after.delete
+  - name: file.before.save
+  - name: file.before.delete
+  - name: file.after.save
+  - name: file.after.delete
+  - name: manifest.before.save
+  - name: theme.before.change
+  - name: config.before.read
+  - name: config.before.save
+  - name: git.before.commit
+  - name: transaction.before.start
+  - name: transaction.before.end
+  - name: rest.before.request
+  - name: site.before.create
+  - name: site.before.duplicate
+  - name: site.before.archive
+  - name: site.before.delete
+  - name: site.before.export
+  - name: user.before.login
+  - name: user.before.logout
+  - name: manifest.after.save
+  - name: theme.after.change
+  - name: config.after.read
+  - name: config.after.save
+  - name: git.after.commit
+  - name: transaction.after.start
+  - name: transaction.after.end
+  - name: rest.after.request
+  - name: site.after.create
+  - name: site.after.duplicate
+  - name: site.after.archive
+  - name: site.after.delete
+  - name: site.after.export
+  - name: user.after.login
+  - name: user.after.logout
+  - name: render.before.head
+  - name: render.after.head
+  - name: render.before.body
+  - name: render.after.body
+  - name: render.before.content
+  - name: render.after.content

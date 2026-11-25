@@ -19,6 +19,32 @@ This command line tool can be used to create and modify two different HAX based 
 .B update
 [options] \- hax cli self update
 .PP
+.B platform
+[status|upgrade|verify|rollback] [options] \- Check, upgrade or verify the HAXcms install in this folder (or the one given with
+.B \-\-path
+). Run outside an install, it reports on the haxcms\-nodejs that
+.B hax serve
+uses.
+.B hax start
+mentions a newer release (checked with GitHub at most weekly) and flags a missing security fix on every run.
+.RS
+Actions:
+.RS
+.B status
+\- installed version, latest release, published security advisories that affect it, and the command that updates this kind of install (default; \-\-format json|yaml)
+.br
+.B upgrade
+\- haxcms\-php: runs the install's own scripts/platform\-upgrade.php, which checks the release against SHA256SUMS and platform\-manifest.json, backs up the code files it changes to _config/platform\-upgrade/backups and never touches site data (\-\-to, \-\-dry\-run, \-\-overwrite\-modified, \-\-allow\-downgrade, \-\-y). npm, Docker and git installs are pointed at the tool they came from
+.br
+.B verify
+\- haxcms\-php: compare code files with the release manifest (modified, missing, leftover files; \-\-format json)
+.br
+.B rollback
+\- haxcms\-php: undo the last upgrade (\-\-y)
+.RE
+Never available on HAXiam (haxiam\-managed) deployments, where the host manages HAXcms: upgrade, verify and rollback exit with an error and status makes no network call. Requires php on the PATH for haxcms\-php installs.
+.RE
+.PP
 .B serve
 \- Launch HAXsite in development mode (http://localhost)
 .PP
@@ -108,6 +134,9 @@ Actions to perform on site include:
 .B site:rsync
 \- Rsync site to remote/local directory
 .br
+.B site:build\-static
+\- Build the site for a static host into \-\-out\-dir (default <site>\-static beside it): every published page as its own HTML file with its metadata and text, generated files rebuilt; the site is not changed
+.br
 .B site:surge
 \- Publish site to Surge.sh
 .br
@@ -150,6 +179,12 @@ Actions to perform on web component include:
 .br
 .B wc:haxproperties
 \- Write haxProperties schema
+.br
+.B wc:rename
+\- Rename this web component
+.br
+.B wc:fuzz
+\- Add a starter fuzz (property\-based) test: test/<name>\-fuzz.test.js with fast\-check, following the HAX_FUZZ_SEED / HAX_FUZZ_RUNS / HAX_FUZZ_PATH convention (\-\-name, \-\-force, \-\-dry\-run)
 .RE
 .RE
 .PP
@@ -164,6 +199,9 @@ Actions to perform on web component include:
 .br
 .B ssr
 \- report\-only: server\-render every wc\-registry.json element with @lit\-labs/ssr and bucket the result (never fails, not part of all; \-\-only, \-\-timeout, \-\-save\-html, \-\-no\-shim, \-\-format json)
+.br
+.B fuzz
+\- report\-only: list sanitizer / parser functions (sanitize*, parse*, escape*, ...) that no fast\-check property test names (never fails, not part of all; \-\-debug, \-\-format json)
 .br
 .B all
 \- ddd and schema
@@ -244,6 +282,18 @@ npm client to use (must be installed) npm, yarn, pnpm (default: "npm")
 \--y
 yes to all questions
 .TP
+\--to <char>
+platform upgrade: version to upgrade to, x.y.z (default: latest release)
+.TP
+\--dry\-run
+platform upgrade: show what would change; change nothing
+.TP
+\--overwrite\-modified
+platform upgrade: replace code files that were changed by hand (they are backed up first)
+.TP
+\--allow\-downgrade
+platform upgrade: allow a version at or below the installed one
+.TP
 \--skip
 skip frills like animations
 .TP
@@ -281,7 +331,7 @@ in a monorepo, leave out the step that writes the element's docs data (lib/<tag>
 force creation even if name exists in registry
 .TP
 \--import\-site <char>
-URL of site to import
+URL of a site, or path to a local file, to import
 .TP
 \--import\-structure <char>
 import method to use:
@@ -314,7 +364,19 @@ htmlToSite
 .br
 docxToSite
 .br
+odtToSite
+.br
+pdfToSite
+.br
+pptxToSite
+.br
+odpToSite
+.br
 xlsxToSite
+.br
+odsToSite
+.br
+mdToSite
 .TP
 \--node\-op <char>
 node operation to perform
@@ -367,6 +429,9 @@ max number of site search matches to return
 \--search\-selector
 treat \--search as a selector query (tag, tag[attr], tag[attr="value"], [attr])
 .TP
+\--out\-dir <char>
+folder site:build\-static writes the static site to
+.TP
 \--only <char>
 site:rebuild targets to rebuild, comma separated (rss, sitemap, search, llms, managed, skills)
 .TP
@@ -404,7 +469,7 @@ repositories to clone
 output the version number
 .TP
 \--title <char>
-title
+title of the page (node:add / node:edit) or of the new site
 .TP
 \--content <char>
 page content for node:add / node:edit: a value starting with http:// or https:// is fetched as a URL; otherwise a one\-line value (under 4096 characters) that names an existing file is read from it; anything else is inline HTML (or md/json/yaml with \-\-content\-format). No flag forces inline content; wrap URL\- or file\-name\-like text in an element to keep it inline.
@@ -459,6 +524,15 @@ Create a web component with specific organization and author
 .B hax serve
 Launch HAXsite in development mode (http://localhost)
 .TP
+.B hax platform status \--path /var/www/haxcms
+Installed vs latest HAXcms release and any security advisories that affect it
+.TP
+.B hax platform upgrade \--path /var/www/haxcms \--dry\-run
+Show what an upgrade would change; then drop \-\-dry\-run to back up and upgrade
+.TP
+.B hax platform rollback \--path /var/www/haxcms \--y
+Undo the last platform upgrade
+.TP
 .B hax site site:theme \--theme polaris\-flex
 Change the theme of an existing site
 .TP
@@ -511,6 +585,14 @@ Report how selected elements server-render
 .B hax audit theme \--format json
 .br
 Check a HAXcms theme against the theme contract and report findings as JSON
+.TP
+.B hax audit fuzz \--format json
+.br
+List sanitizer and parser code that has no property\-based test, as JSON
+.TP
+.B hax wc wc:fuzz \--y
+.br
+Inside an element's folder, write a starter fuzz test for it
 .TP
 .B hax party \--repos haxtheweb/webcomponents
 Join the HAX community by cloning specific repositories

@@ -60,6 +60,11 @@ import {
 } from "./lib/cli-manifest.js";
 import { skillsCommandDetected, skillsActions } from "./lib/programs/skills.js";
 import {
+  platformCommandDetected,
+  platformActions,
+  platformStartNotice,
+} from "./lib/programs/platform.js";
+import {
   camelToDash,
   exec,
   runCommand,
@@ -72,11 +77,12 @@ import {
   rejectLeadingDash,
   hasNameSpecialCharacters,
   validateDomain,
+  validateSiteUrl,
   validateTemplateName,
 } from "./lib/utils.js";
 import * as haxcmsLib from "@haxtheweb/haxcms-nodejs/dist/lib/HAXCMS.js";
 const systemStructureContext = haxcmsLib.systemStructureContext;
-// `hax audit [ddd|schema|i18n|ssr|all]`; the DDD audit itself lives in audit.js
+// `hax audit [ddd|schema|i18n|ssr|theme|fuzz|all]`; the DDD audit itself lives in audit.js
 const runAuditCommand = (commandRun, dddPath, schemaRoot) =>
   runAuditCommandWith(commandRun, dddPath, schemaRoot, {
     auditDDD: auditCommandDetected,
@@ -116,6 +122,7 @@ function cliManifest() {
     i18n: "cliArgAuditI18n",
     ssr: "cliArgAuditSsr",
     theme: "cliArgAuditTheme",
+    fuzz: "cliArgAuditFuzz",
     all: "cliArgAuditAll",
   };
   return buildCliManifest(
@@ -124,6 +131,7 @@ function cliManifest() {
       site: siteActions(),
       wc: webcomponentActions(),
       skills: skillsActions(),
+      platform: platformActions,
       audit: Object.keys(auditTypes).map((type) => ({
         value: type,
         label: t(auditTypes[type]),
@@ -210,11 +218,12 @@ async function main() {
     .option("--import-site <char>", t("cliOptImportSite"))
     .option(
       "--import-structure <char>",
-      `${t("cliOptImportStructure")}\n\rpressbooksToSite\n\relmslnToSite\n\rhaxcmsToSite\n\rnotionToSite\n\rgitbookToSite\n\revolutionToSite\n\rploneToSite\n\rwordpressPagesToSite\n\rdrupalToSite\n\ropenstaxToSite\n\rvitepressToSite\n\rquartoToSite\n\rhtmlToSite\n\rdocxToSite\n\rxlsxToSite`,
+      `${t("cliOptImportStructure")}\n\rpressbooksToSite\n\relmslnToSite\n\rhaxcmsToSite\n\rnotionToSite\n\rgitbookToSite\n\revolutionToSite\n\rploneToSite\n\rwordpressPagesToSite\n\rdrupalToSite\n\ropenstaxToSite\n\rvitepressToSite\n\rquartoToSite\n\rhtmlToSite\n\rdocxToSite\n\rodtToSite\n\rpdfToSite\n\rpptxToSite\n\rodpToSite\n\rxlsxToSite\n\rodsToSite\n\rmdToSite`,
     )
     .option("--node-op <char>", t("cliOptNodeOp"))
     .option("--item-id <char>", t("cliOptItemId"))
     .option("--domain <char>", t("cliOptDomain"))
+    .option("--out-dir <char>", t("cliOptOutDir"))
     .option("--title-scrape <char>", t("cliOptTitleScrape"))
     .option("--content-scrape <char>", t("cliOptContentScrape"))
     .option("--content-format <char>", t("cliOptContentFormat"))
@@ -340,10 +349,11 @@ async function main() {
     .option("--import-site <char>", t("cliOptImportSite"))
     .option(
       "--import-structure <char>",
-      `${t("cliOptImportStructure")}\n\rpressbooksToSite\n\relmslnToSite\n\rhaxcmsToSite\n\rnotionToSite\n\rgitbookToSite\n\revolutionToSite\n\rploneToSite\n\rwordpressPagesToSite\n\rdrupalToSite\n\ropenstaxToSite\n\rvitepressToSite\n\rquartoToSite\n\rhtmlToSite\n\rdocxToSite\n\rxlsxToSite`,
+      `${t("cliOptImportStructure")}\n\rpressbooksToSite\n\relmslnToSite\n\rhaxcmsToSite\n\rnotionToSite\n\rgitbookToSite\n\revolutionToSite\n\rploneToSite\n\rwordpressPagesToSite\n\rdrupalToSite\n\ropenstaxToSite\n\rvitepressToSite\n\rquartoToSite\n\rhtmlToSite\n\rdocxToSite\n\rodtToSite\n\rpdfToSite\n\rpptxToSite\n\rodpToSite\n\rxlsxToSite\n\rodsToSite\n\rmdToSite`,
     )
     .option("--name <char>", t("cliOptSiteName"))
     .option("--domain <char>", t("cliOptDomain"))
+    .option("--out-dir <char>", t("cliOptOutDir"))
     .option("--node-op <char>", t("cliOptNodeOp"))
     .option("--title-scrape <char>", t("cliOptTitleScrape"))
     .option("--content-scrape <char>", t("cliOptContentScrape"))
@@ -384,10 +394,13 @@ async function main() {
   let siteNodeOps = siteNodeOperations();
   for (let i in siteNodeOps) {
     // --content help spells out how the value is read (URL, file or HTML)
+    // --title also names a new site (hax site <name> --title "My Site")
     const optionHelp =
       siteNodeOps[i].value === "content"
         ? t("cliOptContent")
-        : `${siteNodeOps[i].label}`;
+        : siteNodeOps[i].value === "title"
+          ? t("cliOptTitle")
+          : `${siteNodeOps[i].label}`;
     program.option(`--${camelToDash(siteNodeOps[i].value)} <char>`, optionHelp);
     siteProg.option(
       `--${camelToDash(siteNodeOps[i].value)} <char>`,
@@ -463,6 +476,9 @@ async function main() {
         "\n\r" +
         "theme - " +
         t("cliArgAuditTheme") +
+        "\n\r" +
+        "fuzz - " +
+        t("cliArgAuditFuzz") +
         "\n\r" +
         "all - " +
         t("cliArgAuditAll"),
@@ -544,6 +560,52 @@ async function main() {
     .option("--no-i", t("cliOptNoI"))
     .option("--format <char>", t("cliOptFormat"))
     .option("--quiet", t("cliOptQuiet"))
+    .version(packageJson.version);
+
+  // haxtheweb/issues#1768: update awareness for a HAXcms install
+  let strPlatformActions = "";
+  platformActions.forEach((action) => {
+    strPlatformActions += `${action.value} - ${action.label}` + "\n\r";
+  });
+  program
+    .command("platform")
+    .description(t("cliCmdPlatform"))
+    .argument(
+      "[action]",
+      t("cliArgPlatformAction") + "\n\r" + strPlatformActions,
+    )
+    .action((action, cmdOptions = {}) => {
+      commandRun = {
+        command: "platform",
+        arguments: { action: action || "status" },
+        options: {},
+      };
+      // these only exist on the platform subcommand
+      if (cmdOptions.path) {
+        commandRun.options.path = cmdOptions.path;
+      }
+      if (cmdOptions.format) {
+        commandRun.options.format = cmdOptions.format;
+      }
+      for (const key of [
+        "to",
+        "dryRun",
+        "overwriteModified",
+        "allowDowngrade",
+        "y",
+      ]) {
+        if (cmdOptions[key]) {
+          commandRun.options[key] = cmdOptions[key];
+        }
+      }
+    })
+    .option("--path <char>", t("cliOptPlatformPath"))
+    .option("--format <char>", t("cliOptFormat"))
+    .option("--to <char>", t("cliOptPlatformTo"))
+    .option("--dry-run", t("cliOptPlatformDryRun"))
+    .option("--overwrite-modified", t("cliOptPlatformOverwriteModified"))
+    .option("--allow-downgrade", t("cliOptPlatformAllowDowngrade"))
+    .option("--y", t("cliOptYes"))
     .version(packageJson.version);
 
   // haxtheweb/issues#3228: machine-readable command manifest + shell completion
@@ -813,7 +875,15 @@ async function main() {
   // exploitable, without a full exec()->spawn() migration.
   try {
     if (commandRun.options.domain) {
-      commandRun.options.domain = validateDomain(commandRun.options.domain);
+      // site:build-static also takes the full published address (the Pages
+      // deploy workflow passes configure-pages' base_url); it never reaches
+      // a shell string, so it gets the URL-aware validator
+      commandRun.options.domain =
+        commandRun.command === "site" &&
+        commandRun.arguments &&
+        commandRun.arguments.action === "site:build-static"
+          ? validateSiteUrl(commandRun.options.domain)
+          : validateDomain(commandRun.options.domain);
     }
     rejectShellMetacharacters(commandRun.options.author, "author");
     rejectShellMetacharacters(commandRun.options.gitRepo, "git-repo");
@@ -976,6 +1046,11 @@ async function main() {
     siteListOutput(commandRun, process.cwd());
     process.exit(0);
   }
+  // a HAXcms install here (or the one `hax serve` uses) that is behind or
+  // missing a security fix gets a notice on start; GitHub is asked weekly
+  if (commandRun.command === "start" && !commandRun.options.quiet) {
+    await platformStartNotice(process.cwd(), timeSince.days > 7);
+  }
   // test for updating to latest or just run the command
   if (commandRun.command === "webcomponent" && commandRun.options.search) {
     await elementsSearchCommand(commandRun);
@@ -999,6 +1074,9 @@ async function main() {
     await partyCommandDetected(commandRun);
   } else if (commandRun.command === "skills") {
     await skillsCommandDetected(commandRun);
+  } else if (commandRun.command === "platform") {
+    await platformCommandDetected(commandRun);
+    process.exit(process.exitCode || 0);
   }
   // CLI works within context of the site if one is detected, otherwise we can do other things
   else if (await systemStructureContext()) {

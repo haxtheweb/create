@@ -298,6 +298,8 @@ test(
         "order",
         "theme",
         "hideInMenu",
+        "move",
+        "locked",
       ],
     );
   },

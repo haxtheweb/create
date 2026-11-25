@@ -34,7 +34,7 @@ Build and maintain HAXcms sites with proper structure, themes, and JSON Outline 
 4. **Routes**: Do not create pages or routes using the `x/` prefix — it is reserved for internal HAXcms paths (`x/search`, `x/tags`, `x/manifest`). (PRAW Rule `Q4D9hL9sFNORlMPt1z2ZEb`)
 5. **Content**: Use HAX-capable web components for rich content. Apply DDD attributes for consistent spacing and typography. Include engaging visual elements (videos, tables, interactive components).
 6. **Theme**: Use HAXCMSLitElement for custom theme components. Apply DDD design tokens consistently. Run `yarn run build` after theme changes.
-7. **Import**: Use supported import methods (`pressbooksToSite`, `htmlToSite`, `notionToSite`, `docxToSite`, etc.) via `hax site --import-site <url> --import-structure <method>`.
+7. **Import**: Use supported import methods (`pressbooksToSite`, `htmlToSite`, `notionToSite`, etc.) via `hax site --import-site <url> --import-structure <method>`. Documents are file imports: `hax site --import-site ./course.odt` picks the importer from the extension (.docx, .odt, .pdf, .pptx, .odp, .xlsx, .xls, .ods, .md, .markdown, .txt); `--import-structure` (`docxToSite`, `odtToSite`, `pdfToSite`, `pptxToSite`, `odpToSite`, `xlsxToSite`, `odsToSite`, `mdToSite`) can name it.
 
 ## Page creation (critical)
 
@@ -79,6 +79,8 @@ Pass values as `--flag=value`. A value that starts with `-` (for example `--desc
 | `--hide-in-menu=true\|false`               | Hidden from the menu.                                                                                                                                                                                                                                                                              |
 | `--parent=<id-or-slug>` or `--parent=null` | Parent page. `null` moves the page to the top level.                                                                                                                                                                                                                                               |
 | `--order=<number>`                         | Position among its siblings.                                                                                                                                                                                                                                                                       |
+| `--move=up\|down\|indent\|outdent`         | One step up or down among its siblings, or one level in (under the page above it) or out.                                                                                                                                                                                                          |
+| `--locked=true\|false`                     | Lock or unlock the page. A locked page refuses every other change until it is unlocked.                                                                                                                                                                                                            |
 | `--theme=<theme>`                          | Theme for this page only (empty removes it).                                                                                                                                                                                                                                                       |
 
 Order rule: whenever `--parent` is given (even the current parent, or `null` for a page already at the top level) and no `--order` is given, the page goes after the last of its siblings (highest sibling order + 1), the same as the API's setParent. Its depth follows the parent and its slug is rebuilt from the path unless the slug was set by hand. Pass `--order` to place it yourself.
@@ -117,6 +119,7 @@ When creating educational content:
 - Run `yarn run build` after theme modifications involving HAXCMSLitElement
 - Do not manually edit `custom-elements.json` or generated manifest files
 - Regenerate feeds, sitemap, search index and `llms.txt` with `hax site site:rebuild`, never by hand
+- Build a copy for a static host (each page as its own HTML file with its metadata and text, for search engines and AI agents) with `hax site site:build-static --out-dir <folder> --y --no-i`; the site itself is not changed
 - Use HAX CLI tools for site operations rather than manual file edits
 - Ensure `site.json` is valid JSON Outline Schema before committing
 

@@ -12,6 +12,7 @@ const {
   validateNpmClient,
   rejectShellMetacharacters,
   validateDomain,
+  validateSiteUrl,
   validateTemplateName,
   listTemplateNames,
   validateWebcomponentName,
@@ -27,6 +28,7 @@ const {
   isValidGithubOwner,
   isValidGithubRepo,
   runCommand,
+  windowsShellArg,
   initGitRepo,
 } = require("../../src/lib/utils.js");
 
@@ -117,6 +119,44 @@ test("validateDomain rejects a leading dash (argument injection)", () => {
   assert.throws(() => validateDomain("--help"), /cannot start with "-"/);
   assert.throws(() => validateDomain("-x.example.com"), /cannot start with/);
   assert.equal(validateDomain("x-y.example.com"), "x-y.example.com");
+});
+
+test("validateSiteUrl accepts the Pages base_url the deploy workflow passes", () => {
+  // actions/configure-pages base_url for a custom domain and a project site
+  assert.equal(validateSiteUrl("https://btopro.com"), "https://btopro.com/");
+  assert.equal(
+    validateSiteUrl("https://haxtheweb.github.io/haxtheweb.org"),
+    "https://haxtheweb.github.io/haxtheweb.org",
+  );
+  assert.equal(
+    validateSiteUrl("http://localhost:8080/site/"),
+    "http://localhost:8080/site/",
+  );
+});
+
+test("validateSiteUrl hands bare hostnames and empty values to validateDomain", () => {
+  assert.equal(validateSiteUrl("example.com"), "example.com");
+  assert.equal(validateSiteUrl(""), "");
+  assert.equal(validateSiteUrl(undefined), undefined);
+  assert.throws(() => validateSiteUrl("example.com; rm"), /Invalid --domain/);
+  assert.throws(() => validateSiteUrl("--help"), /cannot start with "-"/);
+  assert.throws(() => validateSiteUrl("ftp://example.com"), /Invalid --domain/);
+});
+
+test("validateSiteUrl rejects credentials, queries, fragments and unsafe paths", () => {
+  for (const bad of [
+    "https://user:pw@example.com/",
+    "https://example.com/?x=1",
+    "https://example.com/#top",
+    "https://example.com/a b",
+    "https://example.com/$(id)",
+    "https://example.com/a;rm",
+    "https://example.com/'x'",
+    "https://-x.example.com/",
+    "https://",
+  ]) {
+    assert.throws(() => validateSiteUrl(bad), /Invalid --domain/, bad);
+  }
 });
 
 // --- --template allowlist ---
@@ -373,6 +413,37 @@ test("runCommand passes args literally, never through a shell (R2-L-1)", async (
   assert.equal(stdout, "a; echo pwned $(id)");
 });
 
+test("windowsShellArg quotes anything cmd.exe would read as syntax", () => {
+  // plain values pass as they are
+  assert.equal(windowsShellArg("commit"), "commit");
+  assert.equal(windowsShellArg("my-site.surge.sh"), "my-site.surge.sh");
+  // whitespace, quotes and every cmd metacharacter end up inside quotes
+  assert.equal(windowsShellArg("first commit"), '"first commit"');
+  assert.equal(windowsShellArg('say "hi"'), '"say ""hi"""');
+  for (const value of [
+    "a&calc",
+    "a|calc",
+    "a>out",
+    "a<in",
+    "a^b",
+    "(a)",
+    "a!b",
+    "a,b",
+    "a;b",
+    "a=b",
+  ]) {
+    assert.equal(windowsShellArg(value), `"${value}"`, value);
+  }
+  // an empty argument still occupies its slot
+  assert.equal(windowsShellArg(""), '""');
+});
+
+test("windowsShellArg refuses what cmd.exe expands or splits even when quoted", () => {
+  for (const value of ["%PATH%", "50% done", "a\nb", "a\rb", "a\u0000b"]) {
+    assert.throws(() => windowsShellArg(value), /Windows shell/, value);
+  }
+});
+
 test("initGitRepo works in a directory whose name contains shell syntax (R2-H-2)", async () => {
   const fs = require("node:fs");
   const os = require("node:os");
@@ -444,4 +515,101 @@ test("githubRepoLink rejects non-github hosts and bad input", () => {
   assert.equal(githubRepoLink("ssh://github.com/x/y.git"), null);
   assert.equal(githubRepoLink(""), null);
   assert.equal(githubRepoLink(undefined), null);
+});
+
+// --- ensurePrivateConfigDir: ~/.haxtheweb is readable by its owner only ---
+
+const posixOnly = {
+  skip: process.platform === "win32" ? "POSIX file modes" : false,
+};
+
+test("ensurePrivateConfigDir creates the folder 0700", posixOnly, () => {
+  const fs = require("node:fs");
+  const os = require("node:os");
+  const { ensurePrivateConfigDir } = require("../../src/lib/utils.js");
+  const base = fs.mkdtempSync(path.join(os.tmpdir(), "hax-private-dir-"));
+  try {
+    const dir = ensurePrivateConfigDir(base);
+    assert.equal(dir, path.join(base, ".haxtheweb"));
+    assert.equal(fs.statSync(dir).mode & 0o777, 0o700);
+  } finally {
+    fs.rmSync(base, { recursive: true, force: true });
+  }
+});
+
+test(
+  "ensurePrivateConfigDir tightens an existing folder and its files, not subfolders",
+  posixOnly,
+  () => {
+    const fs = require("node:fs");
+    const os = require("node:os");
+    const { ensurePrivateConfigDir } = require("../../src/lib/utils.js");
+    const base = fs.mkdtempSync(path.join(os.tmpdir(), "hax-private-dir-"));
+    try {
+      const dir = path.join(base, ".haxtheweb");
+      fs.mkdirSync(dir);
+      fs.chmodSync(dir, 0o775);
+      fs.writeFileSync(path.join(dir, "create.log"), "x");
+      fs.chmodSync(path.join(dir, "create.log"), 0o664);
+      fs.mkdirSync(path.join(dir, "archives"));
+      fs.chmodSync(path.join(dir, "archives"), 0o755);
+      ensurePrivateConfigDir(base);
+      assert.equal(fs.statSync(dir).mode & 0o777, 0o700);
+      assert.equal(
+        fs.statSync(path.join(dir, "create.log")).mode & 0o777,
+        0o600,
+      );
+      // a folder keeps its mode (0600 would make it unusable); the 0700
+      // parent already keeps other accounts out
+      assert.equal(fs.statSync(path.join(dir, "archives")).mode & 0o777, 0o755);
+    } finally {
+      fs.rmSync(base, { recursive: true, force: true });
+    }
+  },
+);
+
+test("ensurePrivateConfigDir never throws on an unusable base", () => {
+  const { ensurePrivateConfigDir } = require("../../src/lib/utils.js");
+  assert.doesNotThrow(() => ensurePrivateConfigDir("/dev/null/nope"));
+});
+
+// --- interactiveSpawnArgs: the Windows shell never sees a raw argument ---
+
+test("interactiveSpawnArgs quotes arguments when it turns the Windows shell on", () => {
+  const { interactiveSpawnArgs } = require("../../src/lib/utils.js");
+  const prepared = interactiveSpawnArgs(
+    ["-avz", "--", "C:\\My Sites\\one/", "host:/var/www & calc"],
+    { cwd: "C:\\work" },
+    "win32",
+  );
+  assert.equal(prepared.options.shell, true);
+  assert.equal(prepared.options.stdio, "inherit");
+  assert.equal(prepared.options.cwd, "C:\\work");
+  assert.deepEqual(prepared.args, [
+    "-avz",
+    "--",
+    '"C:\\My Sites\\one/"',
+    '"host:/var/www & calc"',
+  ]);
+});
+
+test("interactiveSpawnArgs refuses what cmd.exe expands even when quoted", () => {
+  const { interactiveSpawnArgs } = require("../../src/lib/utils.js");
+  assert.throws(
+    () => interactiveSpawnArgs(["%COMSPEC%"], {}, "win32"),
+    /Windows shell/,
+  );
+});
+
+test("interactiveSpawnArgs leaves arguments alone when no shell is involved", () => {
+  const { interactiveSpawnArgs } = require("../../src/lib/utils.js");
+  const args = ["a b", "c & d", "%x%"];
+  // other platforms: no shell, the array reaches the program as is
+  const posix = interactiveSpawnArgs(args, {}, "linux");
+  assert.equal(posix.options.shell, undefined);
+  assert.deepEqual(posix.args, args);
+  // a caller that sets shell itself keeps its own argument handling
+  const explicit = interactiveSpawnArgs(args, { shell: false }, "win32");
+  assert.equal(explicit.options.shell, false);
+  assert.deepEqual(explicit.args, args);
 });

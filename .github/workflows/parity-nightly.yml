@@ -6,6 +6,16 @@ name: parity-nightly
 #
 #   sequence A  nodejs + php + CLI, ops the CLI can express
 #   sequence B  nodejs + php, every write op the site API has
+#   golden      every leg against the committed snapshots in test/parity/golden/
+#   fuzz        nodejs + php, requests generated from the site OpenAPI spec
+#               with fast-check, responses and sites diffed
+#               (haxtheweb/issues#3386). A random seed every night, shown in
+#               the job summary with a one-line replay per finding
+#
+# After the sequences, every leg's site is checked against the site folder
+# contract (haxtheweb/issues#3351, test/contract/README.md) and each
+# backend's copy of the contract is compared with json-outline-schema's.
+# Also report-only.
 #
 # Latest default branches of haxcms-nodejs (main) and haxcms-php (master),
 # built here; the CLI is linked to that haxcms-nodejs build, not the npm
@@ -23,6 +33,14 @@ on:
         description: "Ops per sequence"
         required: false
         default: "1000"
+      fuzz_seed:
+        description: "Generated inputs: replay a seed (integer); empty for a random one"
+        required: false
+        default: ""
+      fuzz_runs:
+        description: "Generated inputs: sequences per round"
+        required: false
+        default: "200"
 permissions:
   contents: read
 concurrency:
@@ -36,6 +54,8 @@ jobs:
     env:
       # inputs are empty on the nightly schedule, so defaults apply
       HAX_PARITY_OPS: ${{ inputs.ops || '1000' }}
+      HAX_FUZZ_SEED: ${{ inputs.fuzz_seed || 'random' }}
+      HAX_FUZZ_RUNS: ${{ inputs.fuzz_runs || '200' }}
       HAX_PARITY_OUT: ${{ github.workspace }}/parity-results
       HAX_PARITY_NODEJS_REPO: ${{ github.workspace }}/haxcms-nodejs
       HAX_PARITY_PHP_REPO: ${{ github.workspace }}/haxcms-php
@@ -64,6 +84,13 @@ jobs:
           ref: master
           path: haxcms-php
           persist-credentials: false
+      - name: Checkout json-outline-schema (site folder contract)
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: haxtheweb/json-outline-schema
+          ref: master
+          path: json-outline-schema
+          persist-credentials: false
       - name: Set up Node.js
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
@@ -81,6 +108,19 @@ jobs:
           case "$HAX_PARITY_OPS" in
             '' | *[!0-9]*)
               echo "::error title=ops::ops must be a whole number"
+              exit 1
+              ;;
+          esac
+          case "$HAX_FUZZ_RUNS" in
+            '' | *[!0-9]*)
+              echo "::error title=fuzz_runs::fuzz_runs must be a whole number"
+              exit 1
+              ;;
+          esac
+          case "$HAX_FUZZ_SEED" in
+            random) ;;
+            '' | - | *[!0-9-]* | ?*-*)
+              echo "::error title=fuzz_seed::fuzz_seed must be an integer or empty"
               exit 1
               ;;
           esac
@@ -115,6 +155,40 @@ jobs:
         # exits non-zero only when the harness crashes; divergences are data
         working-directory: create
         run: node test/parity/parity.cjs --seq A,B
+
+      # Every leg compared to the reviewed snapshots in test/parity/golden/
+      # (haxtheweb/issues#3332). Report-only here: no --fail-on-diff, so a
+      # mismatch goes to the job summary and never fails the nightly. The
+      # release-candidate gate runs the same suite with --fail-on-diff.
+      - name: Golden snapshots (report-only)
+        if: always()
+        working-directory: create
+        run: node test/parity/parity.cjs --golden --out "$HAX_PARITY_OUT/golden-suite"
+
+      # Requests generated from the site OpenAPI spec (haxtheweb/issues#3386),
+      # sent to both backends, responses and sites diffed. Report-only like
+      # the steps above: no --fail-on-diff, so findings go to the job summary
+      # (each with its seed, path and replay command) and
+      # parity-results/fuzz-run, and never fail the nightly.
+      - name: Generated inputs from the OpenAPI spec (report-only)
+        if: always()
+        working-directory: create
+        run: node test/parity/parity.cjs --fuzz --out "$HAX_PARITY_OUT/fuzz-run"
+
+      # Each leg has just made a site and run every op on it, so it must be a
+      # complete site folder with nothing retired and nothing unknown. Findings
+      # go to the job summary and parity-results/site-contract.md.
+      - name: Site folder contract (report-only)
+        if: always()
+        working-directory: create
+        run: |
+          # json-outline-schema has no lockfile, so npm ci cannot run there
+          (cd "$GITHUB_WORKSPACE/json-outline-schema" && npm install --no-package-lock --no-audit --no-fund --omit=dev --ignore-scripts)
+          node test/contract/site-contract.cjs --jos "$GITHUB_WORKSPACE/json-outline-schema" \
+            --level managed --exhaustive --new --report-only \
+            --parity-out "$HAX_PARITY_OUT" \
+            --copies "haxcms-nodejs=$HAX_PARITY_NODEJS_REPO,haxcms-php=$HAX_PARITY_PHP_REPO" \
+            --out "$HAX_PARITY_OUT/site-contract.md"
 
       - name: Upload parity results
         if: always()

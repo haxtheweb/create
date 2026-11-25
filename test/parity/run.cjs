@@ -40,7 +40,7 @@ async function runSequence(cfg, seq, nodeInfo, log = console.log) {
       cfg["php-url"],
       cfg["php-user"],
       cfg["php-pass"],
-      path.join(cfg.php, "_sites"),
+      path.join(cfg.phpRoot || cfg.php, "_sites"),
     ),
   ];
   if (seq === "A")

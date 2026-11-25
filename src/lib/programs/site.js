@@ -2,13 +2,11 @@
 import { setTimeout } from "node:timers/promises";
 import * as fs from "node:fs";
 import * as path from "node:path";
-import * as os from "node:os";
 import open from "open";
 import * as p from "@clack/prompts";
 import * as ejs from "ejs";
 import color from "picocolors";
 import { dump, load } from "js-yaml";
-import Twig from "twig";
 
 import { parse } from "node-html-parser";
 import { merlinSays, communityStatement } from "../statements.js";
@@ -61,6 +59,7 @@ import {
   listSites,
   generateCount,
   placeholderPageHtml,
+  copyToPrivateTemp,
 } from "../site-tools.js";
 
 // Security (in-process-converters): the deprecated @haxtheweb/open-apis npm dependency was
@@ -160,51 +159,7 @@ export function rsyncArgError(value, optionName) {
   return undefined;
 }
 
-let twigConstantFunctionRegistered = false;
 let haxcmsNodejsCli = null;
-
-export function ensureTwigConstantFunction() {
-  if (twigConstantFunctionRegistered) {
-    return;
-  }
-  twigConstantFunctionRegistered = true;
-  try {
-    if (Twig && typeof Twig.extendFunction === "function") {
-      // Security (twig-constant-allowlist): previously this read process.env[name] and
-      // globalThis[name], which exposed arbitrary secrets/globals to any Twig
-      // template rendered in this process. The only template usage is the
-      // service-worker.js template's constant('JSON_PRETTY_PRINT'), a PHP
-      // constant ported from the PHP HAXcms. Resolve that handful from a
-      // static allowlist and return null for anything else — no env/global
-      // access.
-      Twig.extendFunction("constant", function constantLookup(name) {
-        if (typeof name !== "string") {
-          return null;
-        }
-        if (Object.prototype.hasOwnProperty.call(TWIG_PHP_CONSTANTS, name)) {
-          return TWIG_PHP_CONSTANTS[name];
-        }
-        return null;
-      });
-    }
-  } catch {
-    // non-fatal: Twig constant() helper simply won't be available
-  }
-}
-
-// Static allowlist of PHP constants the Twig templates reference (ported from
-// PHP HAXcms). Values match the standard PHP bitmask values.
-const TWIG_PHP_CONSTANTS = {
-  JSON_PRETTY_PRINT: 128,
-  JSON_HEX_TAG: 1,
-  JSON_HEX_AMP: 2,
-  JSON_HEX_APOS: 4,
-  JSON_HEX_QUOT: 8,
-  JSON_FORCE_OBJECT: 16,
-  JSON_NUMERIC_CHECK: 32,
-  JSON_UNESCAPED_SLASHES: 64,
-  JSON_UNESCAPED_UNICODE: 256,
-};
 
 async function getHaxcmsNodejsCli() {
   if (!haxcmsNodejsCli) {
@@ -250,7 +205,13 @@ class Res {
 // Security (in-process-converters): params added so the site/import/:platform dispatcher
 // (replacing the open-apis broker) can receive the platform name in-process.
 // Backward-compatible: existing callers omit params, defaulting to {}.
-async function invokeRoute(routeHandler, body = {}, query = {}, params = {}) {
+async function invokeRoute(
+  routeHandler,
+  body = {},
+  query = {},
+  params = {},
+  files = undefined,
+) {
   let res = new Res();
   // Site-scoped reads (site:search, site:tags, site:blocks, site:analytics,
   // site:list-files) pass query.siteName; set the auth context so
@@ -277,6 +238,8 @@ async function invokeRoute(routeHandler, body = {}, query = {}, params = {}) {
           "x-hax-actor": cliActor(),
         },
         haxcmsSiteApiAuth: siteAuthContext,
+        // file importer routes read their upload from req.files
+        files: files,
       },
       res,
     );
@@ -298,10 +261,22 @@ async function invokeRoute(routeHandler, body = {}, query = {}, params = {}) {
 let commitContextLib = null;
 try {
   // optional: only in haxcms-nodejs releases with commit op codes
-  // eslint-disable-next-line n/no-missing-require
+
   commitContextLib = require("@haxtheweb/haxcms-nodejs/dist/lib/commitContext.js");
 } catch {
   commitContextLib = null;
+}
+// haxtheweb/issues#3327: haxcms-nodejs renders the pages a static host
+// serves (metadata, structured data and each page's text in the HTML).
+// Older releases have no renderer; then a static publish ships the
+// ghpages.html shell alone, as before.
+let staticPagesLib = null;
+try {
+  // optional: only in haxcms-nodejs releases with the static page renderer
+
+  staticPagesLib = require("@haxtheweb/haxcms-nodejs/dist/lib/staticPages.js");
+} catch {
+  staticPagesLib = null;
 }
 // a person ran the CLI unless --agent / HAX_ACTOR=agent says an agent did
 export function cliActor() {
@@ -374,9 +349,10 @@ export function cliCommitContextFor(handler) {
 }
 // Security (in-process-converters): map --import-structure names to on-prem haxcms-nodejs
 // route handlers (replaces the deprecated @haxtheweb/open-apis broker). Platform
-// converters go through the site/import/:platform dispatcher; docx/xlsx use their
-// own actions routes. evolutionToSite (custom zip upload) is intentionally absent
-// and falls through to the hidden-methodologies branch below.
+// converters go through the site/import/:platform dispatcher with the source URL;
+// file importers (routeKey) are the backends' upload routes and are handed the
+// local file named by --import-site. evolutionToSite (custom zip upload) is
+// intentionally absent and falls through to the hidden-methodologies branch below.
 export const IMPORT_STRUCTURE_MAP = {
   haxcmsToSite: { platform: "haxcms" },
   pressbooksToSite: { platform: "pressbooks" },
@@ -391,8 +367,75 @@ export const IMPORT_STRUCTURE_MAP = {
   quartoToSite: { platform: "quarto" },
   htmlToSite: { platform: "html" },
   docxToSite: { routeKey: "actions/import-docx" },
+  odtToSite: { routeKey: "actions/import-odt" },
+  pdfToSite: { routeKey: "actions/import-pdf" },
+  pptxToSite: { routeKey: "actions/import-pptx" },
+  odpToSite: { routeKey: "actions/import-odp" },
   xlsxToSite: { routeKey: "actions/import-xlsx" },
+  // the spreadsheet route reads .ods with the same columns
+  odsToSite: { routeKey: "actions/import-xlsx" },
+  // .txt is read as Markdown
+  mdToSite: { routeKey: "actions/import-md" },
 };
+// A local file given to --import-site with no --import-structure picks its
+// file importer from the extension.
+export const IMPORT_STRUCTURE_FOR_EXTENSION = {
+  docx: "docxToSite",
+  odt: "odtToSite",
+  pdf: "pdfToSite",
+  pptx: "pptxToSite",
+  odp: "odpToSite",
+  xlsx: "xlsxToSite",
+  xls: "xlsxToSite",
+  ods: "odsToSite",
+  md: "mdToSite",
+  markdown: "mdToSite",
+  txt: "mdToSite",
+};
+/**
+ * The upload a file importer route reads (req.files) for the local file named
+ * by --import-site, or null when it is not an existing file (a URL, a
+ * directory, a missing path).
+ * @param {string} source
+ * @param {string} [cwd]
+ * @returns {Array<{originalname: string, path: string}>|null}
+ */
+export function importFileUpload(source, cwd) {
+  if (
+    typeof source !== "string" ||
+    source === "" ||
+    /^[a-z][a-z0-9+.-]*:\/\//i.test(source)
+  ) {
+    return null;
+  }
+  const filePath = path.resolve(cwd || process.cwd(), source);
+  let stat = null;
+  try {
+    stat = fs.statSync(filePath);
+  } catch {
+    return null;
+  }
+  if (!stat.isFile()) {
+    return null;
+  }
+  return [{ originalname: path.basename(filePath), path: filePath }];
+}
+/**
+ * The --import-structure to use for an --import-site source when none was
+ * given: a local file's importer by extension, else HAXcms to HAXcms.
+ * @param {string} source
+ * @param {string} [cwd]
+ * @returns {string}
+ */
+export function defaultImportStructure(source, cwd) {
+  if (importFileUpload(source, cwd)) {
+    const ext = path.extname(source).slice(1).toLowerCase();
+    if (IMPORT_STRUCTURE_FOR_EXTENSION[ext]) {
+      return IMPORT_STRUCTURE_FOR_EXTENSION[ext];
+    }
+  }
+  return "haxcmsToSite";
+}
 // Build the build.files map for a scraped Drupal7 book-print-html page: each
 // <img src="/..."> (absolute-path, not protocol-relative //) is recorded as
 // files[relativeSrc] = absoluteImgUrl so the backend's bulk-import path can
@@ -854,6 +897,32 @@ function encodeSlugPathForLlmsFull(slug = "") {
  * Build llms-full.txt for a site directory, or return null when the site is
  * private or has no readable site.json.
  */
+/**
+ * @description The readable text of a page's HTML: no markup, script or
+ * style content, a blank line after each block and a line break for <br>.
+ * The HTML is parsed, so text that only looks like a tag once other tags are
+ * removed stays text.
+ * @param {string} html page HTML
+ * @returns {string}
+ */
+export function htmlToPageText(html) {
+  const root = parse(String(html || ""));
+  root.querySelectorAll("script, style").forEach((el) => {
+    el.replaceWith(" ");
+  });
+  root.querySelectorAll("br").forEach((el) => {
+    el.replaceWith("\n");
+  });
+  root
+    .querySelectorAll(
+      "p, div, h1, h2, h3, h4, h5, h6, li, section, article, blockquote",
+    )
+    .forEach((el) => {
+      el.insertAdjacentHTML("afterend", "\n\n");
+    });
+  return root.rawText.replace(/[ \t]+/g, " ").replace(/\n{3,}/g, "\n\n");
+}
+
 export function buildStaticLlmsFull(siteDirectory) {
   let manifest;
   try {
@@ -939,14 +1008,7 @@ export function buildStaticLlmsFull(siteDirectory) {
         fs.existsSync(htmlPath)
       ) {
         // no sidecar: fall back to the page text
-        body = fs
-          .readFileSync(htmlPath, "utf8")
-          .replace(/<(script|style)[^>]*>[\s\S]*?<\/\1>/gi, " ")
-          .replace(/<\/(p|div|h[1-6]|li|section|article|blockquote)>/gi, "\n\n")
-          .replace(/<br\s*\/?>/gi, "\n")
-          .replace(/<[^>]+>/g, "")
-          .replace(/[ \t]+/g, " ")
-          .replace(/\n{3,}/g, "\n\n");
+        body = htmlToPageText(fs.readFileSync(htmlPath, "utf8"));
       }
     }
     parts.push(String(body).trim());
@@ -1148,6 +1210,314 @@ function logStaticPublishPrepared(state, commandRun) {
   }
 }
 
+// pages written into a site for a static publish are listed here (in the
+// stash dir, outside the site) so a restore, or the next publish after a
+// crashed one, removes exactly those files and nothing else
+const STATIC_PAGES_RECORD = "static-pages.json";
+
+/**
+ * The address a static publish goes to, as an absolute URL, or "" when it
+ * isn't known yet: --domain, then the CNAME a previous publish left.
+ */
+export function staticPublishDomain(siteDirectory, domainOption) {
+  let domain =
+    typeof domainOption === "string" && domainOption.trim() !== ""
+      ? domainOption.trim()
+      : readSurgeCnameDomain(siteDirectory);
+  if (!domain || /\s/.test(domain)) {
+    return "";
+  }
+  if (!/^https?:\/\//i.test(domain)) {
+    domain = "https://" + domain;
+  }
+  try {
+    const url = new URL(domain);
+    return url.protocol + "//" + url.host + url.pathname;
+  } catch {
+    return "";
+  }
+}
+
+/**
+ * Remove the pages writeStaticPublishPages put in a site (as listed in the
+ * record): only those files, then each folder it made if it is empty.
+ * Returns the number of files removed.
+ */
+export function removeStaticPublishPages(siteDirectory) {
+  const recordPath = path.join(
+    staticPublishStashDir(siteDirectory),
+    STATIC_PAGES_RECORD,
+  );
+  let removed = 0;
+  let record = null;
+  try {
+    record = JSON.parse(fs.readFileSync(recordPath, "utf8"));
+  } catch {
+    return removed;
+  }
+  const root = path.resolve(siteDirectory);
+  const inside = (relative) => {
+    if (typeof relative !== "string" || relative === "") {
+      return null;
+    }
+    const full = path.resolve(root, relative);
+    return full.startsWith(root + path.sep) ? full : null;
+  };
+  const files = record && Array.isArray(record.files) ? record.files : [];
+  for (const relative of files) {
+    const full = inside(relative);
+    try {
+      if (full && fs.lstatSync(full).isFile()) {
+        fs.unlinkSync(full);
+        removed++;
+      }
+    } catch {
+      // already gone
+    }
+  }
+  const dirs = record && Array.isArray(record.dirs) ? record.dirs : [];
+  // deepest first, so a parent is empty by the time it is checked
+  for (const relative of [...dirs].sort((a, b) => b.length - a.length)) {
+    const full = inside(relative);
+    try {
+      if (full) {
+        // rmdirSync refuses a folder that isn't empty
+        fs.rmdirSync(full);
+      }
+    } catch {
+      // not empty or already gone; leave it
+    }
+  }
+  try {
+    fs.unlinkSync(recordPath);
+  } catch {
+    // best-effort
+  }
+  try {
+    // only an empty stash is removed
+    fs.rmdirSync(staticPublishStashDir(siteDirectory));
+  } catch {
+    // stash still holds artifacts; restore handles it
+  }
+  return removed;
+}
+
+/**
+ * Write the pages a static host serves into a site prepared with
+ * prepareSiteForStaticPublish (haxtheweb/issues#3327): the rendered home
+ * page over the swapped-in index.html, and <slug>/index.html for each
+ * published page. A file or folder the site already has is never replaced.
+ * Every file and folder written is recorded so removeStaticPublishPages
+ * (run by restoreSiteAfterStaticPublish) takes them out again.
+ * Returns the number of pages written; 0 with an older haxcms-nodejs.
+ */
+export async function writeStaticPublishPages(siteDirectory, domain = "") {
+  if (
+    !staticPagesLib ||
+    typeof staticPagesLib.renderStaticPages !== "function" ||
+    !fs.existsSync(siteDirectory)
+  ) {
+    return 0;
+  }
+  const root = path.resolve(siteDirectory);
+  const record = { files: [], dirs: [] };
+  const saveRecord = () => {
+    const stashDir = staticPublishStashDir(siteDirectory);
+    fs.mkdirSync(stashDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(stashDir, STATIC_PAGES_RECORD),
+      JSON.stringify(record),
+    );
+  };
+  let written = 0;
+  try {
+    const site = new haxcmsLib.HAXCMSSite();
+    await site.loadSingle(root);
+    const pages = await staticPagesLib.renderStaticPages(site, { domain });
+    for (const page of pages) {
+      const target = path.resolve(root, page.path);
+      if (!target.startsWith(root + path.sep)) {
+        continue;
+      }
+      if (page.path === "index.html") {
+        // only over the ghpages.html copy prepare made (the original is
+        // in index.html.bak); never over a site's own index.html
+        if (fs.existsSync(path.join(root, "index.html.bak"))) {
+          fs.writeFileSync(target, page.html);
+          written++;
+        }
+        continue;
+      }
+      if (fs.existsSync(target)) {
+        continue;
+      }
+      // folders are recorded before anything is written into them
+      const made = [];
+      let dir = path.dirname(target);
+      while (dir !== root && !fs.existsSync(dir)) {
+        made.unshift(dir);
+        dir = path.dirname(dir);
+      }
+      for (const folder of made) {
+        record.dirs.push(path.relative(root, folder));
+      }
+      record.files.push(page.path);
+      saveRecord();
+      for (const folder of made) {
+        fs.mkdirSync(folder);
+      }
+      fs.writeFileSync(target, page.html, { flag: "wx" });
+      written++;
+    }
+  } catch {
+    // best-effort: a publish never fails over its pages; whatever was
+    // written is in the record and is removed on restore
+  }
+  return written;
+}
+
+// site:build-static (haxtheweb/issues#3352, #2765): a folder a static host
+// serves as is, built from a site without changing it. A folder this wrote
+// carries this marker, and only such a folder (or an empty one) is replaced.
+export const STATIC_BUILD_MARKER = ".hax-static-build";
+// never copied: version control, CI, installed packages, earlier builds
+// (dist/, ignored by git and the publish ignore files), logs, publish
+// leftovers. Symbolic links aren't copied either: in a site they point at a
+// HAXcms server's shared front-end build, which a static host doesn't have
+// (the magic script loads it from the CDN instead).
+const STATIC_COPY_SKIP = new Set([
+  ".git",
+  ".github",
+  "node_modules",
+  "dist",
+  "logs",
+  "index.html.bak",
+]);
+// the dot files a static host needs: agent discovery and GitHub Pages' flag
+const STATIC_COPY_DOTFILES = new Set([".well-known", ".nojekyll"]);
+
+function copySiteForStaticBuild(from, to, skipDir) {
+  fs.mkdirSync(to, { recursive: true });
+  for (const entry of fs.readdirSync(from)) {
+    if (STATIC_COPY_SKIP.has(entry) || /\.log$/i.test(entry)) {
+      continue;
+    }
+    if (entry.charAt(0) === "." && !STATIC_COPY_DOTFILES.has(entry)) {
+      continue;
+    }
+    const source = path.join(from, entry);
+    if (source === skipDir) {
+      continue;
+    }
+    const stat = fs.lstatSync(source);
+    if (stat.isDirectory()) {
+      copySiteForStaticBuild(source, path.join(to, entry), skipDir);
+    } else if (stat.isFile()) {
+      fs.copyFileSync(source, path.join(to, entry));
+    }
+  }
+}
+
+/**
+ * Build a site for a static host into outDirectory (or in place when it is
+ * the site's own folder, for a build that already is a disposable copy):
+ * the site's files, its managed and generated files rebuilt (robots.txt,
+ * llms.txt, sitemap, feeds, search index, agent skills), ghpages.html as
+ * the entry point, llms-full.txt, and each published page rendered with its
+ * metadata and content (writeStaticPublishPages' renderer). domain is the
+ * published address when site.json has none. Returns
+ * { out, pages, renderer } where renderer is false with a haxcms-nodejs
+ * that has no page renderer (the shell is then the entry point, as before).
+ */
+export async function buildStaticSite(
+  siteDirectory,
+  outDirectory,
+  domain = "",
+) {
+  const root = path.resolve(siteDirectory);
+  const out = path.resolve(outDirectory);
+  if (!fs.existsSync(path.join(root, "site.json"))) {
+    throw new Error(`${root} is not a HAXsite (no site.json)`);
+  }
+  const inPlace = root === out;
+  if (!inPlace) {
+    if (root.startsWith(out + path.sep)) {
+      throw new Error("The output folder can't contain the site");
+    }
+    let outStat = null;
+    try {
+      outStat = fs.lstatSync(out);
+    } catch {
+      outStat = null;
+    }
+    if (outStat && !outStat.isDirectory()) {
+      throw new Error(`${out} exists and is not a folder; not replacing it`);
+    }
+    if (outStat) {
+      const entries = fs.readdirSync(out);
+      if (entries.length > 0 && !entries.includes(STATIC_BUILD_MARKER)) {
+        throw new Error(
+          `${out} is not empty and was not made by site:build-static; not replacing it`,
+        );
+      }
+      fs.rmSync(out, { recursive: true, force: true });
+    }
+    copySiteForStaticBuild(root, out, out);
+    fs.writeFileSync(path.join(out, STATIC_BUILD_MARKER), "");
+  }
+  const site = new haxcmsLib.HAXCMSSite();
+  await site.loadSingle(out);
+  if (
+    domain &&
+    site.manifest.metadata &&
+    site.manifest.metadata.site &&
+    !site.manifest.metadata.site.domain
+  ) {
+    // in memory only: the address the generated files use
+    site.manifest.metadata.site.domain = domain;
+  }
+  try {
+    await site.rebuildManagedFiles();
+  } catch {
+    // a template that can't render keeps the site's own copy
+  }
+  try {
+    await site.updateAlternateFormats();
+  } catch {
+    // feeds and indexes are best-effort, as on save
+  }
+  const ghpages = path.join(out, "ghpages.html");
+  if (fs.existsSync(ghpages)) {
+    fs.copyFileSync(ghpages, path.join(out, "index.html"));
+  }
+  if (!fs.existsSync(path.join(out, "llms-full.txt"))) {
+    const markdown = buildStaticLlmsFull(out);
+    if (markdown !== null) {
+      fs.writeFileSync(path.join(out, "llms-full.txt"), markdown);
+    }
+  }
+  const renderer = !!(
+    staticPagesLib && typeof staticPagesLib.renderStaticPages === "function"
+  );
+  let pages = 0;
+  if (renderer) {
+    const rendered = await staticPagesLib.renderStaticPages(site, { domain });
+    for (const page of rendered) {
+      const target = path.resolve(out, page.path);
+      if (!target.startsWith(out + path.sep)) {
+        continue;
+      }
+      if (page.path !== "index.html" && fs.existsSync(target)) {
+        continue;
+      }
+      fs.mkdirSync(path.dirname(target), { recursive: true });
+      fs.writeFileSync(target, page.html);
+      pages++;
+    }
+  }
+  return { out, pages, renderer };
+}
+
 /**
  * Prepare a live HAXcms site directory for a static host: swap ghpages.html
  * in as index.html (backing the original up), write llms-full.txt, and move
@@ -1168,7 +1538,9 @@ export function prepareSiteForStaticPublish(siteDirectory) {
     },
   };
   try {
-    // a stash left behind by a crashed/killed earlier publish goes back first
+    // pages and a stash left behind by a crashed/killed earlier publish
+    // come out / go back first
+    removeStaticPublishPages(siteDirectory);
     unstashStaticPublishArtifacts(siteDirectory);
     // static hosts have no server to answer llms-full.txt (#3104)
     writeStaticLlmsFull(siteDirectory);
@@ -1207,6 +1579,10 @@ export function restoreSiteAfterStaticPublish(siteDirectory) {
     }
     // llms-full.txt was only for the static host; HAXcms serves it live
     removeStaticLlmsFull(siteDirectory);
+    // so were the rendered pages (HAXcms renders them per request)
+    if (removeStaticPublishPages(siteDirectory) > 0) {
+      restored = true;
+    }
     const indexPath = path.join(siteDirectory, "index.html");
     const backupPath = path.join(siteDirectory, "index.html.bak");
     if (fs.existsSync(backupPath)) {
@@ -1323,6 +1699,7 @@ export function siteActions() {
     },
     { value: "site:sync", label: t("siteActionSiteSync") },
     { value: "site:rsync", label: t("siteActionSiteRsync") },
+    { value: "site:build-static", label: t("siteActionSiteBuildStatic") },
     { value: "site:surge", label: t("siteActionSiteSurge") },
     { value: "site:netlify", label: t("siteActionSiteNetlify") },
     { value: "site:vercel", label: t("siteActionSiteVercel") },
@@ -1409,10 +1786,6 @@ export function formatAgentOrientation(agent) {
 }
 
 export async function siteCommandDetected(commandRun) {
-  // operations on an existing site (site:theme, site:rebuild, node edits...)
-  // re-render managed files like service-worker.js, whose template calls
-  // Twig's PHP constant(); register it here too, not only on site creation
-  ensureTwigConstantFunction();
   let activeHaxsite = await systemStructureContext();
   let actionAssigned = false;
   // default to status unless already set so we don't issue a create in a create
@@ -1891,20 +2264,23 @@ export async function siteCommandDetected(commandRun) {
               },
             });
           }
+          // the title is stored trimmed, as the API and the editor store it,
+          // and a blank title or the text "null" gets the default page title
+          commandRun.options.title = pageTitleOrDefault(
+            commandRun.options.title,
+          );
           let createNodeBody = {
             site: activeHaxsite,
             node: {
               title: commandRun.options.title,
             },
           };
-          if (commandRun.options.parent && commandRun.options.parent !== "") {
-            const parentNode = findNodeByIdOrSlug(
-              activeHaxsite,
-              commandRun.options.parent,
-            );
-            createNodeBody.parent = parentNode
-              ? parentNode.id
-              : commandRun.options.parent;
+          const addParent = resolveParentOption(
+            activeHaxsite,
+            commandRun.options.parent,
+          );
+          if (addParent) {
+            createNodeBody.parent = addParent;
           }
           if (
             commandRun.options.order &&
@@ -2023,7 +2399,7 @@ export async function siteCommandDetected(commandRun) {
               console.error(
                 t("siteNodeEditNothingToChange", {
                   flags:
-                    "--title, --slug, --content, --description, --tags, --parent, --order, --published, --hide-in-menu, --theme",
+                    "--title, --slug, --content, --description, --tags, --parent, --order, --move, --published, --hide-in-menu, --locked, --theme",
                 }),
               );
               process.exitCode = 1;
@@ -2055,19 +2431,32 @@ export async function siteCommandDetected(commandRun) {
               if (!commandRun.options[nodeProp]) {
                 let val = page[nodeProp];
                 if (
-                  ["tags", "published", "hideInMenu", "theme"].includes(
-                    nodeProp,
-                  )
+                  [
+                    "tags",
+                    "published",
+                    "hideInMenu",
+                    "locked",
+                    "theme",
+                  ].includes(nodeProp)
                 ) {
                   val = page.metadata[nodeProp];
                 } else if (nodeProp === "content") {
                   val = await activeHaxsite.getPageContent(page);
                 }
                 //  boolean is confirm
-                if (["published", "hideInMenu"].includes(nodeProp)) {
+                if (["published", "hideInMenu", "locked"].includes(nodeProp)) {
                   propValue = await p.confirm({
                     message: `${nodeProp}:`,
                     initialValue: Boolean(val),
+                  });
+                }
+                // a direction, picked from the four the backend knows
+                else if (nodeProp === "move") {
+                  propValue = await p.select({
+                    message: `${nodeProp}:`,
+                    options: Object.keys(NODE_MOVE_OPERATIONS).map(
+                      (direction) => ({ value: direction, label: direction }),
+                    ),
                   });
                 }
                 // these have fixed possible values
@@ -2170,10 +2559,15 @@ export async function siteCommandDetected(commandRun) {
               // failure too.
               const respData = resp && resp.res ? resp.res.data : null;
               if (!respData || respData.status >= 400) {
+                // say why the backend refused (a locked page answers 423);
+                // "not found" only when the backend said so or said nothing
+                const notFound = t("siteNodeDeleteNotFound", {
+                  id: commandRun.options.itemId,
+                });
                 console.error(
-                  t("siteNodeDeleteNotFound", {
-                    id: commandRun.options.itemId,
-                  }),
+                  respData && respData.status !== 404
+                    ? apiMessage(respData, notFound)
+                    : notFound,
                 );
                 process.exitCode = 1;
               } else {
@@ -2784,6 +3178,21 @@ export async function siteCommandDetected(commandRun) {
           // Prepare for static publish: swap ghpages.html in as index.html and clean local artifacts
           surgePrepared = prepareSiteForStaticPublish(activeHaxsite.directory);
           logStaticPublishPrepared(surgePrepared, commandRun);
+          if (surgePrepared) {
+            const pagesWritten = await writeStaticPublishPages(
+              activeHaxsite.directory,
+              staticPublishDomain(
+                activeHaxsite.directory,
+                commandRun.options.domain,
+              ),
+            );
+            if (pagesWritten > 0 && !commandRun.options.quiet) {
+              log(
+                `Rendered ${pagesWritten} pages with their metadata and content for the static host`,
+                "info",
+              );
+            }
+          }
           // attempt to install; implies they asked to publish with surge but
           // system test did not see it globally
           if (!sysSurge) {
@@ -2920,6 +3329,21 @@ export async function siteCommandDetected(commandRun) {
             activeHaxsite.directory,
           );
           logStaticPublishPrepared(netlifyPrepared, commandRun);
+          if (netlifyPrepared) {
+            const pagesWritten = await writeStaticPublishPages(
+              activeHaxsite.directory,
+              staticPublishDomain(
+                activeHaxsite.directory,
+                commandRun.options.domain,
+              ),
+            );
+            if (pagesWritten > 0 && !commandRun.options.quiet) {
+              log(
+                `Rendered ${pagesWritten} pages with their metadata and content for the static host`,
+                "info",
+              );
+            }
+          }
           // attempt to install; implies they asked to publish with netlify but
           // system test did not see it globally
           if (!sysNetlify) {
@@ -3005,6 +3429,21 @@ export async function siteCommandDetected(commandRun) {
           // Prepare for static publish: swap ghpages.html in as index.html and clean local artifacts
           vercelPrepared = prepareSiteForStaticPublish(activeHaxsite.directory);
           logStaticPublishPrepared(vercelPrepared, commandRun);
+          if (vercelPrepared) {
+            const pagesWritten = await writeStaticPublishPages(
+              activeHaxsite.directory,
+              staticPublishDomain(
+                activeHaxsite.directory,
+                commandRun.options.domain,
+              ),
+            );
+            if (pagesWritten > 0 && !commandRun.options.quiet) {
+              log(
+                `Rendered ${pagesWritten} pages with their metadata and content for the static host`,
+                "info",
+              );
+            }
+          }
           // attempt to install; implies they asked to publish with vercel but
           // system test did not see it globally
           if (!sysVercel) {
@@ -3239,7 +3678,10 @@ export async function siteCommandDetected(commandRun) {
           };
           // the link IS the output, so it is printed even with --quiet
           if (structuredOutputEnabled() || commandRun.options.i === false) {
-            logStructuredOutput(commandRun, result);
+            // Security (no-secrets-in-logs): written to stdout only. log()
+            // also appends to ~/.haxtheweb/create.log, which would keep a
+            // working sign-in token on disk.
+            writeData(formatStructuredOutput(commandRun, result));
           } else {
             const where = result.url
               ? color.bold(result.url)
@@ -3561,29 +4003,26 @@ export async function siteCommandDetected(commandRun) {
                 let filePath = path.join(commandRun.options.source, file);
                 let fileStats = fs.statSync(filePath);
                 if (fileStats.isFile()) {
-                  let tmpFile = path.join(
-                    os.tmpdir(),
-                    `hax-cli-upload-${Date.now()}-${Math.floor(Math.random() * 1000000)}-${file}`,
-                  );
-                  fs.copyFileSync(filePath, tmpFile);
+                  // Security (private-temp-files): staged in a private folder
+                  const staged = copyToPrivateTemp(filePath, file);
                   let fileObj = {
-                    path: tmpFile,
+                    path: staged.file,
                     originalname: file,
                     name: file,
                     size: fileStats.size,
                   };
-                  let resp = await cliBridge.cliBridge(
-                    "v1/files",
-                    {
-                      site: { name: activeHaxsite.name },
-                    },
-                    "post",
-                    fileObj,
-                  );
+                  let resp;
                   try {
-                    fs.unlinkSync(tmpFile);
-                  } catch {
-                    /* best-effort cleanup */
+                    resp = await cliBridge.cliBridge(
+                      "v1/files",
+                      {
+                        site: { name: activeHaxsite.name },
+                      },
+                      "post",
+                      fileObj,
+                    );
+                  } finally {
+                    staged.remove();
                   }
                   if (resp.res.data && resp.res.data.status === 200) {
                     uploaded++;
@@ -3596,29 +4035,30 @@ export async function siteCommandDetected(commandRun) {
                 );
               }
             } else {
-              let tmpFile = path.join(
-                os.tmpdir(),
-                `hax-cli-upload-${Date.now()}-${Math.floor(Math.random() * 1000000)}-${path.basename(commandRun.options.source)}`,
+              const uploadName = path.basename(commandRun.options.source);
+              // Security (private-temp-files): staged in a private folder
+              const staged = copyToPrivateTemp(
+                commandRun.options.source,
+                uploadName,
               );
-              fs.copyFileSync(commandRun.options.source, tmpFile);
               let fileObj = {
-                path: tmpFile,
-                originalname: path.basename(commandRun.options.source),
-                name: path.basename(commandRun.options.source),
+                path: staged.file,
+                originalname: uploadName,
+                name: uploadName,
                 size: stats.size,
               };
-              let resp = await cliBridge.cliBridge(
-                "v1/files",
-                {
-                  site: { name: activeHaxsite.name },
-                },
-                "post",
-                fileObj,
-              );
+              let resp;
               try {
-                fs.unlinkSync(tmpFile);
-              } catch {
-                /* best-effort cleanup */
+                resp = await cliBridge.cliBridge(
+                  "v1/files",
+                  {
+                    site: { name: activeHaxsite.name },
+                  },
+                  "post",
+                  fileObj,
+                );
+              } finally {
+                staged.remove();
               }
               logStructuredOutput(commandRun, resp.res.data);
             }
@@ -3881,6 +4321,38 @@ export async function siteCommandDetected(commandRun) {
         }
         break;
       }
+      case "site:build-static": {
+        try {
+          const outDirectory = commandRun.options.outDir
+            ? resolveLocalPath(commandRun.options.outDir)
+            : path.join(
+                path.dirname(path.resolve(activeHaxsite.directory)),
+                `${path.basename(path.resolve(activeHaxsite.directory))}-static`,
+              );
+          const built = await buildStaticSite(
+            activeHaxsite.directory,
+            outDirectory,
+            staticPublishDomain(
+              activeHaxsite.directory,
+              commandRun.options.domain,
+            ),
+          );
+          if (commandRun.options.format) {
+            logStructuredOutput(commandRun, built);
+          } else if (!commandRun.options.quiet) {
+            p.outro(
+              `${color.green("✓")} ${t("siteBuildStaticDone", { out: built.out, pages: built.pages })}`,
+            );
+            if (!built.renderer) {
+              log(t("siteBuildStaticNoRenderer"), "warn");
+            }
+          }
+        } catch (e) {
+          log(formatErrorForLogging(e), "error");
+          process.exitCode = 1;
+        }
+        break;
+      }
       case "site:archive": {
         try {
           const target = commandRun.options.toFile
@@ -4008,12 +4480,15 @@ export async function siteCommandDetected(commandRun) {
           ? commandRun.options.title
           : t("siteGenerateDefaultTitle");
         let parent = null;
-        if (commandRun.options.parent && commandRun.options.parent !== "") {
-          const parentNode = findNodeByIdOrSlug(
+        try {
+          parent = resolveParentOption(
             activeHaxsite,
             commandRun.options.parent,
           );
-          parent = parentNode ? parentNode.id : commandRun.options.parent;
+        } catch (e) {
+          log(formatErrorForLogging(e), "error");
+          process.exitCode = 1;
+          break;
         }
         let order = nextSiblingOrder(activeHaxsite.manifest.items, parent);
         const created = [];
@@ -4222,6 +4697,24 @@ export function siteListOutput(commandRun, directory) {
 }
 
 // haxtheweb/issues#3127: order for a new node so it lands after its siblings
+// the id of the page a --parent option names, by id or slug. No option, an
+// empty one, or the word null is the top level (null). A parent the site
+// does not have is an error, the same as node:edit --parent.
+export function resolveParentOption(activeHaxsite, value) {
+  if (value === undefined || value === null) {
+    return null;
+  }
+  const wanted = String(value).trim();
+  if (wanted === "" || wanted === "null") {
+    return null;
+  }
+  const parentNode = findNodeByIdOrSlug(activeHaxsite, wanted);
+  if (!parentNode) {
+    throw new Error(t("siteParentNotFound", { parent: wanted }));
+  }
+  return parentNode.id;
+}
+
 export function nextSiblingOrder(items, parent = null) {
   let max = -1;
   (items || []).forEach((item) => {
@@ -4390,7 +4883,9 @@ export function nodeEditsFromOptions(options, titleWasProvided = true) {
     "order",
     "published",
     "hideInMenu",
+    "locked",
     "theme",
+    "move",
   ].forEach((field) => {
     if (typeof options[field] !== "undefined") {
       edits[field] = options[field];
@@ -4497,6 +4992,27 @@ export function pageBreakForItem(item, overrides = {}) {
   return `<page-break ${html}></page-break>`;
 }
 
+// the title a page gets when it has none, and the rule for "none": empty,
+// only white space, or the text "null" in any case. Same rule as the
+// haxcms-nodejs and haxcms-php APIs.
+export const DEFAULT_PAGE_TITLE = "New page";
+
+export function pageTitleOrDefault(value) {
+  const title =
+    value === null || value === undefined ? "" : String(value).trim();
+  return title === "" || title.toLowerCase() === "null"
+    ? DEFAULT_PAGE_TITLE
+    : title;
+}
+
+// --move <direction>: the item operation each direction runs
+export const NODE_MOVE_OPERATIONS = {
+  up: "moveUp",
+  down: "moveDown",
+  indent: "indent",
+  outdent: "outdent",
+};
+
 const NODE_EDIT_ITEM_OPERATIONS = [
   ["title", "setTitle"],
   ["slug", "setSlug"],
@@ -4514,6 +5030,18 @@ const NODE_EDIT_ITEM_OPERATIONS = [
 export function nodeEditRequests(page, edits, items = [], body = "") {
   const has = (field) => Object.prototype.hasOwnProperty.call(edits, field);
   const requests = [];
+  // a locked page refuses every change but setLocked, so an unlock goes
+  // before the other edits and a lock after them
+  const lockRequest = has("locked")
+    ? {
+        fields: ["locked"],
+        route: `v1/items/${page.id}`,
+        body: { operation: "setLocked", locked: toBoolean(edits.locked) },
+      }
+    : null;
+  if (lockRequest && !lockRequest.body.locked) {
+    requests.push(lockRequest);
+  }
   if (has("content") || has("theme")) {
     const fields = [];
     if (has("content")) {
@@ -4583,6 +5111,17 @@ export function nodeEditRequests(page, edits, items = [], body = "") {
       body: { operation: "setParent", parent: parent, order: order },
     });
   }
+  // last, so a move is made from where --parent / --order just put the page
+  if (has("move")) {
+    requests.push({
+      fields: ["move"],
+      route: `v1/items/${page.id}`,
+      body: { operation: NODE_MOVE_OPERATIONS[edits.move] },
+    });
+  }
+  if (lockRequest && lockRequest.body.locked) {
+    requests.push(lockRequest);
+  }
   return requests;
 }
 
@@ -4594,6 +5133,11 @@ export async function applyNodeEdits(activeHaxsite, page, edits, commandRun) {
   const clean = {};
   for (const field of Object.keys(edits)) {
     clean[field] = edits[field] === "null" ? null : edits[field];
+  }
+  // a title can't be the text "null" or blank: it becomes the default title,
+  // the same rule the API keeps
+  if (Object.prototype.hasOwnProperty.call(edits, "title")) {
+    clean.title = pageTitleOrDefault(edits.title);
   }
   const has = (field) => Object.prototype.hasOwnProperty.call(clean, field);
   // validate everything before the first write
@@ -4619,6 +5163,23 @@ export async function applyNodeEdits(activeHaxsite, page, edits, commandRun) {
       );
     }
     clean.order = order;
+  }
+  if (has("move")) {
+    const direction = String(clean.move === null ? "" : clean.move)
+      .trim()
+      .toLowerCase();
+    if (
+      !Object.prototype.hasOwnProperty.call(NODE_MOVE_OPERATIONS, direction)
+    ) {
+      throw new Error(
+        t("siteMoveInvalid", {
+          flag: "--move",
+          choices: Object.keys(NODE_MOVE_OPERATIONS).join(", "),
+          value: clean.move,
+        }),
+      );
+    }
+    clean.move = direction;
   }
   if (has("theme")) {
     if (clean.theme) {
@@ -4711,6 +5272,8 @@ export function siteNodeOperations(search = null) {
     { value: "order", label: t("siteNodeOpOrder") },
     { value: "theme", label: t("siteNodeOpTheme") },
     { value: "hideInMenu", label: t("siteNodeOpHideInMenu") },
+    { value: "move", label: t("siteNodeOpMove") },
+    { value: "locked", label: t("siteNodeOpLocked") },
   ];
   if (search) {
     for (const op of obj) {
@@ -4908,10 +5471,14 @@ export async function applySiteLanguage(commandRun, project) {
 }
 
 // haxtheweb/issues#3292: the createSite request for a new site. Flags the
-// user gave (--theme, --description) are sent; everything else is
+// user gave (--theme, --description, --title) are sent; everything else is
 // left to the API's createSite so a CLI-made site matches a dashboard-made one.
 export function newSiteRequest(options = {}, project = {}) {
   const site = { name: project.name };
+  // --title: the site's title (createSite keeps the machine name without it)
+  if (typeof options.title === "string" && options.title.trim() !== "") {
+    site.title = options.title;
+  }
   const theme = options.theme ? options.theme : project.theme;
   if (theme) {
     site.theme = theme;
@@ -4945,7 +5512,8 @@ export async function siteProcess(commandRun, project, port = "3000") {
   }
   // haxtheweb/issues#3292: the same request the API's createSite gets from
   // the dashboard. Only what the user chose is sent; createSite fills in its
-  // own defaults (clean-two theme, a "Welcome" page, no build block).
+  // own defaults (clean-two theme, the default-starter "Home" page, no build
+  // block).
   let siteRequest = newSiteRequest(commandRun.options, project);
   let skeletonFilePath = commandRun.options.skeletonFile
     ? commandRun.options.skeletonFile
@@ -5012,14 +5580,17 @@ export async function siteProcess(commandRun, project, port = "3000") {
   // allow for importSite option
   if (commandRun.options.importSite) {
     if (!commandRun.options.importStructure) {
-      // assume hax to hax if it's not defined
-      commandRun.options.importStructure = "haxcmsToSite";
+      // a local file picks its importer by extension; otherwise assume
+      // hax to hax
+      commandRun.options.importStructure = defaultImportStructure(
+        commandRun.options.importSite,
+      );
     }
     // Security (in-process-converters): verify this is a valid import structure and route
     // it in-process to the on-prem haxcms-nodejs handler (replaces the
     // @haxtheweb/open-apis broker + MicroFrontendRegistry lookup). Platform
-    // converters go through the site/import/:platform dispatcher; docx/xlsx
-    // use their own actions routes.
+    // converters go through the site/import/:platform dispatcher; file
+    // importers get the local file as their upload.
     const importConfig =
       IMPORT_STRUCTURE_MAP[commandRun.options.importStructure];
     if (commandRun.options.importStructure && importConfig) {
@@ -5032,10 +5603,29 @@ export async function siteProcess(commandRun, project, port = "3000") {
           { platform: importConfig.platform },
         );
       } else {
-        resp = await invokeRoute(
-          allRoutesLib.allRoutes.system.map.post[importConfig.routeKey],
-          { repoUrl: commandRun.options.importSite },
-        );
+        const upload = importFileUpload(commandRun.options.importSite);
+        const importRoute =
+          allRoutesLib.allRoutes.system.map.post[importConfig.routeKey];
+        if (typeof importRoute !== "function") {
+          // the installed haxcms-nodejs predates this importer
+          resp = {
+            statusCode: 501,
+            data: { error: t("siteImportNotInBackend") },
+          };
+        } else if (!upload) {
+          resp = {
+            statusCode: 400,
+            data: { error: t("siteImportNeedsLocalFile") },
+          };
+        } else {
+          resp = await invokeRoute(
+            importRoute,
+            { method: "site" },
+            {},
+            {},
+            upload,
+          );
+        }
       }
       const importedData =
         resp && resp.data && resp.data.data ? resp.data.data : null;
@@ -5185,7 +5775,6 @@ export async function siteProcess(commandRun, project, port = "3000") {
     }
   }
   HAXCMS.cliWritePath = `${project.path}`;
-  ensureTwigConstantFunction();
   let res = await invokeRoute(
     allRoutesLib.allRoutes.system.map.post["sites"],
     siteRequest,

@@ -13,6 +13,7 @@ import color from "picocolors";
 import { auditI18nCommand } from "./audit-i18n.js";
 import { auditSsrCommand } from "./audit-ssr.js";
 import { auditThemeCommand } from "./audit-theme.js";
+import { auditFuzzCommand } from "./audit-fuzz.js";
 import { t } from "../i18n.js";
 
 /**
@@ -44,6 +45,17 @@ export const SCHEMA_VALIDATORS = {
     version: SCHEMA_VALIDATOR_VERSION,
     bin: "jos-validate",
     args: ["--type", "site"],
+  },
+  // the site folder contract (haxtheweb/issues#3351): which files make a
+  // HAXcms site. Checked at the "content" level, which every site should
+  // reach; the folder, not a file, is the target.
+  siteFolder: {
+    label: "HAXcms site folder (site folder contract)",
+    labelKey: "auditSchemaLabelSiteFolder",
+    pkg: "@haxtheweb/json-outline-schema-spec",
+    version: SCHEMA_VALIDATOR_VERSION,
+    bin: "jos-validate",
+    args: ["--site"],
   },
   skeleton: {
     label: "HAXcms site skeletons",
@@ -162,11 +174,12 @@ const SKIP_DIRS = new Set([
 /**
  * @description Walk a project and group the files each validator should check.
  * @param root directory to audit
- * @returns {{site: string[], skeleton: string[], haxProperties: string[], demoSchema: string[], appstore: string[], merlin: string[]}}
+ * @returns {{site: string[], siteFolder: string[], skeleton: string[], haxProperties: string[], demoSchema: string[], appstore: string[], merlin: string[]}}
  */
 export function discoverSchemaTargets(root) {
   const targets = {
     site: [],
+    siteFolder: [],
     skeleton: [],
     haxProperties: [],
     demoSchema: [],
@@ -176,6 +189,8 @@ export function discoverSchemaTargets(root) {
   const rootSite = path.join(root, "site.json");
   if (existsSync(rootSite)) {
     targets.site.push(rootSite);
+    // a site.json at the root makes the root a HAXcms site folder
+    targets.siteFolder.push(root);
   }
   const walk = (dir) => {
     let entries = [];
@@ -415,19 +430,36 @@ export async function auditSchemaCommand(commandRun, root = null, deps = {}) {
         );
         continue;
       }
-      const head = t("auditSchemaSummary", {
-        label,
-        files: targets[kind].length,
-        errors,
-        warnings,
-      });
+      const head = t(
+        kind === "siteFolder"
+          ? "auditSchemaSummaryFolders"
+          : "auditSchemaSummary",
+        {
+          label,
+          files: targets[kind].length,
+          errors,
+          warnings,
+        },
+      );
       if (kindPassed) {
         p.log.success(head);
       } else {
         p.log.error(head);
       }
       for (const r of outcome.reports) {
-        const rel = path.relative(projectRoot, r.file || "") || r.file;
+        // file reports carry `file`; site folder reports carry `folder`
+        const target = r.file || r.folder || "";
+        // the audited root itself (a site folder) shows as "."
+        const rel = target ? path.relative(projectRoot, target) || "." : "";
+        if (r.type === "site-folder") {
+          p.log.message(
+            t("auditSchemaSiteFolderLevel", {
+              folder: rel,
+              level: r.level || "content",
+              reached: r.reached || t("auditSchemaSiteFolderNone"),
+            }),
+          );
+        }
         for (const e of r.errors || []) {
           p.log.message(
             `${color.red(errorTag)}${tagPad(errorTag)}${rel} ${e.path}: ${e.message}`,
@@ -488,6 +520,7 @@ export function runAuditCommand(commandRun, dddPath, schemaRoot, deps = {}) {
   const auditI18n = deps.auditI18n || auditI18nCommand;
   const auditSsr = deps.auditSsr || auditSsrCommand;
   const auditTheme = deps.auditTheme || auditThemeCommand;
+  const auditFuzz = deps.auditFuzz || auditFuzzCommand;
   if (type === "ddd") {
     // DDD audit keeps its existing behavior, including exiting itself
     return auditDDD(commandRun, dddPath);
@@ -505,6 +538,12 @@ export function runAuditCommand(commandRun, dddPath, schemaRoot, deps = {}) {
   if (type === "theme") {
     // HAXcms theme contract; not part of "all" yet
     const r = auditTheme(commandRun, schemaRoot);
+    return exit(r.passed ? 0 : 1);
+  }
+  if (type === "fuzz") {
+    // a report of sanitizer / parser code with no property test, not a
+    // check: it always exits 0 (and is not part of "all")
+    const r = auditFuzz(commandRun, schemaRoot);
     return exit(r.passed ? 0 : 1);
   }
   if (type === "ssr") {

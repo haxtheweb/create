@@ -1,0 +1,80 @@
+{
+  "manifest": {
+    "id": "SITE_ID",
+    "title": "SITE_NAME",
+    "author": "",
+    "description": "Parity test site",
+    "license": "by-sa",
+    "metadata": {
+      "author": {},
+      "site": {
+        "name": "SITE_NAME",
+        "logo": "assets/banner.jpg",
+        "settings": {
+          "lang": "en-US",
+          "publishPagesOn": true,
+          "canonical": true,
+          "pathauto": true
+        },
+        "git": {
+          "vendor": "github",
+          "branch": "gh-pages"
+        }
+      },
+      "theme": {
+        "element": "polaris-flex-theme",
+        "path": "@haxtheweb/polaris-theme/lib/polaris-flex-theme.js",
+        "name": "Polaris Flex",
+        "thumbnail": "@haxtheweb/haxcms-elements/lib/theme-screenshots/theme-polaris-flex-theme-thumb.jpg",
+        "description": "Start with a blank site using the Polaris Flex",
+        "category": [
+          "Website",
+          "Organization"
+        ],
+        "hidden": false,
+        "priority": -1,
+        "terrible": false,
+        "supportedPalettes": null,
+        "layout": "Top nav",
+        "designSystem": null,
+        "inspiredBy": null,
+        "inspiredByTheme": null,
+        "acceptsDesignSystems": false,
+        "variables": {},
+        "regions": {}
+      },
+      "node": {
+        "fields": {}
+      },
+      "platform": {
+        "audience": "expert",
+        "features": {},
+        "allowedBlocks": []
+      }
+    },
+    "items": {
+      "L0": {
+        "id": "L0",
+        "indent": 0,
+        "location": "pages/L0/index.html",
+        "slug": "home",
+        "order": 0,
+        "parent": null,
+        "title": "Home",
+        "description": "",
+        "metadata": {
+          "published": true,
+          "hideInMenu": false,
+          "tags": []
+        }
+      }
+    },
+    "location": "<sites>/SITE_NAME/index.html"
+  },
+  "sequence": [
+    "L0"
+  ],
+  "pages": {
+    "L0": "<p>Edit this page to get started on your HAX site!</p>"
+  }
+}

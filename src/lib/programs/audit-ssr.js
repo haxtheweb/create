@@ -36,13 +36,13 @@ import { t } from "../i18n.js";
  * apart as demo: "bare".
  */
 
-import { SSR_PRIMITIVE_CSS } from "./audit-ssr-primitives.js";
-
 export const SSR_STATUSES = [
   "rendered",
   "shell",
   "empty",
   "no-shadow-root",
+  "non-visual",
+  "skipped",
   "threw",
 ];
 
@@ -168,6 +168,42 @@ export function splitCssRules(css) {
     }
   }
   return rules.filter(Boolean);
+}
+
+/**
+ * @description Does a CSS rule do nothing but set custom properties? Those are
+ * the token and colour maps (`:host([accent-color="red"]) { --a: #f00; ... }`)
+ * that every element using a mixin repeats in its shadow root.
+ * @param rule one rule as splitCssRules returns it
+ */
+export function isVariableRule(rule) {
+  const open = rule.indexOf("{");
+  if (open === -1 || rule.trimStart().startsWith("@") || !rule.endsWith("}")) {
+    return false;
+  }
+  const body = rule.slice(open + 1, -1);
+  if (body.includes("{")) {
+    return false;
+  }
+  // comments out first, without a regular expression
+  let plain = "";
+  for (let at = 0; at < body.length; ) {
+    const start = body.indexOf("/*", at);
+    if (start === -1) {
+      plain += body.slice(at);
+      break;
+    }
+    const end = body.indexOf("*/", start + 2);
+    plain += body.slice(at, start);
+    at = end === -1 ? body.length : end + 2;
+  }
+  const declarations = plain
+    .split(";")
+    .map((d) => d.trim())
+    .filter(Boolean);
+  return (
+    declarations.length > 0 && declarations.every((d) => d.startsWith("--"))
+  );
 }
 
 const escapeRegExp = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -306,7 +342,7 @@ export function shadowRootContent(markup, tag) {
  * @description Measure SSR output and classify it.
  * @param markup the string @lit-labs/ssr produced
  * @param tag the element that was rendered
- * @returns {{status: string, bytes: number, shadowRoots: number, textChars: number, elements: number, slots: number, media: number, styleBytes: number, uniqueStyleBytes: number, styleBlocks: Array<{hash: string, bytes: number}>, styleRules: Object<string, number>, falseBooleanAttrs: string[]}}
+ * @returns {{status: string, bytes: number, shadowRoots: number, textChars: number, elements: number, slots: number, media: number, styleBytes: number, uniqueStyleBytes: number, styleBlocks: Array<{hash: string, bytes: number}>, styleRules: Object<string, number>, variableRules: string[], variableRuleBytes: number, falseBooleanAttrs: string[]}}
  */
 export function analyzeSsrOutput(markup, tag) {
   const bytes = Buffer.byteLength(markup);
@@ -314,6 +350,9 @@ export function analyzeSsrOutput(markup, tag) {
   const styleBlocks = [];
   // each distinct CSS rule once per element, for spotting shared base styles
   const ruleSizes = new Map();
+  // rules that only set custom properties (token and colour maps)
+  const variableRules = new Set();
+  let variableRuleBytes = 0;
   let styleBytes = 0;
   for (const m of markup.matchAll(STYLES)) {
     const size = Buffer.byteLength(m[1]);
@@ -322,10 +361,15 @@ export function analyzeSsrOutput(markup, tag) {
     seen.set(hash, size);
     styleBlocks.push({ hash, bytes: size });
     for (const rule of splitCssRules(m[1])) {
-      ruleSizes.set(
-        createHash("sha1").update(rule).digest("hex").slice(0, 12),
-        Buffer.byteLength(rule),
-      );
+      const ruleHash = createHash("sha1")
+        .update(rule)
+        .digest("hex")
+        .slice(0, 12);
+      ruleSizes.set(ruleHash, Buffer.byteLength(rule));
+      if (isVariableRule(rule)) {
+        variableRules.add(ruleHash);
+        variableRuleBytes += Buffer.byteLength(rule);
+      }
     }
   }
   const uniqueStyleBytes = [...seen.values()].reduce((a, b) => a + b, 0);
@@ -344,6 +388,8 @@ export function analyzeSsrOutput(markup, tag) {
     uniqueStyleBytes,
     styleBlocks,
     styleRules: Object.fromEntries(ruleSizes),
+    variableRules: [...variableRules],
+    variableRuleBytes,
     falseBooleanAttrs: [],
   };
   if (inner === null) {
@@ -457,6 +503,38 @@ export function sourceHints(source) {
   return hints;
 }
 
+/**
+ * @description Heuristic: does the element's source describe something that
+ * is not meant to draw anything (a registry, store, router, bridge, loader)?
+ * It defines no render(), no styles, and builds no content (lifecycle,
+ * attachShadow, innerHTML, createElement).
+ * Only used to explain an element that rendered nothing, never to excuse a
+ * failure.
+ */
+export function isNonVisual(source) {
+  if (!source) {
+    return false;
+  }
+  if (/^\s*render\s*\(/m.test(source)) {
+    return false;
+  }
+  if (/static\s+(get\s+)?styles\b/.test(source)) {
+    return false;
+  }
+  // vanilla elements that draw into a shadow root themselves, and files
+  // that define no element class at all (they wrap one from a library)
+  if (
+    /attachShadow|\.innerHTML\s*=|createElement\s*\(/.test(source) ||
+    !/\bclass\s+\w+\s+extends\b/.test(source)
+  ) {
+    return false;
+  }
+  return sourceHints(source).every((hint) => hint === "fetches-data");
+}
+
+// only an element that was rendered has output to measure
+const measured = (r) => r.status !== "threw" && r.status !== "skipped";
+
 const percentile = (sorted, fraction) =>
   sorted.length
     ? sorted[Math.min(sorted.length - 1, Math.floor(sorted.length * fraction))]
@@ -465,7 +543,7 @@ const percentile = (sorted, fraction) =>
 /**
  * @description Roll results up into counts, failure causes and size figures.
  */
-export function summarizeSsr(results) {
+export function summarizeSsr(results, extras = {}) {
   const counts = Object.fromEntries(SSR_STATUSES.map((s) => [s, 0]));
   const byDemo = {
     demoSchema: Object.fromEntries(SSR_STATUSES.map((s) => [s, 0])),
@@ -481,6 +559,9 @@ export function summarizeSsr(results) {
   let uniqueStyleBytes = 0;
   // CSS rules repeated across elements (the shared base styles, e.g. DDD)
   const ruleUse = new Map();
+  const blockSizes = new Map();
+  const variableRules = new Set();
+  let variableRuleBytes = 0;
   for (const r of results) {
     counts[r.status] += 1;
     byDemo[r.demo][r.status] += 1;
@@ -514,7 +595,7 @@ export function summarizeSsr(results) {
       entry.tags.push(r.tag);
       hinted.set(hint, entry);
     }
-    if (r.status !== "threw") {
+    if (measured(r)) {
       sizes.push(r.bytes);
       bytes += r.bytes;
       styleBytes += r.styleBytes;
@@ -524,9 +605,17 @@ export function summarizeSsr(results) {
         use.elements += 1;
         ruleUse.set(hash, use);
       }
+      for (const block of r.styleBlocks || []) {
+        blockSizes.set(block.hash, block.bytes);
+      }
+      variableRuleBytes += r.variableRuleBytes || 0;
+      for (const hash of r.variableRules || []) {
+        variableRules.add(hash);
+      }
     }
   }
   sizes.sort((a, b) => a - b);
+  const sum = (values) => [...values].reduce((a, b) => a + b, 0);
   const rendered = sizes.length;
   const sharedThreshold = Math.max(5, Math.ceil(rendered * 0.1));
   const shared = [...ruleUse.values()].filter(
@@ -558,7 +647,38 @@ export function summarizeSsr(results) {
         (r) => r.propertyBoundAddresses && r.propertyBoundAddresses.length,
       )
       .map((r) => ({ tag: r.tag, bindings: r.propertyBoundAddresses })),
-    primitiveStyles: { bytes: Buffer.byteLength(SSR_PRIMITIVE_CSS) },
+    primitiveStyles: { bytes: Buffer.byteLength(extras.primitiveCss || "") },
+    // the page-level sheet (primitives + the project's design system) a page
+    // would carry once; null when the project has no design system to read
+    globalStyles: extras.global
+      ? {
+          bytes: extras.global.bytes,
+          sourceBytes: extras.global.sourceBytes,
+          variableBytes: extras.global.variableBytes,
+        }
+      : null,
+    // What the styles inside shadow roots cost, to compare ways of shipping
+    // them. Bytes are totals over every element measured.
+    styleCosts: {
+      // as rendered: every shadow root carries its own copy
+      perShadowRoot: styleBytes,
+      // each distinct <style> block once per element's output
+      oncePerElement: uniqueStyleBytes,
+      // each distinct <style> block once for the whole run (a shared file)
+      onceOverall: sum(blockSizes.values()),
+      distinctBlocks: blockSizes.size,
+      // rules that only set custom properties: as rendered, and counted once
+      variableRules: {
+        bytes: variableRuleBytes,
+        bytesIfEmittedOnce: sum(
+          [...variableRules].map(
+            (hash) => (ruleUse.get(hash) || {}).bytes || 0,
+          ),
+        ),
+      },
+      // the markup alone, with no <style> content in any shadow root
+      htmlWithoutStyles: bytes - styleBytes,
+    },
     size: {
       measured: rendered,
       bytes,
@@ -580,7 +700,7 @@ export function summarizeSsr(results) {
       share: styleBytes ? sharedBytes / styleBytes : 0,
     },
     largest: results
-      .filter((r) => r.status !== "threw")
+      .filter(measured)
       .sort((a, b) => b.bytes - a.bytes)
       .slice(0, 5)
       .map((r) => ({ tag: r.tag, bytes: r.bytes, styleBytes: r.styleBytes })),
@@ -592,7 +712,7 @@ export function summarizeSsr(results) {
  * element that hung or crashed it, so one bad element can't end the audit.
  * @param payload {root, timeout, items}
  * @param deps injectable { spawn, workerPath } for tests
- * @returns {Promise<{fatal?: {code: string, message: string}, results: object[], fallbacks: object[]}>}
+ * @returns {Promise<{fatal?: {code: string, message: string}, results: object[], fallbacks: object[], primitives: string, global: object|null}>}
  */
 export async function runSsrWorker(payload, deps = {}) {
   const spawn = deps.spawn || nodeSpawn;
@@ -602,6 +722,8 @@ export async function runSsrWorker(payload, deps = {}) {
   const results = [];
   // extensionless imports the worker had to resolve through its fallback
   const fallbacks = new Map();
+  let primitives = "";
+  let global = null;
   let pending = payload.items.slice();
   while (pending.length) {
     const attempt = await new Promise((resolve) => {
@@ -671,6 +793,11 @@ export async function runSsrWorker(payload, deps = {}) {
     });
     // asyncOnly lines are late errors from an element that already finished
     for (const doc of attempt.got) {
+      if (typeof doc.primitives === "string") {
+        primitives = doc.primitives;
+        global = doc.global || null;
+        continue;
+      }
       if (doc.fallback) {
         fallbacks.set(
           `${doc.fallback.specifier}|${doc.fallback.parent}`,
@@ -697,6 +824,8 @@ export async function runSsrWorker(payload, deps = {}) {
         fatal: attempt.fatal,
         results,
         fallbacks: [...fallbacks.values()],
+        primitives,
+        global,
       };
     }
     if (attempt.complete || !pending.length) {
@@ -715,7 +844,7 @@ export async function runSsrWorker(payload, deps = {}) {
       warnings: [],
     });
   }
-  return { results, fallbacks: [...fallbacks.values()] };
+  return { results, fallbacks: [...fallbacks.values()], primitives, global };
 }
 
 function readSource(file) {
@@ -800,7 +929,12 @@ export async function auditSsrCommand(commandRun, root = null, deps = {}) {
     const message =
       outcome.fatal.code === "missing-ssr"
         ? t("auditSsrMissingSsr", { command: "npm i -D @lit-labs/ssr" })
-        : t("auditSsrWorkerFailed", { error: outcome.fatal.message });
+        : outcome.fatal.code === "missing-ssr-kit"
+          ? t("auditSsrMissingKit", {
+              command: "npm i @haxtheweb/haxcms-nodejs@latest",
+              env: "HAX_SSR_KIT",
+            })
+          : t("auditSsrWorkerFailed", { error: outcome.fatal.message });
     return fail(outcome.fatal.code, message);
   }
   const demoOf = Object.fromEntries(
@@ -811,7 +945,13 @@ export async function auditSsrCommand(commandRun, root = null, deps = {}) {
     mkdirSync(saveDir, { recursive: true });
   }
   if (saveDir) {
-    writeFileSync(path.join(saveDir, "_primitives.css"), SSR_PRIMITIVE_CSS);
+    writeFileSync(
+      path.join(saveDir, "_primitives.css"),
+      outcome.primitives || "",
+    );
+    if (outcome.global) {
+      writeFileSync(path.join(saveDir, "_global.css"), outcome.global.css);
+    }
     for (const doc of outcome.results) {
       if (doc.progressive) {
         writeFileSync(
@@ -840,10 +980,20 @@ export async function auditSsrCommand(commandRun, root = null, deps = {}) {
         warnings,
       };
     }
+    if (doc.skipped) {
+      return { ...base, status: "skipped", skipReason: doc.skipped, warnings };
+    }
     if (saveDir) {
       writeFileSync(path.join(saveDir, `${doc.tag}.html`), doc.html);
     }
     const a = analyzeSsrOutput(doc.html, doc.tag);
+    if (
+      (a.status === "empty" || a.status === "no-shadow-root") &&
+      doc.file &&
+      isNonVisual(readSource(doc.file))
+    ) {
+      a.status = "non-visual";
+    }
     const hints =
       a.status === "rendered" || !doc.file
         ? []
@@ -860,6 +1010,9 @@ export async function auditSsrCommand(commandRun, root = null, deps = {}) {
       styleBytes: a.styleBytes,
       uniqueStyleBytes: a.uniqueStyleBytes,
       styleRules: a.styleRules,
+      styleBlocks: a.styleBlocks,
+      variableRules: a.variableRules,
+      variableRuleBytes: a.variableRuleBytes,
       falseBooleanAttrs: a.falseBooleanAttrs,
       propertyBoundAddresses: doc.file
         ? propertyBoundAddresses(readSource(doc.file))
@@ -870,7 +1023,10 @@ export async function auditSsrCommand(commandRun, root = null, deps = {}) {
       warnings,
     };
   });
-  const summary = summarizeSsr(results);
+  const summary = summarizeSsr(results, {
+    primitiveCss: outcome.primitives,
+    global: outcome.global,
+  });
   const fallbacks = outcome.fallbacks || [];
   summary.env = options.shim === false ? "bare" : "inert-dom";
   summary.resolverFallbacks = {
@@ -885,7 +1041,13 @@ export async function auditSsrCommand(commandRun, root = null, deps = {}) {
   };
   // the per-block detail only feeds the summary
   const publicResults = results.map(
-    ({ styleRules: _styleRules, ...rest }) => rest,
+    ({
+      styleRules: _styleRules,
+      styleBlocks: _styleBlocks,
+      variableRules: _variableRules,
+      variableRuleBytes: _variableRuleBytes,
+      ...rest
+    }) => rest,
   );
   if (asJson) {
     out(
@@ -912,6 +1074,8 @@ export async function auditSsrCommand(commandRun, root = null, deps = {}) {
     shell: [color.yellow, t("auditSsrStatusShell")],
     empty: [color.yellow, t("auditSsrStatusEmpty")],
     "no-shadow-root": [color.yellow, t("auditSsrStatusNoShadow")],
+    "non-visual": [color.dim, t("auditSsrStatusNonVisual")],
+    skipped: [color.dim, t("auditSsrStatusSkipped")],
     threw: [color.red, t("auditSsrStatusThrew")],
   };
   for (const status of SSR_STATUSES) {
@@ -982,6 +1146,26 @@ export async function auditSsrCommand(commandRun, root = null, deps = {}) {
         shared: summary.shared.rules,
         elements: summary.shared.threshold,
         sharedShare: Math.round(summary.shared.share * 100),
+      }),
+    );
+  }
+  if (summary.size.measured && summary.size.styleBytes) {
+    const mb = (n) => (n / 1e6).toFixed(1);
+    p.log.info(
+      t("auditSsrStyleCosts", {
+        total: mb(summary.styleCosts.perShadowRoot),
+        perElement: mb(summary.styleCosts.oncePerElement),
+        overall: mb(summary.styleCosts.onceOverall),
+        variables: mb(summary.styleCosts.variableRules.bytes),
+        markup: mb(summary.styleCosts.htmlWithoutStyles),
+      }),
+    );
+  }
+  if (summary.globalStyles) {
+    p.log.info(
+      t("auditSsrGlobalStyles", {
+        size: kb(summary.globalStyles.bytes),
+        variables: kb(summary.globalStyles.variableBytes),
       }),
     );
   }

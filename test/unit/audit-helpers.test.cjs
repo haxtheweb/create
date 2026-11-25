@@ -19,6 +19,7 @@ const {
   helpAuditRadius,
   helpAuditSpacing,
   hasColorLiteral,
+  isDddExemptValue,
   auditColorAttributes,
   auditJavaScriptLine,
 } = require("../../src/lib/programs/audit.js");
@@ -179,9 +180,37 @@ test("helpAuditLineHeight maps % values to ddd lh tokens", () => {
   assert.equal(helpAuditLineHeight("150%"), "--ddd-lh-150");
 });
 
-test("helpAuditLineHeight returns no-suggestions without %", () => {
+test("helpAuditLineHeight maps unitless ratios and 100% to ddd lh tokens", () => {
+  assert.equal(helpAuditLineHeight("1"), "--ddd-lh-100");
+  assert.equal(helpAuditLineHeight("100%"), "--ddd-lh-100");
+  assert.equal(helpAuditLineHeight("1.5"), "--ddd-lh-150");
+  assert.equal(helpAuditLineHeight("170%"), "--ddd-lh-170");
   assert.equal(
-    helpAuditLineHeight("1.5"),
+    helpAuditLineHeight("normal"),
+    "No available suggestions. Check DDD documentation.",
+  );
+});
+
+test("helpAuditLetterSpacing maps uppercase em tracking to label and eyebrow tokens", () => {
+  assert.equal(helpAuditLetterSpacing("0.06em"), "--ddd-label-letter-spacing");
+  assert.equal(
+    helpAuditLetterSpacing("0.12em"),
+    "--ddd-eyebrow-letter-spacing",
+  );
+});
+
+test("helpAuditFontSize maps small sizes and in-text marks", () => {
+  assert.equal(helpAuditFontSize("12px"), "--ddd-font-size-6xs");
+  assert.equal(helpAuditFontSize("14px"), "--ddd-font-size-5xs");
+  assert.equal(helpAuditFontSize("0.6em"), "--ddd-font-size-annotation");
+});
+
+test("helpAuditSpacing maps container-query insets to cell inset tokens", () => {
+  assert.equal(helpAuditSpacing("4cqi"), "--ddd-cell-inset-xs");
+  assert.equal(helpAuditSpacing("6cqi"), "--ddd-cell-inset-sm");
+  assert.equal(helpAuditSpacing("10cqi"), "--ddd-cell-inset-md");
+  assert.equal(
+    helpAuditSpacing("40cqi"),
     "No available suggestions. Check DDD documentation.",
   );
 });
@@ -272,4 +301,38 @@ test("auditJavaScriptLine flags ?., ??, window and DDD(LitElement)", () => {
     [],
   );
   assert.deepEqual(rules("// a comment mentioning ?. and window.x"), []);
+});
+
+test("isDddExemptValue: keywords and system colors have no DDD token; numbers and colors still do", () => {
+  for (const v of [
+    "inherit",
+    "none",
+    "transparent",
+    "auto",
+    "currentColor",
+    "unset",
+    "revert-layer",
+    "CanvasText",
+    "Highlight",
+    "ButtonText",
+    "none !important",
+    "  Canvas  ",
+  ]) {
+    assert.equal(isDddExemptValue(v), true, v);
+  }
+  for (const v of [
+    "0",
+    "1",
+    "0.06em",
+    "4px",
+    "black",
+    "red",
+    "#000",
+    "normal",
+    "1px solid transparent",
+    "var(--x)",
+    "light-dark(black, white)",
+  ]) {
+    assert.equal(isDddExemptValue(v), false, v);
+  }
 });

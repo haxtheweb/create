@@ -343,6 +343,10 @@ function auditFile(fileLocation, fileName) {
         .map((item) => item && item.trim());
       lineProperty = lineProperty.toLowerCase();
       lineAttribute = lineAttribute.replace(";", "");
+      // keywords and system colors have no DDD token to suggest
+      if (isDddExemptValue(lineAttribute)) {
+        return;
+      }
 
       // Check border shorthands
       if (
@@ -491,6 +495,61 @@ function auditFile(fileLocation, fileName) {
   } else {
     p.note(t("auditNoChangesNeeded"));
   }
+}
+
+// CSS-wide keywords and keyword values that mean "no value" or "use what is
+// there"; DDD has no token for them and needs none
+const KEYWORD_VALUES = new Set([
+  "inherit",
+  "initial",
+  "unset",
+  "revert",
+  "revert-layer",
+  "none",
+  "transparent",
+  "auto",
+  "currentcolor",
+]);
+
+// CSS system colors (CSS Color 4). Forced colors / high contrast mode requires
+// them, and they follow the user's chosen palette, so they are never replaced
+// with DDD colors.
+const SYSTEM_COLORS = new Set([
+  "canvas",
+  "canvastext",
+  "linktext",
+  "visitedtext",
+  "activetext",
+  "buttonface",
+  "buttontext",
+  "buttonborder",
+  "field",
+  "fieldtext",
+  "highlight",
+  "highlighttext",
+  "selecteditem",
+  "selecteditemtext",
+  "mark",
+  "marktext",
+  "graytext",
+  "accentcolor",
+  "accentcolortext",
+]);
+
+/**
+ * @description True when a CSS value is only a keyword DDD has no token for
+ * (inherit, none, transparent, auto, currentColor, ...) or a CSS system color
+ * (Canvas, CanvasText, Highlight, ...), optionally with !important. Numbers,
+ * lengths and named colors are not exempt.
+ * @param value CSS value
+ * @returns Boolean
+ */
+export function isDddExemptValue(value) {
+  const v = String(value)
+    .toLowerCase()
+    .replace(/!\s*important\s*$/, "")
+    .trim();
+  return KEYWORD_VALUES.has(v) || SYSTEM_COLORS.has(v);
 }
 
 /**
@@ -892,10 +951,18 @@ export function helpAuditFontFamily(fontFamily) {
  * @returns String containing suggested changes
  */
 export function helpAuditFontSize(fontSize) {
+  // a small em size is a mark inside other text (a number in a cell, a count)
+  if (/^\s*[\d.]+em\s*$/.test(fontSize) && parseFloat(fontSize) < 0.8) {
+    return "--ddd-font-size-annotation"; // 0.6em
+  }
   if (fontSize.includes("px")) {
     fontSize = Number(fontSize.replace("px", ""));
 
-    if (fontSize <= 16) {
+    if (fontSize <= 12) {
+      return "--ddd-font-size-6xs"; // 12px
+    } else if (fontSize <= 14) {
+      return "--ddd-font-size-5xs"; // 14px
+    } else if (fontSize <= 16) {
       return "--ddd-font-size-4xs"; // 16px
     } else if (fontSize > 16 && fontSize <= 18) {
       return "--ddd-font-size-3xs"; // 18px
@@ -978,6 +1045,13 @@ export function helpAuditFontWeight(fontWeight) {
  * @returns String containing suggested changes
  */
 export function helpAuditLetterSpacing(letterSpacing) {
+  // em tracking is for uppercase text: small labels inside components, or
+  // eyebrows above headings
+  if (/^\s*[\d.]+em\s*$/.test(letterSpacing)) {
+    return parseFloat(letterSpacing) <= 0.09
+      ? "--ddd-label-letter-spacing" // 0.06em
+      : "--ddd-eyebrow-letter-spacing"; // 0.12em
+  }
   if (letterSpacing.includes("px")) {
     letterSpacing = letterSpacing.replace("px", "");
 
@@ -1041,19 +1115,26 @@ export function helpAuditLetterSpacing(letterSpacing) {
  * @returns String containing suggested changes
  */
 export function helpAuditLineHeight(lineHeight) {
-  if (lineHeight.includes("%")) {
-    lineHeight = lineHeight.replace("%", "");
-
-    if (lineHeight <= 120) {
-      return "--ddd-lh-120"; // 120%
-    } else if (lineHeight > 120 && lineHeight <= 140) {
-      return "--ddd-lh-140"; // 140%
-    } else if (lineHeight > 140) {
-      return "--ddd-lh-150"; // 150%
-    }
+  // a percentage, or a unitless ratio (1, 1.5)
+  let ratio = null;
+  if (/^\s*[\d.]+%\s*$/.test(lineHeight)) {
+    ratio = parseFloat(lineHeight) / 100;
+  } else if (/^\s*\d*\.?\d+\s*$/.test(lineHeight)) {
+    ratio = parseFloat(lineHeight);
   }
-
-  return t("auditNoSuggestion");
+  if (ratio === null || Number.isNaN(ratio)) {
+    return t("auditNoSuggestion");
+  }
+  if (ratio <= 1.1) {
+    return "--ddd-lh-100"; // 1
+  } else if (ratio <= 1.2) {
+    return "--ddd-lh-120"; // 120%
+  } else if (ratio <= 1.4) {
+    return "--ddd-lh-140"; // 140%
+  } else if (ratio <= 1.6) {
+    return "--ddd-lh-150"; // 150%
+  }
+  return "--ddd-lh-170"; // 170%
 }
 
 /**
@@ -1097,6 +1178,17 @@ export function helpAuditRadius(radius) {
  * @returns String containing suggested changes
  */
 export function helpAuditSpacing(spacing) {
+  // container query units: an inset inside a grid cell that is a size container
+  if (/^\s*[\d.]+cqi\s*$/.test(spacing)) {
+    const share = parseFloat(spacing);
+    if (share <= 4) {
+      return "--ddd-cell-inset-xs"; // 4cqi
+    } else if (share <= 7) {
+      return "--ddd-cell-inset-sm"; // 6cqi
+    } else if (share <= 12) {
+      return "--ddd-cell-inset-md"; // 10cqi
+    }
+  }
   if (spacing.includes("px")) {
     spacing = Number(spacing.replace("px", ""));
 

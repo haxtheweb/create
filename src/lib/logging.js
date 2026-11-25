@@ -1,14 +1,19 @@
 import { homedir } from "node:os";
 import * as path from "node:path";
 import * as winston from "winston";
-import { camelToDash } from "./utils.js";
+import { camelToDash, ensurePrivateConfigDir } from "./utils.js";
 
 // check for vercel running which is not allowed to write to home in logs
 let baseLogPath = homedir();
 if (process.env.VERCEL_ENV) {
   baseLogPath = "/tmp/";
 }
-const logFileName = path.join(baseLogPath, ".haxtheweb", "create.log");
+// Security (no-secrets-in-logs): the log folder and its files are private to
+// this user; the transport below creates new log files 0600 as well.
+const logFileName = path.join(
+  ensurePrivateConfigDir(baseLogPath),
+  "create.log",
+);
 export const consoleTransport = new winston.transports.Console({
   format: winston.format.simple(),
 });
@@ -26,6 +31,7 @@ export const logFile = new winston.transports.File({
   maxsize: 100000,
   maxFiles: 10,
   tailable: true,
+  options: { flags: "a", mode: 0o600 },
 });
 
 export const logger = winston.createLogger({

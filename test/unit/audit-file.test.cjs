@@ -221,3 +221,37 @@ test("fill / stroke / background with color literals are reported; tokens and ke
     fs.rmSync(root, { recursive: true, force: true });
   }
 });
+
+test("keywords and system colors are not reported; literals next to them still are", () => {
+  tableCalls.length = 0;
+  notes.length = 0;
+  const root = makeProject(
+    [
+      ":host {",
+      "  border: none;",
+      "  background-color: transparent;",
+      "  font-size: inherit;",
+      "  margin-inline-start: auto;",
+      "  outline: none;",
+      "  color: currentColor;",
+      "  border-color: CanvasText;",
+      "  color: Highlight !important;",
+      "  margin: 4px;",
+      "  border-color: black;",
+      "}",
+    ].join("\n"),
+  );
+  try {
+    runAudit({ options: {} }, root);
+    assert.equal(tableCalls.length, 1);
+    assert.deepEqual(
+      tableCalls[0].map((r) => [r["Line Number"], r["CSS Property"]]),
+      [
+        [10, "margin"],
+        [11, "border-color"],
+      ],
+    );
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});

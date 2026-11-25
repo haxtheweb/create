@@ -1,0 +1,107 @@
+{
+  "manifest": {
+    "id": "SITE_ID",
+    "title": "SITE_NAME",
+    "author": "",
+    "description": "Parity test site",
+    "license": "by-sa",
+    "metadata": {
+      "author": {},
+      "site": {
+        "name": "SITE_NAME",
+        "logo": "assets/banner.jpg",
+        "settings": {
+          "lang": "en-US",
+          "publishPagesOn": true,
+          "canonical": true,
+          "pathauto": true
+        },
+        "git": {
+          "vendor": "github",
+          "branch": "gh-pages"
+        }
+      },
+      "theme": {
+        "element": "clean-two",
+        "path": "@haxtheweb/clean-two/clean-two.js",
+        "name": "Clean Two",
+        "thumbnail": "@haxtheweb/haxcms-elements/lib/theme-screenshots/theme-clean-two-thumb.jpg",
+        "description": "Start with a blank site using the Clean Two",
+        "category": [
+          "Course"
+        ],
+        "hidden": false,
+        "priority": 0,
+        "terrible": false,
+        "supportedPalettes": null,
+        "layout": "Sidebar",
+        "designSystem": null,
+        "inspiredBy": null,
+        "inspiredByTheme": null,
+        "acceptsDesignSystems": false,
+        "variables": {
+          "icon": "icons:record-voice-over",
+          "hexCode": "#3f51b5",
+          "cssVariable": "--simple-colors-default-theme-light-blue-7"
+        }
+      },
+      "node": {
+        "fields": {}
+      },
+      "platform": {
+        "audience": "expert",
+        "features": {},
+        "allowedBlocks": []
+      },
+      "build": {
+        "structure": "import"
+      }
+    },
+    "items": {
+      "L0": {
+        "id": "L0",
+        "indent": 0,
+        "location": "pages/L0/index.html",
+        "slug": "chapter-one",
+        "order": 0,
+        "parent": null,
+        "title": "Chapter One",
+        "description": "",
+        "metadata": {}
+      },
+      "L1": {
+        "id": "L1",
+        "indent": 1,
+        "location": "pages/L1/index.html",
+        "slug": "chapter-one/section-a",
+        "order": 0,
+        "parent": "L0",
+        "title": "Section A",
+        "description": "",
+        "metadata": {}
+      },
+      "L2": {
+        "id": "L2",
+        "indent": 0,
+        "location": "pages/L2/index.html",
+        "slug": "chapter-two",
+        "order": 1,
+        "parent": null,
+        "title": "Chapter Two",
+        "description": "",
+        "metadata": {}
+      }
+    },
+    "location": "<sites>/SITE_NAME/index.html"
+  },
+  "sequence": [
+    "L0",
+    "L1",
+    "L2"
+  ],
+  "pages": {
+    "L0": "<p>Some <em>emphasis</em> and <strong>strong</strong> text.<sup class=\"footnote-ref\"><a href=\"#fn1\" id=\"fnref1\">[1]</a></sup></p><ul>\n<li>one</li>\n<li>two</li>\n</ul><pre><code class=\"language-js\">const a = 1;\n</code></pre>",
+    "L1": "<table>\n<thead>\n<tr>\n<th>a</th>\n<th>b</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>1</td>\n<td>2</td>\n</tr>\n</tbody>\n</table>",
+    "L2": "<div class=\"x\">raw html</div><hr class=\"footnotes-sep\"><section class=\"footnotes\">\n<ol class=\"footnotes-list\">\n<li id=\"fn1\" class=\"footnote-item\"><p>A footnote. <a href=\"#fnref1\" class=\"footnote-backref\">↩︎</a></p>\n</li>\n</ol>\n</section>"
+  }
+}
