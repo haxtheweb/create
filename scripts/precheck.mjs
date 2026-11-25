@@ -287,6 +287,17 @@ function main() {
     );
   }
 
+  // Node.js latest LTS (praw RULES.md 92dfb3b2): cheap, so it always runs
+  console.log("\n▶ Node.js latest LTS");
+  const lts = spawnSync(
+    process.execPath,
+    [path.join(root, "scripts", "node-lts-check.mjs")],
+    { cwd: root, stdio: "inherit" },
+  );
+  if (lts.status !== 0) {
+    failures.push("Node.js latest LTS");
+  }
+
   console.log("");
   if (advisories.length) {
     console.log(
