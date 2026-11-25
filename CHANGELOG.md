@@ -4,27 +4,25 @@ All notable changes to this project will be documented in this file. See [commit
 
 ## [26.11.0](https://github.com/haxtheweb/create/compare/v26.8.1...v26.11.0) (2026-11-25)
 
-
 ### Features
 
-* add quartoToSite to hax --import-structure (haxtheweb/issues[#2189](https://github.com/haxtheweb/create/issues/2189)) ([e0fe785](https://github.com/haxtheweb/create/commit/e0fe7856739df73fb6d0b3c70f20987de11e88e9))
-* **audit ssr:** createElement builds registered classes; alias self ([effedf3](https://github.com/haxtheweb/create/commit/effedf38a2f4acc2ef7a1247649febf6a3fbe471))
-* **audit ssr:** inert DOM environment and progressive-enhancement fallbacks ([dc6f564](https://github.com/haxtheweb/create/commit/dc6f564f1feb21daecbbf4241de142c8258c6fff)), closes [haxtheweb/issues#3161](https://github.com/haxtheweb/issues/issues/3161)
-* **audit:** add report-only `hax audit ssr` ([66806d2](https://github.com/haxtheweb/create/commit/66806d24ca05b43b5712f37b80e4ae605f3553e6)), closes [haxtheweb/issues#3161](https://github.com/haxtheweb/issues/issues/3161)
-* **site:** --agent flag and commit attribution for in-process route calls ([4720c4c](https://github.com/haxtheweb/create/commit/4720c4c4401cd80d2bb84d37f55d9371b781ed88)), closes [haxtheweb/issues#3191](https://github.com/haxtheweb/issues/issues/3191) [haxtheweb/haxcms-nodejs#151](https://github.com/haxtheweb/haxcms-nodejs/issues/151)
-* **site:** add openstaxToSite to --import-structure ([6b23863](https://github.com/haxtheweb/create/commit/6b23863be8af73f786b5b9eee81e52f728a7ab8f)), closes [haxtheweb/issues#2912](https://github.com/haxtheweb/issues/issues/2912) [haxtheweb/haxcms-nodejs#40](https://github.com/haxtheweb/haxcms-nodejs/issues/40)
-* **site:** add vitepressToSite to --import-structure ([dfdbb07](https://github.com/haxtheweb/create/commit/dfdbb07303009a90f5bf2258a78892ea7e1998a5)), closes [haxtheweb/issues#2923](https://github.com/haxtheweb/issues/issues/2923) [haxtheweb/haxcms-nodejs#42](https://github.com/haxtheweb/haxcms-nodejs/issues/42)
-* **site:** site:login-link mints a one-time sign-in link ([#2854](https://github.com/haxtheweb/create/issues/2854)) ([3f2d38f](https://github.com/haxtheweb/create/commit/3f2d38ff860ea68a9e7e5016be89d2b12a1f4dc8)), closes [haxtheweb/haxcms-nodejs#67](https://github.com/haxtheweb/haxcms-nodejs/issues/67)
-* **skills:** add hax-rpg-character skill for extending the avatar ([8d91d78](https://github.com/haxtheweb/create/commit/8d91d7897c577445988e782e2bb61e6ae070b354))
-* **webcomponent:** English-only locales in monorepos with the locale guard ([3c3de60](https://github.com/haxtheweb/create/commit/3c3de602b46d7f35eb20bdd43b02f554f1a9c5e2)), closes [haxtheweb/issues#3262](https://github.com/haxtheweb/issues/issues/3262)
-
+- add quartoToSite to hax --import-structure (haxtheweb/issues[#2189](https://github.com/haxtheweb/create/issues/2189)) ([e0fe785](https://github.com/haxtheweb/create/commit/e0fe7856739df73fb6d0b3c70f20987de11e88e9))
+- **audit ssr:** createElement builds registered classes; alias self ([effedf3](https://github.com/haxtheweb/create/commit/effedf38a2f4acc2ef7a1247649febf6a3fbe471))
+- **audit ssr:** inert DOM environment and progressive-enhancement fallbacks ([dc6f564](https://github.com/haxtheweb/create/commit/dc6f564f1feb21daecbbf4241de142c8258c6fff)), closes [haxtheweb/issues#3161](https://github.com/haxtheweb/issues/issues/3161)
+- **audit:** add report-only `hax audit ssr` ([66806d2](https://github.com/haxtheweb/create/commit/66806d24ca05b43b5712f37b80e4ae605f3553e6)), closes [haxtheweb/issues#3161](https://github.com/haxtheweb/issues/issues/3161)
+- **site:** --agent flag and commit attribution for in-process route calls ([4720c4c](https://github.com/haxtheweb/create/commit/4720c4c4401cd80d2bb84d37f55d9371b781ed88)), closes [haxtheweb/issues#3191](https://github.com/haxtheweb/issues/issues/3191) [haxtheweb/haxcms-nodejs#151](https://github.com/haxtheweb/haxcms-nodejs/issues/151)
+- **site:** add openstaxToSite to --import-structure ([6b23863](https://github.com/haxtheweb/create/commit/6b23863be8af73f786b5b9eee81e52f728a7ab8f)), closes [haxtheweb/issues#2912](https://github.com/haxtheweb/issues/issues/2912) [haxtheweb/haxcms-nodejs#40](https://github.com/haxtheweb/haxcms-nodejs/issues/40)
+- **site:** add vitepressToSite to --import-structure ([dfdbb07](https://github.com/haxtheweb/create/commit/dfdbb07303009a90f5bf2258a78892ea7e1998a5)), closes [haxtheweb/issues#2923](https://github.com/haxtheweb/issues/issues/2923) [haxtheweb/haxcms-nodejs#42](https://github.com/haxtheweb/haxcms-nodejs/issues/42)
+- **site:** site:login-link mints a one-time sign-in link ([#2854](https://github.com/haxtheweb/create/issues/2854)) ([3f2d38f](https://github.com/haxtheweb/create/commit/3f2d38ff860ea68a9e7e5016be89d2b12a1f4dc8)), closes [haxtheweb/haxcms-nodejs#67](https://github.com/haxtheweb/haxcms-nodejs/issues/67)
+- **skills:** add hax-rpg-character skill for extending the avatar ([8d91d78](https://github.com/haxtheweb/create/commit/8d91d7897c577445988e782e2bb61e6ae070b354))
+- **webcomponent:** English-only locales in monorepos with the locale guard ([3c3de60](https://github.com/haxtheweb/create/commit/3c3de602b46d7f35eb20bdd43b02f554f1a9c5e2)), closes [haxtheweb/issues#3262](https://github.com/haxtheweb/issues/issues/3262)
 
 ### Bug Fixes
 
-* **audit-ssr:** cap collected HTML at 8 MB and mark the row truncated ([e1e6de4](https://github.com/haxtheweb/create/commit/e1e6de4ac08a83185852b9327b1140655ef60bc8))
-* **audit-ssr:** keep the text of multi-line error messages ([0e22cac](https://github.com/haxtheweb/create/commit/0e22cac7b0024548f63acf1f3f9ec89e7a770c0a))
-* **audit-ssr:** strip HTML blocks to a fixed point (CodeQL) ([7609a55](https://github.com/haxtheweb/create/commit/7609a555367dadb862d68b4b77b403e4bf065a87))
-* **cli:** accept installed hidden themes and register Twig constant() for site ops ([eb4da8e](https://github.com/haxtheweb/create/commit/eb4da8e00f165f58fe1fe7d21d580ac5d08cf000)), closes [haxtheweb/issues#3318](https://github.com/haxtheweb/issues/issues/3318) [haxtheweb/issues#3319](https://github.com/haxtheweb/issues/issues/3319)
+- **audit-ssr:** cap collected HTML at 8 MB and mark the row truncated ([e1e6de4](https://github.com/haxtheweb/create/commit/e1e6de4ac08a83185852b9327b1140655ef60bc8))
+- **audit-ssr:** keep the text of multi-line error messages ([0e22cac](https://github.com/haxtheweb/create/commit/0e22cac7b0024548f63acf1f3f9ec89e7a770c0a))
+- **audit-ssr:** strip HTML blocks to a fixed point (CodeQL) ([7609a55](https://github.com/haxtheweb/create/commit/7609a555367dadb862d68b4b77b403e4bf065a87))
+- **cli:** accept installed hidden themes and register Twig constant() for site ops ([eb4da8e](https://github.com/haxtheweb/create/commit/eb4da8e00f165f58fe1fe7d21d580ac5d08cf000)), closes [haxtheweb/issues#3318](https://github.com/haxtheweb/issues/issues/3318) [haxtheweb/issues#3319](https://github.com/haxtheweb/issues/issues/3319)
 
 ## [26.8.1](https://github.com/haxtheweb/create/compare/v26.0.4...v26.8.1) (2026-08-14)
 
