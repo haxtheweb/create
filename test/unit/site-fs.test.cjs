@@ -38,6 +38,9 @@ const {
   writeStaticPublishPages,
   removeStaticPublishPages,
   buildStaticSite,
+  staticBuildCdn,
+  staticBuildShipsOwnBuild,
+  STATIC_DEFAULT_CDN,
   staticHostLiveOnlyFiles,
   STATIC_BUILD_MARKER,
 } = available ? siteModule : {};
@@ -1090,7 +1093,9 @@ test(
         /The first page, with words/,
       );
       if (built.renderer) {
-        assert.equal(built.pages, 2);
+        // the home page and the one page; newer haxcms-nodejs releases also
+        // render routes such as x/displays/search.html
+        assert.ok(built.pages >= 2, String(built.pages));
         assert.match(
           fs.readFileSync(path.join(out, "first", "index.html"), "utf8"),
           /https:\/\/static\.example\/first/,
@@ -1158,6 +1163,127 @@ test(
       await assert.rejects(
         buildStaticSite(mine, path.join(parent, "x")),
         /not a HAXsite/,
+      );
+    } finally {
+      fs.rmSync(parent, { recursive: true, force: true });
+    }
+  },
+);
+
+// --- site:build-static: where the front-end build comes from (#3429) ---
+
+// true when the installed haxcms-nodejs renderer takes the cdn option
+function rendererTakesCdn() {
+  try {
+    const pkg = path.dirname(
+      require.resolve("@haxtheweb/haxcms-nodejs/package.json"),
+    );
+    const staticPages = require(
+      path.join(pkg, "dist", "lib", "staticPages.js"),
+    );
+    return typeof staticPages.validStaticCdn === "function";
+  } catch {
+    return false;
+  }
+}
+
+test(
+  "staticBuildCdn: the CDN unless the output ships its own build/",
+  opts,
+  () => {
+    const parent = fs.mkdtempSync(
+      path.join(os.tmpdir(), "hax-buildstatic-cdn-"),
+    );
+    try {
+      const out = path.join(parent, "out");
+      fs.mkdirSync(out);
+      assert.equal(staticBuildShipsOwnBuild(out), false);
+      assert.equal(staticBuildCdn(out), STATIC_DEFAULT_CDN);
+      // a link to a server's shared build doesn't count: a static host has none
+      const shared = path.join(parent, "shared");
+      fs.mkdirSync(
+        path.join(shared, "es6", "node_modules", "@haxtheweb", "wc-autoload"),
+        { recursive: true },
+      );
+      fs.writeFileSync(
+        path.join(
+          shared,
+          "es6",
+          "node_modules",
+          "@haxtheweb",
+          "wc-autoload",
+          "wc-autoload.js",
+        ),
+        "",
+      );
+      fs.symlinkSync(shared, path.join(out, "build"));
+      assert.equal(staticBuildShipsOwnBuild(out), false);
+      assert.equal(staticBuildCdn(out), STATIC_DEFAULT_CDN);
+      // a real copy does
+      fs.unlinkSync(path.join(out, "build"));
+      fs.cpSync(shared, path.join(out, "build"), { recursive: true });
+      assert.equal(staticBuildShipsOwnBuild(out), true);
+      assert.equal(staticBuildCdn(out), "./");
+      // --cdn wins, and only takes "./" or an https base
+      assert.equal(
+        staticBuildCdn(out, "https://mirror.example/cdn/"),
+        "https://mirror.example/cdn/",
+      );
+      assert.equal(staticBuildCdn(out, "./"), "./");
+      for (const bad of [
+        "http://mirror.example/",
+        "https://mirror.example/x",
+        "javascript:alert(1)//",
+        "//mirror.example/",
+      ]) {
+        assert.throws(() => staticBuildCdn(out, bad), /--cdn/, bad);
+      }
+    } finally {
+      fs.rmSync(parent, { recursive: true, force: true });
+    }
+  },
+);
+
+test(
+  "buildStaticSite writes the CDN into the pages instead of the shell's check",
+  { ...opts, timeout: 60000 },
+  async () => {
+    const parent = fs.mkdtempSync(
+      path.join(os.tmpdir(), "hax-buildstatic-cdn2-"),
+    );
+    try {
+      const root = makeBoilerplateSite(parent);
+      const out = path.join(parent, "out");
+      const built = await buildStaticSite(root, out, "https://static.example/");
+      // the site links a server's build, which isn't copied: the CDN
+      assert.equal(built.cdn, STATIC_DEFAULT_CDN);
+      if (!rendererTakesCdn()) {
+        return;
+      }
+      for (const page of ["index.html", path.join("first", "index.html")]) {
+        const html = fs.readFileSync(path.join(out, page), "utf8");
+        const head = html.substring(0, html.indexOf("</head>"));
+        assert.equal(head.indexOf("XMLHttpRequest"), -1, page);
+        assert.ok(
+          head.indexOf(
+            `globalThis.__appCDN = ${JSON.stringify(STATIC_DEFAULT_CDN)};`,
+          ) !== -1,
+          page,
+        );
+      }
+      // --cdn names another place
+      const mirror = await buildStaticSite(
+        root,
+        out,
+        "https://static.example/",
+        "https://mirror.example/cdn/",
+      );
+      assert.equal(mirror.cdn, "https://mirror.example/cdn/");
+      assert.ok(
+        fs
+          .readFileSync(path.join(out, "index.html"), "utf8")
+          .indexOf('globalThis.__appCDN = "https://mirror.example/cdn/";') !==
+          -1,
       );
     } finally {
       fs.rmSync(parent, { recursive: true, force: true });

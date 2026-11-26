@@ -1425,6 +1425,53 @@ export async function writeStaticPublishPages(siteDirectory, domain = "") {
 // serves as is, built from a site without changing it. A folder this wrote
 // carries this marker, and only such a folder (or an empty one) is replaced.
 export const STATIC_BUILD_MARKER = ".hax-static-build";
+// haxtheweb/issues#3429: where the front-end build comes from for a static
+// build. The page shell checks at load time with a synchronous request;
+// site:build-static knows the answer (it never copies the build/ symlinks,
+// so the output ships build/ only if the site holds a real copy) and writes
+// it into the pages instead. --cdn names another place (a mirror, a Waypoint).
+export const STATIC_DEFAULT_CDN = "https://cdn.hax.cloud/cdn/";
+const STATIC_OWN_BUILD = [
+  "build",
+  "es6",
+  "node_modules",
+  "@haxtheweb",
+  "wc-autoload",
+  "wc-autoload.js",
+];
+
+// true when the output holds its own build/ (real folders and files, no links)
+export function staticBuildShipsOwnBuild(out) {
+  let at = path.resolve(out);
+  for (const part of STATIC_OWN_BUILD) {
+    at = path.join(at, part);
+    try {
+      if (fs.lstatSync(at).isSymbolicLink()) {
+        return false;
+      }
+    } catch {
+      return false;
+    }
+  }
+  return true;
+}
+
+// "./" or an https base ending in "/", the same rule the renderer applies
+export function staticBuildCdn(out, requested = "") {
+  if (requested) {
+    const cdn = String(requested).trim();
+    if (
+      cdn === "./" ||
+      /^https:\/\/[a-z0-9.-]+(:[0-9]+)?\/([a-z0-9._~-]+\/)*$/i.test(cdn)
+    ) {
+      return cdn;
+    }
+    throw new Error(
+      `--cdn must be "./" or an https address ending in "/" (got ${cdn})`,
+    );
+  }
+  return staticBuildShipsOwnBuild(out) ? "./" : STATIC_DEFAULT_CDN;
+}
 // never copied: version control, CI, installed packages, earlier builds
 // (dist/, ignored by git and the publish ignore files), logs, publish
 // leftovers. Symbolic links aren't copied either: in a site they point at a
@@ -1581,6 +1628,7 @@ export async function buildStaticSite(
   siteDirectory,
   outDirectory,
   domain = "",
+  requestedCdn = "",
 ) {
   const root = path.resolve(siteDirectory);
   const out = path.resolve(outDirectory);
@@ -1665,6 +1713,7 @@ export async function buildStaticSite(
   }
   stripServerOnlyFromStaticBuild(out);
   writeStaticRootMarkdown(out, site, domain);
+  const cdn = staticBuildCdn(out, requestedCdn);
   const renderer = !!(
     staticPagesLib && typeof staticPagesLib.renderStaticPages === "function"
   );
@@ -1685,7 +1734,11 @@ export async function buildStaticSite(
         // not there
       }
     }
-    const rendered = await staticPagesLib.renderStaticPages(site, { domain });
+    // older haxcms-nodejs releases ignore cdn and keep the shell's own check
+    const rendered = await staticPagesLib.renderStaticPages(site, {
+      domain,
+      cdn,
+    });
     for (const page of rendered) {
       const target = path.resolve(out, page.path);
       if (!target.startsWith(out + path.sep)) {
@@ -1701,7 +1754,7 @@ export async function buildStaticSite(
       }
     }
   }
-  return { out, pages, renderer };
+  return { out, pages, renderer, cdn };
 }
 
 /**
@@ -4598,6 +4651,7 @@ export async function siteCommandDetected(commandRun) {
               activeHaxsite.directory,
               commandRun.options.domain,
             ),
+            commandRun.options.cdn,
           );
           if (commandRun.options.format) {
             logStructuredOutput(commandRun, built);

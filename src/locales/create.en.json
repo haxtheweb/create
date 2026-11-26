@@ -254,6 +254,7 @@
   "cliOptNodeOp": "node operation to perform",
   "cliOptItemId": "node ID to operate on",
   "cliOptDomain": "published domain name",
+  "cliOptCdn": "site:build-static: where the front-end build comes from (\"./\" or an https address); default: ./ when the site ships build/, otherwise cdn.hax.cloud",
   "cliOptOutDir": "folder site:build-static writes the static site to (default: <site>-static beside the site)",
   "cliOptTitleScrape": "CSS Selector for `title` in resource",
   "cliOptContentScrape": "CSS Selector for `body` in resource",
