@@ -287,6 +287,17 @@ function main() {
     );
   }
 
+  // External Dependencies: JS builds, never TypeScript sources; cheap, so it always runs
+  console.log("\n▶ External dependencies use JS builds");
+  const jsBuilds = spawnSync(
+    process.execPath,
+    [path.join(root, "scripts", "js-builds-check.mjs")],
+    { cwd: root, stdio: "inherit" },
+  );
+  if (jsBuilds.status !== 0) {
+    failures.push("External dependencies use JS builds");
+  }
+
   // Node.js latest LTS (praw RULES.md 92dfb3b2): cheap, so it always runs
   console.log("\n▶ Node.js latest LTS");
   const lts = spawnSync(
